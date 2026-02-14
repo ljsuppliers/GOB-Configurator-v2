@@ -1,0 +1,47 @@
+{
+  "initialResponse": {
+    "subject": "Re: Garden {buildingType} Enquiry",
+    "body": "Hi {customerFirstName},\n\nThank you for your valued enquiry. It's great to hear you are considering a {buildingTypeLower} for your home. This is certainly something we can help with.\n\nThe next step would be a site visit to discuss the project further. We can run through all of your requirements and from there we will provide an official quote, and welcome you to visit our showroom or a previous customers' project to see one of our buildings first-hand.\n\nAre you available next week? Please could you also provide your full address and contact number?\n\nPlease let me know if you have any questions in the meantime..\n\nMany thanks,\nLiam"
+  },
+  "siteVisitConfirmation": {
+    "subject": "Site Visit Confirmation - {visitDate}",
+    "body": "Hi {customerFirstName},\n\nHope all is well. Just to confirm, {salesRep} will be visiting {address} on {visitDate} at {visitTime} to discuss your {buildingTypeLower} project.\n\n{salesRep} will run through all of your requirements, take measurements, and discuss the various options available. He's happy to answer any questions you may have.\n\nIf you need to reschedule, please let me know..\n\nMany thanks,\nLiam"
+  },
+  "quoteEmail": {
+    "subject": "Quote for {dimensions} {tier} {buildingType}",
+    "body": "Good {todayTimeOfDay} {customerFirstName},\n\nHope all is well. Thank you for having Richard visit last week, he said it was great to meet to discuss your {buildingTypeLower} project.\n\nI've attached our quote for a {dimensions} {tier} {buildingTypeLower} that includes delivery, base, installation, and VAT.\n\n{buildingIncludes}{discountParagraph}\n\nFor all of our projects we put together a detailed drawing, so we will work with you to finalise the exact configuration of the building.\n\nI've shown the prices of our paid extras, should you require any. Excluded from our price is the electrical connection that will be subject to a visit from an electrician. We also ask that customers provide a toilet and mini skip whilst we are on site.\n\nWe've looked at all our competitors and are confident we offer the best product on the market, particularly when it comes to design, insulation (100mm PIR), and construction materials used. Having visited most garden room suppliers in the UK, we believe ours to be up there with the best value for money.\n\nRegarding next steps, we ask for a £250 holding deposit that secures your delivery/installation date and allows us to put together a detailed drawing that will define exactly what is included in your building. We will also arrange a visit from our registered electrician to assess the electrical connection.\n\nIf you have any questions or should you wish to proceed, please let me know. We would love to work with you to create the perfect {buildingTypeLower} for your home.\n\n{showroomOffer}\n\nYou can find more information and photos here:\n\n• Gallery: https://gardenofficebuildings.co.uk/gallery/\n• YouTube Channel: https://www.youtube.com/@gardenofficebuildings\n• Telegraph Article: https://www.telegraph.co.uk/property/uk/homes-in-the-garden-trend/\n\nHave a lovely {todayDayOfWeek}!\n\nMany thanks,\nLiam"
+  },
+  "preliminaryQuoteEmail": {
+    "subject": "Preliminary Quote for {dimensions} {tier} {buildingType}",
+    "body": "Good {todayTimeOfDay} {customerFirstName},\n\nHope all is well. Thank you for your enquiry about a {buildingTypeLower} for your home.\n\nI've attached our preliminary quote for a {dimensions} {tier} {buildingTypeLower} that includes delivery, base, installation, and VAT.\n\n{buildingIncludes}{discountParagraph}\n\nThis is a preliminary estimate based on the photos and information you've provided. The price is subject to a full site survey to assess access, ground conditions, and your exact requirements. The site survey also gives us a chance to run through all the options available and answer any questions you may have.\n\nFor all of our projects we put together a detailed drawing, so we will work with you to finalise the exact configuration of the building.\n\nI've shown the prices of our paid extras, should you require any. Excluded from our price is the electrical connection that will be subject to a visit from an electrician. We also ask that customers provide a toilet and mini skip whilst we are on site.\n\nWe've looked at all our competitors and are confident we offer the best product on the market, particularly when it comes to design, insulation (100mm PIR), and construction materials used. Having visited most garden room suppliers in the UK, we believe ours to be up there with the best value for money.\n\nIf you'd like to proceed, the next step would be to arrange a site visit to discuss the project further. Are you available next week?\n\n{showroomOffer}\n\nYou can find more information and photos here:\n\n• Gallery: https://gardenofficebuildings.co.uk/gallery/\n• YouTube Channel: https://www.youtube.com/@gardenofficebuildings\n• Telegraph Article: https://www.telegraph.co.uk/property/uk/homes-in-the-garden-trend/\n\nHave a lovely {todayDayOfWeek}!\n\nMany thanks,\nLiam"
+  },
+  "followUp1Week": {
+    "subject": "Re: Quote for {buildingType}",
+    "body": "Hi {customerFirstName},\n\nHope all is well. Just following up to see if you had any more thoughts regarding the project?\n\nLet me know..\n\nMany thanks,\nLiam"
+  },
+  "followUp2Weeks": {
+    "subject": "Re: Quote for {buildingType}",
+    "body": "Hi {customerFirstName},\n\nHope all is well. Just wanted to check in to see if you had any questions about the quote or if there's anything I can help with?\n\nWe'd love to work with you on this project, so please don't hesitate to reach out if you'd like to discuss anything..\n\nMany thanks,\nLiam"
+  },
+  "depositConfirmation": {
+    "subject": "Re: Quote for {buildingType}",
+    "body": "Hi {customerFirstName},\n\nGreat news that you'd like to proceed.\n\nI've attached our £250 holding deposit invoice that will secure your delivery/installation date for w/c {deliveryDate}.\n\nOur bank details are on the invoice. Please advise when payment is made and I will confirm we have received it.\n\nNext steps: we will start work on your drawing and will arrange a visit from our electrician to assess the electrical connection.\n\nAny questions, please let me know. We look forward to working with you..\n\nMany thanks,\nLiam"
+  },
+  "drawingSent": {
+    "subject": "Drawing and Specification - {customerName}",
+    "body": "Hi {customerFirstName},\n\nHope all is well. I've attached the following:\n- Updated drawing of your building\n- Specification with payment schedule\n- Our internal flooring options - please could you let me know what you'd like?\n- First stage invoice that is now due\n\nPlease advise when payment is made and I will confirm receipt.\n\nWe are due to deliver and start installation w/c {deliveryDate}.\n\nRegarding a skip, we ask that customers organise this before we arrive on site. We recommend an 8 yard skip.\n\nAlso, are we also able to use your downstairs toilet?\n\nWe look forward to finally getting started!\n\nMany thanks,\nLiam"
+  },
+  "paymentReceived": {
+    "subject": "Re: {buildingType} - Payment Received",
+    "body": "Hi {customerFirstName},\n\nHope all is well. Just to confirm, we have received your payment - thank you.\n\nWe are on track for delivery and installation w/c {deliveryDate}. I will be in touch closer to the time with more details..\n\nAny questions in the meantime, please let me know.\n\nMany thanks,\nLiam"
+  },
+  "deliveryNotification": {
+    "subject": "Delivery Confirmation - w/c {deliveryDate}",
+    "body": "Hi {customerFirstName},\n\nHope all is well. Just to confirm, we are due to deliver and start installation of your {buildingTypeLower} on {deliveryDate}.\n\nOur team will arrive around 8:00am. Please ensure there is clear access to your garden and that a skip is in place.\n\nAs a reminder, we also ask that customers provide access to a toilet during the installation.\n\nIf you have any questions or concerns before we arrive, please let me know..\n\nMany thanks,\nLiam"
+  },
+  "buildComplete": {
+    "subject": "Build Complete - {customerName}",
+    "body": "Hi {customerFirstName},\n\nHope all is well. I hope you are enjoying your new {buildingTypeLower}!\n\nI've attached our final invoice for the remaining balance. Our bank details are on the invoice. Please advise when payment is made and I will confirm receipt.\n\nIf there is anything that needs attention or if you have any questions, please don't hesitate to let me know..\n\nFinally, if you are happy with your building, we would really appreciate a Google review - it helps us enormously:\nhttps://g.page/r/CTtD_m6Dc8sKEBM/review\n\nThank you for choosing Garden Office Buildings. It has been a pleasure working with you.\n\nMany thanks,\nLiam"
+  },
+  "signature": "\n---\nLiam Bee\nSales & Marketing Director | Garden Office Buildings\np: 01689 818 400\ne: liam@gardenofficebuildings.co.uk\nRear of 158 Main Road\nBiggin Hill, Kent\nTN16 3BA\nwww.gardenofficebuildings.co.uk"
+}

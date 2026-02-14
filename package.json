@@ -1,0 +1,15 @@
+{
+  "name": "gob-configurator",
+  "version": "1.0.0",
+  "description": "Garden Office Buildings Configurator",
+  "scripts": {
+    "start": "node server.js",
+    "sheets": "node sheets-server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "googleapis": "^128.0.0",
+    "open": "^11.0.0"
+  }
+}

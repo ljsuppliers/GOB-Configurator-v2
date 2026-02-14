@@ -1,0 +1,278 @@
+/* Drawing canvas and price panel styles */
+
+/* ─── DRAWING ─── */
+.drawing-panel {
+  position: relative;
+}
+
+.drawing-toolbar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+}
+
+.drawing-toolbar button {
+  padding: 4px 10px;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.drawing-toolbar button:hover {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+/* ─── PRICE PANEL ─── */
+.price-section {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.price-section:last-child {
+  border-bottom: none;
+}
+
+.price-section-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 2px 0;
+  font-size: 12px;
+}
+
+.price-row span:first-child {
+  flex: 1;
+  padding-right: 8px;
+}
+
+.price-amount {
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.price-base .price-amount {
+  font-size: 16px;
+  color: var(--accent);
+}
+
+.price-total {
+  background: var(--accent);
+  color: white;
+  padding: 10px 8px;
+  margin: 8px -12px;
+  border-radius: 0;
+}
+
+.price-total .price-row {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.price-total .price-amount {
+  font-size: 18px;
+}
+
+.price-discount .price-amount {
+  color: var(--danger);
+}
+
+.price-deductions .price-amount,
+.price-amount.deduction {
+  color: #16a34a;
+}
+
+.payment-schedule {
+  margin-top: 8px;
+}
+
+.payment-row {
+  font-size: 11px;
+}
+
+.payment-row span:first-child {
+  color: var(--text-secondary);
+}
+
+.discount-controls {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.discount-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.discount-row select,
+.discount-row input {
+  flex: 1;
+}
+
+/* ─── EMAIL PANEL ─── */
+.email-drafter h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--accent);
+}
+
+.email-template-select {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.email-template-select select {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.email-output {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.email-preview {
+  background: #f9f9f9;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.email-field {
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.email-body pre {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.email-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* ─── SURVEY FORM ─── */
+.survey-form h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--accent);
+}
+
+.survey-section {
+  margin-bottom: 12px;
+}
+
+.survey-section h4 {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.survey-section label {
+  display: block;
+  font-size: 12px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.survey-section input,
+.survey-section select,
+.survey-section textarea {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.survey-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+.survey-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.photo-preview {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.survey-photo {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+/* ───────────────────────────────────────────────────────────
+   Draggable Components
+   ─────────────────────────────────────────────────────────── */
+
+.component.draggable {
+  cursor: move;
+  transition: filter 0.15s ease;
+}
+
+.component.draggable:hover {
+  filter: brightness(1.1) drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+}
+
+.component.dragging {
+  filter: brightness(1.15) drop-shadow(0 0 12px rgba(59, 130, 246, 0.8));
+  opacity: 0.85;
+}
+
+/* Selection outline (when component is selected) */
+.component.selected rect:first-child,
+.component.selected path:first-child {
+  stroke: #3B82F6;
+  stroke-width: 4;
+}

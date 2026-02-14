@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium PDF Test - GOB Configurator</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    
+    .test-card {
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #2c5530;
+      margin-top: 0;
+    }
+    
+    .button {
+      display: inline-block;
+      background: #2c5530;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      margin: 10px 10px 10px 0;
+      cursor: pointer;
+      border: none;
+      font-size: 16px;
+    }
+    
+    .button:hover {
+      background: #3a7340;
+    }
+    
+    .info {
+      background: #eaf5ec;
+      border-left: 4px solid #2c5530;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .checklist li {
+      padding: 8px 0;
+      padding-left: 30px;
+      position: relative;
+    }
+    
+    .checklist li:before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #2c5530;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    
+    code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-card">
+    <h1>🎨 Premium PDF Generator Test</h1>
+    
+    <div class="info">
+      <strong>📋 What's New:</strong><br>
+      The PDF quote has been completely redesigned with professional styling, GOB branding, premium typography, and clean visual hierarchy suitable for £20k-£50k projects.
+    </div>
+    
+    <h2>Test Scenarios</h2>
+    
+    <button class="button" onclick="testBasic()">Test: Basic Classic</button>
+    <button class="button" onclick="testSignature()">Test: Signature with Extras</button>
+    <button class="button" onclick="testComplex()">Test: Complex Quote</button>
+    
+    <h2>Design Features</h2>
+    
+    <ul class="checklist">
+      <li>GOB logo prominently displayed</li>
+      <li>Brand colors throughout (#2c5530 green)</li>
+      <li>Professional typography hierarchy</li>
+      <li>Clean sections with subtle backgrounds</li>
+      <li>Premium pricing table design</li>
+      <li>Smart page breaks</li>
+      <li>Footer on every page</li>
+      <li>Customer details in styled box</li>
+    </ul>
+    
+    <h2>Technical Details</h2>
+    
+    <p><strong>Library:</strong> jsPDF (already included)</p>
+    <p><strong>Colors:</strong> GOB brand palette from CSS</p>
+    <p><strong>Logo:</strong> Loaded from <code>assets/logo-base64.txt</code></p>
+    <p><strong>Browser Support:</strong> All modern browsers</p>
+    
+    <div class="info">
+      <strong>🔍 What to Check:</strong><br>
+      • Logo appears at top<br>
+      • Colors match GOB branding<br>
+      • Sections are clearly separated<br>
+      • Pricing table looks professional<br>
+      • Text is well-spaced and readable<br>
+      • Footer appears at bottom
+    </div>
+    
+    <h2>Documentation</h2>
+    
+    <p>Full documentation: <code>docs/PDF-REDESIGN.md</code></p>
+    <p>Modified files:</p>
+    <ul>
+      <li><code>js/quote/generator.js</code> (complete rewrite)</li>
+      <li><code>js/quote/template.js</code> (updated utilities)</li>
+    </ul>
+  </div>
+  
+  <script src="lib/jspdf.min.js"></script>
+  <script type="module">
+    import { generateQuotePDF } from './js/quote/generator.js';
+    
+    // Test data generators
+    window.testBasic = function() {
+      const state = {
+        width: 4800,
+        depth: 3450,
+        height: 2500,
+        tier: 'classic',
+        buildingType: 'Garden Office',
+        foundationType: 'ground-screw',
+        cornerLeft: 'closed',
+        cornerRight: 'closed',
+        cladding: {
+          front: 'western-red-cedar',
+          left: 'anthracite-steel',
+          right: 'anthracite-steel',
+          rear: 'anthracite-steel'
+        },
+        components: [
+          { type: 'Sliding door', label: 'Sliding door 2.1m', elevation: 'Front' },
+          { type: 'Window', label: 'Fixed window 1200mm', elevation: 'Left' },
+          { type: 'Window', label: 'Fixed window 1200mm', elevation: 'Right' }
+        ],
+        customer: {
+          name: 'John Smith',
+          number: 'GOB-2026-001',
+          date: '13 February 2026',
+          address: '123 Garden Lane, Kent, TN16 3BA'
+        }
+      };
+      
+      const price = {
+        basePrice: 21745,
+        claddingUpgrades: [],
+        componentUpgrades: [],
+        heightUpgrade: 0,
+        heightUpgradeLabel: '',
+        extras: [],
+        deductions: [],
+        installation: 6400,
+        totalIncVat: 28145,
+        discount: 0,
+        discountLabel: '',
+        paymentSchedule: [
+          { stage: 1, label: 'Deposit (25%)', amount: 7036 },
+          { stage: 2, label: 'Production start (50%)', amount: 14073 },
+          { stage: 3, label: 'Installation complete (25%)', amount: 7036 }
+        ]
+      };
+      
+      generateQuotePDF(state, price);
+    };
+    
+    window.testSignature = function() {
+      const state = {
+        width: 5950,
+        depth: 3450,
+        height: 2750,
+        tier: 'signature',
+        buildingType: 'Garden Office',
+        foundationType: 'ground-screw',
+        cornerLeft: 'open',
+        cornerRight: 'open',
+        cladding: {
+          front: 'composite-latte',
+          left: 'thermowood',
+          right: 'thermowood',
+          rear: 'anthracite-steel'
+        },
+        components: [
+          { type: 'Bi-fold door', label: 'Bi-fold 4-leaf 3.5m', elevation: 'Front' },
+          { type: 'Corner window', label: 'Corner window set', elevation: 'Left' },
+          { type: 'Window', label: 'Fixed window 1800mm', elevation: 'Right' }
+        ],
+        customer: {
+          name: 'Sarah Johnson',
+          number: 'GOB-2026-002',
+          date: '13 February 2026',
+          address: '45 Woodland Drive, Sevenoaks, Kent, TN13 2AB'
+        }
+      };
+      
+      const price = {
+        basePrice: 25495,
+        claddingUpgrades: [
+          { label: 'Composite slatted cladding upgrade', price: 2500 },
+          { label: 'Thermowood upgrade (left & right)', price: 1800 }
+        ],
+        componentUpgrades: [
+          { label: 'Bi-fold door upgrade', price: 2450 }
+        ],
+        heightUpgrade: 750,
+        heightUpgradeLabel: 'Extra height (2750mm)',
+        extras: [
+          { label: 'Air conditioning unit (premium w/ app)', price: 2250 },
+          { label: 'External double plug socket', price: 235 },
+          { label: 'Electric wall panel heater', price: 495 }
+        ],
+        deductions: [],
+        installation: 7500,
+        totalIncVat: 43475,
+        discount: 1000,
+        discountLabel: 'Early booking discount',
+        paymentSchedule: [
+          { stage: 1, label: 'Deposit (25%)', amount: 10869 },
+          { stage: 2, label: 'Production start (50%)', amount: 21738 },
+          { stage: 3, label: 'Installation complete (25%)', amount: 10868 }
+        ]
+      };
+      
+      generateQuotePDF(state, price);
+    };
+    
+    window.testComplex = function() {
+      const state = {
+        width: 7100,
+        depth: 4025,
+        height: 2800,
+        tier: 'signature',
+        buildingType: 'Garden Office',
+        foundationType: 'ground-screw',
+        cornerLeft: 'open',
+        cornerRight: 'closed',
+        rooms: [
+          { label: 'Main office' },
+          { label: 'Meeting room' }
+        ],
+        cladding: {
+          front: 'composite-latte',
+          left: 'composite-coffee',
+          right: 'thermowood',
+          rear: 'anthracite-steel'
+        },
+        components: [
+          { type: 'Bi-fold door', label: 'Bi-fold 5-leaf 4.5m', elevation: 'Front' },
+          { type: 'Sliding door', label: 'Sliding door 2.1m', elevation: 'Rear' },
+          { type: 'Window', label: 'Fixed window 2400mm', elevation: 'Left' },
+          { type: 'Window', label: 'Fixed window 1800mm', elevation: 'Right' }
+        ],
+        structuralExtras: {
+          partition: 'with door'
+        },
+        customNotes: {
+          quote: 'This quote includes a custom partition wall to create two separate rooms. The electrical installation has been enhanced with additional zones for flexible lighting control in both spaces. Customer has requested premium composite cladding on the front and side elevations for a contemporary finish.'
+        },
+        customer: {
+          name: 'Michael & Emma Thompson',
+          number: 'GOB-2026-003',
+          date: '13 February 2026',
+          address: 'Oakwood House, The Green, Westerham, Kent, TN16 1AS'
+        }
+      };
+      
+      const price = {
+        basePrice: 30995,
+        claddingUpgrades: [
+          { label: 'Composite slatted cladding (front)', price: 2800 },
+          { label: 'Composite slatted cladding (left)', price: 2400 },
+          { label: 'Thermowood upgrade (right)', price: 900 }
+        ],
+        componentUpgrades: [
+          { label: 'Bi-fold 5-leaf upgrade', price: 2700 },
+          { label: 'Additional sliding door', price: 1950 }
+        ],
+        heightUpgrade: 950,
+        heightUpgradeLabel: 'Extra height (2800mm)',
+        extras: [
+          { label: 'Internal partition wall with interior door', price: 1150 },
+          { label: 'Air conditioning unit (premium w/ app)', price: 2250 },
+          { label: 'Additional lighting zone on separate switch', price: 125 },
+          { label: 'External up/down light', price: 95 },
+          { label: 'Additional double plug socket w/ USB', price: 85 },
+          { label: 'Premium flooring upgrade', price: 350 }
+        ],
+        deductions: [
+          { label: 'Repeat customer discount', price: -1500 }
+        ],
+        installation: 9500,
+        totalIncVat: 54750,
+        discount: 2500,
+        discountLabel: 'Package discount',
+        paymentSchedule: [
+          { stage: 1, label: 'Deposit (25%)', amount: 13688 },
+          { stage: 2, label: 'Production start (50%)', amount: 27375 },
+          { stage: 3, label: 'Installation complete (25%)', amount: 13687 }
+        ]
+      };
+      
+      generateQuotePDF(state, price);
+    };
+  </script>
+</body>
+</html>

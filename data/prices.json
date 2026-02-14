@@ -1,0 +1,134 @@
+{
+  "basePrices": {
+    "classic": {
+      "3650x2875": 17495,
+      "3650x3450": 19495,
+      "3650x4025": 21495,
+      "3650x4600": 23495,
+      "4800x2875": 19995,
+      "4800x3450": 21745,
+      "4800x4025": 23495,
+      "4800x4600": 25495,
+      "5950x2875": 21495,
+      "5950x3450": 23495,
+      "5950x4025": 26495,
+      "5950x4600": 28495,
+      "7100x2875": 24495,
+      "7100x3450": 26495,
+      "7100x4025": 28795,
+      "7100x4600": 31995
+    },
+    "signature": {
+      "3650x2875": 18495,
+      "3650x3450": 20495,
+      "3650x4025": 22495,
+      "3650x4400": 24495,
+      "4800x2875": 21495,
+      "4800x3450": 23495,
+      "4800x4025": 25495,
+      "4800x4400": 27495,
+      "5950x2875": 23495,
+      "5950x3450": 25495,
+      "5950x4025": 28495,
+      "5950x4400": 30495,
+      "7100x2875": 26495,
+      "7100x3450": 28495,
+      "7100x4025": 30995,
+      "7100x4400": 34995
+    }
+  },
+  "sizeNames": {
+    "3650": "Midi",
+    "4800": "Maxi",
+    "5950": "Multi",
+    "7100": "Multi+"
+  },
+  "standardWidths": [3650, 4800, 5950, 7100],
+  "standardDepths": {
+    "classic": [2875, 3450, 4025, 4600],
+    "signature": [2875, 3450, 4025, 4400]
+  },
+  "installation": {
+    "ranges": [
+      { "maxArea": 11, "price": 5000 },
+      { "maxArea": 14, "price": 6400 },
+      { "maxArea": 17, "price": 7000 },
+      { "maxArea": 20, "price": 7500 },
+      { "maxArea": 24, "price": 8000 },
+      { "maxArea": 28, "price": 8500 },
+      { "maxArea": 32, "price": 9000 },
+      { "maxArea": 36, "price": 9500 },
+      { "maxArea": 40, "price": 10500 },
+      { "maxArea": 45, "price": 11800 },
+      { "maxArea": 50, "price": 13500 },
+      { "maxArea": 60, "price": 14000 },
+      { "maxArea": 80, "price": 16000 }
+    ]
+  },
+  "extras": {
+    "electrical": {
+      "externalSocket": { "label": "External double plug socket", "price": 235 },
+      "upDownLight": { "label": "External up/down light", "price": 95 },
+      "heater": { "label": "Electric wall panel heater", "price": 495 },
+      "additionalSocket": { "label": "Additional double plug socket", "price": 60 },
+      "additionalSocketUsb": { "label": "Additional double plug socket w/ USB", "price": 85 },
+      "additionalLightingZone": { "label": "Additional lighting zone on separate switch", "price": 125 },
+      "quineticSwitch": { "label": "Wireless quinetic switch system", "price": 265 },
+      "acUnitStandard": { "label": "Air conditioning unit (standard)", "price": 1750 },
+      "acUnitPremium": { "label": "Air conditioning unit (premium w/ app)", "price": 2250 },
+      "cat6Point": { "label": "Additional CAT6 point", "price": 45 },
+      "hdmiCables": { "label": "HDMI cables + brush plates for TV", "price": 30 },
+      "floodlightCabling": { "label": "Cabling for external flood light", "price": 50 },
+      "tvMountingPrep": { "label": "TV mounting preparation (HDMI cables + brush plates)", "price": 95 }
+    },
+    "structural": {
+      "partition": { "label": "Internal partition wall with interior door", "price": 1150 },
+      "partitionStorage": { "label": "Basic storage room partition", "price": 650 },
+      "partitionToilet": { "label": "Partition for toilet/shower room", "price": 2350 },
+      "secretDoor": { "label": "Secret cladded door with storage", "price": 1750 },
+      "additionalDecking": { "label": "Additional decking (per sqm)", "price": 350 },
+      "waterButtConnection": { "label": "Connecting downpipe to water butt", "price": 50 },
+      "premiumFlooring": { "label": "Premium flooring upgrade", "price": 350 }
+    },
+    "bathroom": {
+      "wcSuite": { 
+        "label": "WC Suite (toilet room)", 
+        "price": 5000,
+        "description": "Includes toilet, small vanity basin, extractor fan, tiling, and all internal plumbing. Utility connections (water supply, waste) arranged separately."
+      },
+      "bathroomSuite": { 
+        "label": "Bathroom Suite (toilet + shower)", 
+        "price": 8500,
+        "description": "Includes toilet, vanity basin, shower tray with glass screen, extractor fan, heated towel rail, tiling, and all internal plumbing. Utility connections (water supply, waste) arranged separately."
+      }
+    },
+    "doors": {
+      "bifold3Leaf": { "label": "Aluminium bi-fold 3-leaf 2.8m", "price": 1850 },
+      "bifold4Leaf": { "label": "Aluminium bi-fold 4-leaf 3.5m", "price": 2450 },
+      "bifold5Leaf": { "label": "Aluminium bi-fold 5-leaf 4.5m", "price": 2700 },
+      "singleGlazedDoor": { "label": "Single opening glazed door", "price": 1450 },
+      "bifoldUpgrade": { "label": "Bi-fold door upgrade from sliding", "price": 850 }
+    }
+  },
+  "deductions": {
+    "removeDecking": { "label": "Remove integrated decking", "price": -750 },
+    "useExistingFoundation": { "label": "Use existing foundation", "price": -500 }
+  },
+  "claddingUpgrade": {
+    "cedar": { "label": "Western red cedar", "perSqm": 125 },
+    "composite": { "label": "Composite slatted", "perSqm": 125 },
+    "thermowood": { "label": "Thermowood", "perSqm": 85 }
+  },
+  "heightUpgrade": {
+    "250": { "small": 1000, "medium": 1500, "large": 2900 },
+    "450": { "small": 2750, "medium": 3500, "large": 4145 },
+    "500": { "small": 3000, "medium": 3500, "large": 4500 }
+  },
+  "heightUpgradeSizeThresholds": {
+    "small": 15,
+    "medium": 25,
+    "large": 999
+  },
+  "vatRate": 0.20,
+  "holdingDeposit": 250
+}

@@ -1,0 +1,159 @@
+{
+  "width": 5000,
+  "depth": 3500,
+  "height": 2500,
+  "tier": "signature",
+  "buildingType": "Garden Office Building",
+  "roofType": "flat",
+  "roofDirection": "left-to-right",
+  "rooms": [
+    {
+      "label": "Office",
+      "widthMm": 5000
+    }
+  ],
+  "cladding": {
+    "front": "western-red-cedar",
+    "left": "anthracite-steel",
+    "right": "anthracite-steel",
+    "rear": "anthracite-steel",
+    "otherDescription": ""
+  },
+  "cornerLeft": "open",
+  "cornerRight": "closed",
+  "overhangDepth": 400,
+  "foundationType": "ground-screw",
+  "showBoundaries": false,
+  "components": [
+    {
+      "id": "comp-1",
+      "type": "sliding-door-2500",
+      "elevation": "front",
+      "positionX": 1250,
+      "label": "2.5m UPVC Sliding Door"
+    }
+  ],
+  "externalFeatures": [],
+  "extras": {
+    "externalSocket": 0,
+    "upDownLight": 0,
+    "heater": 0,
+    "acUnit": "none",
+    "additionalSocket": 0,
+    "additionalSocketUsb": 0,
+    "additionalLightingZone": 0,
+    "quineticSwitch": false,
+    "cat6Point": 0,
+    "hdmiCables": false,
+    "floodlightCabling": false,
+    "tvMountingPrep": false
+  },
+  "structuralExtras": {
+    "heightUpgrade": 0,
+    "additionalDecking": 0,
+    "secretDoor": false,
+    "premiumFlooring": false,
+    "bifoldUpgrade": false
+  },
+  "deductions": {
+    "removeDecking": false,
+    "useExistingFoundation": false
+  },
+  "partitionRoom": {
+    "enabled": false,
+    "corner": "rear-left",
+    "width": 1500,
+    "depth": 1500,
+    "type": "storage",
+    "label": "Storage",
+    "doorPosition": 0.5,
+    "labelOffsetX": 0,
+    "labelOffsetY": 0,
+    "doorWall": "horizontal",
+    "doorDirection": "outward"
+  },
+  "bathroom": {
+    "enabled": false,
+    "type": "none",
+    "includeUtilityConnections": false,
+    "notes": ""
+  },
+  "customer": {
+    "name": "",
+    "address": "",
+    "number": "",
+    "email": "",
+    "date": ""
+  },
+  "site": {
+    "boundaryLeft": "",
+    "boundaryRight": "",
+    "boundaryRear": "",
+    "access": "",
+    "accessCharge": 0,
+    "accessChargeReason": "",
+    "notes": "",
+    "location": "",
+    "parking": "",
+    "groundCondition": "level-lawn",
+    "slope": "",
+    "soilType": "",
+    "proposedFoundation": "",
+    "groundNotes": "",
+    "structures": "",
+    "existingStructure": "",
+    "structureRemoval": "",
+    "structureNotes": "",
+    "prepWorks": "",
+    "prepNotes": "",
+    "powerSource": "",
+    "powerLocation": "",
+    "powerDistance": "",
+    "permittedDevelopment": true,
+    "planningNotes": ""
+  },
+  "survey": {
+    "completed": false,
+    "completedDate": "",
+    "surveyorName": "",
+    "visitDate": "",
+    "salesRep": "",
+    "visitedShowroom": false,
+    "ambassadorEligible": false,
+    "useCase": "",
+    "budgetRange": "",
+    "preferredDelivery": "",
+    "claddingPreference": "",
+    "doorPreference": "",
+    "windowPreference": "",
+    "heatingPreference": "",
+    "acPreference": false,
+    "extrasNotes": "",
+    "partitionNotes": "",
+    "bathroomType": "",
+    "bathroomNotes": "",
+    "competitorQuotes": "",
+    "urgency": "normal",
+    "referralSource": ""
+  },
+  "discount": {
+    "type": "none",
+    "amount": 0,
+    "description": ""
+  },
+  "customNotes": {
+    "quote": "",
+    "email": "",
+    "drawing": "",
+    "drawingNumber": ""
+  },
+  "straightPartition": {
+    "enabled": false,
+    "position": 2500,
+    "leftLabel": "Office",
+    "rightLabel": "Storage",
+    "hasDoor": true,
+    "doorPosition": 0.5,
+    "doorDirection": "right"
+  }
+}

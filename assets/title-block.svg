@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <!-- Background -->
+  <rect width="800" height="500" fill="#ffffff" stroke="#222222" stroke-width="3"/>
+  
+  <!-- Header bar -->
+  <rect width="800" height="80" fill="#f5f5f5"/>
+  <line x1="0" y1="80" x2="800" y2="80" stroke="#222222" stroke-width="2"/>
+  
+  <!-- Logo placeholder - will be replaced with actual logo -->
+  <image id="logo" href="logo.png" x="20" y="15" width="250" height="50" preserveAspectRatio="xMinYMid meet"/>
+  
+  <!-- Design Drawing label -->
+  <text x="780" y="52" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#3BA8A8" text-anchor="end">DESIGN DRAWING</text>
+  
+  <!-- Content area -->
+  <!-- Project -->
+  <text x="25" y="115" font-family="Arial, sans-serif" font-size="14" fill="#888888">Project</text>
+  <text id="field-project" x="25" y="140" font-family="Arial, sans-serif" font-size="18" fill="#222222">Proposed Garden Office Building for:</text>
+  
+  <!-- Client -->
+  <text x="25" y="175" font-family="Arial, sans-serif" font-size="14" fill="#888888">Client</text>
+  <text id="field-client" x="25" y="205" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#000000">—</text>
+  
+  <!-- Site -->
+  <text x="25" y="245" font-family="Arial, sans-serif" font-size="14" fill="#888888">Site Address</text>
+  <text id="field-site" x="25" y="272" font-family="Arial, sans-serif" font-size="16" fill="#333333">—</text>
+  
+  <!-- Divider -->
+  <line x1="25" y1="295" x2="775" y2="295" stroke="#dddddd" stroke-width="2"/>
+  
+  <!-- Specification -->
+  <text x="25" y="325" font-family="Arial, sans-serif" font-size="14" fill="#888888">Specification</text>
+  <text id="field-spec" x="25" y="352" font-family="Arial, sans-serif" font-size="15" fill="#444444">—</text>
+  
+  <!-- Divider -->
+  <line x1="25" y1="375" x2="775" y2="375" stroke="#dddddd" stroke-width="2"/>
+  
+  <!-- Three column info row -->
+  <!-- Date -->
+  <text x="25" y="405" font-family="Arial, sans-serif" font-size="13" fill="#888888">Date</text>
+  <text id="field-date" x="25" y="430" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#222222">—</text>
+  
+  <!-- Scale -->
+  <text x="300" y="405" font-family="Arial, sans-serif" font-size="13" fill="#888888">Scale</text>
+  <text x="300" y="430" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#222222">1:50 @ A3</text>
+  
+  <!-- Drawing Number -->
+  <text x="550" y="405" font-family="Arial, sans-serif" font-size="13" fill="#888888">Drawing No.</text>
+  <text id="field-dwg" x="550" y="430" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#222222">GOB-001</text>
+  
+  <!-- Footer bar -->
+  <rect y="450" width="800" height="50" fill="#222222"/>
+  
+  <!-- Footer left - Company -->
+  <text x="25" y="478" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff">Garden Office Buildings</text>
+  <text x="25" y="495" font-family="Arial, sans-serif" font-size="11" fill="#999999">Rear of 158 Main Road, Biggin Hill, Kent TN16 3BA</text>
+  
+  <!-- Footer right - Contact -->
+  <text x="775" y="478" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="end">01959 569 222</text>
+  <text x="775" y="495" font-family="Arial, sans-serif" font-size="11" fill="#3BA8A8" text-anchor="end">gardenofficebuildings.co.uk</text>
+</svg>

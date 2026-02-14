@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GOB Drawing Engine v5 — Polished</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #e8e8e8; padding: 20px; }
+    h1 { margin-bottom: 4px; color: #1a3a1a; font-size: 22px; }
+    .sub { color: #666; font-size: 13px; margin-bottom: 24px; }
+    h2 { margin: 28px 0 12px; color: #222; font-size: 16px; }
+    .drawing-frame {
+      background: white;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      padding: 0;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .drawing-frame svg { display: block; width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+
+<h1>GOB Drawing Engine v5</h1>
+<p class="sub">Anthracite grey UPVC frames, 300mm fascia + 75mm trim, vertical steel cladding, 400mm front canopy only.</p>
+
+<div id="samples"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// GOB Drawing Engine v5
+// All coordinates in mm. viewBox handles scaling.
+//
+// Building structure (from top to bottom, within overall height H):
+//   y=0          : top of building
+//   y=0..75      : top trim (anthracite)
+//   y=75..375    : fascia (300mm, anthracite)
+//   y=375        : bottom of fascia → gutter hangs here
+//   y=375..H     : wall cladding area
+//   Doors: 2110mm tall, base at y=H (ground level)
+//   Overall height dimension: y=0 to y=H
+// ═══════════════════════════════════════════════════════════════
+
+const COL = {
+  anthracite:    '#383E42',
+  anthraciteLt:  '#4A5054',
+  anthraciteDk:  '#2C3134',
+  cedar:         '#B87A4B',
+  cedarLight:    '#D4995F',
+  cedarDark:     '#8B5E30',
+  cedarPlank:    '#C4874E',
+  composite:     '#BFA48D',
+  compositeLt:   '#D4BBA5',
+  compositeDk:   '#A89078',
+  glass:         '#6B9AAD',
+  glassDark:     '#5888A0',
+  glassReflect:  '#B0D0DD',
+  decking:       '#606365',
+  deckingLine:   '#505355',
+  roofEdge:      '#2C2C2C',
+  handle:        '#555',
+  handleDk:      '#333',
+  soffit:        '#E8E4DF',
+  white:         '#FAFAFA',
+  wallFill:      '#D5D5D5',
+};
+
+const FASCIA_H = 300;
+const TOP_TRIM = 75;
+const ROOF_ZONE = FASCIA_H + TOP_TRIM; // 375mm from top
+const GUTTER_H = 30;
+const CANOPY_DEPTH = 400; // front projection only
+
+function svgDefs() {
+  return `<defs>
+    <linearGradient id="glass" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="${COL.glassReflect}" stop-opacity="0.8"/>
+      <stop offset="25%" stop-color="${COL.glass}" stop-opacity="0.85"/>
+      <stop offset="60%" stop-color="${COL.glassDark}" stop-opacity="0.88"/>
+      <stop offset="85%" stop-color="${COL.glass}" stop-opacity="0.82"/>
+      <stop offset="100%" stop-color="${COL.glassReflect}" stop-opacity="0.75"/>
+    </linearGradient>
+    <linearGradient id="frameGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${COL.anthraciteDk}"/>
+      <stop offset="12%" stop-color="${COL.anthracite}"/>
+      <stop offset="50%" stop-color="${COL.anthraciteLt}"/>
+      <stop offset="88%" stop-color="${COL.anthracite}"/>
+      <stop offset="100%" stop-color="${COL.anthraciteDk}"/>
+    </linearGradient>
+    <linearGradient id="frameGradV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${COL.anthraciteDk}"/>
+      <stop offset="12%" stop-color="${COL.anthracite}"/>
+      <stop offset="50%" stop-color="${COL.anthraciteLt}"/>
+      <stop offset="88%" stop-color="${COL.anthracite}"/>
+      <stop offset="100%" stop-color="${COL.anthraciteDk}"/>
+    </linearGradient>
+    <linearGradient id="aluFrame" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3A3A3A"/>
+      <stop offset="20%" stop-color="#555"/>
+      <stop offset="50%" stop-color="#666"/>
+      <stop offset="80%" stop-color="#555"/>
+      <stop offset="100%" stop-color="#3A3A3A"/>
+    </linearGradient>
+    <linearGradient id="gutterGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${COL.anthraciteLt}"/>
+      <stop offset="40%" stop-color="${COL.anthracite}"/>
+      <stop offset="100%" stop-color="${COL.anthraciteDk}"/>
+    </linearGradient>
+    <linearGradient id="fasciaGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${COL.anthraciteLt}"/>
+      <stop offset="50%" stop-color="${COL.anthracite}"/>
+      <stop offset="100%" stop-color="${COL.anthraciteDk}"/>
+    </linearGradient>
+    <linearGradient id="soffitGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D0CCC6"/>
+      <stop offset="100%" stop-color="${COL.soffit}"/>
+    </linearGradient>
+
+    <!-- Chrome handle gradients -->
+    <linearGradient id="chromeH" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#888C90"/>
+      <stop offset="20%" stop-color="#B8BCC0"/>
+      <stop offset="50%" stop-color="#D8DCE0"/>
+      <stop offset="80%" stop-color="#B8BCC0"/>
+      <stop offset="100%" stop-color="#888C90"/>
+    </linearGradient>
+    <linearGradient id="chromeV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#888C90"/>
+      <stop offset="20%" stop-color="#B8BCC0"/>
+      <stop offset="50%" stop-color="#D8DCE0"/>
+      <stop offset="80%" stop-color="#B8BCC0"/>
+      <stop offset="100%" stop-color="#888C90"/>
+    </linearGradient>
+
+    <!-- Western Red Cedar — 150mm wide vertical tongue-and-groove boards -->
+    <pattern id="cedarClad" x="0" y="0" width="150" height="150" patternUnits="userSpaceOnUse">
+      <rect width="150" height="150" fill="${COL.cedar}"/>
+      <!-- Board edge joints -->
+      <line x1="0" y1="0" x2="0" y2="150" stroke="${COL.cedarDark}" stroke-width="3"/>
+      <line x1="1" y1="0" x2="1" y2="150" stroke="${COL.cedarLight}" stroke-width="1" opacity="0.4"/>
+      <line x1="149" y1="0" x2="149" y2="150" stroke="${COL.cedarDark}" stroke-width="1.5"/>
+      <!-- Subtle grain variation -->
+      <line x1="50" y1="0" x2="48" y2="150" stroke="${COL.cedarLight}" stroke-width="0.6" opacity="0.2"/>
+      <line x1="100" y1="0" x2="102" y2="150" stroke="${COL.cedarLight}" stroke-width="0.5" opacity="0.18"/>
+      <!-- Natural colour variation across board -->
+      <rect x="5" y="0" width="70" height="150" fill="${COL.cedarPlank}" opacity="0.12"/>
+      <rect x="85" y="0" width="50" height="150" fill="${COL.cedarLight}" opacity="0.08"/>
+    </pattern>
+
+    <!-- Anthracite box-profile steel — VERTICAL ribs -->
+    <pattern id="steelClad" x="0" y="0" width="35" height="200" patternUnits="userSpaceOnUse">
+      <rect width="35" height="200" fill="${COL.anthracite}"/>
+      <rect x="0" y="0" width="1.5" height="200" fill="${COL.anthraciteLt}" opacity="0.5"/>
+      <rect x="28" y="0" width="2" height="200" fill="${COL.anthraciteDk}" opacity="0.6"/>
+      <rect x="33" y="0" width="2" height="200" fill="${COL.anthraciteDk}" opacity="0.35"/>
+      <rect x="15" y="0" width="1" height="200" fill="${COL.anthraciteLt}" opacity="0.12"/>
+    </pattern>
+
+    <!-- Composite slatted cladding — 40mm wide vertical slats -->
+    <pattern id="compositeClad" x="0" y="0" width="40" height="200" patternUnits="userSpaceOnUse">
+      <rect width="40" height="200" fill="${COL.composite}"/>
+      <!-- Board edge joints -->
+      <line x1="0" y1="0" x2="0" y2="200" stroke="${COL.compositeDk}" stroke-width="2.5"/>
+      <line x1="1.5" y1="0" x2="1.5" y2="200" stroke="${COL.compositeLt}" stroke-width="0.8" opacity="0.4"/>
+      <line x1="39" y1="0" x2="39" y2="200" stroke="${COL.compositeDk}" stroke-width="1.2"/>
+      <!-- Subtle colour variation -->
+      <rect x="6" y="0" width="16" height="200" fill="${COL.compositeLt}" opacity="0.07"/>
+    </pattern>
+
+    <!-- Grey composite decking -->
+    <pattern id="deckPat" x="0" y="0" width="130" height="400" patternUnits="userSpaceOnUse">
+      <rect width="130" height="400" fill="${COL.decking}"/>
+      <line x1="0" y1="0" x2="0" y2="400" stroke="${COL.deckingLine}" stroke-width="2"/>
+      <line x1="129" y1="0" x2="129" y2="400" stroke="${COL.deckingLine}" stroke-width="1.5"/>
+      <rect x="40" y="0" width="30" height="400" fill="#808385" opacity="0.08"/>
+    </pattern>
+  </defs>`;
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+
+function tag(n, a, c) {
+  const s = Object.entries(a).filter(([k,v]) => v !== undefined && v !== null).map(([k,v]) => `${k}="${v}"`).join(' ');
+  return c != null ? `<${n} ${s}>${c}</${n}>` : `<${n} ${s}/>`;
+}
+function ln(x1,y1,x2,y2,sw,col,ex) { return tag('line',{x1,y1,x2,y2,stroke:col||'#000','stroke-width':sw,...(ex||{})}); }
+function rc(x,y,w,h,o) { o=o||{}; return tag('rect',{x,y,width:w,height:h,fill:o.fill||'none',stroke:o.stroke||(o.sw?'#000':'none'),'stroke-width':o.sw||0,rx:o.rx||0,opacity:o.opacity,'clip-path':o.clip}); }
+function tx(x,y,str,sz,o) { o=o||{}; return tag('text',{x,y,'font-family':'Arial,Helvetica,sans-serif','font-size':sz,fill:o.color||'#222','text-anchor':o.anchor||'middle','font-weight':o.bold?'bold':undefined,'font-style':o.italic?'italic':undefined,'text-decoration':o.underline?'underline':undefined,'letter-spacing':o.spacing,transform:o.transform},str); }
+function grp(c,a) { return tag('g',a||{},c); }
+
+// ── Glass ────────────────────────────────────────────────────
+
+function glassFill(x, y, w, h) {
+  let s = '';
+  s += rc(x, y, w, h, { fill: 'url(#glass)' });
+  // Reflection streaks
+  const rw = w * 0.12, rx1 = x + w * 0.3;
+  s += tag('polygon', { points: `${rx1},${y} ${rx1+rw},${y} ${rx1+rw*0.6+w*0.08},${y+h} ${rx1+w*0.08-rw*0.4},${y+h}`, fill: 'white', opacity: 0.1 });
+  const rx2 = rx1 + rw + w*0.06;
+  s += tag('polygon', { points: `${rx2},${y} ${rx2+rw*0.4},${y} ${rx2+rw*0.2+w*0.05},${y+h} ${rx2+w*0.05-rw*0.2},${y+h}`, fill: 'white', opacity: 0.06 });
+  s += rc(x, y, w, h*0.02, { fill: 'white', opacity: 0.08 });
+  return s;
+}
+
+// ── Stepped UPVC Frame Profile (matches Crystal anthracite) ──
+
+function frameProfile(x, y, w, h, t) {
+  // Two-layer frame: outer frame + inner glazing bead (matches sliding door)
+  const outerT = Math.round(t * 0.55);
+  const innerT = t - outerT;
+  let s = '';
+
+  // ── OUTER FRAME ──
+  s += rc(x, y, w, h, { fill: '#2A2E32' });
+  s += rc(x+3, y+3, w-6, h-6, { fill: '#3D4347' });
+  s += ln(x+4, y+4, x+w-4, y+4, 1.5, '#565C60', { opacity: 0.4 });
+  s += ln(x+4, y+6, x+4, y+h-4, 1, '#565C60', { opacity: 0.3 });
+  s += ln(x+4, y+h-3, x+w-4, y+h-3, 1.5, '#1E2226', { opacity: 0.5 });
+  s += ln(x+w-3, y+6, x+w-3, y+h-4, 1, '#1E2226', { opacity: 0.4 });
+  s += rc(x+outerT-3, y+outerT-3, w-outerT*2+6, h-outerT*2+6, { fill: '#222629' });
+  s += rc(x+outerT-1, y+outerT-1, w-outerT*2+2, h-outerT*2+2, { fill: '#3A3F43' });
+
+  // ── INNER GLAZING BEAD ──
+  const ix = x+outerT, iy = y+outerT, iw = w-outerT*2, ih = h-outerT*2;
+  s += rc(ix, iy, iw, ih, { fill: '#2A2E32' });
+  s += rc(ix+2, iy+2, iw-4, ih-4, { fill: '#3D4347' });
+  s += ln(ix+3, iy+3, ix+iw-3, iy+3, 1, '#565C60', { opacity: 0.3 });
+  s += ln(ix+3, iy+5, ix+3, iy+ih-3, 0.8, '#565C60', { opacity: 0.2 });
+  s += ln(ix+3, iy+ih-2, ix+iw-3, iy+ih-2, 1, '#1E2226', { opacity: 0.35 });
+  s += ln(ix+iw-2, iy+5, ix+iw-2, iy+ih-3, 0.8, '#1E2226', { opacity: 0.3 });
+  s += rc(ix+innerT-2, iy+innerT-2, iw-innerT*2+4, ih-innerT*2+4, { fill: '#222629' });
+  s += rc(ix+innerT-1, iy+innerT-1, iw-innerT*2+2, ih-innerT*2+2, { fill: '#3A3F43' });
+
+  return s;
+}
+
+// ── Sliding Door (Crystal UPVC anthracite, exact match) ──────
+
+function slidingDoor(x, y, w, h) {
+  const outerT = Math.max(35, w * 0.028);    // outer frame (~70mm on 2500)
+  const sashT = Math.max(22, w * 0.018);     // sash frame (~45mm on 2500)
+  const interlockW = Math.max(14, w * 0.012); // centre interlock (~30mm)
+  let s = '';
+
+  // ── OUTER FRAME (stepped UPVC profile) ──
+  s += rc(x, y, w, h, { fill: '#2A2E32' });
+  s += rc(x+3, y+3, w-6, h-6, { fill: '#3D4347' });
+  s += ln(x+4, y+4, x+w-4, y+4, 1.5, '#565C60', { opacity: 0.4 });
+  s += ln(x+4, y+6, x+4, y+h-4, 1, '#565C60', { opacity: 0.3 });
+  s += ln(x+4, y+h-3, x+w-4, y+h-3, 1.5, '#1E2226', { opacity: 0.5 });
+  s += ln(x+w-3, y+6, x+w-3, y+h-4, 1, '#1E2226', { opacity: 0.4 });
+  // Inner rebate step
+  s += rc(x+outerT-3, y+outerT-3, w-outerT*2+6, h-outerT*2+6, { fill: '#222629' });
+  s += rc(x+outerT-1, y+outerT-1, w-outerT*2+2, h-outerT*2+2, { fill: '#3A3F43' });
+
+  // Opening area
+  const ox = x + outerT, oy = y + outerT;
+  const ow = w - outerT * 2, oh = h - outerT * 2;
+  s += rc(ox, oy, ow, oh, { fill: '#1E2226' });
+
+  // ── LEFT SASH (fixed pane) ──
+  const lpw = (ow - interlockW) / 2;
+  s += rc(ox, oy, lpw, oh, { fill: '#2A2E32' });
+  s += rc(ox+2, oy+2, lpw-4, oh-4, { fill: '#3D4347' });
+  s += ln(ox+3, oy+3, ox+lpw-3, oy+3, 1, '#565C60', { opacity: 0.3 });
+  s += ln(ox+3, oy+5, ox+3, oy+oh-3, 0.8, '#565C60', { opacity: 0.2 });
+  s += ln(ox+3, oy+oh-2, ox+lpw-3, oy+oh-2, 1, '#1E2226', { opacity: 0.35 });
+  s += ln(ox+lpw-2, oy+5, ox+lpw-2, oy+oh-3, 0.8, '#1E2226', { opacity: 0.3 });
+  s += rc(ox+sashT-2, oy+sashT-2, lpw-sashT*2+4, oh-sashT*2+4, { fill: '#222629' });
+  s += rc(ox+sashT-1, oy+sashT-1, lpw-sashT*2+2, oh-sashT*2+2, { fill: '#3A3F43' });
+  s += glassFill(ox+sashT, oy+sashT, lpw-sashT*2, oh-sashT*2);
+  s += rc(ox+sashT, oy+sashT, lpw-sashT*2, oh-sashT*2, { sw: 0.5, stroke: '#252A2E' });
+
+  // ── RIGHT SASH (sliding pane) ──
+  const rpx = ox + lpw + interlockW;
+  s += rc(rpx, oy, lpw, oh, { fill: '#2A2E32' });
+  s += rc(rpx+2, oy+2, lpw-4, oh-4, { fill: '#3D4347' });
+  s += ln(rpx+3, oy+3, rpx+lpw-3, oy+3, 1, '#565C60', { opacity: 0.3 });
+  s += ln(rpx+3, oy+5, rpx+3, oy+oh-3, 0.8, '#565C60', { opacity: 0.2 });
+  s += ln(rpx+3, oy+oh-2, rpx+lpw-3, oy+oh-2, 1, '#1E2226', { opacity: 0.35 });
+  s += ln(rpx+lpw-2, oy+5, rpx+lpw-2, oy+oh-3, 0.8, '#1E2226', { opacity: 0.3 });
+  s += rc(rpx+sashT-2, oy+sashT-2, lpw-sashT*2+4, oh-sashT*2+4, { fill: '#222629' });
+  s += rc(rpx+sashT-1, oy+sashT-1, lpw-sashT*2+2, oh-sashT*2+2, { fill: '#3A3F43' });
+  s += glassFill(rpx+sashT, oy+sashT, lpw-sashT*2, oh-sashT*2);
+  s += rc(rpx+sashT, oy+sashT, lpw-sashT*2, oh-sashT*2, { sw: 0.5, stroke: '#252A2E' });
+
+  // ── INTERLOCK (centre joint where sashes meet) ──
+  const ix = ox + lpw;
+  s += rc(ix, oy, interlockW, oh, { fill: '#2A2E32' });
+  s += rc(ix+2, oy+1, interlockW-4, oh-2, { fill: '#3D4347' });
+  s += ln(ix+interlockW/2, oy, ix+interlockW/2, oy+oh, 0.8, '#252A2E');
+
+  // ── BOTTOM TRACK ──
+  const trackH = Math.max(5, outerT * 0.1);
+  s += rc(ox, oy+oh-trackH, ow, trackH, { fill: '#2A2E32' });
+  s += ln(ox, oy+oh-trackH, ox+ow, oy+oh-trackH, 0.5, '#4E5458', { opacity: 0.4 });
+
+  return grp(s);
+}
+
+// ── Bifold Door (anthracite UPVC, stepped profile) ───────────
+
+function bifoldDoor(x, y, w, h, leaves) {
+  leaves = leaves || 3;
+  const outerT = Math.max(30, w * 0.022);
+  const divW = Math.max(12, w * 0.010);
+  const leafW = (w - outerT*2 - divW*(leaves-1)) / leaves;
+  const leafT = Math.max(18, leafW * 0.04);
+  let s = '';
+
+  // Outer frame (stepped profile)
+  s += rc(x, y, w, h, { fill: '#2A2E32' });
+  s += rc(x+3, y+3, w-6, h-6, { fill: '#3D4347' });
+  s += ln(x+4, y+4, x+w-4, y+4, 1.5, '#565C60', { opacity: 0.4 });
+  s += ln(x+4, y+6, x+4, y+h-4, 1, '#565C60', { opacity: 0.3 });
+  s += ln(x+4, y+h-3, x+w-4, y+h-3, 1.5, '#1E2226', { opacity: 0.5 });
+  s += ln(x+w-3, y+6, x+w-3, y+h-4, 1, '#1E2226', { opacity: 0.4 });
+  s += rc(x+outerT-3, y+outerT-3, w-outerT*2+6, h-outerT*2+6, { fill: '#222629' });
+  s += rc(x+outerT-1, y+outerT-1, w-outerT*2+2, h-outerT*2+2, { fill: '#3A3F43' });
+
+  // Opening background
+  s += rc(x+outerT, y+outerT, w-outerT*2, h-outerT*2, { fill: '#1E2226' });
+
+  // Individual leaf panels
+  const ly = y + outerT, lh = h - outerT*2;
+  for (let i = 0; i < leaves; i++) {
+    const lx = x + outerT + i * (leafW + divW);
+    // Leaf frame (stepped)
+    s += rc(lx, ly, leafW, lh, { fill: '#2A2E32' });
+    s += rc(lx+2, ly+2, leafW-4, lh-4, { fill: '#3D4347' });
+    s += rc(lx+leafT-2, ly+leafT-2, leafW-leafT*2+4, lh-leafT*2+4, { fill: '#222629' });
+    s += rc(lx+leafT-1, ly+leafT-1, leafW-leafT*2+2, lh-leafT*2+2, { fill: '#3A3F43' });
+    // Glass
+    s += glassFill(lx+leafT, ly+leafT, leafW-leafT*2, lh-leafT*2);
+    s += rc(lx+leafT, ly+leafT, leafW-leafT*2, lh-leafT*2, { sw: 0.8, stroke: '#252A2E' });
+    // Divider between leaves
+    if (i < leaves-1) {
+      const dx = lx + leafW;
+      s += rc(dx, ly, divW, lh, { fill: '#2A2E32' });
+      s += rc(dx+2, ly+2, divW-4, lh-4, { fill: '#3D4347' });
+    }
+  }
+
+  // Folding arrows
+  const fY = y+h-Math.max(60, h*0.035), mX = x+w/2, fS = Math.max(18, w*0.015);
+  s += tag('polyline',{points:`${mX-fS*3},${fY} ${mX-fS},${fY-fS} ${mX-fS},${fY+fS}`,fill:'none',stroke:'#AAA','stroke-width':2});
+  s += tag('polyline',{points:`${mX+fS*3},${fY} ${mX+fS},${fY-fS} ${mX+fS},${fY+fS}`,fill:'none',stroke:'#AAA','stroke-width':2});
+  return grp(s);
+}
+
+// ── Single Glazed Door (stepped UPVC + chrome handle) ────────
+
+function singleDoor(x, y, w, h, hinge) {
+  hinge = hinge || 'left';
+  const frameT = Math.max(110, w * 0.17);
+  const pi = Math.max(4, w*0.006);
+  let s = '';
+  s += frameProfile(x, y, w, h, frameT);
+  const gx=x+frameT+pi, gy=y+frameT+pi, gw=w-(frameT+pi)*2, gh=h-(frameT+pi)*2;
+  s += glassFill(gx,gy,gw,gh);
+  s += rc(gx,gy,gw,gh, { sw: 0.5, stroke: '#252A2E' });
+  return grp(s);
+}
+
+// ── Windows (2x thick frames) ────────────────────────────────
+
+function windowFixed(x, y, w, h) {
+  const t = Math.max(82, w * 0.1275);
+  let s = frameProfile(x,y,w,h,t);
+  s += glassFill(x+t, y+t, w-t*2, h-t*2);
+  s += rc(x+t, y+t, w-t*2, h-t*2, { sw: 0.5, stroke: '#252A2E' });
+  return grp(s);
+}
+
+function windowOpener(x, y, w, h) {
+  const t = Math.max(82, w * 0.1275);
+  const innerH = h-t*2, opH = innerH*0.3, transH = Math.max(20, t*0.55);
+  let s = frameProfile(x,y,w,h,t);
+  s += glassFill(x+t, y+t, w-t*2, opH-transH/2);
+  const ty = y+t+opH-transH/2;
+  // Transom bar (stepped anthracite, spans glass opening)
+  s += rc(x+t-4, ty, w-t*2+8, transH, { fill: '#2A2E32' });
+  s += rc(x+t-2, ty+2, w-t*2+4, transH-4, { fill: '#3D4347' });
+  s += ln(x+t-1, ty+3, x+w-t+1, ty+3, 1, '#4E5458', { opacity: 0.3 });
+  s += glassFill(x+t, ty+transH, w-t*2, innerH-opH-transH/2);
+  return grp(s);
+}
+
+function slotWindow(x, y, w, h, hasOp) {
+  const t = Math.max(67, w * 0.1275);
+  let s = frameProfile(x,y,w,h,t);
+  s += glassFill(x+t, y+t, w-t*2, h-t*2);
+  return grp(s);
+}
+
+// ── Dispatcher ───────────────────────────────────────────────
+
+function renderComp(type, x, y, w, h) {
+  if (type.includes('sliding')) return slidingDoor(x,y,w,h);
+  if (type.includes('bifold-27')||type.includes('bifold-26')) return bifoldDoor(x,y,w,h,3);
+  if (type.includes('bifold-35')||type.includes('bifold-36')) return bifoldDoor(x,y,w,h,4);
+  if (type.includes('bifold-45')) return bifoldDoor(x,y,w,h,5);
+  if (type.includes('bifold')) return bifoldDoor(x,y,w,h,3);
+  if (type.includes('single')) return singleDoor(x,y,w,h);
+  if (type.includes('slot')) return slotWindow(x,y,w,h,type.includes('opener'));
+  if (type.includes('opener')) return windowOpener(x,y,w,h);
+  return windowFixed(x,y,w,h);
+}
+
+function cladFill(t) {
+  if (t==='cedar'||t==='diagonal') return 'url(#cedarClad)';
+  if (t==='composite'||t==='horizontal') return 'url(#compositeClad)';
+  return 'url(#steelClad)';
+}
+
+// ── Gutter ───────────────────────────────────────────────────
+
+function gutterBar(x, y, w, opts) {
+  const o = opts || {};
+  let s = '';
+  s += rc(x, y, w, GUTTER_H, { fill: 'url(#gutterGrad)', sw: 1.2, stroke: COL.anthraciteDk });
+  s += ln(x, y, x+w, y, 0.8, COL.anthraciteLt, { opacity: 0.4 });
+  const dpW = 18;
+  if (o.dpLeft !== false) {
+    const dpH = o.dpH || 200, dpX = x+20;
+    s += rc(dpX, y+GUTTER_H, dpW, dpH, { fill: 'url(#gutterGrad)', sw: 0.8, stroke: COL.anthraciteDk });
+    s += tag('path',{d:`M ${dpX} ${y+GUTTER_H+dpH} Q ${dpX-12} ${y+GUTTER_H+dpH+18} ${dpX-18} ${y+GUTTER_H+dpH+12}`,fill:'none',stroke:COL.anthracite,'stroke-width':2.5});
+  }
+  if (o.dpRight !== false) {
+    const dpH = o.dpH || 200, dpX = x+w-38;
+    s += rc(dpX, y+GUTTER_H, dpW, dpH, { fill: 'url(#gutterGrad)', sw: 0.8, stroke: COL.anthraciteDk });
+    s += tag('path',{d:`M ${dpX+dpW} ${y+GUTTER_H+dpH} Q ${dpX+dpW+12} ${y+GUTTER_H+dpH+18} ${dpX+dpW+18} ${y+GUTTER_H+dpH+12}`,fill:'none',stroke:COL.anthracite,'stroke-width':2.5});
+  }
+  return s;
+}
+
+// ── Front Elevation ──────────────────────────────────────────
+
+function renderFront(cfg) {
+  const { width, height, overhang, components, claddingType, tier, cornerLeft, cornerRight } = cfg;
+  const cid = 'fc'+Math.random().toString(36).substr(2,5);
+  const wallTop = ROOF_ZONE;
+  const wallH = height - wallTop;
+  const isSig = tier === 'signature';
+  const deckH = 50;
+  let s = '';
+
+  // Clip for cladding area only (below fascia)
+  s += `<defs><clipPath id="${cid}"><rect x="0" y="${wallTop}" width="${width}" height="${wallH}"/></clipPath></defs>`;
+
+  // --- TOP TRIM (75mm) ---
+  s += rc(0, 0, width, TOP_TRIM, { fill: COL.anthraciteDk, sw: 0 });
+  s += ln(0, TOP_TRIM, width, TOP_TRIM, 1, COL.anthraciteLt, { opacity: 0.3 });
+
+  // --- FASCIA (300mm, anthracite with gradient) ---
+  s += rc(0, TOP_TRIM, width, FASCIA_H, { fill: 'url(#fasciaGrad)' });
+  s += ln(0, ROOF_ZONE, width, ROOF_ZONE, 1.5, COL.anthraciteDk);
+
+  // --- GUTTER (hangs below fascia) ---
+  s += gutterBar(0, ROOF_ZONE, width, { dpH: wallH * 0.12 });
+
+  // --- WALL CLADDING (full width, below fascia) ---
+  s += rc(0, wallTop, width, wallH, { fill: cladFill(claddingType), clip: `url(#${cid})` });
+
+  // --- WALL OUTLINE ---
+  s += rc(0, 0, width, height, { sw: 5, stroke: '#222' });
+
+  // --- COMPONENTS (in wall area) ---
+  for (const comp of components) {
+    const cy = comp.y !== undefined ? comp.y : (height - comp.h);
+    s += renderComp(comp.type, comp.x, cy, comp.w, comp.h);
+  }
+
+  // --- SIGNATURE: DECKING + CORNER DETAILS ---
+  if (isSig) {
+    // Decking strip at base
+    s += rc(0, height, width, deckH, { fill: COL.decking });
+    s += ln(0, height, width, height, 1.5, COL.deckingLine);
+    s += ln(0, height + deckH, width, height + deckH, 1, COL.deckingLine);
+
+    // Left corner (sits under the fascia/canopy, at the building edge)
+    if (cornerLeft === 'closed') {
+      s += rc(0, ROOF_ZONE, 180, wallH + deckH, { fill: COL.anthracite, sw: 1.5, stroke: COL.anthraciteDk });
+      s += ln(180, ROOF_ZONE, 180, height + deckH, 1, COL.anthraciteLt, { opacity: 0.4 });
+    } else {
+      // Open: 180mm front x 50mm trim (matches closed width from the front)
+      s += rc(0, ROOF_ZONE, 180, wallH, { fill: COL.anthracite, sw: 1, stroke: COL.anthraciteDk });
+    }
+
+    // Right corner (sits under the fascia/canopy, at the building edge)
+    if (cornerRight === 'closed') {
+      s += rc(width - 180, ROOF_ZONE, 180, wallH + deckH, { fill: COL.anthracite, sw: 1.5, stroke: COL.anthraciteDk });
+      s += ln(width - 180, ROOF_ZONE, width - 180, height + deckH, 1, COL.anthraciteLt, { opacity: 0.4 });
+    } else {
+      s += rc(width - 180, ROOF_ZONE, 180, wallH, { fill: COL.anthracite, sw: 1, stroke: COL.anthraciteDk });
+    }
+  }
+
+  return s;
+}
+
+// ── Side Elevation ───────────────────────────────────────────
+
+function renderSide(cfg) {
+  const { depth, height, components, side, tier, overhang, corner } = cfg;
+  const cid = 'sc'+side+Math.random().toString(36).substr(2,5);
+  const wallTop = ROOF_ZONE;
+  const wallH = height - wallTop;
+  const isSig = tier === 'signature';
+  const deckH = 50;
+  const proj = isSig && overhang > 0 ? CANOPY_DEPTH : 0;
+
+  // Left elevation: front of building is on the RIGHT (x=depth end)
+  // Right elevation: front of building is on the LEFT (x=0 end)
+  const frontRight = side === 'left';
+
+  // Fascia extends continuously from building rear to canopy edge
+  const fasciaX = frontRight ? 0 : -proj;
+  const fasciaW = depth + proj;
+  let s = '';
+
+  s += `<defs><clipPath id="${cid}"><rect x="0" y="${wallTop}" width="${depth}" height="${wallH}"/></clipPath></defs>`;
+
+  // --- TOP TRIM (continuous across building + canopy) ---
+  s += rc(fasciaX, 0, fasciaW, TOP_TRIM, { fill: COL.anthraciteDk });
+  s += ln(fasciaX, TOP_TRIM, fasciaX+fasciaW, TOP_TRIM, 1, COL.anthraciteLt, { opacity: 0.3 });
+
+  // --- FASCIA (continuous) ---
+  s += rc(fasciaX, TOP_TRIM, fasciaW, FASCIA_H, { fill: 'url(#fasciaGrad)' });
+  s += ln(fasciaX, ROOF_ZONE, fasciaX+fasciaW, ROOF_ZONE, 1.5, COL.anthraciteDk);
+
+  // --- FASCIA/TRIM OUTLINE (continuous band) ---
+  s += rc(fasciaX, 0, fasciaW, ROOF_ZONE, { sw: 3, stroke: '#222' });
+
+  // --- GUTTER (on main building only) ---
+  s += gutterBar(0, ROOF_ZONE, depth, { dpRight: false, dpH: wallH*0.12 });
+
+  // --- STEEL CLADDING ---
+  s += rc(0, wallTop, depth, wallH, { fill: 'url(#steelClad)', clip: `url(#${cid})` });
+
+  // --- WALL OUTLINE (below fascia only) ---
+  s += ln(0, ROOF_ZONE, 0, height, 4, '#222');
+  s += ln(0, height, depth, height, 4, '#222');
+  s += ln(depth, height, depth, ROOF_ZONE, 4, '#222');
+
+  // --- COMPONENTS ---
+  for (const comp of (components || [])) {
+    const cy = comp.y !== undefined ? comp.y : (height - comp.h);
+    s += renderComp(comp.type, comp.x, cy, comp.w, comp.h);
+  }
+
+  // --- SIGNATURE CORNER TREATMENT ---
+  if (proj > 0) {
+    // Front-end x positions depend on which side
+    const feStart = frontRight ? depth : -proj;       // canopy projection start
+    const feEnd = frontRight ? depth + proj : 0;      // canopy projection end
+    const bldgEdge = frontRight ? depth : 0;          // building face edge
+
+    if (corner === 'closed') {
+      // Side screen: steel cladding fills between fascia and ground
+      const scCid = 'ssc'+Math.random().toString(36).substr(2,5);
+      s += `<defs><clipPath id="${scCid}"><rect x="${feStart}" y="${wallTop}" width="${proj}" height="${wallH}"/></clipPath></defs>`;
+      s += rc(feStart, wallTop, proj, wallH, { fill: 'url(#steelClad)', clip: `url(#${scCid})` });
+      s += rc(feStart, ROOF_ZONE, proj, wallH, { sw: 3, stroke: '#222' });
+      // 180mm U-section at the outer face, below fascia
+      const uX = frontRight ? feEnd - 180 : feStart;
+      s += rc(uX, ROOF_ZONE, 180, wallH + deckH, { fill: COL.anthracite, sw: 1, stroke: COL.anthraciteDk });
+      // Decking below side screen
+      s += rc(feStart, height, proj, deckH, { fill: COL.decking });
+    } else {
+      // Open: fascia extends continuously (already drawn). Below fascia is open air.
+      // Vertical edge at canopy end
+      const endX = frontRight ? feEnd : feStart;
+      s += ln(endX, 0, endX, ROOF_ZONE, 2, COL.anthraciteDk);
+      // 50mm corner trim at building edge, below fascia
+      const trimX = frontRight ? bldgEdge - 50 : bldgEdge;
+      s += rc(trimX, ROOF_ZONE, 50, wallH, { fill: COL.anthracite, sw: 0.8, stroke: COL.anthraciteDk });
+      // Decking platform at bottom
+      s += rc(feStart, height, proj, deckH, { fill: COL.decking });
+      const deckEdge = frontRight ? feEnd : feStart;
+      s += ln(deckEdge, height, deckEdge, height+deckH, 1, COL.deckingLine);
+    }
+
+    // Decking on main building base
+    s += rc(0, height, depth, deckH, { fill: COL.decking });
+    s += ln(fasciaX, height+deckH, fasciaX+fasciaW, height+deckH, 1, COL.deckingLine);
+    s += ln(0, height, depth, height, 1.5, COL.deckingLine);
+  }
+
+  return s;
+}
+
+// ── Plan View ────────────────────────────────────────────────
+
+function renderPlan(cfg) {
+  const { width, depth, wallThickness, overhang, tier, components, rooms, cornerLeft, cornerRight } = cfg;
+  const wt = wallThickness || 150;
+  const isSig = tier === 'signature';
+  const proj = CANOPY_DEPTH; // 400mm
+  let s = '';
+
+  // --- SIGNATURE: DECKING + CANOPY + CORNER EXTENSIONS ---
+  if (isSig && overhang > 0) {
+    // Decking area in front of building (front = bottom, so below depth)
+    s += rc(0, depth, width, proj, { fill: 'url(#deckPat)', sw: 1.5, stroke: COL.deckingLine });
+
+    // Closed corner extensions (side walls extend forward 400mm)
+    if (cornerLeft === 'closed') {
+      // Left wall extends forward (downward in plan)
+      s += rc(0, depth, wt, proj, { fill: COL.wallFill, sw: 2, stroke: '#333' });
+    }
+    if (cornerRight === 'closed') {
+      // Right wall extends forward (downward in plan)
+      s += rc(width-wt, depth, wt, proj, { fill: COL.wallFill, sw: 2, stroke: '#333' });
+    }
+
+    // Canopy edge as dashed outline (roof overhang above decking)
+    s += tag('rect', { x: 0, y: depth, width: width, height: proj,
+      fill: 'none', stroke: '#888', 'stroke-width': 1, 'stroke-dasharray': '15,10' });
+    s += tx(width/2, depth+proj/2+20, 'canopy above / decking below', 70, { italic: true, color: '#999' });
+  }
+
+  // Outer walls
+  s += rc(0, 0, width, depth, { fill: COL.wallFill, sw: 4, stroke: '#333' });
+  // Inner cavity
+  s += rc(wt, wt, width-wt*2, depth-wt*2, { fill: COL.white, sw: 2, stroke: '#555' });
+
+  // Openings (front wall = bottom edge of plan)
+  for (const c of (components || [])) {
+    if (c.wall === 'front') {
+      const fy = depth - wt;
+      s += rc(c.x, fy, c.w, wt, { fill: COL.white });
+      if (c.type.includes('sliding')||c.type.includes('bifold')) {
+        s += ln(c.x, fy+wt*0.3, c.x+c.w, fy+wt*0.3, 2.5, COL.anthracite);
+        s += ln(c.x, fy+wt*0.7, c.x+c.w, fy+wt*0.7, 2.5, COL.anthracite);
+        s += ln(c.x+c.w/2, fy+wt*0.15, c.x+c.w/2, fy+wt*0.85, 1.5, COL.anthraciteLt);
+      } else {
+        s += ln(c.x, fy+wt*0.3, c.x+c.w, fy+wt*0.3, 1.5, COL.anthracite);
+        s += ln(c.x, fy+wt*0.7, c.x+c.w, fy+wt*0.7, 1.5, COL.anthracite);
+      }
+    } else if (c.wall === 'left') {
+      s += rc(0, c.x, wt, c.w, { fill: COL.white });
+      s += ln(wt*0.3, c.x, wt*0.3, c.x+c.w, 1.5, COL.anthracite);
+      s += ln(wt*0.7, c.x, wt*0.7, c.x+c.w, 1.5, COL.anthracite);
+    } else if (c.wall === 'right') {
+      s += rc(width-wt, c.x, wt, c.w, { fill: COL.white });
+      s += ln(width-wt*0.3, c.x, width-wt*0.3, c.x+c.w, 1.5, COL.anthracite);
+      s += ln(width-wt*0.7, c.x, width-wt*0.7, c.x+c.w, 1.5, COL.anthracite);
+    }
+  }
+
+  // Partitions
+  if (rooms && rooms.length > 1) {
+    let acc = 0;
+    for (let i=0; i<rooms.length-1; i++) {
+      acc += rooms[i].width;
+      s += rc(acc, wt, wt, depth-wt*2, { fill: COL.wallFill, sw: 2, stroke: '#555' });
+      const dY = depth*0.45, dW = 800;
+      s += rc(acc, dY, wt, dW, { fill: COL.white });
+      s += tag('path',{d:`M ${acc+wt} ${dY} A ${dW} ${dW} 0 0 1 ${acc+wt+dW*0.71} ${dY+dW*0.71}`,fill:'none',stroke:'#888','stroke-width':1,'stroke-dasharray':'10,6'});
+    }
+  }
+  if (rooms) {
+    let acc = 0;
+    for (const r of rooms) { s += tx(acc+r.width/2, depth/2+40, r.label, 150, { color: '#444', bold: true }); acc += r.width + wt; }
+  }
+  return s;
+}
+
+// ── Title Block ──────────────────────────────────────────────
+
+function renderTitle(cfg) {
+  const { title, customer, address, date, spec, w, h } = cfg;
+  const pad = 40;
+  let s = '';
+
+  // Outer border
+  s += rc(0, 0, w, h, { fill: COL.white, sw: 3, stroke: '#333' });
+
+  // Header bar with logo
+  const headerH = h * 0.22;
+  s += rc(0, 0, w, headerH, { fill: '#F7F7F5', sw: 0 });
+  s += ln(0, headerH, w, headerH, 2, '#ddd');
+  const logoH = headerH * 0.7;
+  const logoW = logoH * 4.5;
+  s += tag('image', { href: 'assets/logo.png', x: pad, y: (headerH-logoH)/2, width: Math.min(logoW, w-pad*2), height: logoH, preserveAspectRatio: 'xMinYMid meet' });
+
+  // Customer section
+  const secY = headerH + pad;
+  const lh = h * 0.075;
+  let y = secY;
+
+  s += tx(pad, y, title, h*0.048, { anchor:'start', color:'#666' }); y += lh*0.9;
+  s += tx(pad, y, customer, h*0.065, { anchor:'start', bold:true, color:'#222' }); y += lh*1.1;
+  s += tx(pad, y, address, h*0.048, { anchor:'start', color:'#444' }); y += lh;
+  s += tx(pad, y, date, h*0.048, { anchor:'start', color:'#444' }); y += lh*1.4;
+
+  // Divider
+  s += ln(pad, y, w-pad, y, 1.5, '#E5E5E5'); y += lh*0.8;
+
+  // Spec line
+  s += tx(pad, y, 'Specification:', h*0.038, { anchor:'start', bold:true, color:'#555' }); y += lh*0.7;
+  s += tx(pad, y, spec, h*0.038, { anchor:'start', color:'#666' }); y += lh*1.2;
+
+  // Disclaimer
+  s += ln(pad, y, w-pad, y, 1, '#EEE'); y += lh*0.7;
+  s += tx(pad, y, 'Drawing to scale. Positions of openings are approximate.', h*0.032, { anchor:'start', italic:true, color:'#AAA' }); y += lh*0.6;
+  s += tx(pad, y, 'Final layout confirmed with customer prior to manufacture.', h*0.032, { anchor:'start', italic:true, color:'#AAA' });
+
+  // Address footer
+  const footH = h * 0.1;
+  s += rc(0, h-footH, w, footH, { fill: '#F7F7F5' });
+  s += ln(0, h-footH, w, h-footH, 1, '#E5E5E5');
+  s += tx(w/2, h-footH/2+h*0.015, 'Garden Office Buildings  ·  Rear of 158 Main Road, Biggin Hill, Kent, TN16 3BA  ·  gardenofficebuildings.co.uk', h*0.028, { color:'#999' });
+
+  return s;
+}
+
+// ── Dimension Lines ──────────────────────────────────────────
+
+function dimH(x1, x2, y, label, off) {
+  const yl = y+(off||250), cw = Math.min(100,(x2-x1)*0.05), ch = cw*0.5;
+  let s = '';
+  s += ln(x1,y+15,x1,yl+12,1.5,'#444');
+  s += ln(x2,y+15,x2,yl+12,1.5,'#444');
+  s += ln(x1,yl,x2,yl,3,'#111');
+  s += tag('polyline',{points:`${x1+cw},${yl-ch} ${x1},${yl} ${x1+cw},${yl+ch}`,fill:'none',stroke:'#111','stroke-width':3});
+  s += tag('polyline',{points:`${x2-cw},${yl-ch} ${x2},${yl} ${x2-cw},${yl+ch}`,fill:'none',stroke:'#111','stroke-width':3});
+  s += tx((x1+x2)/2, yl-50, label, 120, { color: '#111', bold: true });
+  return s;
+}
+
+function dimV(y1, y2, x, label, off) {
+  const xl = x+(off||-350), ch = Math.min(100,(y2-y1)*0.05), cw = ch*0.5;
+  let s = '';
+  s += ln(x-15,y1,xl-12,y1,1.5,'#444');
+  s += ln(x-15,y2,xl-12,y2,1.5,'#444');
+  s += ln(xl,y1,xl,y2,3,'#111');
+  s += tag('polyline',{points:`${xl-cw},${y1+ch} ${xl},${y1} ${xl+cw},${y1+ch}`,fill:'none',stroke:'#111','stroke-width':3});
+  s += tag('polyline',{points:`${xl-cw},${y2-ch} ${xl},${y2} ${xl+cw},${y2-ch}`,fill:'none',stroke:'#111','stroke-width':3});
+  const cx = xl-60, cy = (y1+y2)/2;
+  s += tx(cx, cy, label, 120, { transform: `rotate(-90 ${cx} ${cy})`, color: '#111', bold: true });
+  return s;
+}
+
+// ── Full Drawing Composer ────────────────────────────────────
+
+function compose(b) {
+  const W=b.width, D=b.depth, H=b.height;
+  const oh = b.tier==='signature' ? CANOPY_DEPTH : 0;
+  const proj = oh;
+  const margin=700, dim=600, labH=350;
+  const deckH = oh > 0 ? 50 : 0;
+  const cL = b.cornerLeft || 'open';
+  const cR = b.cornerRight || 'open';
+  const gap = 600; // space between views (clear of canopy projections)
+
+  // ─── ROW 1: LEFT | FRONT | RIGHT (all elevations on one row) ───
+  const row1Y = margin + labH;
+
+  // Left elevation (canopy extends right by proj)
+  const lX = margin + dim;
+  // Front elevation: needs gap after left's canopy
+  const fX = lX + D + proj + gap;
+  // Right elevation: canopy extends left by proj, needs gap after front
+  const rX = fX + W + gap + proj;
+
+  const row1Right = rX + D + proj + dim;
+  const row1Bottom = row1Y + H + deckH + 650; // space for dim lines + bigger text
+
+  // ─── ROW 2: PLAN VIEW + TITLE BLOCK ───
+  const row2Y = row1Bottom + 250 + labH;
+  const pX = margin + dim;
+  const planExtra = oh > 0 ? oh + 300 : 0;
+
+  // Title block — to the right of plan
+  const tiW = Math.max(2400, D*2 + 600);
+  const tiH = Math.max(D + planExtra + 200, 1400);
+  const tiX = pX + W + 500;
+  const tiY = row2Y;
+
+  const totW = Math.max(row1Right + margin, tiX + tiW + margin);
+  const totH = row2Y + Math.max(D + planExtra, tiH) + dim + 500 + margin;
+
+  let s = svgDefs();
+  s += rc(0,0,totW,totH,{fill:'white'});
+  s += rc(margin*0.4, margin*0.4, totW-margin*0.8, totH-margin*0.8, { sw: 4, stroke: '#333' });
+
+  // LEFT ELEVATION
+  s += tx(lX+D/2, row1Y-160, 'Left Elevation', 180, { bold:true, color:'#222' });
+  s += grp(renderSide({ depth:D, height:H, side:'left', tier:b.tier, overhang:oh, components:b.leftComponents||[], corner:cL }), { transform:`translate(${lX},${row1Y})` });
+  s += dimH(lX, lX+D, row1Y+H+deckH+30, `${D}mm`, 250);
+
+  // FRONT ELEVATION (center)
+  s += tx(fX+W/2, row1Y-160, 'Front Elevation', 180, { bold:true, color:'#222' });
+  s += grp(renderFront({ width:W, height:H, overhang:oh, tier:b.tier, claddingType:b.frontCladding, components:b.frontComponents||[], cornerLeft:cL, cornerRight:cR }), { transform:`translate(${fX},${row1Y})` });
+  s += dimH(fX, fX+W, row1Y+H+deckH+30, `${W}mm`, 250);
+  s += dimV(row1Y, row1Y+H, fX, `${H}mm`, -450);
+
+  // RIGHT ELEVATION
+  s += tx(rX+D/2, row1Y-160, 'Right Elevation', 180, { bold:true, color:'#222' });
+  s += grp(renderSide({ depth:D, height:H, side:'right', tier:b.tier, overhang:oh, components:b.rightComponents||[], corner:cR }), { transform:`translate(${rX},${row1Y})` });
+  s += dimH(rX, rX+D, row1Y+H+deckH+30, `${D}mm`, 250);
+
+  // PLAN VIEW
+  s += tx(pX+W/2, row2Y-160, 'Plan View', 180, { bold:true, color:'#222' });
+  s += grp(renderPlan({ width:W, depth:D, wallThickness:150, overhang:oh, tier:b.tier, components:b.planComponents||[], rooms:b.rooms, cornerLeft:cL, cornerRight:cR }), { transform:`translate(${pX},${row2Y})` });
+  const planDimY = oh > 0 ? row2Y+D+oh+40 : row2Y+D+40;
+  s += dimH(pX, pX+W, planDimY, `${W}mm`, 250);
+  s += dimV(row2Y, row2Y+D, pX, `${D}mm`, -450);
+  s += tx(pX+W/2, planDimY+450, 'Location of lighting, sockets, switches, heating, AC/consumer unit TBD on 1st visit by electrician', 70, { italic:true, color:'#888' });
+
+  // TITLE BLOCK
+  s += grp(renderTitle({ w:tiW, h:tiH, title:b.title, customer:b.customer, address:b.address, date:b.date, spec:b.spec }), { transform:`translate(${tiX},${tiY})` });
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totW} ${totH}">${s}</svg>`;
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// SAMPLES
+// ═══════════════════════════════════════════════════════════════
+
+const el = document.getElementById('samples');
+function add(t,h) { el.innerHTML += `<h2>${t}</h2>${h}`; }
+
+// 1. Components
+let cs = svgDefs();
+const pad = 150; let cx = pad;
+const comps = [
+  { l:'2.5m Sliding Door', fn:()=>slidingDoor(0,0,2500,2110), w:2500 },
+  { l:'2.7m Bifold (3-leaf)', fn:()=>bifoldDoor(0,0,2700,2110,3), w:2700 },
+  { l:'3.5m Bifold (4-leaf)', fn:()=>bifoldDoor(0,0,3500,2110,4), w:3500 },
+  { l:'Single Glazed Door', fn:()=>singleDoor(0,0,900,2110), w:900 },
+  { l:'0.9m Window (opener)', fn:()=>windowOpener(0,0,900,2110), w:900 },
+  { l:'0.6m Fixed Window', fn:()=>windowFixed(0,0,600,2110), w:600 },
+  { l:'0.6m Opener Window', fn:()=>windowOpener(0,0,600,2110), w:600 },
+  { l:'0.4m Fixed', fn:()=>windowFixed(0,0,400,2110), w:400 },
+  { l:'Slot Window', fn:()=>slotWindow(0,0,900,450,true), w:900, h:450 },
+];
+const totCW = comps.reduce((s,c) => s+c.w+pad, pad);
+for (const c of comps) { cs += tx(cx+c.w/2, -35, c.l, 52, { color:'#444' }); cs += grp(c.fn(), { transform:`translate(${cx},0)` }); cx += c.w+pad; }
+add('1. Component Library — Thick Anthracite Grey Frames + Dark Reflective Glass',
+  `<div class="drawing-frame"><svg viewBox="-30 -90 ${totCW+60} 2350">${cs}</svg></div>`);
+
+// 2. Front Elevation — 2.5m Cedar
+let fe = svgDefs();
+fe += tx(2500, -250, 'Front Elevation — 2500mm height (cedar)', 130, { bold:true, color:'#222' });
+fe += renderFront({ width:5000, height:2500, overhang:400, tier:'signature', claddingType:'cedar',
+  cornerLeft:'open', cornerRight:'closed',
+  components: [
+    { type:'sliding-door-2500', x:200, w:2500, h:2110 },
+    { type:'window-0.6m-fixed', x:3100, w:600, h:2110 },
+    { type:'window-0.9m-opener', x:3900, w:900, h:2110 },
+  ]
+});
+fe += dimH(0, 5000, 2500+50+20, '5000mm overall width', 250);
+fe += dimV(0, 2500, 0, '2500mm overall height', -450);
+add('2. Front Elevation — 5.0m x 2.5m Signature, Cedar (minimal cladding above doors)',
+  `<div class="drawing-frame"><svg viewBox="-750 -400 6800 3700">${fe}</svg></div>`);
+
+// 2b. Front Elevation — 2.75m Cedar (cladding visible above doors)
+let fe2 = svgDefs();
+fe2 += tx(2500, -250, 'Front Elevation — 2750mm height (cedar)', 130, { bold:true, color:'#222' });
+fe2 += renderFront({ width:5000, height:2750, overhang:400, tier:'signature', claddingType:'cedar',
+  cornerLeft:'open', cornerRight:'closed',
+  components: [
+    { type:'sliding-door-2500', x:200, w:2500, h:2110 },
+    { type:'window-0.6m-fixed', x:3100, w:600, h:2110 },
+    { type:'window-0.9m-opener', x:3900, w:900, h:2110 },
+  ]
+});
+fe2 += dimH(0, 5000, 2750+50+20, '5000mm overall width', 250);
+fe2 += dimV(0, 2750, 0, '2750mm overall height', -450);
+add('2b. Front Elevation — 5.0m x 2.75m Signature, Cedar (265mm cladding above doors)',
+  `<div class="drawing-frame"><svg viewBox="-750 -400 6800 3900">${fe2}</svg></div>`);
+
+// 2c. Front Elevation — 2.75m Composite
+let fe3 = svgDefs();
+fe3 += tx(2500, -250, 'Front Elevation — 2750mm height (composite)', 130, { bold:true, color:'#222' });
+fe3 += renderFront({ width:5000, height:2750, overhang:400, tier:'signature', claddingType:'composite',
+  cornerLeft:'closed', cornerRight:'open',
+  components: [
+    { type:'sliding-door-2500', x:200, w:2500, h:2110 },
+    { type:'window-0.6m-fixed', x:3100, w:600, h:2110 },
+    { type:'window-0.9m-opener', x:3900, w:900, h:2110 },
+  ]
+});
+fe3 += dimH(0, 5000, 2750+50+20, '5000mm overall width', 250);
+fe3 += dimV(0, 2750, 0, '2750mm overall height', -450);
+add('2c. Front Elevation — 5.0m x 2.75m Signature, Composite (265mm cladding above doors)',
+  `<div class="drawing-frame"><svg viewBox="-750 -400 6800 3900">${fe3}</svg></div>`);
+
+// 3. Side Elevation
+let se = svgDefs();
+se += tx(2200, -250, 'Left Elevation', 130, { bold:true, color:'#222' });
+se += renderSide({ depth:3600, height:2750, side:'left', tier:'signature', overhang:400, corner:'open',
+  components: [{ type:'window-0.9m-opener', x:1350, w:900, h:2110 }]
+});
+se += dimH(0, 3600, 2770+60, '3600mm overall depth', 250);
+add('3. Left Side Elevation — 2.75m, Vertical Anthracite Steel, Open Corner',
+  `<div class="drawing-frame"><svg viewBox="-550 -400 5400 3800">${se}</svg></div>`);
+
+// 4-7: Full drawings
+add('4. FULL — 5.0m x 3.6m x 2.5m Signature Cedar (open left, closed right)', `<div class="drawing-frame">${compose({
+  width:5000, depth:3600, height:2500, tier:'signature', frontCladding:'cedar',
+  cornerLeft:'open', cornerRight:'closed',
+  frontComponents: [
+    { type:'sliding-door-2500', x:200, w:2500, h:2110 },
+    { type:'window-0.6m-fixed', x:3100, w:600, h:2110 },
+    { type:'window-0.9m-opener', x:3900, w:900, h:2110 },
+  ],
+  leftComponents: [{ type:'window-0.9m-opener', x:1350, w:900, h:2110 }],
+  rightComponents: [],
+  planComponents: [
+    { wall:'front', type:'sliding-door', x:200, w:2500 },
+    { wall:'front', type:'window-fixed', x:3100, w:600 },
+    { wall:'front', type:'window-fixed', x:3900, w:900 },
+    { wall:'left', type:'window-opener', x:1350, w:900 },
+  ],
+  rooms: [{ label:'Office', width:5000 }],
+  title:'Proposed Garden Office Building for:', customer:'Mr & Mrs Smith',
+  address:'@ 42 Oak Lane, Bromley, BR1 2AB', date:'February 2026',
+  spec:'5.0m x 3.6m x 2.5m | Signature | Cedar front | Anthracite sides'
+})}</div>`);
+
+add('5. FULL — 7.0m x 4.4m x 2.75m Signature Cedar Office/Gym (both open)', `<div class="drawing-frame">${compose({
+  width:7000, depth:4400, height:2750, tier:'signature', frontCladding:'cedar',
+  cornerLeft:'open', cornerRight:'open',
+  frontComponents: [
+    { type:'bifold-35', x:200, w:3500, h:2110 },
+    { type:'window-0.9m-fixed', x:4000, w:900, h:2110 },
+    { type:'single-glazed-door', x:5200, w:900, h:2110 },
+    { type:'window-0.6m-fixed', x:6200, w:600, h:2110 },
+  ],
+  leftComponents: [{ type:'window-0.9m-opener', x:1500, w:900, h:2110 }],
+  rightComponents: [{ type:'window-0.6m-fixed', x:1900, w:600, h:2110 }],
+  planComponents: [
+    { wall:'front', type:'bifold', x:200, w:3500 },
+    { wall:'front', type:'window-fixed', x:4000, w:900 },
+    { wall:'front', type:'single-door', x:5200, w:900 },
+    { wall:'front', type:'window-fixed', x:6200, w:600 },
+    { wall:'left', type:'window-opener', x:1500, w:900 },
+    { wall:'right', type:'window-fixed', x:1900, w:600 },
+  ],
+  rooms: [{ label:'Office', width:4800 }, { label:'Gym', width:2050 }],
+  title:'Proposed Garden Office/Gym Building for:', customer:'Mr & Mrs Jones',
+  address:'@ 15 Cedar Drive, Sevenoaks, TN13 1QD', date:'February 2026',
+  spec:'7.0m x 4.4m x 2.75m | Signature | Cedar front | Anthracite sides'
+})}</div>`);
+
+add('6. FULL — 5.0m x 3.6m x 2.75m Signature Composite (closed left, open right)', `<div class="drawing-frame">${compose({
+  width:5000, depth:3600, height:2750, tier:'signature', frontCladding:'composite',
+  cornerLeft:'closed', cornerRight:'open',
+  frontComponents: [
+    { type:'sliding-door-2500', x:200, w:2500, h:2110 },
+    { type:'window-0.9m-opener', x:3100, w:900, h:2110 },
+    { type:'window-0.6m-fixed', x:4200, w:600, h:2110 },
+  ],
+  leftComponents: [{ type:'window-0.9m-opener', x:1350, w:900, h:2110 }],
+  rightComponents: [],
+  planComponents: [
+    { wall:'front', type:'sliding-door', x:200, w:2500 },
+    { wall:'front', type:'window-opener', x:3100, w:900 },
+    { wall:'front', type:'window-fixed', x:4200, w:600 },
+    { wall:'left', type:'window-opener', x:1350, w:900 },
+  ],
+  rooms: [{ label:'Office', width:5000 }],
+  title:'Proposed Garden Office Building for:', customer:'Mr & Mrs Taylor',
+  address:'@ 8 Elm Gardens, Beckenham, BR3 4FG', date:'February 2026',
+  spec:'5.0m x 3.6m x 2.75m | Signature | Composite front | Anthracite sides'
+})}</div>`);
+
+add('7. FULL — 4.8m x 3.45m x 2.5m Classic Composite (no canopy/decking)', `<div class="drawing-frame">${compose({
+  width:4800, depth:3450, height:2500, tier:'classic', frontCladding:'composite',
+  frontComponents: [
+    { type:'sliding-door-2500', x:150, w:2500, h:2110 },
+    { type:'window-0.9m-opener', x:3700, w:900, h:2110 },
+  ],
+  leftComponents: [],
+  rightComponents: [{ type:'window-0.6m-opener', x:1400, w:600, h:2110 }],
+  planComponents: [
+    { wall:'front', type:'sliding-door', x:150, w:2500 },
+    { wall:'front', type:'window-opener', x:3700, w:900 },
+    { wall:'right', type:'window-opener', x:1400, w:600 },
+  ],
+  rooms: [{ label:'Office', width:4800 }],
+  title:'Proposed Garden Office Building for:', customer:'Mr Davis',
+  address:'@ 7 Willow Close, Orpington, BR6 9TJ', date:'January 2026',
+  spec:'4.8m x 3.45m x 2.5m | Classic | Composite front | Anthracite sides'
+})}</div>`);
+
+add('8. FULL — 5.95m x 3.6m x 3.0m Signature Cedar (both closed, tall)', `<div class="drawing-frame">${compose({
+  width:5950, depth:3600, height:3000, tier:'signature', frontCladding:'cedar',
+  cornerLeft:'closed', cornerRight:'closed',
+  frontComponents: [
+    { type:'bifold-27', x:200, w:2700, h:2110 },
+    { type:'window-0.9m-fixed', x:3200, w:900, h:2110 },
+    { type:'single-glazed-door', x:4400, w:900, h:2110 },
+    { type:'window-0.4m-fixed', x:5400, w:400, h:2110 },
+  ],
+  leftComponents: [{ type:'window-0.9m-opener', x:1350, w:900, h:2110 }],
+  rightComponents: [{ type:'window-0.6m-fixed', x:1500, w:600, h:2110 }],
+  planComponents: [
+    { wall:'front', type:'bifold', x:200, w:2700 },
+    { wall:'front', type:'window-fixed', x:3200, w:900 },
+    { wall:'front', type:'single-door', x:4400, w:900 },
+    { wall:'front', type:'window-fixed', x:5400, w:400 },
+    { wall:'left', type:'window-opener', x:1350, w:900 },
+    { wall:'right', type:'window-fixed', x:1500, w:600 },
+  ],
+  rooms: [{ label:'Office', width:3700 }, { label:'Store', width:2100 }],
+  title:'Proposed Garden Office Building for:', customer:'Mr & Mrs Wilson',
+  address:'@ 22 Beech Avenue, Bromley, BR2 8HJ', date:'February 2026',
+  spec:'5.95m x 3.6m x 3.0m | Signature | Cedar front | Anthracite sides'
+})}</div>`);
+
+add('9. FULL — 3.65m x 2.875m x 2.5m Midi Signature Cedar (both closed)', `<div class="drawing-frame">${compose({
+  width:3650, depth:2875, height:2500, tier:'signature', frontCladding:'cedar',
+  cornerLeft:'closed', cornerRight:'closed',
+  frontComponents: [
+    { type:'sliding-door-2000', x:150, w:2000, h:2110 },
+    { type:'window-0.6m-opener', x:2800, w:600, h:2110 },
+  ],
+  leftComponents: [{ type:'window-0.4m-fixed', x:1200, w:400, h:2110 }],
+  rightComponents: [],
+  planComponents: [
+    { wall:'front', type:'sliding-door', x:150, w:2000 },
+    { wall:'front', type:'window-opener', x:2800, w:600 },
+    { wall:'left', type:'window-fixed', x:1200, w:400 },
+  ],
+  rooms: [{ label:'Office', width:3650 }],
+  title:'Proposed Garden Office Building for:', customer:'Ms Johnson',
+  address:'@ 3 The Willows, Chislehurst, BR7 5PA', date:'February 2026',
+  spec:'3.65m x 2.875m x 2.5m | Signature | Cedar front | Anthracite sides'
+})}</div>`);
+
+</script>
+</body>
+</html>

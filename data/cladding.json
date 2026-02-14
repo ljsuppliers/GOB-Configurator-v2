@@ -1,0 +1,117 @@
+{
+  "types": {
+    "western-red-cedar": {
+      "label": "Western Red Cedar",
+      "category": "timber",
+      "elevationPattern": "diagonal",
+      "sidePattern": "vertical",
+      "default": true,
+      "premium": true,
+      "colour": "#8B4513"
+    },
+    "anthracite-steel": {
+      "label": "Anthracite Grey Steel",
+      "category": "steel",
+      "elevationPattern": "vertical",
+      "sidePattern": "vertical",
+      "default": true,
+      "premium": false,
+      "colour": "#3D3D3D"
+    },
+    "grey-steel": {
+      "label": "Grey Steel",
+      "category": "steel",
+      "elevationPattern": "vertical",
+      "sidePattern": "vertical",
+      "default": false,
+      "premium": false,
+      "colour": "#7F7F7F"
+    },
+    "composite-latte": {
+      "label": "Composite Slatted (Latte)",
+      "category": "composite",
+      "elevationPattern": "horizontal",
+      "sidePattern": "horizontal",
+      "default": false,
+      "premium": false,
+      "colour": "#C4A882"
+    },
+    "composite-coffee": {
+      "label": "Composite Slatted (Coffee)",
+      "category": "composite",
+      "elevationPattern": "horizontal",
+      "sidePattern": "horizontal",
+      "default": false,
+      "premium": false,
+      "colour": "#5C4A48"
+    },
+    "composite-grey": {
+      "label": "Composite Slatted (Grey)",
+      "category": "composite",
+      "elevationPattern": "horizontal",
+      "sidePattern": "horizontal",
+      "default": false,
+      "premium": false,
+      "colour": "#808080"
+    },
+    "composite-sage": {
+      "label": "Composite Slatted (Sage Green)",
+      "category": "composite",
+      "elevationPattern": "horizontal",
+      "sidePattern": "horizontal",
+      "default": false,
+      "premium": false,
+      "colour": "#9CAF88"
+    },
+    "composite-chartwell": {
+      "label": "Composite Slatted (Chartwell Green)",
+      "category": "composite",
+      "elevationPattern": "horizontal",
+      "sidePattern": "horizontal",
+      "default": false,
+      "premium": false,
+      "colour": "#7BA05B"
+    },
+    "thermowood": {
+      "label": "Thermowood",
+      "category": "timber",
+      "elevationPattern": "diagonal",
+      "sidePattern": "vertical",
+      "default": false,
+      "premium": true,
+      "colour": "#654321"
+    },
+    "larch": {
+      "label": "Larch",
+      "category": "timber",
+      "elevationPattern": "diagonal",
+      "sidePattern": "vertical",
+      "default": false,
+      "premium": true,
+      "colour": "#B8860B"
+    },
+    "other": {
+      "label": "Other (specify below)",
+      "category": "other",
+      "elevationPattern": "vertical",
+      "sidePattern": "vertical",
+      "default": false,
+      "premium": false,
+      "colour": "#999999"
+    }
+  },
+  "defaultByTier": {
+    "classic": {
+      "front": "composite-latte",
+      "left": "anthracite-steel",
+      "right": "anthracite-steel",
+      "rear": "anthracite-steel"
+    },
+    "signature": {
+      "front": "western-red-cedar",
+      "left": "anthracite-steel",
+      "right": "anthracite-steel",
+      "rear": "anthracite-steel"
+    }
+  }
+}

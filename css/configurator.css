@@ -1,0 +1,321 @@
+/* Configurator panel styles */
+
+.config-section {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.config-section:last-child {
+  border-bottom: none;
+}
+
+.config-section h4 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.config-section label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.config-section input[type="number"],
+.config-section input[type="text"],
+.config-section input[type="tel"],
+.config-section input[type="email"],
+.config-section textarea,
+.config-section select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 13px;
+  background: white;
+  color: var(--text);
+  transition: border-color 0.15s;
+}
+
+.config-section input:focus,
+.config-section select:focus,
+.config-section textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+.config-section textarea {
+  resize: vertical;
+  min-height: 50px;
+}
+
+/* Dimension row (3 inputs side by side) */
+.dim-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+.dim-row label {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.dim-row input {
+  width: 100%;
+  text-align: center;
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-size: 13px;
+}
+
+/* Radio buttons */
+.radio-group {
+  display: flex;
+  gap: 12px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.radio-group input[type="radio"] {
+  accent-color: var(--accent);
+}
+
+/* Stepper */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.stepper button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #f5f5f5;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepper button:hover {
+  background: var(--accent-bg);
+}
+
+.stepper .stepper-value {
+  width: 30px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  line-height: 28px;
+}
+
+.stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.stepper-row .stepper-label {
+  font-size: 12px;
+  color: var(--text);
+  flex: 1;
+}
+
+.stepper-row .stepper-price {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-right: 8px;
+}
+
+/* Checkbox extras */
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.checkbox-row input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+.checkbox-row .extra-price {
+  color: var(--text-secondary);
+  margin-left: auto;
+  font-size: 11px;
+}
+
+.checkbox-row .extra-price.deduction {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+/* Component palette */
+.palette {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.palette-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  background: #f8f8f8;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: grab;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+
+.palette-item:hover {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+}
+
+.palette-item.dragging {
+  opacity: 0.5;
+  border-style: dashed;
+}
+
+.palette-icon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+}
+
+.palette-label {
+  flex: 1;
+  font-size: 11px;
+}
+
+.palette-size {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-family: monospace;
+}
+
+.palette-price {
+  font-size: 10px;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* Placed components list */
+.placed-component {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 3px;
+  font-size: 11px;
+}
+
+.comp-label { flex: 1; }
+.comp-elev {
+  font-size: 10px;
+  color: var(--text-secondary);
+  background: #f0f0f0;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.comp-pos {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-family: monospace;
+}
+.comp-delete {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.empty-msg {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 8px 0;
+}
+
+/* Cladding selects in a grid */
+.cladding-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.cladding-grid label {
+  font-size: 10px;
+}
+
+/* Corner toggle */
+.corner-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 6px;
+}
+
+.corner-row > div {
+  flex: 1;
+}
+
+.corner-row label.corner-label {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+/* Input small */
+.input-sm {
+  padding: 4px 6px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: white;
+}
+
+.input-full { width: 100%; margin-top: 4px; }
+
+/* Select for height upgrade */
+.select-row {
+  margin-bottom: 6px;
+}
+
+.select-row select {
+  width: 100%;
+}
