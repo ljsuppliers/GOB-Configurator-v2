@@ -34,7 +34,14 @@ function handleMouseDown(e) {
     return;
   }
   
-  // Otherwise check for component
+  // Check for plan-component (floor plan dragging)
+  const planTarget = e.target.closest('.plan-component');
+  if (planTarget) {
+    handlePlanComponentDragStart(e, planTarget);
+    return;
+  }
+  
+  // Otherwise check for component on elevations
   const target = e.target.closest('.component.draggable');
   if (!target) return;
   
@@ -108,6 +115,44 @@ function handleFeatureDragStart(e, target) {
   e.preventDefault();
 }
 
+function handlePlanComponentDragStart(e, target) {
+  const compId = target.dataset.compId;
+  const elevation = target.dataset.elevation;
+  if (!compId || !vueApp) return;
+  
+  // Find the component in Vue state
+  const comp = vueApp.state.components.find(c => c.id === compId);
+  if (!comp) return;
+  
+  // Get SVG element and compute scale
+  const svg = target.closest('svg');
+  if (!svg) return;
+  
+  const vb = svg.getAttribute('viewBox');
+  if (!vb) return;
+  const [, , vbW, vbH] = vb.split(' ').map(Number);
+  const svgRect = svg.getBoundingClientRect();
+  const scaleX = vbW / svgRect.width;
+  const scaleY = vbH / svgRect.height;
+  
+  dragState = {
+    type: 'plan-component',
+    compId,
+    comp,
+    svg,
+    scaleX,
+    scaleY,
+    startX: e.clientX,
+    startY: e.clientY,
+    startPosX: comp.positionX || 0,
+    elevation: comp.elevation,
+    active: false
+  };
+  
+  target.classList.add('dragging');
+  e.preventDefault();
+}
+
 function handleMouseMove(e) {
   if (!dragState) return;
   
@@ -138,8 +183,31 @@ function handleMouseMove(e) {
     
     // Update Vue state directly
     dragState.feat.x = newPos;
+  } else if (dragState.type === 'plan-component') {
+    // Plan view component dragging - use Y delta
+    const dy = e.clientY - dragState.startY;
+    const mmDelta = dy * dragState.scaleY;
+    
+    // Get component definition for bounds checking
+    const allComps = { ...componentsData.doors, ...componentsData.windows };
+    const def = allComps[dragState.comp.type];
+    if (!def) return;
+    
+    const maxW = vueApp.state.depth;
+    let newPos = dragState.startPosX + mmDelta;
+    
+    // For right wall, invert the delta (dragging up should increase positionX)
+    if (dragState.comp.elevation === 'right') {
+      newPos = dragState.startPosX - mmDelta;
+    }
+    
+    newPos = Math.round(newPos / 50) * 50; // Snap to 50mm grid
+    newPos = Math.max(0, Math.min(newPos, maxW - def.width));
+    
+    // Update Vue state directly
+    dragState.comp.positionX = newPos;
   } else {
-    // Component dragging
+    // Component dragging on elevation
     // Get component definition for bounds checking
     const allComps = { ...componentsData.doors, ...componentsData.windows };
     const def = allComps[dragState.comp.type];

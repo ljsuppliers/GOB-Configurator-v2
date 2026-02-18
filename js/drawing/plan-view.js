@@ -61,7 +61,7 @@ export function renderPlanView(state, layout, componentsData) {
       svg += renderComponentPlan(comp.type, compX, y, compW, wallT);
     } else {
       // Windows: just show the glass line
-      svg += `<line x1="${compX}" y1="${y + wallT / 2}" x2="${compX + compW}" y2="${y + wallT / 2}" stroke="#000" stroke-width="2"/>`;
+      svg += `<line class="plan-component" data-comp-id="${comp.id}" data-elevation="front" x1="${compX}" y1="${y + wallT / 2}" x2="${compX + compW}" y2="${y + wallT / 2}" stroke="#000" stroke-width="2"/>`;
     }
   }
 
@@ -83,7 +83,7 @@ export function renderPlanView(state, layout, componentsData) {
       svg += renderComponentPlan(comp.type, 0, 0, compW, wallT);
       svg += `</g>`;
     } else {
-      svg += `<line x1="${x + wallT / 2}" y1="${compY}" x2="${x + wallT / 2}" y2="${compY + compW}" stroke="#000" stroke-width="2"/>`;
+      svg += `<line class="plan-component" data-comp-id="${comp.id}" data-elevation="left" x1="${x + wallT / 2}" y1="${compY}" x2="${x + wallT / 2}" y2="${compY + compW}" stroke="#000" stroke-width="2"/>`;
     }
   }
 
@@ -94,7 +94,8 @@ export function renderPlanView(state, layout, componentsData) {
     if (!def) continue;
 
     const compW = def.width * scale;
-    const compY = y + (comp.positionX || 0) * scale;
+    // Right wall: positionX 0 (front) = bottom of plan, positionX max (rear) = top
+    const compY = y + (state.depth - (comp.positionX || 0)) * scale;
 
     svg += `<rect x="${x + w - wallT}" y="${compY}" width="${wallT}" height="${compW}" fill="white" stroke="none"/>`;
 
@@ -103,7 +104,7 @@ export function renderPlanView(state, layout, componentsData) {
       svg += renderComponentPlan(comp.type, 0, 0, compW, wallT);
       svg += `</g>`;
     } else {
-      svg += `<line x1="${x + w - wallT / 2}" y1="${compY}" x2="${x + w - wallT / 2}" y2="${compY + compW}" stroke="#000" stroke-width="2"/>`;
+      svg += `<line class="plan-component" data-comp-id="${comp.id}" data-elevation="right" x1="${x + w - wallT / 2}" y1="${compY}" x2="${x + w - wallT / 2}" y2="${compY + compW}" stroke="#000" stroke-width="2"/>`;
     }
   }
 

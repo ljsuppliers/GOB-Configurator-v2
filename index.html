@@ -332,6 +332,8 @@
             </select>
             <input type="number" v-model.number="comp.positionX" class="input-sm" style="width:50px;" step="50" title="X position (mm from left)">
             <span class="comp-pos">x</span>
+            <button @click="comp.positionX = Math.max(0, comp.positionX - 50)" class="btn-sm" title="Move left/rear 50mm" style="padding:2px 6px;font-size:11px;">◀</button>
+            <button @click="comp.positionX = comp.positionX + 50" class="btn-sm" title="Move right/front 50mm" style="padding:2px 6px;font-size:11px;">▶</button>
             <input type="number" v-model.number="comp.positionY" class="input-sm" style="width:50px;" step="50" title="Y position (mm from ground)" :disabled="!canMoveVertically(comp)" :placeholder="canMoveVertically(comp) ? '850' : 'fixed'">
             <span class="comp-pos">y</span>
             <input type="number" v-model.number="comp.customWidth" class="input-sm" style="width:50px;" step="50" :placeholder="getCompWidth(comp)" title="Custom width (mm)">

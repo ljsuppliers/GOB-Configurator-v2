@@ -129,6 +129,31 @@ function detectElevation(svgX, svgY) {
   return null;
 }
 
+// Detect if clicking on plan view
+function detectPlanView(svgX, svgY) {
+  const state = getState();
+  const margin = 60;
+  const gap = 40;
+  const topY = margin + 55;
+  const frontW = state.width * scale;
+  const sideW = state.depth * scale;
+  const frontH = state.height * scale;
+  const frontX = margin + 40;
+  const leftX = frontX + frontW + gap;
+  const rightX = leftX + sideW + gap;
+  const lowerY = topY + frontH + gap + 50;
+  const planW = state.width * scale;
+  const planD = state.depth * scale;
+  const planX = frontX;
+  const planY = lowerY;
+
+  // Check if within plan view bounds
+  if (svgX >= planX && svgX <= planX + planW && svgY >= planY && svgY <= planY + planD) {
+    return { x: planX, y: planY, w: planW, d: planD };
+  }
+  return null;
+}
+
 function handleMouseDown(e) {
   // Check if clicking on an existing component in the SVG
   const target = e.target.closest('.component, [data-comp-id]');
@@ -137,11 +162,22 @@ function handleMouseDown(e) {
   const compId = target.dataset?.compId;
   if (!compId) return;
 
+  // Check if dragging on plan view
+  const rect = svgEl.getBoundingClientRect();
+  const svgPoint = svgEl.createSVGPoint();
+  svgPoint.x = e.clientX - rect.left;
+  svgPoint.y = e.clientY - rect.top;
+  const ctm = svgEl.getScreenCTM().inverse();
+  const svgCoord = svgPoint.matrixTransform(ctm);
+  const planBounds = detectPlanView(svgCoord.x, svgCoord.y);
+
   dragState = {
     compId,
     startX: e.clientX,
     startY: e.clientY,
-    active: false
+    active: false,
+    isPlanView: !!planBounds,
+    planBounds
   };
 }
 
@@ -160,10 +196,23 @@ function handleMouseMove(e) {
     const state = getState();
     const comp = state.components.find(c => c.id === dragState.compId);
     if (comp) {
-      const mmDelta = Math.round(dx / scale / 50) * 50;
       const allComps = { ...componentsData.doors, ...componentsData.windows };
       const def = allComps[comp.type];
       const maxW = comp.elevation === 'front' ? state.width : state.depth;
+      let mmDelta;
+
+      if (dragState.isPlanView) {
+        // Plan view dragging: use Y delta for side walls, X delta for front
+        const dy = e.clientY - dragState.startY;
+        mmDelta = Math.round(dy / scale / 50) * 50;
+        if (comp.elevation === 'right') {
+          // Right wall: invert the delta
+          mmDelta = -mmDelta;
+        }
+      } else {
+        // Elevation view dragging: use X delta
+        mmDelta = Math.round(dx / scale / 50) * 50;
+      }
 
       const newPos = Math.max(0, Math.min((comp.positionX || 0) + mmDelta, maxW - (def?.width || 0)));
       updateComponent(dragState.compId, { positionX: newPos });
