@@ -953,9 +953,12 @@ function renderPlan(cfg) {
     s += rc(0, 0, width, depth, { fill: COL.wallFill, sw: 6, stroke: '#222' });
     s += rc(wt, wt, width-wt*2, depth-wt*2, { fill: COL.white, sw: 3, stroke: '#333' });
   }
+  const hitPad = 80; // extra padding for click targets on thin wall elements
   for (const c of (components || [])) {
     if (c.wall === 'front') {
       const fy = depth - wt;
+      s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="front" style="cursor:grab">`;
+      s += rc(c.x, fy - hitPad, c.w, wt + hitPad * 2, { fill: 'transparent' });
       s += rc(c.x, fy, c.w, wt, { fill: COL.white });
       if (c.type.includes('sliding')||c.type.includes('bifold')) {
         s += ln(c.x, fy+wt*0.3, c.x+c.w, fy+wt*0.3, 2.5, COL.anthracite);
@@ -965,16 +968,24 @@ function renderPlan(cfg) {
         s += ln(c.x, fy+wt*0.3, c.x+c.w, fy+wt*0.3, 1.5, COL.anthracite);
         s += ln(c.x, fy+wt*0.7, c.x+c.w, fy+wt*0.7, 1.5, COL.anthracite);
       }
+      s += '</g>';
     } else if (c.wall === 'left') {
+      s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="left" style="cursor:grab">`;
+      s += rc(-hitPad, c.x, wt + hitPad * 2, c.w, { fill: 'transparent' });
       s += rc(0, c.x, wt, c.w, { fill: COL.white });
       s += ln(wt*0.3, c.x, wt*0.3, c.x+c.w, 1.5, COL.anthracite);
       s += ln(wt*0.7, c.x, wt*0.7, c.x+c.w, 1.5, COL.anthracite);
+      s += '</g>';
     } else if (c.wall === 'right') {
+      s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="right" style="cursor:grab">`;
+      s += rc(width - wt - hitPad, c.x, wt + hitPad * 2, c.w, { fill: 'transparent' });
       s += rc(width-wt, c.x, wt, c.w, { fill: COL.white });
       s += ln(width-wt*0.3, c.x, width-wt*0.3, c.x+c.w, 1.5, COL.anthracite);
       s += ln(width-wt*0.7, c.x, width-wt*0.7, c.x+c.w, 1.5, COL.anthracite);
+      s += '</g>';
     } else if (c.wall === 'rear') {
-      // Rear wall (top of plan view)
+      s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="rear" style="cursor:grab">`;
+      s += rc(c.x, -hitPad, c.w, wt + hitPad * 2, { fill: 'transparent' });
       s += rc(c.x, 0, c.w, wt, { fill: COL.white });
       if (c.type.includes('sliding')||c.type.includes('bifold')) {
         s += ln(c.x, wt*0.3, c.x+c.w, wt*0.3, 2.5, COL.anthracite);
@@ -984,6 +995,7 @@ function renderPlan(cfg) {
         s += ln(c.x, wt*0.3, c.x+c.w, wt*0.3, 1.5, COL.anthracite);
         s += ln(c.x, wt*0.7, c.x+c.w, wt*0.7, 1.5, COL.anthracite);
       }
+      s += '</g>';
     }
   }
   if (rooms && rooms.length > 1) {
@@ -1372,7 +1384,8 @@ export function generateDrawing(state, componentsData, claddingData) {
     // else: full-height doors/windows default to ground level (y undefined → height - h)
 
     const elevEntry = { type: comp.type, x, w, h, y, id: comp.id, handleSide: comp.handleSide };
-    const planEntry = { wall: comp.elevation, type: comp.type, x, w, id: comp.id };
+    const planX = comp.planPositionX ?? x;
+    const planEntry = { wall: comp.elevation, type: comp.type, x: planX, w, id: comp.id };
 
     // Use custom width if specified
     if (comp.customWidth && comp.customWidth > 0) {

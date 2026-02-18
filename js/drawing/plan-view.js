@@ -51,18 +51,21 @@ export function renderPlanView(state, layout, componentsData) {
     if (!def) continue;
 
     const compW = def.width * scale;
-    const compX = x + (comp.positionX || 0) * scale;
+    const compX = x + (comp.planPositionX ?? comp.positionX ?? 0) * scale;
 
     // Clear the wall where the component sits
     svg += `<rect x="${compX}" y="${y}" width="${compW}" height="${wallT}" fill="white" stroke="none"/>`;
 
-    // Render plan view component
+    // Render plan view component (wrapped for drag handling with hit area)
+    const hitPad = 12; // extra padding around thin wall elements for easier clicking
+    svg += `<g class="plan-component" data-comp-id="${comp.id}" data-elevation="front" style="cursor:grab">`;
+    svg += `<rect x="${compX}" y="${y - hitPad}" width="${compW}" height="${wallT + hitPad * 2}" fill="transparent" stroke="none"/>`;
     if (comp.type.includes('door')) {
       svg += renderComponentPlan(comp.type, compX, y, compW, wallT);
     } else {
-      // Windows: just show the glass line
-      svg += `<line class="plan-component" data-comp-id="${comp.id}" data-elevation="front" x1="${compX}" y1="${y + wallT / 2}" x2="${compX + compW}" y2="${y + wallT / 2}" stroke="#000" stroke-width="2"/>`;
+      svg += `<line x1="${compX}" y1="${y + wallT / 2}" x2="${compX + compW}" y2="${y + wallT / 2}" stroke="#000" stroke-width="2"/>`;
     }
+    svg += `</g>`;
   }
 
   // Left wall components
@@ -72,18 +75,23 @@ export function renderPlanView(state, layout, componentsData) {
     if (!def) continue;
 
     const compW = def.width * scale;
-    const compY = y + (comp.positionX || 0) * scale;
+    const compY = y + (comp.planPositionX ?? comp.positionX ?? 0) * scale;
 
     // Clear wall section
     svg += `<rect x="${x}" y="${compY}" width="${wallT}" height="${compW}" fill="white" stroke="none"/>`;
 
-    if (comp.type.includes('door')) {
-      // Rotated door in left wall
-      svg += `<g transform="translate(${x},${compY}) rotate(90) translate(0,${-wallT})">`;
-      svg += renderComponentPlan(comp.type, 0, 0, compW, wallT);
+    {
+      const hitPad = 12;
+      svg += `<g class="plan-component" data-comp-id="${comp.id}" data-elevation="left" style="cursor:grab">`;
+      svg += `<rect x="${x - hitPad}" y="${compY}" width="${wallT + hitPad * 2}" height="${compW}" fill="transparent" stroke="none"/>`;
+      if (comp.type.includes('door')) {
+        svg += `<g transform="translate(${x},${compY}) rotate(90) translate(0,${-wallT})">`;
+        svg += renderComponentPlan(comp.type, 0, 0, compW, wallT);
+        svg += `</g>`;
+      } else {
+        svg += `<line x1="${x + wallT / 2}" y1="${compY}" x2="${x + wallT / 2}" y2="${compY + compW}" stroke="#000" stroke-width="2"/>`;
+      }
       svg += `</g>`;
-    } else {
-      svg += `<line class="plan-component" data-comp-id="${comp.id}" data-elevation="left" x1="${x + wallT / 2}" y1="${compY}" x2="${x + wallT / 2}" y2="${compY + compW}" stroke="#000" stroke-width="2"/>`;
     }
   }
 
@@ -95,16 +103,22 @@ export function renderPlanView(state, layout, componentsData) {
 
     const compW = def.width * scale;
     // Right wall: positionX 0 (front) = bottom of plan, positionX max (rear) = top
-    const compY = y + (state.depth - (comp.positionX || 0)) * scale;
+    const compY = y + (state.depth - (comp.planPositionX ?? comp.positionX ?? 0)) * scale;
 
     svg += `<rect x="${x + w - wallT}" y="${compY}" width="${wallT}" height="${compW}" fill="white" stroke="none"/>`;
 
-    if (comp.type.includes('door')) {
-      svg += `<g transform="translate(${x + w},${compY}) rotate(90) translate(0,${-wallT})">`;
-      svg += renderComponentPlan(comp.type, 0, 0, compW, wallT);
+    {
+      const hitPad = 12;
+      svg += `<g class="plan-component" data-comp-id="${comp.id}" data-elevation="right" style="cursor:grab">`;
+      svg += `<rect x="${x + w - wallT - hitPad}" y="${compY}" width="${wallT + hitPad * 2}" height="${compW}" fill="transparent" stroke="none"/>`;
+      if (comp.type.includes('door')) {
+        svg += `<g transform="translate(${x + w},${compY}) rotate(90) translate(0,${-wallT})">`;
+        svg += renderComponentPlan(comp.type, 0, 0, compW, wallT);
+        svg += `</g>`;
+      } else {
+        svg += `<line x1="${x + w - wallT / 2}" y1="${compY}" x2="${x + w - wallT / 2}" y2="${compY + compW}" stroke="#000" stroke-width="2"/>`;
+      }
       svg += `</g>`;
-    } else {
-      svg += `<line class="plan-component" data-comp-id="${comp.id}" data-elevation="right" x1="${x + w - wallT / 2}" y1="${compY}" x2="${x + w - wallT / 2}" y2="${compY + compW}" stroke="#000" stroke-width="2"/>`;
     }
   }
 

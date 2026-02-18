@@ -46,6 +46,7 @@ export function renderFrontElevation(state, layout, componentsData) {
     const compY = y + h - compH; // components sit at floor level
 
     // White background to clear cladding
+    svg += `<g class="component draggable" data-comp-id="${comp.id}">`;
     svg += `<rect x="${compX}" y="${compY}" width="${compW}" height="${compH}" fill="white" stroke="none"/>`;
 
     // Render the component
@@ -53,6 +54,7 @@ export function renderFrontElevation(state, layout, componentsData) {
       hasOpener: def.hasOpener,
       leaves: def.width > 3000 ? Math.round(def.width / 800) : (def.width > 2000 ? 3 : undefined)
     });
+    svg += `</g>`;
   }
 
   // Gutter system

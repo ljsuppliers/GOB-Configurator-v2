@@ -91,6 +91,7 @@ function handleDrop(e) {
       type: compInfo.type,
       elevation: elevation.name,
       positionX: clampedX,
+      planPositionX: clampedX,
       label: def.label
     });
 
@@ -209,13 +210,15 @@ function handleMouseMove(e) {
           // Right wall: invert the delta
           mmDelta = -mmDelta;
         }
+        const currentPlanPos = comp.planPositionX ?? comp.positionX ?? 0;
+        const newPos = Math.max(0, Math.min(currentPlanPos + mmDelta, maxW - (def?.width || 0)));
+        updateComponent(dragState.compId, { planPositionX: newPos });
       } else {
         // Elevation view dragging: use X delta
         mmDelta = Math.round(dx / scale / 50) * 50;
+        const newPos = Math.max(0, Math.min((comp.positionX || 0) + mmDelta, maxW - (def?.width || 0)));
+        updateComponent(dragState.compId, { positionX: newPos });
       }
-
-      const newPos = Math.max(0, Math.min((comp.positionX || 0) + mmDelta, maxW - (def?.width || 0)));
-      updateComponent(dragState.compId, { positionX: newPos });
       dragState.startX = e.clientX;
       dragState.startY = e.clientY;
     }

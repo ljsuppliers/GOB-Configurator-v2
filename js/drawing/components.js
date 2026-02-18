@@ -184,7 +184,7 @@ export function slidingDoorPlan(x, y, w, wallThickness) {
   // Mid-line
   svg += el('line', { x1: x + w / 2, y1: y, x2: x + w / 2, y2: y + t, stroke: '#000', 'stroke-width': 1.5 });
 
-  return `<g class="plan-component sliding-door">${svg}</g>`;
+  return `<g class="sliding-door">${svg}</g>`;
 }
 
 export function hingedDoorPlan(x, y, w, wallThickness, options = {}) {
@@ -205,7 +205,7 @@ export function hingedDoorPlan(x, y, w, wallThickness, options = {}) {
   }
   svg += el('path', { d: arcPath, fill: 'none', stroke: '#000', 'stroke-width': 1.5, 'stroke-dasharray': '4,3' });
 
-  return `<g class="plan-component hinged-door">${svg}</g>`;
+  return `<g class="hinged-door">${svg}</g>`;
 }
 
 // ─── COMPONENT RENDERER ──────────────────────────────────────
@@ -227,7 +227,7 @@ export function renderComponentPlan(compType, x, y, w, wallThickness, options = 
     return hingedDoorPlan(x, y, w, wallThickness, options);
   }
   // Windows in plan: just a thin line
-  return `<g class="plan-component window">
+  return `<g class="window">
     <line x1="${x}" y1="${y}" x2="${x + w}" y2="${y}" stroke="#000" stroke-width="2"/>
     <line x1="${x}" y1="${y + wallThickness}" x2="${x + w}" y2="${y + wallThickness}" stroke="#000" stroke-width="2"/>
   </g>`;

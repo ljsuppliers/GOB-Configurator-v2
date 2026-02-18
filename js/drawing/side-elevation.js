@@ -61,10 +61,12 @@ export function renderSideElevation(state, layout, componentsData, side = 'left'
     const compY = y + h - compH;
 
     // White background
+    svg += `<g class="component draggable" data-comp-id="${comp.id}">`;
     svg += `<rect x="${compX}" y="${compY}" width="${compW}" height="${compH}" fill="white" stroke="none"/>`;
     svg += renderComponentElevation(comp.type, compX, compY, compW, compH, {
       hasOpener: def.hasOpener
     });
+    svg += `</g>`;
   }
 
   // Gutter with downpipes on sides
