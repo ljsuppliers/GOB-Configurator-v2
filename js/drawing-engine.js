@@ -770,11 +770,7 @@ function renderSide(cfg) {
     const cy = comp.y !== undefined ? comp.y : (height - comp.h);
     s += renderComp(comp.type, comp.x, cy, comp.w, comp.h, comp.id, claddingType, comp.handleSide);
   }
-  // Base trim at bottom of building - ALWAYS present on all tiers
   const trimH = deckH;
-  s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.anthracite });
-  s += ln(fasciaX, height, fasciaX + fasciaW, height, 1.5, COL.anthraciteDk);
-  s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.anthraciteDk);
 
   if (isSig && frontProj > 50) {
     // SIGNATURE with canopy (400mm front)
@@ -782,6 +778,12 @@ function renderSide(cfg) {
     const feEnd = frontRight ? depth + frontProj : 0;
     const proj = frontProj;
     const bldgEdge = frontRight ? depth : 0;
+
+    // Base trim on main building only (not canopy projection)
+    s += rc(0, height, depth, trimH, { fill: COL.anthracite });
+    s += ln(0, height, depth, height, 1.5, COL.anthraciteDk);
+    s += ln(0, height + trimH, depth, height + trimH, 1, COL.anthraciteDk);
+
     if (corner === 'closed') {
       // Closed corner - side screen is continuous with main building (no vertical break)
       const scCid = 'ssc'+Math.random().toString(36).substr(2,5);
@@ -808,6 +810,11 @@ function renderSide(cfg) {
         s += ln(deckEdge, height, deckEdge, height + trimH, 1, COL.deckingLine);
       }
     }
+  } else {
+    // Classic or Signature without canopy - base trim full fascia width
+    s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.anthracite });
+    s += ln(fasciaX, height, fasciaX + fasciaW, height, 1.5, COL.anthraciteDk);
+    s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.anthraciteDk);
   }
 
   return s;
