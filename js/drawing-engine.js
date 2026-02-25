@@ -697,12 +697,8 @@ function renderFront(cfg) {
       s += rc(-sideOverhang, height, width + sideOverhang*2, trimH, { fill: COL.decking });
       s += ln(-sideOverhang, height, width + sideOverhang, height, 1.5, COL.deckingLine);
       s += ln(-sideOverhang, height + trimH, width + sideOverhang, height + trimH, 1, COL.deckingLine);
-    } else {
-      // No decking - steel trim like Classic
-      s += rc(-sideOverhang, height, width + sideOverhang*2, trimH, { fill: COL.anthracite });
-      s += ln(-sideOverhang, height, width + sideOverhang, height, 1.5, COL.anthraciteDk);
-      s += ln(-sideOverhang, height + trimH, width + sideOverhang, height + trimH, 1, COL.anthraciteDk);
     }
+    // No decking = no strip at all (clean bottom edge)
   } else {
     // CLASSIC: Steel trim at bottom - full width matching fascia
     s += rc(-sideOverhang, height, width + sideOverhang*2, trimH, { fill: COL.anthracite });
@@ -803,28 +799,26 @@ function renderSide(cfg) {
       s += ln(feStart, height, feEnd, height, 3, '#222'); // bottom of screen
       const uX = frontRight ? feEnd - 180 : feStart;
       s += rc(uX, ROOF_ZONE, 180, wallH, { fill: COL.anthracite, sw: 0 });
-      // Steel trim extends full depth including 400mm for closed corner
-      s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.anthracite });
-      s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.anthraciteDk);
+      if (hasDecking !== false) {
+        // Decking strip extends full depth including 400mm for closed corner
+        s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.decking });
+        s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.deckingLine);
+      }
+      // No decking = no strip at all
     } else {
       // Open corner
       const endX = frontRight ? feEnd : feStart;
       // Removed vertical line at open corner edge
       const trimX = frontRight ? bldgEdge - 50 : bldgEdge;
       s += rc(trimX, ROOF_ZONE, 50, wallH, { fill: COL.anthracite, sw: 0 }); // No stroke
-      // Steel trim on main building depth (anthracite)
-      s += rc(0, height, depth, trimH, { fill: COL.anthracite });
-      s += ln(0, height, depth, height, 1.5, COL.anthraciteDk);
       if (hasDecking !== false) {
         // Decking only on the 400mm canopy projection
         s += rc(feStart, height, proj, trimH, { fill: COL.decking });
         const deckEdge = frontRight ? feEnd : feStart;
         s += ln(deckEdge, height, deckEdge, height + trimH, 1, COL.deckingLine);
-      } else {
-        // No decking - steel trim on canopy projection too
-        s += rc(feStart, height, proj, trimH, { fill: COL.anthracite });
+        s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.deckingLine);
       }
-      s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.anthraciteDk);
+      // No decking = no strip at all on the canopy projection
     }
   } else {
     // CLASSIC - steel trim extends full fascia width for seamless look
