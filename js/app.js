@@ -31,6 +31,8 @@ createApp({
 
       nextCompId: 100,
       nextFeatureId: 1000,
+      nextAcUnitId: 2000,
+      nextLabelId: 3000,
 
       // Survey extras checkboxes (mapped to state on apply)
       surveyExtras: {
@@ -120,6 +122,11 @@ createApp({
       if (defaults) {
         this.state.cladding.front = defaults.front;
       }
+      // Reset canopy/decking to included when switching to Signature
+      if (newTier === 'signature') {
+        this.state.hasCanopy = true;
+        this.state.hasDecking = true;
+      }
     },
     activeBottomTab(newTab) {
       if (newTab === 'survey') {
@@ -205,6 +212,46 @@ createApp({
 
     removeExternalFeature(id) {
       this.state.externalFeatures = this.state.externalFeatures.filter(f => f.id !== id);
+    },
+
+    addAcUnit(type) {
+      const isInternal = type === 'internal';
+      const x = isInternal
+        ? Math.round((this.state.width - 800 - 200) / 50) * 50
+        : Math.round(this.state.width / 2 / 50) * 50;
+      const y = isInternal
+        ? 200
+        : Math.round((this.state.depth + 500) / 50) * 50;
+      this.state.acUnits.push({
+        id: 'ac-' + (this.nextAcUnitId++),
+        type,
+        x,
+        y,
+        w: 800,
+        h: 400,
+        rotated: false,
+      });
+    },
+
+    removeAcUnit(id) {
+      this.state.acUnits = this.state.acUnits.filter(u => u.id !== id);
+    },
+
+    addDrawingLabel() {
+      this.state.drawingLabels.push({
+        id: 'lbl-' + (this.nextLabelId++),
+        text: 'Label',
+        fontSize: 140,
+        x: 5000,
+        y: 2000,
+        arrowEnabled: false,
+        arrowX: 5500,
+        arrowY: 2300,
+      });
+    },
+
+    removeDrawingLabel(id) {
+      this.state.drawingLabels = this.state.drawingLabels.filter(l => l.id !== id);
     },
 
     onPartitionChange() {
@@ -305,7 +352,17 @@ createApp({
       // Build "building includes" text based on tier and features
       let buildingIncludes = `The ${s.tier === 'signature' ? 'Signature' : 'Classic'} range includes`;
       if (s.tier === 'signature') {
-        buildingIncludes += ' a 400mm integrated canopy and decking on the front of the building.';
+        const hasCanopy = s.hasCanopy !== false;
+        const hasDecking = s.hasDecking !== false;
+        if (hasCanopy && hasDecking) {
+          buildingIncludes += ' a 400mm integrated canopy and decking on the front of the building.';
+        } else if (hasCanopy) {
+          buildingIncludes += ' a 400mm integrated canopy on the front of the building.';
+        } else if (hasDecking) {
+          buildingIncludes += ' integrated decking on the front of the building.';
+        } else {
+          buildingIncludes += ' a sleek, minimalist finish on the front of the building.';
+        }
       } else {
         buildingIncludes += ' a sleek, minimalist design without the front canopy/decking.';
       }
@@ -392,9 +449,17 @@ createApp({
           this.state = JSON.parse(text);
           this.nextCompId = 100 + (this.state.components?.length || 0);
           this.nextFeatureId = 1000 + (this.state.externalFeatures?.length || 0);
+          this.nextAcUnitId = 2000 + (this.state.acUnits?.length || 0);
+          this.nextLabelId = 3000 + (this.state.drawingLabels?.length || 0);
           // Ensure externalFeatures exists for older configs
           if (!this.state.externalFeatures) {
             this.state.externalFeatures = [];
+          }
+          if (!this.state.acUnits) {
+            this.state.acUnits = [];
+          }
+          if (!this.state.drawingLabels) {
+            this.state.drawingLabels = [];
           }
           this.notify('Configuration loaded: ' + (this.state.customer?.name || file.name));
         } catch (err) {
@@ -591,6 +656,8 @@ createApp({
         // Corners (Signature only)
         cornerLeft: this.state.cornerLeft === 'closed' ? 'Closed' : 'Open',
         cornerRight: this.state.cornerRight === 'closed' ? 'Closed' : 'Open',
+        hasCanopy: this.state.tier === 'signature' ? (this.state.hasCanopy !== false ? 'Yes' : 'No') : 'N/A',
+        hasDecking: this.state.tier === 'signature' ? (this.state.hasDecking !== false ? 'Yes' : 'No') : 'N/A',
         
         // Foundation
         foundationType: this.state.foundationType || 'ground-screw',
@@ -983,6 +1050,14 @@ createApp({
       // Ensure externalFeatures array exists
       if (!this.state.externalFeatures) {
         this.state.externalFeatures = [];
+      }
+      // Ensure acUnits array exists
+      if (!this.state.acUnits) {
+        this.state.acUnits = [];
+      }
+      // Ensure drawingLabels array exists
+      if (!this.state.drawingLabels) {
+        this.state.drawingLabels = [];
       }
       // Ensure bathroom state exists
       if (!this.state.bathroom) {

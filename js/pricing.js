@@ -85,11 +85,20 @@ export function calculatePrice(state) {
   // 4c. Deductions
   const ded = state.deductions || {};
   if (pricesData.deductions) {
-    if (ded.removeDecking) {
-      result.deductions.push({
-        label: pricesData.deductions.removeDecking.label,
-        price: pricesData.deductions.removeDecking.price
-      });
+    // Signature canopy/decking removal
+    if (state.tier === 'signature') {
+      if (state.hasDecking === false) {
+        result.deductions.push({
+          label: pricesData.deductions.removeDecking.label,
+          price: pricesData.deductions.removeDecking.price
+        });
+      }
+      if (state.hasCanopy === false) {
+        result.deductions.push({
+          label: pricesData.deductions.removeCanopy.label,
+          price: pricesData.deductions.removeCanopy.price
+        });
+      }
     }
     if (ded.useExistingFoundation) {
       result.deductions.push({

@@ -20,7 +20,7 @@
     "otherDescription": ""
   },
   "cornerLeft": "open",
-  "cornerRight": "closed",
+  "cornerRight": "open",
   "overhangDepth": 400,
   "foundationType": "ground-screw",
   "showBoundaries": false,
@@ -34,6 +34,8 @@
     }
   ],
   "externalFeatures": [],
+  "acUnits": [],
+  "drawingLabels": [],
   "extras": {
     "externalSocket": 0,
     "upDownLight": 0,
@@ -55,8 +57,11 @@
     "premiumFlooring": false,
     "bifoldUpgrade": false
   },
+  "hasCanopy": true,
+  "hasDecking": true,
   "deductions": {
     "removeDecking": false,
+    "removeCanopy": false,
     "useExistingFoundation": false
   },
   "partitionRoom": {

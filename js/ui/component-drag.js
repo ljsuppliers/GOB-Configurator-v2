@@ -27,21 +27,41 @@ export function cleanup() {
 }
 
 function handleMouseDown(e) {
+  // Check for label arrow drag first (highest z-priority for small targets)
+  const arrowTarget = e.target.closest('.label-arrow.draggable');
+  if (arrowTarget) {
+    handleLabelDragStart(e, arrowTarget, 'arrow');
+    return;
+  }
+
+  // Check for label text drag
+  const labelTarget = e.target.closest('.label-text.draggable');
+  if (labelTarget) {
+    handleLabelDragStart(e, labelTarget, 'text');
+    return;
+  }
+
+  // Check for AC unit drag
+  const acTarget = e.target.closest('.ac-unit.draggable');
+  if (acTarget) {
+    handleAcUnitDragStart(e, acTarget);
+    return;
+  }
+
   // Check for external feature first
   const featureTarget = e.target.closest('.external-feature.draggable');
   if (featureTarget) {
     handleFeatureDragStart(e, featureTarget);
     return;
   }
-  
+
   // Check for plan-component (floor plan dragging)
   const planTarget = e.target.closest('.plan-component');
   if (planTarget) {
-    console.log('[drag] plan-component found:', planTarget.dataset.compId, planTarget.dataset.elevation, planTarget);
     handlePlanComponentDragStart(e, planTarget);
     return;
   }
-  
+
   // Otherwise check for component on elevations
   const target = e.target.closest('.component.draggable');
   if (!target) return;
@@ -116,6 +136,73 @@ function handleFeatureDragStart(e, target) {
   e.preventDefault();
 }
 
+function handleAcUnitDragStart(e, target) {
+  const acId = target.dataset.acId;
+  if (!acId || !vueApp) return;
+
+  const unit = vueApp.state.acUnits.find(u => u.id === acId);
+  if (!unit) return;
+
+  const svg = target.closest('svg');
+  if (!svg) return;
+
+  const vb = svg.getAttribute('viewBox');
+  if (!vb) return;
+  const [, , vbW, vbH] = vb.split(' ').map(Number);
+  const svgRect = svg.getBoundingClientRect();
+
+  dragState = {
+    type: 'ac-unit',
+    unitId: acId,
+    unit,
+    svg,
+    scaleX: vbW / svgRect.width,
+    scaleY: vbH / svgRect.height,
+    startX: e.clientX,
+    startY: e.clientY,
+    startPosX: unit.x,
+    startPosY: unit.y,
+    active: false
+  };
+
+  target.classList.add('dragging');
+  e.preventDefault();
+}
+
+function handleLabelDragStart(e, target, dragPart) {
+  const labelId = target.dataset.labelId;
+  if (!labelId || !vueApp) return;
+
+  const label = vueApp.state.drawingLabels.find(l => l.id === labelId);
+  if (!label) return;
+
+  const svg = target.closest('svg');
+  if (!svg) return;
+
+  const vb = svg.getAttribute('viewBox');
+  if (!vb) return;
+  const [, , vbW, vbH] = vb.split(' ').map(Number);
+  const svgRect = svg.getBoundingClientRect();
+
+  dragState = {
+    type: 'label',
+    dragPart,
+    labelId,
+    label,
+    svg,
+    scaleX: vbW / svgRect.width,
+    scaleY: vbH / svgRect.height,
+    startX: e.clientX,
+    startY: e.clientY,
+    startPosX: dragPart === 'arrow' ? label.arrowX : label.x,
+    startPosY: dragPart === 'arrow' ? label.arrowY : label.y,
+    active: false
+  };
+
+  target.classList.add('dragging');
+  e.preventDefault();
+}
+
 function handlePlanComponentDragStart(e, target) {
   const compId = target.dataset.compId;
   const elevation = target.dataset.elevation;
@@ -159,30 +246,56 @@ function handleMouseMove(e) {
   if (!dragState) return;
   
   const dx = e.clientX - dragState.startX;
-  
+  const dy = e.clientY - dragState.startY;
+
   // Only start dragging after small movement threshold
-  if (!dragState.active && Math.abs(dx) > 3) {
+  if (!dragState.active && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
     dragState.active = true;
   }
-  
+
   if (!dragState.active) return;
+
+  // Convert pixel delta to mm (used by 1D draggers)
+  const mmDelta = dx * (dragState.scale || dragState.scaleX || 1);
   
-  // Convert pixel delta to mm
-  const mmDelta = dx * dragState.scale;
-  
-  if (dragState.type === 'feature') {
+  if (dragState.type === 'ac-unit') {
+    // AC unit 2D dragging on plan view
+    const dxPx = e.clientX - dragState.startX;
+    const dyPx = e.clientY - dragState.startY;
+    let newX = dragState.startPosX + dxPx * dragState.scaleX;
+    let newY = dragState.startPosY + dyPx * dragState.scaleY;
+    newX = Math.round(newX / 50) * 50;
+    newY = Math.round(newY / 50) * 50;
+    dragState.unit.x = newX;
+    dragState.unit.y = newY;
+  } else if (dragState.type === 'label') {
+    // Label text or arrow 2D dragging
+    const dxPx = e.clientX - dragState.startX;
+    const dyPx = e.clientY - dragState.startY;
+    let newX = dragState.startPosX + dxPx * dragState.scaleX;
+    let newY = dragState.startPosY + dyPx * dragState.scaleY;
+    newX = Math.round(newX / 50) * 50;
+    newY = Math.round(newY / 50) * 50;
+    if (dragState.dragPart === 'arrow') {
+      dragState.label.arrowX = newX;
+      dragState.label.arrowY = newY;
+    } else {
+      dragState.label.x = newX;
+      dragState.label.y = newY;
+    }
+  } else if (dragState.type === 'feature') {
     // External feature dragging (horizontal only)
     const featureWidths = {
       'upDownLight': 120,
       'socket': 150
     };
     const featWidth = featureWidths[dragState.feat.type] || 150;
-    
+
     // Calculate new position with bounds
     let newPos = dragState.startPosX + mmDelta;
     newPos = Math.round(newPos / 50) * 50; // Snap to 50mm grid
     newPos = Math.max(0, Math.min(newPos, vueApp.state.width - featWidth));
-    
+
     // Update Vue state directly
     dragState.feat.x = newPos;
   } else if (dragState.type === 'plan-component') {
@@ -239,15 +352,21 @@ function handleMouseMove(e) {
 
 function handleMouseUp(e) {
   if (!dragState) return;
-  
+
   // Remove dragging class
   if (dragState.type === 'feature') {
     const el = document.querySelector(`[data-feature-id="${dragState.featId}"]`);
+    if (el) el.classList.remove('dragging');
+  } else if (dragState.type === 'ac-unit') {
+    const el = document.querySelector(`[data-ac-id="${dragState.unitId}"]`);
+    if (el) el.classList.remove('dragging');
+  } else if (dragState.type === 'label') {
+    const el = document.querySelector(`[data-label-id="${dragState.labelId}"]`);
     if (el) el.classList.remove('dragging');
   } else {
     const el = document.querySelector(`[data-comp-id="${dragState.compId}"]`);
     if (el) el.classList.remove('dragging');
   }
-  
+
   dragState = null;
 }

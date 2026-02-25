@@ -112,6 +112,7 @@
   },
   "deductions": {
     "removeDecking": { "label": "Remove integrated decking", "price": -750 },
+    "removeCanopy": { "label": "Remove canopy", "price": -750 },
     "useExistingFoundation": { "label": "Use existing foundation", "price": -500 }
   },
   "claddingUpgrade": {

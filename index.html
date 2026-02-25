@@ -365,6 +365,67 @@
           </div>
         </div>
 
+        <!-- AC Units on Plan View -->
+        <div class="config-section">
+          <h4>AC Units (Plan View)</h4>
+          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Add AC unit rectangles to plan view (drag to position)</p>
+          <div style="display:flex;gap:6px;margin-bottom:10px;">
+            <button class="btn" style="flex:1;padding:6px;font-size:12px;" @click="addAcUnit('internal')">+ Internal AC</button>
+            <button class="btn" style="flex:1;padding:6px;font-size:12px;" @click="addAcUnit('external')">+ External AC</button>
+          </div>
+          <p v-if="!state.acUnits.length" class="empty-msg">Click buttons above to add.</p>
+          <div v-for="unit in state.acUnits" :key="unit.id" class="placed-component" style="flex-wrap:wrap;gap:4px;">
+            <div style="display:flex;align-items:center;gap:4px;width:100%;">
+              <span class="comp-label">{{ unit.type === 'internal' ? 'AC (Int)' : 'AC (Ext)' }}</span>
+              <input type="number" v-model.number="unit.x" class="input-sm" style="width:55px;" step="50" title="X position (mm)">
+              <span class="comp-pos">x</span>
+              <input type="number" v-model.number="unit.y" class="input-sm" style="width:55px;" step="50" title="Y position (mm)">
+              <span class="comp-pos">y</span>
+              <button class="comp-delete" @click="removeAcUnit(unit.id)">&#215;</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;">
+              <span style="color:#888;">W</span>
+              <input type="number" v-model.number="unit.w" class="input-sm" style="width:55px;" step="50" min="200" title="Width (mm)">
+              <span style="color:#888;">H</span>
+              <input type="number" v-model.number="unit.h" class="input-sm" style="width:55px;" step="50" min="200" title="Height (mm)">
+              <button class="btn-sm" style="padding:2px 8px;font-size:11px;" @click="unit.rotated = !unit.rotated" :title="unit.rotated ? 'Vertical — click to rotate horizontal' : 'Horizontal — click to rotate vertical'">&#8635; {{ unit.rotated ? 'Vert' : 'Horiz' }}</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Drawing Labels with Arrows -->
+        <div class="config-section">
+          <h4>Drawing Labels</h4>
+          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Add text labels anywhere on the drawing (drag to position)</p>
+          <div style="margin-bottom:10px;">
+            <button class="btn" style="padding:6px;font-size:12px;" @click="addDrawingLabel">+ Add Label</button>
+          </div>
+          <p v-if="!state.drawingLabels.length" class="empty-msg">Click button above to add.</p>
+          <div v-for="lbl in state.drawingLabels" :key="lbl.id" class="placed-component" style="flex-wrap:wrap;gap:4px;">
+            <div style="display:flex;align-items:center;gap:4px;width:100%;">
+              <input type="text" v-model="lbl.text" class="input-sm" style="flex:1;min-width:80px;" placeholder="Label text">
+              <span style="color:#888;font-size:11px;">Size</span>
+              <input type="number" v-model.number="lbl.fontSize" class="input-sm" style="width:50px;" step="10" min="40" max="400" title="Font size">
+              <button class="comp-delete" @click="removeDrawingLabel(lbl.id)">&#215;</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;">
+              <span style="color:#888;">X</span>
+              <input type="number" v-model.number="lbl.x" class="input-sm" style="width:55px;" step="50">
+              <span style="color:#888;">Y</span>
+              <input type="number" v-model.number="lbl.y" class="input-sm" style="width:55px;" step="50">
+              <label style="display:flex;align-items:center;gap:2px;margin-left:4px;">
+                <input type="checkbox" v-model="lbl.arrowEnabled"> Arrow
+              </label>
+            </div>
+            <div v-if="lbl.arrowEnabled" style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;">
+              <span style="color:#888;">Tip X</span>
+              <input type="number" v-model.number="lbl.arrowX" class="input-sm" style="width:55px;" step="50">
+              <span style="color:#888;">Tip Y</span>
+              <input type="number" v-model.number="lbl.arrowY" class="input-sm" style="width:55px;" step="50">
+            </div>
+          </div>
+        </div>
+
         <!-- Electrical Extras -->
         <div class="config-section">
           <h4>Electrical Extras</h4>
@@ -439,14 +500,24 @@
           </label>
         </div>
 
+        <!-- Canopy & Decking (Signature) -->
+        <div class="config-section" v-if="state.tier === 'signature'">
+          <h4>Canopy & Decking</h4>
+          <div class="checkbox-row">
+            <input type="checkbox" v-model="state.hasCanopy" id="chk-has-canopy">
+            <label for="chk-has-canopy">Include canopy</label>
+            <span v-if="!state.hasCanopy" class="extra-price deduction">-&pound;750</span>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" v-model="state.hasDecking" id="chk-has-decking">
+            <label for="chk-has-decking">Include decking</label>
+            <span v-if="!state.hasDecking" class="extra-price deduction">-&pound;750</span>
+          </div>
+        </div>
+
         <!-- Deductions -->
         <div class="config-section">
           <h4>Deductions</h4>
-          <div class="checkbox-row">
-            <input type="checkbox" v-model="state.deductions.removeDecking" id="chk-remove-decking">
-            <label for="chk-remove-decking">Remove integrated decking</label>
-            <span class="extra-price deduction">-&pound;750</span>
-          </div>
           <div class="checkbox-row">
             <input type="checkbox" v-model="state.deductions.useExistingFoundation" id="chk-existing-foundation">
             <label for="chk-existing-foundation">Use existing foundation</label>
