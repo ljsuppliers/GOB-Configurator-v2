@@ -801,8 +801,8 @@ function renderSide(cfg) {
       }
     } else {
       // Open corner
-      const trimX = frontRight ? bldgEdge - 50 : bldgEdge;
-      s += rc(trimX, ROOF_ZONE, 50, wallH, { fill: COL.anthracite, sw: 0 });
+      const trimX = frontRight ? bldgEdge - 180 : bldgEdge;
+      s += rc(trimX, ROOF_ZONE, 180, wallH, { fill: COL.anthracite, sw: 0 });
       if (hasDecking !== false) {
         // Decking only on the 400mm canopy projection (drawn on top of base trim)
         s += rc(feStart, height, proj, trimH, { fill: COL.decking });
