@@ -223,8 +223,8 @@ app.post('/api/create-quote', async (req, res) => {
     // === STANDARD FEATURES HEADER (row 23) ===
     updates.push({ range: 'Quote!B23', values: [[isSig ? 'Standard Features (Signature)' : 'Standard Features (Classic)']] });
     
-    // === OVERHANG LINE (row 25) ===
-    updates.push({ range: 'Quote!B25', values: [[isSig ? 'To include 400mm overhang/decking' : '']] });
+    // === CANOPY LINE (row 25) ===
+    updates.push({ range: 'Quote!B25', values: [[isSig ? 'To include 400mm canopy/decking' : '']] });
     
     // === FOUNDATION (row 27) ===
     if (q.foundationPrice) {

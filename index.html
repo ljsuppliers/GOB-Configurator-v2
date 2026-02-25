@@ -115,9 +115,9 @@
           </div>
         </div>
 
-        <!-- Corners & Overhang -->
+        <!-- Corners, Canopy & Decking -->
         <div class="config-section">
-          <h4>Corners & Overhang</h4>
+          <h4>Corners, Canopy & Decking</h4>
           <div class="corner-row">
             <div>
               <label class="corner-label">Left Corner</label>
@@ -134,9 +134,21 @@
               </div>
             </div>
           </div>
-          <label>Overhang Depth (mm)
+          <label>Canopy Depth (mm)
             <input type="number" v-model.number="state.overhangDepth" min="0" max="1000" step="50">
           </label>
+          <div v-if="state.tier === 'signature'" style="margin-top:8px;">
+            <div class="checkbox-row">
+              <input type="checkbox" v-model="state.hasCanopy" id="chk-has-canopy">
+              <label for="chk-has-canopy">Include canopy</label>
+              <span v-if="!state.hasCanopy" class="extra-price deduction">-&pound;750</span>
+            </div>
+            <div class="checkbox-row">
+              <input type="checkbox" v-model="state.hasDecking" id="chk-has-decking">
+              <label for="chk-has-decking">Include decking</label>
+              <span v-if="!state.hasDecking" class="extra-price deduction">-&pound;750</span>
+            </div>
+          </div>
           <label>Foundation
             <select v-model="state.foundationType">
               <option value="ground-screw">Ground Screw</option>
@@ -498,21 +510,6 @@
           <label>Additional Decking (sqm)
             <input type="number" v-model.number="state.structuralExtras.additionalDecking" min="0" max="50" step="1">
           </label>
-        </div>
-
-        <!-- Canopy & Decking (Signature) -->
-        <div class="config-section" v-if="state.tier === 'signature'">
-          <h4>Canopy & Decking</h4>
-          <div class="checkbox-row">
-            <input type="checkbox" v-model="state.hasCanopy" id="chk-has-canopy">
-            <label for="chk-has-canopy">Include canopy</label>
-            <span v-if="!state.hasCanopy" class="extra-price deduction">-&pound;750</span>
-          </div>
-          <div class="checkbox-row">
-            <input type="checkbox" v-model="state.hasDecking" id="chk-has-decking">
-            <label for="chk-has-decking">Include decking</label>
-            <span v-if="!state.hasDecking" class="extra-price deduction">-&pound;750</span>
-          </div>
         </div>
 
         <!-- Deductions -->

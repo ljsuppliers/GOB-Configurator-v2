@@ -292,7 +292,7 @@ export function generateQuotePDF(state, price) {
   // STANDARD FEATURES
   const standardFeatures = [
     'Insulated timber/panel construction (100mm PIR walls, 75mm PIR floor/ceiling)',
-    state.tier === 'signature' ? '400mm overhang with integrated decking feature' : 'Flush front design with clean lines',
+    state.tier === 'signature' ? '400mm canopy with integrated decking feature' : 'Flush front design with clean lines',
     `${state.foundationType === 'ground-screw' ? 'Ground screw' : 'Concrete'} foundation system`,
     `${state.cornerLeft === 'open' ? 'Open' : 'Closed'} left corner, ${state.cornerRight === 'open' ? 'open' : 'closed'} right corner`
   ];
@@ -401,7 +401,7 @@ export function generateQuotePDF(state, price) {
   // ELECTRICAL INSTALLATION
   const electrical = [
     'LED downlights/panel lights',
-    state.tier === 'signature' ? 'External spotlights in overhang soffit' : null,
+    state.tier === 'signature' ? 'External spotlights in canopy soffit' : null,
     '5× double power sockets (1 with USB ports)',
     '1× double light switch',
     '1× network connection port (CAT6)',

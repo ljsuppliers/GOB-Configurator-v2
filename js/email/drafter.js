@@ -102,9 +102,9 @@ function generateBuildingIncludesList(state, cladLabels) {
     features.push(`Open-ended ${openCorners.join(' and ')} corner${openCorners.length > 1 ? 's' : ''}`);
   }
 
-  // Overhang/decking
+  // Canopy/decking
   if (state.overhangDepth > 0) {
-    features.push(`Contemporary overhang/decking feature (${state.overhangDepth}mm)`);
+    features.push(`Contemporary canopy/decking feature (${state.overhangDepth}mm)`);
   }
 
   // Foundation
