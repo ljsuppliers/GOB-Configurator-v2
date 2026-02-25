@@ -697,8 +697,12 @@ function renderFront(cfg) {
       s += rc(-sideOverhang, height, width + sideOverhang*2, trimH, { fill: COL.decking });
       s += ln(-sideOverhang, height, width + sideOverhang, height, 1.5, COL.deckingLine);
       s += ln(-sideOverhang, height + trimH, width + sideOverhang, height + trimH, 1, COL.deckingLine);
+    } else {
+      // No decking - anthracite base trim around bottom of building
+      s += rc(-sideOverhang, height, width + sideOverhang*2, trimH, { fill: COL.anthracite });
+      s += ln(-sideOverhang, height, width + sideOverhang, height, 1.5, COL.anthraciteDk);
+      s += ln(-sideOverhang, height + trimH, width + sideOverhang, height + trimH, 1, COL.anthraciteDk);
     }
-    // No decking = no strip at all (clean bottom edge)
   } else {
     // CLASSIC: Steel trim at bottom - full width matching fascia
     s += rc(-sideOverhang, height, width + sideOverhang*2, trimH, { fill: COL.anthracite });
@@ -803,8 +807,12 @@ function renderSide(cfg) {
         // Decking strip extends full depth including 400mm for closed corner
         s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.decking });
         s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.deckingLine);
+      } else {
+        // No decking - anthracite base trim around bottom of building
+        s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.anthracite });
+        s += ln(fasciaX, height, fasciaX + fasciaW, height, 1.5, COL.anthraciteDk);
+        s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.anthraciteDk);
       }
-      // No decking = no strip at all
     } else {
       // Open corner
       const endX = frontRight ? feEnd : feStart;
@@ -817,8 +825,12 @@ function renderSide(cfg) {
         const deckEdge = frontRight ? feEnd : feStart;
         s += ln(deckEdge, height, deckEdge, height + trimH, 1, COL.deckingLine);
         s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.deckingLine);
+      } else {
+        // No decking - anthracite base trim around bottom of building
+        s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.anthracite });
+        s += ln(fasciaX, height, fasciaX + fasciaW, height, 1.5, COL.anthraciteDk);
+        s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.anthraciteDk);
       }
-      // No decking = no strip at all on the canopy projection
     }
   } else {
     // CLASSIC - steel trim extends full fascia width for seamless look
