@@ -677,37 +677,22 @@ function renderFront(cfg) {
     s += renderComp(comp.type, comp.x, cy, comp.w, comp.h, comp.id, claddingType, comp.handleSide);
   }
   
-  // Steel trim at bottom of building (both Classic and Signature)
-  const trimH = deckH; // Steel trim same height as decking
-  
+  // Base trim at bottom of building - ALWAYS present on all tiers
+  const trimH = deckH;
+  s += rc(-sideOverhang, height, width + sideOverhang*2, trimH, { fill: COL.anthracite });
+  s += ln(-sideOverhang, height, width + sideOverhang, height, 1.5, COL.anthraciteDk);
+  s += ln(-sideOverhang, height + trimH, width + sideOverhang, height + trimH, 1, COL.anthraciteDk);
+
   if (isSig) {
     // SIGNATURE: Corners at front
-    if (cornerLeft === 'closed') {
-      s += rc(0, ROOF_ZONE, 180, wallH, { fill: COL.anthracite, sw: 0 });
-    } else {
-      s += rc(0, ROOF_ZONE, 180, wallH, { fill: COL.anthracite, sw: 0 });
-    }
-    if (cornerRight === 'closed') {
-      s += rc(width - 180, ROOF_ZONE, 180, wallH, { fill: COL.anthracite, sw: 0 });
-    } else {
-      s += rc(width - 180, ROOF_ZONE, 180, wallH, { fill: COL.anthracite, sw: 0 });
-    }
+    s += rc(0, ROOF_ZONE, 180, wallH, { fill: COL.anthracite, sw: 0 });
+    s += rc(width - 180, ROOF_ZONE, 180, wallH, { fill: COL.anthracite, sw: 0 });
     if (hasDecking !== false) {
-      // Decking on front - full width matching fascia (25mm overhang each side)
+      // Decking on front - drawn on top of base trim
       s += rc(-sideOverhang, height, width + sideOverhang*2, trimH, { fill: COL.decking });
       s += ln(-sideOverhang, height, width + sideOverhang, height, 1.5, COL.deckingLine);
       s += ln(-sideOverhang, height + trimH, width + sideOverhang, height + trimH, 1, COL.deckingLine);
-    } else {
-      // No decking - anthracite base trim around bottom of building
-      s += rc(-sideOverhang, height, width + sideOverhang*2, trimH, { fill: COL.anthracite });
-      s += ln(-sideOverhang, height, width + sideOverhang, height, 1.5, COL.anthraciteDk);
-      s += ln(-sideOverhang, height + trimH, width + sideOverhang, height + trimH, 1, COL.anthraciteDk);
     }
-  } else {
-    // CLASSIC: Steel trim at bottom - full width matching fascia
-    s += rc(-sideOverhang, height, width + sideOverhang*2, trimH, { fill: COL.anthracite });
-    s += ln(-sideOverhang, height, width + sideOverhang, height, 1.5, COL.anthraciteDk);
-    s += ln(-sideOverhang, height + trimH, width + sideOverhang, height + trimH, 1, COL.anthraciteDk);
   }
   
   // External features (lights and sockets on front wall) - rendered LAST so they appear on top
@@ -785,10 +770,14 @@ function renderSide(cfg) {
     const cy = comp.y !== undefined ? comp.y : (height - comp.h);
     s += renderComp(comp.type, comp.x, cy, comp.w, comp.h, comp.id, claddingType, comp.handleSide);
   }
-  const trimH = deckH; // Steel trim same height as decking
-  
+  // Base trim at bottom of building - ALWAYS present on all tiers
+  const trimH = deckH;
+  s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.anthracite });
+  s += ln(fasciaX, height, fasciaX + fasciaW, height, 1.5, COL.anthraciteDk);
+  s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.anthraciteDk);
+
   if (isSig && frontProj > 50) {
-    // SIGNATURE with overhang (400mm front)
+    // SIGNATURE with canopy (400mm front)
     const feStart = frontRight ? depth : -frontProj;
     const feEnd = frontRight ? depth + frontProj : 0;
     const proj = frontProj;
@@ -804,39 +793,21 @@ function renderSide(cfg) {
       const uX = frontRight ? feEnd - 180 : feStart;
       s += rc(uX, ROOF_ZONE, 180, wallH, { fill: COL.anthracite, sw: 0 });
       if (hasDecking !== false) {
-        // Decking strip extends full depth including 400mm for closed corner
+        // Decking covers full width including canopy (drawn on top of base trim)
         s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.decking });
         s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.deckingLine);
-      } else {
-        // No decking - anthracite base trim around bottom of building
-        s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.anthracite });
-        s += ln(fasciaX, height, fasciaX + fasciaW, height, 1.5, COL.anthraciteDk);
-        s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.anthraciteDk);
       }
     } else {
       // Open corner
-      const endX = frontRight ? feEnd : feStart;
-      // Removed vertical line at open corner edge
       const trimX = frontRight ? bldgEdge - 50 : bldgEdge;
-      s += rc(trimX, ROOF_ZONE, 50, wallH, { fill: COL.anthracite, sw: 0 }); // No stroke
+      s += rc(trimX, ROOF_ZONE, 50, wallH, { fill: COL.anthracite, sw: 0 });
       if (hasDecking !== false) {
-        // Decking only on the 400mm canopy projection
+        // Decking only on the 400mm canopy projection (drawn on top of base trim)
         s += rc(feStart, height, proj, trimH, { fill: COL.decking });
         const deckEdge = frontRight ? feEnd : feStart;
         s += ln(deckEdge, height, deckEdge, height + trimH, 1, COL.deckingLine);
-        s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.deckingLine);
-      } else {
-        // No decking - anthracite base trim around bottom of building
-        s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.anthracite });
-        s += ln(fasciaX, height, fasciaX + fasciaW, height, 1.5, COL.anthraciteDk);
-        s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.anthraciteDk);
       }
     }
-  } else {
-    // CLASSIC - steel trim extends full fascia width for seamless look
-    s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.anthracite });
-    s += ln(fasciaX, height, fasciaX + fasciaW, height, 1.5, COL.anthraciteDk);
-    s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.anthraciteDk);
   }
 
   return s;
