@@ -735,22 +735,22 @@ createApp({
       this.notify('Creating Google Sheet...');
       
       try {
-        const response = await fetch('http://localhost:3001/api/create-quote', {
+        const response = await fetch('/api/create-quote', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(quoteData)
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
           this.notify('Google Sheet created!');
           window.open(result.url, '_blank');
         } else {
-          this.notify('Error: ' + result.error);
+          this.notify('Error: ' + (result.error || 'Unknown error'));
         }
       } catch (err) {
-        this.notify('Error: Make sure sheets-server is running (node sheets-server.js)');
+        this.notify('Error creating Google Sheet. Please try again.');
         console.error('Google Sheets error:', err);
       }
     },
@@ -913,8 +913,6 @@ createApp({
           this.state.cladding.rear = 'western-red-cedar';
         } else if (pref === 'composite') {
           this.state.cladding.front = 'composite-slatted';
-        } else if (pref === 'thermowood') {
-          this.state.cladding.front = 'thermowood';
         }
       }
 

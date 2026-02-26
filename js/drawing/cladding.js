@@ -52,7 +52,7 @@ export function horizontalCladding(x, y, w, h, options = {}) {
 export function renderCladding(type, x, y, w, h, elevation = 'side') {
   // Front elevations use diagonal for timber/cedar, horizontal for composite
   if (elevation === 'front') {
-    if (type === 'western-red-cedar' || type === 'thermowood' || type === 'larch') {
+    if (type === 'western-red-cedar' || type === 'larch') {
       return diagonalCladding(x, y, w, h);
     } else if (type && type.startsWith('composite-')) {
       return horizontalCladding(x, y, w, h);

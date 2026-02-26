@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/create-quote.js": {
+      "maxDuration": 30,
+      "includeFiles": "../assets/logo-text.png"
+    }
+  }
+}

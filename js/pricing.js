@@ -33,6 +33,13 @@ export function getDownlightCount(state) {
   return 12;
 }
 
+export function getSocketCount(state) {
+  const sqm = (state.width / 1000) * (state.depth / 1000);
+  if (sqm <= 10) return 4;
+  if (sqm <= 25) return 5;
+  return 7;
+}
+
 export function getSpotlightCount(state) {
   if (state.tier !== 'signature') return 0;
   return Math.floor(state.width / 1000);
@@ -337,7 +344,7 @@ function calculateCladdingUpgrades(state) {
 
   // Default cladding per tier
   const defaults = state.tier === 'classic'
-    ? { front: 'composite-latte', left: 'anthracite-steel', right: 'anthracite-steel', rear: 'anthracite-steel' }
+    ? { front: 'composite-coffee', left: 'anthracite-steel', right: 'anthracite-steel', rear: 'anthracite-steel' }
     : { front: 'western-red-cedar', left: 'anthracite-steel', right: 'anthracite-steel', rear: 'anthracite-steel' };
 
   const sides = {
@@ -356,7 +363,7 @@ function calculateCladdingUpgrades(state) {
         .replace('grey', '')];
 
       // Check for timber/composite upgrades on sides
-      if (current === 'western-red-cedar' || current === 'thermowood' || current === 'larch') {
+      if (current === 'western-red-cedar' || current === 'larch') {
         const sqm = info.widthM * heightM;
         const rate = pricesData.claddingUpgrade.cedar?.perSqm || 125;
         upgrades.push({

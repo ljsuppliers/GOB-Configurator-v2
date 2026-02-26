@@ -2,15 +2,8 @@
 // Redesigned with professional layout and branding
 
 import { getQuoteLayout, formatCurrency, formatDate } from './template.js';
-
-// Load logo base64 (will be injected by build process or loaded separately)
-let logoBase64 = null;
-
-// Load logo on module initialization
-fetch('./assets/logo-base64.txt')
-  .then(res => res.text())
-  .then(data => { logoBase64 = data.trim(); })
-  .catch(err => console.warn('Logo not loaded:', err));
+import logoBase64 from './logoData.js';
+import { getSocketCount } from '../pricing.js';
 
 // ═══════════════════════════════════════════════════════════════
 // VERSION TRACKING
@@ -291,7 +284,7 @@ export function generateQuotePDF(state, price) {
 
   // STANDARD FEATURES
   const standardFeatures = [
-    'Insulated timber/panel construction (100mm PIR walls, 75mm PIR floor/ceiling)',
+    'Insulated timber/panel construction with 100mm PIR walls, 75mm PIR floor and ceiling',
     state.tier === 'signature' ? '400mm canopy with integrated decking feature' : 'Flush front design with clean lines',
     `${state.foundationType === 'ground-screw' ? 'Ground screw' : 'Concrete'} foundation system`,
     `${state.cornerLeft === 'open' ? 'Open' : 'Closed'} left corner, ${state.cornerRight === 'open' ? 'open' : 'closed'} right corner`
@@ -306,7 +299,6 @@ export function generateQuotePDF(state, price) {
     'grey-steel': 'Grey steel',
     'composite-latte': 'Composite slatted (Latte)',
     'composite-coffee': 'Composite slatted (Coffee)',
-    'thermowood': 'Thermowood',
     'larch': 'Larch'
   };
 
@@ -344,11 +336,9 @@ export function generateQuotePDF(state, price) {
 
   // INTERNAL FINISH
   const internalFinish = [
-    'Flooring: Natural Oak or Light Grey luxury vinyl (to be confirmed)',
-    state.tier === 'signature' 
-      ? 'Walls: Plasterboarded, plastered and decorated white' 
-      : 'Walls: White melamine panel finish',
-    'Skirting board: White MDF'
+    'Flooring: TBC (Natural Oak or Light Grey)',
+    'Walls: Plasterboarded, plastered and decorated white',
+    'Skirting board: white'
   ];
 
   y = renderSection('INTERNAL FINISH', internalFinish);
@@ -401,9 +391,9 @@ export function generateQuotePDF(state, price) {
   // ELECTRICAL INSTALLATION
   const electrical = [
     'LED downlights/panel lights',
-    state.tier === 'signature' ? 'External spotlights in canopy soffit' : null,
-    '5× double power sockets (1 with USB ports)',
-    '1× double light switch',
+    state.tier === 'signature' ? 'External downlights in canopy soffit' : null,
+    `${getSocketCount(state)}× double power sockets (1 with USB ports)`,
+    '1× single dimmable light switch in brushed steel',
     '1× network connection port (CAT6)',
     'Consumer unit with RCD protection'
   ].filter(Boolean);
@@ -638,11 +628,11 @@ export function generateQuotePDF(state, price) {
   const terms = [
     'This quotation is valid for 30 days from the date shown.',
     'All prices include VAT at 20%.',
-    'We ask that customers provide a toilet and mini skip whilst we are on site.',
+    'Customer to provide toilet facility and 6-yard skip for waste removal.',
     'Installation and groundworks are paid directly to our installer team.',
     'Electrical connection to mains supply is excluded and must be arranged by the customer.',
     'Lead time: typically 8-12 weeks from deposit payment.',
-    'A deposit of 25% is required to confirm your order and secure your build slot.'
+    'A holding deposit of £250 is required to reserve your delivery and installation date.'
   ];
 
   terms.forEach(term => {

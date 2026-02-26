@@ -18,6 +18,7 @@ app.use(express.json({ limit: '10mb' }));
 const credentialsPath = path.join(__dirname, 'oauth-credentials.json');
 const tokenPath = path.join(__dirname, 'oauth-token.json');
 const versionsPath = path.join(__dirname, 'quote-versions.json');
+const LOGO_PATH = path.join(__dirname, 'assets', 'logo-text.png');
 
 let oauth2Client;
 
@@ -42,6 +43,58 @@ const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
 const QUOTES_FOLDER_ID = '18dfAzGwqwqT-zI0yUBO60MrIFkvInULP';
+
+// ─── Logo Upload ───
+let logoFileId = null;
+
+async function ensureLogoUploaded() {
+  if (logoFileId) return;
+
+  try {
+    // Check for existing logo in quotes folder
+    const searchRes = await drive.files.list({
+      q: `name = 'GOB-Logo-Text.png' and '${QUOTES_FOLDER_ID}' in parents and trashed = false`,
+      fields: 'files(id)',
+    });
+
+    if (searchRes.data.files && searchRes.data.files.length > 0) {
+      logoFileId = searchRes.data.files[0].id;
+      console.log('Found existing logo on Drive:', logoFileId);
+      return;
+    }
+
+    // Upload logo
+    const fileMetadata = {
+      name: 'GOB-Logo-Text.png',
+      parents: [QUOTES_FOLDER_ID],
+    };
+    const media = {
+      mimeType: 'image/png',
+      body: fs.createReadStream(LOGO_PATH),
+    };
+
+    const uploadRes = await drive.files.create({
+      requestBody: fileMetadata,
+      media,
+      fields: 'id',
+    });
+
+    logoFileId = uploadRes.data.id;
+
+    // Make publicly readable so =IMAGE() formula works
+    await drive.permissions.create({
+      fileId: logoFileId,
+      requestBody: { role: 'reader', type: 'anyone' },
+    });
+
+    console.log('Uploaded logo to Drive:', logoFileId);
+  } catch (err) {
+    console.warn('Logo upload failed (non-fatal):', err.message);
+  }
+}
+
+// Upload logo on startup
+ensureLogoUploaded();
 
 // ─── Helpers ───
 
@@ -124,6 +177,13 @@ function getSpotlights(q) {
   return Math.floor(q.width / 1000);
 }
 
+function getSocketCount(q) {
+  const sqm = (q.width / 1000) * (q.depth / 1000);
+  if (sqm <= 10) return 4;
+  if (sqm <= 25) return 5;
+  return 7;
+}
+
 // ─── Brand colours ───
 const TEAL = { red: 0.231, green: 0.659, blue: 0.659 };       // #3BA8A8
 const TEAL_LIGHT = { red: 0.878, green: 0.949, blue: 0.949 };  // #E0F2F2
@@ -132,6 +192,7 @@ const BLACK = { red: 0, green: 0, blue: 0 };
 const DARK_GREY = { red: 0.2, green: 0.2, blue: 0.2 };
 const LIGHT_GREY = { red: 0.95, green: 0.95, blue: 0.95 };
 const MID_GREY = { red: 0.6, green: 0.6, blue: 0.6 };
+const BORDER_COL = { red: 0.82, green: 0.84, blue: 0.85 };
 
 // ─── Sheet Builder ───
 // Builds rows of data + formatting requests, row by row, so everything is dynamic.
@@ -166,14 +227,18 @@ function buildQuoteData(q) {
   // ════════════════════════════════════════════
   addBlank(1); // Row 1 (spacer)
 
-  // Row 2: Company Name
-  addRow([{ col: 1, value: 'Garden Office Buildings', bold: true, fontSize: 18, fg: TEAL }], 30);
+  // Row 2: Company Logo / Name
+  if (logoFileId) {
+    addRow([{ col: 1, value: `=IMAGE("https://drive.google.com/uc?id=${logoFileId}", 4, 37, 200)` }], 42);
+  } else {
+    addRow([{ col: 1, value: 'Garden Office Buildings', bold: true, fontSize: 18, fg: TEAL }], 30);
+  }
 
   // Row 3: Address line 1
-  addRow([{ col: 1, value: 'Unit 5B, Biggin Hill Airport, Churchill Way, Westerham TN16 3BN', fontSize: 9, fg: MID_GREY }]);
+  addRow([{ col: 1, value: 'Rear of 158 Main Road, Biggin Hill, Kent, TN16 3BA', fontSize: 9, fg: MID_GREY }]);
 
   // Row 4: Contact
-  addRow([{ col: 1, value: '020 3488 2828  |  info@gardenofficebuildings.co.uk  |  www.gardenofficebuildings.co.uk', fontSize: 9, fg: MID_GREY }]);
+  addRow([{ col: 1, value: '01689 818 400  |  info@gardenofficebuildings.co.uk  |  www.gardenofficebuildings.co.uk', fontSize: 9, fg: MID_GREY }]);
 
   addBlank(1); // Row 5
 
@@ -188,18 +253,16 @@ function buildQuoteData(q) {
   // CUSTOMER INFO
   // ════════════════════════════════════════════
   const dateStr = fmtDate(q.date || new Date());
-  addRow([
-    { col: 1, value: 'Customer:', bold: true, fontSize: 10 },
-    { col: 4, value: q.customerName || '', fontSize: 10 },
-  ]);
-  addRow([
-    { col: 1, value: 'Date:', bold: true, fontSize: 10 },
-    { col: 4, value: dateStr, fontSize: 10 },
-  ]);
-  addRow([
-    { col: 1, value: 'Address:', bold: true, fontSize: 10 },
-    { col: 4, value: q.address || '', fontSize: 10 },
-  ]);
+  const custLines = [
+    q.customerName ? `Customer:   ${q.customerName}` : null,
+    q.customerNumber ? `Customer No:   ${q.customerNumber}` : null,
+    `Date:   ${dateStr}`,
+    q.address ? `Address:   ${q.address}` : null,
+  ].filter(Boolean);
+
+  for (const line of custLines) {
+    addRow([{ col: 1, value: line, fontSize: 10 }]);
+  }
 
   addBlank(1);
 
@@ -243,7 +306,7 @@ function buildQuoteData(q) {
   ], 22);
 
   // Insulation
-  addRow([{ col: 1, value: 'Full insulation: 100mm Celotex floor, 50mm Celotex walls, 100mm Celotex roof', fontSize: 10 }]);
+  addRow([{ col: 1, value: 'Insulated timber/panel construction with 100mm PIR walls, 75mm PIR floor and ceiling', fontSize: 10 }]);
 
   // Canopy/Decking (Signature)
   if (isSig) {
@@ -316,14 +379,9 @@ function buildQuoteData(q) {
     { col: 1, value: 'INTERNAL FINISH', bold: true, fontSize: 11, fg: TEAL },
   ], 22);
 
-  if (isSig) {
-    addRow([{ col: 1, value: 'Plastered and painted internal walls (white)', fontSize: 10 }]);
-  } else {
-    addRow([{ col: 1, value: 'White melamine faced internal wall panels', fontSize: 10 }]);
-  }
-  addRow([{ col: 1, value: 'Heavy-duty vinyl flooring throughout', fontSize: 10 }]);
-  addRow([{ col: 1, value: 'White UPVC skirting board', fontSize: 10 }]);
-  addRow([{ col: 1, value: 'White UPVC internal window sills', fontSize: 10 }]);
+  addRow([{ col: 1, value: 'Internal wall finish: plasterboarded, plastered and decorated white', fontSize: 10 }]);
+  addRow([{ col: 1, value: 'Flooring: TBC (Natural Oak or Light Grey)', fontSize: 10 }]);
+  addRow([{ col: 1, value: 'Skirting board: white', fontSize: 10 }]);
 
   addBlank(1);
 
@@ -378,10 +436,11 @@ function buildQuoteData(q) {
   addRow([{ col: 1, value: 'Configuration/Quantity TBC on 1st fix electrician visit approximately 1 week into project', fontSize: 9, fg: MID_GREY }]);
 
   if (numSpotlights > 0) {
-    addRow([{ col: 1, value: `${numSpotlights} x external spotlights in canopy soffit`, fontSize: 10 }]);
+    addRow([{ col: 1, value: `${numSpotlights} x external downlights in canopy soffit`, fontSize: 10 }]);
   }
 
-  addRow([{ col: 1, value: '5 x double power sockets in brushed steel finish (1 w/ USB ports)', fontSize: 10 }]);
+  const sheetSocketCount = getSocketCount(q);
+  addRow([{ col: 1, value: `${sheetSocketCount} x double power sockets in brushed steel finish (1 w/ USB ports)`, fontSize: 10 }]);
 
   // Lighting zones
   let lightingZones = 1;
@@ -391,7 +450,7 @@ function buildQuoteData(q) {
     addRow([{ col: 1, value: `${lightingZones} x internal lighting zones on separate switches`, fontSize: 10 }]);
   }
 
-  addRow([{ col: 1, value: '1 x double light switch in brushed steel', fontSize: 10 }]);
+  addRow([{ col: 1, value: '1 x single dimmable light switch in brushed steel', fontSize: 10 }]);
   addRow([{ col: 1, value: '1 x network connection port', fontSize: 10 }]);
   addRow([{ col: 1, value: 'Consumer unit', fontSize: 10 }]);
 
@@ -431,33 +490,47 @@ function buildQuoteData(q) {
   }
 
   // ════════════════════════════════════════════
-  // OPTIONAL EXTRAS REFERENCE LIST
+  // OPTIONAL EXTRAS (with qty input)
   // ════════════════════════════════════════════
   addRow([
-    { col: 1, value: 'OPTIONAL EXTRAS (available to add)', bold: true, fontSize: 10, fg: MID_GREY },
-  ], 20);
+    { col: 1, value: 'OPTIONAL EXTRAS (available to add)', bold: true, fontSize: 11, fg: TEAL },
+  ], 22);
+
+  // Column headers
+  addRow([
+    { col: 1, value: 'Item', bold: true, fontSize: 9, fg: TEAL, bg: TEAL_LIGHT },
+    { col: 7, value: 'Price each', bold: true, fontSize: 9, fg: TEAL, bg: TEAL_LIGHT, align: 'RIGHT' },
+    { col: 8, value: 'Qty', bold: true, fontSize: 9, fg: TEAL, bg: TEAL_LIGHT, align: 'CENTER' },
+    { col: 9, value: 'Total', bold: true, fontSize: 9, fg: TEAL, bg: TEAL_LIGHT, align: 'RIGHT' },
+  ]);
 
   const optionalExtras = [
-    ['External double plug socket', '£235.00'],
-    ['External up/down light', '£95.00'],
-    ['Electric wall panel heater', '£495.00'],
-    ['Additional double plug socket', '£60.00'],
-    ['Additional double plug socket w/ USB', '£85.00'],
-    ['Additional lighting zone', '£125.00'],
-    ['Wireless quinetic switch system', '£265.00'],
-    ['Air conditioning (standard)', '£1,750.00'],
-    ['Air conditioning (premium w/ app)', '£2,250.00'],
-    ['CAT6 network point', '£45.00'],
-    ['HDMI cables + brush plates for TV', '£30.00'],
-    ['Flood light cabling', '£50.00'],
-    ['TV mounting preparation', '£95.00'],
+    ['External double plug socket', 235],
+    ['External up/down light', 95],
+    ['Oil filled electric wall panel radiator', 495],
+    ['Additional double plug socket', 60],
+    ['Additional double plug socket w/ USB', 85],
+    ['Additional lighting zone', 125],
+    ['Wireless quinetic switch system', 265],
+    ['Air conditioning (standard)', 1750],
+    ['Air conditioning (premium Mitsubishi MSZ-LN)', 2500],
+    ['CAT6 network point', 45],
+    ['HDMI cables + brush plates for TV', 30],
+    ['Flood light cabling', 50],
+    ['TV mounting preparation', 95],
   ];
 
-  for (const [label, price] of optionalExtras) {
-    addRow([
-      { col: 1, value: label, fontSize: 9, fg: MID_GREY },
-      { col: 9, value: price, fontSize: 9, fg: MID_GREY, align: 'RIGHT' },
-    ]);
+  for (const [label, unitPrice] of optionalExtras) {
+    const rowNum = rows.length + 1; // 1-indexed for Sheets formulas
+    rows.push({
+      cells: [
+        { col: 1, value: label, fontSize: 9, fg: MID_GREY },
+        { col: 7, value: unitPrice, fontSize: 9, fg: MID_GREY, align: 'RIGHT', numberFormat: { type: 'CURRENCY', pattern: '£#,##0.00' } },
+        { col: 8, value: '', fontSize: 9, align: 'CENTER' },
+        { col: 9, value: `=IF(AND(I${rowNum}>0,ISNUMBER(I${rowNum})),H${rowNum}*I${rowNum},"")`, fontSize: 9, fg: MID_GREY, align: 'RIGHT', numberFormat: { type: 'CURRENCY', pattern: '£#,##0.00' } },
+      ],
+      qtyBorderCol: 8,
+    });
   }
 
   addBlank(1);
@@ -601,7 +674,7 @@ function buildQuoteData(q) {
   addBlank(2);
 
   // Footer
-  addRow([{ col: 1, value: 'Garden Office Buildings  |  020 3488 2828  |  info@gardenofficebuildings.co.uk', fontSize: 9, fg: TEAL }]);
+  addRow([{ col: 1, value: 'Garden Office Buildings  |  01689 818 400  |  info@gardenofficebuildings.co.uk', fontSize: 9, fg: TEAL }]);
 
   return rows;
 }
@@ -615,7 +688,7 @@ function buildSheetValues(rows) {
   for (const row of rows) {
     const r = new Array(10).fill('');
     for (const cell of (row.cells || [])) {
-      r[cell.col] = cell.value || '';
+      r[cell.col] = cell.value !== undefined && cell.value !== null ? cell.value : '';
     }
     grid.push(r);
   }
@@ -690,6 +763,11 @@ function buildFormatRequests(rows, sheetId) {
         fields.push('userEnteredFormat.horizontalAlignment');
       }
 
+      if (cell.numberFormat) {
+        format.numberFormat = cell.numberFormat;
+        fields.push('userEnteredFormat.numberFormat');
+      }
+
       if (fields.length > 0) {
         requests.push({
           repeatCell: {
@@ -700,7 +778,35 @@ function buildFormatRequests(rows, sheetId) {
         });
       }
     }
+
+    // Box border around qty cells
+    if (row.qtyBorderCol !== undefined) {
+      const border = { style: 'SOLID', colorStyle: { rgbColor: BORDER_COL } };
+      requests.push({
+        updateBorders: {
+          range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: row.qtyBorderCol, endColumnIndex: row.qtyBorderCol + 1 },
+          top: border, bottom: border, left: border, right: border,
+        },
+      });
+    }
   }
+
+  // Teal border around entire quote
+  requests.push({
+    updateBorders: {
+      range: {
+        sheetId,
+        startRowIndex: 0,
+        endRowIndex: rows.length,
+        startColumnIndex: 0,
+        endColumnIndex: 10,
+      },
+      top: { style: 'SOLID_MEDIUM', colorStyle: { rgbColor: TEAL } },
+      bottom: { style: 'SOLID_MEDIUM', colorStyle: { rgbColor: TEAL } },
+      left: { style: 'SOLID_MEDIUM', colorStyle: { rgbColor: TEAL } },
+      right: { style: 'SOLID_MEDIUM', colorStyle: { rgbColor: TEAL } },
+    },
+  });
 
   return requests;
 }

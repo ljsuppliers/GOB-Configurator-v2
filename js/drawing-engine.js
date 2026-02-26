@@ -605,7 +605,7 @@ function renderDrawingLabel(label) {
 function cladFill(t) {
   if (!t) return 'url(#steelClad)';
   // Cedar/timber types
-  if (t==='western-red-cedar'||t==='cedar'||t==='diagonal'||t==='thermowood'||t==='larch') return 'url(#cedarClad)';
+  if (t==='western-red-cedar'||t==='cedar'||t==='diagonal'||t==='larch') return 'url(#cedarClad)';
   // Composite types
   if (t.startsWith('composite')||t==='horizontal') return 'url(#compositeClad)';
   // Steel types (anthracite, grey, etc.)

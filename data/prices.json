@@ -69,13 +69,13 @@
     "electrical": {
       "externalSocket": { "label": "External double plug socket", "price": 235 },
       "upDownLight": { "label": "External up/down light", "price": 95 },
-      "heater": { "label": "Electric wall panel heater", "price": 495 },
+      "heater": { "label": "Oil filled electric wall panel radiator", "price": 495 },
       "additionalSocket": { "label": "Additional double plug socket", "price": 60 },
       "additionalSocketUsb": { "label": "Additional double plug socket w/ USB", "price": 85 },
       "additionalLightingZone": { "label": "Additional lighting zone on separate switch", "price": 125 },
       "quineticSwitch": { "label": "Wireless quinetic switch system", "price": 265 },
       "acUnitStandard": { "label": "Air conditioning unit (standard)", "price": 1750 },
-      "acUnitPremium": { "label": "Air conditioning unit (premium w/ app)", "price": 2250 },
+      "acUnitPremium": { "label": "Air conditioning unit (premium Mitsubishi MSZ-LN series)", "price": 2500 },
       "cat6Point": { "label": "Additional CAT6 point", "price": 45 },
       "hdmiCables": { "label": "HDMI cables + brush plates for TV", "price": 30 },
       "floodlightCabling": { "label": "Cabling for external flood light", "price": 50 },
@@ -86,7 +86,7 @@
       "partitionStorage": { "label": "Basic storage room partition", "price": 650 },
       "partitionToilet": { "label": "Partition for toilet/shower room", "price": 2350 },
       "secretDoor": { "label": "Secret cladded door with storage", "price": 1750 },
-      "additionalDecking": { "label": "Additional decking (per sqm)", "price": 350 },
+      "additionalDecking": { "label": "Additional decking (per sqm)", "price": 300 },
       "waterButtConnection": { "label": "Connecting downpipe to water butt", "price": 50 },
       "premiumFlooring": { "label": "Premium flooring upgrade", "price": 350 }
     },
@@ -116,9 +116,9 @@
     "useExistingFoundation": { "label": "Use existing foundation", "price": -500 }
   },
   "claddingUpgrade": {
-    "cedar": { "label": "Western red cedar", "perSqm": 125 },
-    "composite": { "label": "Composite slatted", "perSqm": 125 },
-    "thermowood": { "label": "Thermowood", "perSqm": 85 }
+    "cedar": { "label": "Western red cedar", "perSqm": 115 },
+    "composite": { "label": "Composite slatted", "perSqm": 115 },
+    "larch": { "label": "Larch", "perSqm": 80 }
   },
   "heightUpgrade": {
     "250": { "small": 1000, "medium": 1500, "large": 2900 },

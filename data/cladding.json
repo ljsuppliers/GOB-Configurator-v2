@@ -72,15 +72,6 @@
       "premium": false,
       "colour": "#7BA05B"
     },
-    "thermowood": {
-      "label": "Thermowood",
-      "category": "timber",
-      "elevationPattern": "diagonal",
-      "sidePattern": "vertical",
-      "default": false,
-      "premium": true,
-      "colour": "#654321"
-    },
     "larch": {
       "label": "Larch",
       "category": "timber",
@@ -102,7 +93,7 @@
   },
   "defaultByTier": {
     "classic": {
-      "front": "composite-latte",
+      "front": "composite-coffee",
       "left": "anthracite-steel",
       "right": "anthracite-steel",
       "rear": "anthracite-steel"

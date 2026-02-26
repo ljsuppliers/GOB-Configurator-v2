@@ -22,7 +22,6 @@ export function generateEmail(templateName) {
     'western-red-cedar': 'premium cedar cladding',
     'anthracite-steel': 'anthracite steel cladding',
     'composite-latte': 'composite slatted cladding',
-    'thermowood': 'thermowood cladding',
     'larch': 'larch cladding'
   };
 
@@ -161,7 +160,6 @@ function claddingLabels(key) {
     'western-red-cedar': 'Premium cedar cladding',
     'anthracite-steel': 'Anthracite steel cladding',
     'composite-latte': 'Composite slatted cladding',
-    'thermowood': 'Thermowood cladding',
     'larch': 'Larch cladding'
   };
   return labels[key] || 'Premium timber cladding';
