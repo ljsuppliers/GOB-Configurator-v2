@@ -46,6 +46,77 @@
       <!-- LEFT: Config Panel -->
       <aside class="config-panel">
 
+        <!-- Cloud Saves -->
+        <div class="config-section cloud-saves-section">
+          <h4 @click="cloudPanelOpen = !cloudPanelOpen" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;">
+            Cloud Saves
+            <span style="font-size:11px;color:#888;">{{ cloudPanelOpen ? '&#9650;' : '&#9660;' }}</span>
+          </h4>
+          <div v-show="cloudPanelOpen">
+
+            <!-- Not configured notice -->
+            <div v-if="!cloudReady" style="font-size:11px;color:#888;padding:6px 0;">
+              Firebase not configured. Paste your config into <code>js/cloud-storage.js</code> to enable cloud saves.
+            </div>
+
+            <template v-if="cloudReady">
+
+              <!-- Currently loaded indicator -->
+              <div v-if="currentCloudId" style="background:#e8f5e9;border-radius:4px;padding:6px 8px;margin-bottom:8px;font-size:12px;display:flex;align-items:center;gap:6px;">
+                <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" :title="currentCloudName">&#9729; {{ currentCloudName }}</span>
+                <button class="btn btn-sm" style="padding:2px 8px;font-size:11px;white-space:nowrap;" @click="updateCloudSave" :disabled="cloudLoading">Update</button>
+                <button class="btn btn-sm" style="padding:2px 8px;font-size:11px;white-space:nowrap;" @click="currentCloudId = null; currentCloudName = ''">Detach</button>
+              </div>
+
+              <!-- Save bar -->
+              <div style="display:flex;gap:4px;margin-bottom:8px;">
+                <input type="text" v-model="cloudSaveName" placeholder="Design name..." style="flex:1;font-size:12px;padding:4px 6px;" @keyup.enter="saveToCloud">
+                <button class="btn btn-sm" style="padding:4px 10px;font-size:11px;white-space:nowrap;" @click="saveToCloud" :disabled="cloudLoading || !cloudSaveName.trim()">Save to Cloud</button>
+              </div>
+
+              <!-- Error message -->
+              <div v-if="cloudError" style="background:#fbe9e7;color:#c62828;border-radius:4px;padding:6px 8px;margin-bottom:8px;font-size:11px;">
+                {{ cloudError }}
+                <button @click="cloudError = null" style="float:right;background:none;border:none;cursor:pointer;font-size:13px;line-height:1;">&times;</button>
+              </div>
+
+              <!-- Loading -->
+              <div v-if="cloudLoading" style="text-align:center;padding:8px 0;font-size:11px;color:#888;">
+                Loading...
+              </div>
+
+              <!-- Designs list -->
+              <div v-if="!cloudLoading && cloudDesigns.length > 0" style="max-height:220px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:4px;">
+                <div v-for="design in cloudDesigns" :key="design.id"
+                     class="cloud-design-row"
+                     :style="{ background: design.id === currentCloudId ? '#e3f2fd' : 'transparent' }">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ design.name }}</div>
+                    <div style="font-size:10px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                      {{ design.customer || 'No customer' }} &middot; {{ design.dimensions }} &middot;
+                      <span style="text-transform:capitalize;">{{ design.tier }}</span>
+                    </div>
+                    <div style="font-size:10px;color:#aaa;">{{ formatCloudDate(design.updatedAt || design.savedAt) }}</div>
+                  </div>
+                  <div style="display:flex;gap:3px;flex-shrink:0;">
+                    <button class="btn btn-sm" style="padding:2px 6px;font-size:10px;" @click="loadFromCloud(design)" :disabled="cloudLoading" title="Load this design">Load</button>
+                    <button class="btn btn-sm" style="padding:2px 6px;font-size:10px;color:#c62828;" @click="deleteFromCloud(design)" :disabled="cloudLoading" title="Delete this design">&times;</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Empty state -->
+              <p v-if="!cloudLoading && cloudDesigns.length === 0" class="empty-msg" style="font-size:11px;">No saved designs yet.</p>
+
+              <!-- Refresh -->
+              <div style="text-align:right;margin-top:4px;">
+                <button class="btn btn-sm" style="padding:2px 8px;font-size:10px;" @click="refreshCloudDesigns" :disabled="cloudLoading">Refresh</button>
+              </div>
+
+            </template>
+          </div>
+        </div>
+
         <!-- Building Dimensions -->
         <div class="config-section">
           <h4>Building</h4>
@@ -1205,6 +1276,10 @@
 <!-- Libraries -->
 <script src="lib/vue.global.prod.js"></script>
 <script src="lib/jspdf.min.js"></script>
+
+<!-- Firebase (compat SDK for cloud saves) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
 <script type="module" src="js/app.js"></script>

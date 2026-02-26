@@ -6,6 +6,7 @@ import { generateDrawing } from './drawing-engine.js';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
+import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 
 const { createApp } = Vue;
 
@@ -33,6 +34,16 @@ createApp({
       nextFeatureId: 1000,
       nextAcUnitId: 2000,
       nextLabelId: 3000,
+
+      // Cloud saves
+      cloudReady: false,
+      cloudDesigns: [],
+      currentCloudId: null,
+      currentCloudName: '',
+      cloudSaveName: '',
+      cloudLoading: false,
+      cloudError: null,
+      cloudPanelOpen: true,
 
       // Survey extras checkboxes (mapped to state on apply)
       surveyExtras: {
@@ -759,6 +770,115 @@ createApp({
       }
     },
 
+    // ─── CLOUD SAVE METHODS ───
+    async refreshCloudDesigns() {
+      if (!this.cloudReady) return;
+      this.cloudLoading = true;
+      this.cloudError = null;
+      try {
+        this.cloudDesigns = await listDesigns();
+      } catch (err) {
+        console.error('Cloud list error:', err);
+        this.cloudError = 'Failed to load designs: ' + err.message;
+      } finally {
+        this.cloudLoading = false;
+      }
+    },
+
+    async saveToCloud() {
+      const name = this.cloudSaveName.trim();
+      if (!name) return;
+      this.cloudLoading = true;
+      this.cloudError = null;
+      try {
+        const docId = await saveDesign(name, this.state);
+        this.currentCloudId = docId;
+        this.currentCloudName = name;
+        this.cloudSaveName = '';
+        this.notify('Saved to cloud: ' + name);
+        await this.refreshCloudDesigns();
+      } catch (err) {
+        console.error('Cloud save error:', err);
+        this.cloudError = 'Failed to save: ' + err.message;
+      } finally {
+        this.cloudLoading = false;
+      }
+    },
+
+    async updateCloudSave() {
+      if (!this.currentCloudId) return;
+      this.cloudLoading = true;
+      this.cloudError = null;
+      try {
+        await updateDesign(this.currentCloudId, this.currentCloudName, this.state);
+        this.notify('Updated: ' + this.currentCloudName);
+        await this.refreshCloudDesigns();
+      } catch (err) {
+        console.error('Cloud update error:', err);
+        this.cloudError = 'Failed to update: ' + err.message;
+      } finally {
+        this.cloudLoading = false;
+      }
+    },
+
+    async loadFromCloud(design) {
+      this.cloudLoading = true;
+      this.cloudError = null;
+      try {
+        const loadedState = await loadDesign(design.id);
+        this.state = loadedState;
+        this.currentCloudId = design.id;
+        this.currentCloudName = design.name;
+        // Reset ID counters
+        this.nextCompId = 100 + (this.state.components?.length || 0);
+        this.nextFeatureId = 1000 + (this.state.externalFeatures?.length || 0);
+        this.nextAcUnitId = 2000 + (this.state.acUnits?.length || 0);
+        this.nextLabelId = 3000 + (this.state.drawingLabels?.length || 0);
+        // Ensure arrays exist for older configs
+        if (!this.state.externalFeatures) this.state.externalFeatures = [];
+        if (!this.state.acUnits) this.state.acUnits = [];
+        if (!this.state.drawingLabels) this.state.drawingLabels = [];
+        this.notify('Loaded: ' + design.name);
+      } catch (err) {
+        console.error('Cloud load error:', err);
+        this.cloudError = 'Failed to load: ' + err.message;
+      } finally {
+        this.cloudLoading = false;
+      }
+    },
+
+    async deleteFromCloud(design) {
+      if (!confirm(`Delete "${design.name}"? This cannot be undone.`)) return;
+      this.cloudLoading = true;
+      this.cloudError = null;
+      try {
+        await deleteDesign(design.id);
+        if (this.currentCloudId === design.id) {
+          this.currentCloudId = null;
+          this.currentCloudName = '';
+        }
+        this.notify('Deleted: ' + design.name);
+        await this.refreshCloudDesigns();
+      } catch (err) {
+        console.error('Cloud delete error:', err);
+        this.cloudError = 'Failed to delete: ' + err.message;
+      } finally {
+        this.cloudLoading = false;
+      }
+    },
+
+    formatCloudDate(date) {
+      if (!date) return '';
+      const d = date instanceof Date ? date : new Date(date);
+      const now = new Date();
+      const diff = now - d;
+      if (diff < 60000) return 'Just now';
+      if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+      if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+      if (diff < 604800000) return Math.floor(diff / 86400000) + 'd ago';
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    },
+
     // ─── SURVEY METHODS ───
     markSurveyComplete() {
       if (!this.state.survey) {
@@ -1095,6 +1215,18 @@ createApp({
 
       this.loaded = true;
       console.log('GOB Configurator v2 loaded');
+
+      // Initialize Firebase cloud saves
+      try {
+        const fbReady = initFirebase();
+        this.cloudReady = fbReady && isFirebaseReady();
+        if (this.cloudReady) {
+          this.refreshCloudDesigns();
+        }
+      } catch (err) {
+        console.warn('Firebase init skipped:', err.message);
+        this.cloudReady = false;
+      }
     } catch (err) {
       console.error('Failed to initialise:', err);
       document.body.innerHTML = `<div style="padding:40px;font-family:Arial">
