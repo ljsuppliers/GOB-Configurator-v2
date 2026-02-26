@@ -21,59 +21,6 @@ const BORDER_COL = { red: 0.82, green: 0.84, blue: 0.85 };
 
 const QUOTES_FOLDER_ID = '18dfAzGwqwqT-zI0yUBO60MrIFkvInULP';
 
-// ─── Logo Upload ───
-let logoFileId = null;
-
-async function ensureLogoUploaded(driveApi) {
-  if (logoFileId) return;
-
-  try {
-    // Check for existing logo in quotes folder
-    const searchRes = await driveApi.files.list({
-      q: `name = 'GOB-Logo-Text.png' and '${QUOTES_FOLDER_ID}' in parents and trashed = false`,
-      fields: 'files(id)',
-    });
-
-    if (searchRes.data.files && searchRes.data.files.length > 0) {
-      logoFileId = searchRes.data.files[0].id;
-      console.log('Found existing logo on Drive:', logoFileId);
-      return;
-    }
-
-    // Upload logo from bundled assets
-    const fs = require('fs');
-    const path = require('path');
-    const logoPath = path.join(__dirname, '..', 'assets', 'logo-text.png');
-
-    const fileMetadata = {
-      name: 'GOB-Logo-Text.png',
-      parents: [QUOTES_FOLDER_ID],
-    };
-    const media = {
-      mimeType: 'image/png',
-      body: fs.createReadStream(logoPath),
-    };
-
-    const uploadRes = await driveApi.files.create({
-      requestBody: fileMetadata,
-      media,
-      fields: 'id',
-    });
-
-    logoFileId = uploadRes.data.id;
-
-    // Make publicly readable so =IMAGE() formula works
-    await driveApi.permissions.create({
-      fileId: logoFileId,
-      requestBody: { role: 'reader', type: 'anyone' },
-    });
-
-    console.log('Uploaded logo to Drive:', logoFileId);
-  } catch (err) {
-    console.warn('Logo upload failed (non-fatal):', err.message);
-  }
-}
-
 // ─── Auth ───
 function getAuthClient() {
   const oauth2Client = new google.auth.OAuth2(
@@ -262,19 +209,12 @@ function buildQuoteSheet(q) {
   // ════════════════════════════════════════
   blank(1);
 
-  // Company logo / name
+  // Company name
   const companyRow = rows.length;
-  if (logoFileId) {
-    rows.push({
-      cells: [{ col: DESC_START, value: `=IMAGE("https://drive.google.com/uc?id=${logoFileId}", 4, 37, 200)` }],
-      height: 42,
-    });
-  } else {
-    rows.push({
-      cells: [{ col: DESC_START, value: 'Garden Office Buildings', bold: true, fontSize: 22, fg: TEAL }],
-      height: 38,
-    });
-  }
+  rows.push({
+    cells: [{ col: DESC_START, value: 'Garden Office Buildings', bold: true, fontSize: 22, fg: TEAL }],
+    height: 38,
+  });
   merges.push({ startRow: companyRow, endRow: companyRow + 1, startCol: DESC_START, endCol: PRICE_COL + 1 });
 
   // Address
@@ -837,9 +777,6 @@ module.exports = async function handler(req, res) {
     const auth = getAuthClient();
     const sheetsApi = google.sheets({ version: 'v4', auth });
     const driveApi = google.drive({ version: 'v3', auth });
-
-    // Ensure logo is uploaded to Drive (cached after first call)
-    await ensureLogoUploaded(driveApi);
 
     const q = req.body;
     const customerName = q.customerName || 'Unknown';

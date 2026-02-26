@@ -18,8 +18,6 @@ app.use(express.json({ limit: '10mb' }));
 const credentialsPath = path.join(__dirname, 'oauth-credentials.json');
 const tokenPath = path.join(__dirname, 'oauth-token.json');
 const versionsPath = path.join(__dirname, 'quote-versions.json');
-const LOGO_PATH = path.join(__dirname, 'assets', 'logo-text.png');
-
 let oauth2Client;
 
 function initAuth() {
@@ -43,58 +41,6 @@ const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
 const QUOTES_FOLDER_ID = '18dfAzGwqwqT-zI0yUBO60MrIFkvInULP';
-
-// ─── Logo Upload ───
-let logoFileId = null;
-
-async function ensureLogoUploaded() {
-  if (logoFileId) return;
-
-  try {
-    // Check for existing logo in quotes folder
-    const searchRes = await drive.files.list({
-      q: `name = 'GOB-Logo-Text.png' and '${QUOTES_FOLDER_ID}' in parents and trashed = false`,
-      fields: 'files(id)',
-    });
-
-    if (searchRes.data.files && searchRes.data.files.length > 0) {
-      logoFileId = searchRes.data.files[0].id;
-      console.log('Found existing logo on Drive:', logoFileId);
-      return;
-    }
-
-    // Upload logo
-    const fileMetadata = {
-      name: 'GOB-Logo-Text.png',
-      parents: [QUOTES_FOLDER_ID],
-    };
-    const media = {
-      mimeType: 'image/png',
-      body: fs.createReadStream(LOGO_PATH),
-    };
-
-    const uploadRes = await drive.files.create({
-      requestBody: fileMetadata,
-      media,
-      fields: 'id',
-    });
-
-    logoFileId = uploadRes.data.id;
-
-    // Make publicly readable so =IMAGE() formula works
-    await drive.permissions.create({
-      fileId: logoFileId,
-      requestBody: { role: 'reader', type: 'anyone' },
-    });
-
-    console.log('Uploaded logo to Drive:', logoFileId);
-  } catch (err) {
-    console.warn('Logo upload failed (non-fatal):', err.message);
-  }
-}
-
-// Upload logo on startup
-ensureLogoUploaded();
 
 // ─── Helpers ───
 
@@ -227,12 +173,8 @@ function buildQuoteData(q) {
   // ════════════════════════════════════════════
   addBlank(1); // Row 1 (spacer)
 
-  // Row 2: Company Logo / Name
-  if (logoFileId) {
-    addRow([{ col: 1, value: `=IMAGE("https://drive.google.com/uc?id=${logoFileId}", 4, 37, 200)` }], 42);
-  } else {
-    addRow([{ col: 1, value: 'Garden Office Buildings', bold: true, fontSize: 18, fg: TEAL }], 30);
-  }
+  // Row 2: Company Name
+  addRow([{ col: 1, value: 'Garden Office Buildings', bold: true, fontSize: 18, fg: TEAL }], 30);
 
   // Row 3: Address line 1
   addRow([{ col: 1, value: 'Rear of 158 Main Road, Biggin Hill, Kent, TN16 3BA', fontSize: 9, fg: MID_GREY }]);
