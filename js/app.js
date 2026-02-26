@@ -387,6 +387,21 @@ createApp({
         }
       }
       
+      // Exclusions paragraph - adapts based on bathroom selection
+      let exclusionsParagraph = "I've shown the prices of our paid extras, should you require any. Excluded from our price is the electrical connection that will be subject to a visit from an electrician.";
+      if (s.bathroom?.enabled && s.bathroom?.type) {
+        exclusionsParagraph += ' The utility connections (water supply and waste) will also be arranged separately with our plumber and landscaper.';
+        exclusionsParagraph += ' We also ask that customers provide a mini skip whilst we are on site.';
+      } else {
+        exclusionsParagraph += ' We also ask that customers provide a toilet and mini skip whilst we are on site.';
+      }
+
+      // Deposit next steps - mentions electrician + plumber when bathroom enabled
+      let depositNextSteps = 'We will also arrange a visit from our registered electrician to assess the electrical connection.';
+      if (s.bathroom?.enabled && s.bathroom?.type) {
+        depositNextSteps = 'We will also arrange visits from our registered electrician and plumber to assess the electrical and utility connections.';
+      }
+
       // Showroom offer
       const showroomOffer = 'We also welcome you to visit our showroom in Biggin Hill to see our buildings first-hand. We have several display models available, and Richard is always happy to answer any questions.';
 
@@ -411,6 +426,8 @@ createApp({
         '{discountParagraph}': discountParagraph || ambassadorParagraph,
         '{buildingIncludes}': buildingIncludes,
         '{showroomOffer}': showroomOffer,
+        '{exclusionsParagraph}': exclusionsParagraph,
+        '{depositNextSteps}': depositNextSteps,
       };
 
       let subject = template.subject;

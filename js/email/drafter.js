@@ -36,6 +36,31 @@ export function generateEmail(templateName) {
   // Generate showroom offer
   const showroomOffer = "Please let me know if you'd like to visit our showroom to see one of our buildings first-hand.";
 
+  // Dynamic opening paragraph
+  const salesRep = state.salesRep || 'Richard';
+  const buildingTypeLower = (state.buildingType || 'garden office building').toLowerCase();
+  let openingParagraph;
+  if (state.visitedShowroom) {
+    openingParagraph = `Hope all is well. It was great to meet you at our showroom to discuss your ${buildingTypeLower} project.`;
+  } else {
+    openingParagraph = `Hope all is well. Thank you for having ${salesRep} visit, he said it was great to meet to discuss your ${buildingTypeLower} project.`;
+  }
+
+  // Exclusions paragraph - adapts based on bathroom selection
+  let exclusionsParagraph = "I've shown the prices of our paid extras, should you require any. Excluded from our price is the electrical connection that will be subject to a visit from an electrician.";
+  if (state.bathroom?.enabled && state.bathroom?.type) {
+    exclusionsParagraph += ' The utility connections (water supply and waste) will also be arranged separately with our plumber and landscaper.';
+    exclusionsParagraph += ' We also ask that customers provide a mini skip whilst we are on site.';
+  } else {
+    exclusionsParagraph += ' We also ask that customers provide a toilet and mini skip whilst we are on site.';
+  }
+
+  // Deposit next steps
+  let depositNextSteps = 'We will also arrange a visit from our registered electrician to assess the electrical connection.';
+  if (state.bathroom?.enabled && state.bathroom?.type) {
+    depositNextSteps = 'We will also arrange visits from our registered electrician and plumber to assess the electrical and utility connections.';
+  }
+
   const vars = {
     '{customerName}': state.customer?.name || '[Customer Name]',
     '{customerFirstName}': derived.customerFirstName || '[Name]',
@@ -58,9 +83,12 @@ export function generateEmail(templateName) {
     '{todayDayOfWeek}': getTodayDayOfWeek(),
     '{buildingIncludes}': buildingIncludes,
     '{showroomOffer}': showroomOffer,
-    '{openingParagraph}': '',
+    '{openingParagraph}': openingParagraph,
     '{customParagraph}': state.customNotes?.email ? '\n\n' + state.customNotes.email : '',
-    '{ambassadorParagraph}': ''
+    '{ambassadorParagraph}': '',
+    '{discountParagraph}': '',
+    '{exclusionsParagraph}': exclusionsParagraph,
+    '{depositNextSteps}': depositNextSteps
   };
 
   let subject = template.subject;
