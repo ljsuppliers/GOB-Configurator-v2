@@ -20,6 +20,7 @@ const GREEN_TEXT  = { red: 0.09, green: 0.55, blue: 0.25 };
 const BORDER_COL = { red: 0.82, green: 0.84, blue: 0.85 };
 
 const QUOTES_FOLDER_ID = '18dfAzGwqwqT-zI0yUBO60MrIFkvInULP';
+const TEMPLATE_ID = '1RZ_4OoMkdQbs-dl1-m9_rAPBQR0irch_QkzfGoZl5tI';
 
 // ─── Auth ───
 function getAuthClient() {
@@ -209,13 +210,13 @@ function buildQuoteSheet(q) {
   // ════════════════════════════════════════
   blank(1);
 
-  // Company name
-  const companyRow = rows.length;
+  // Logo row — image is provided by the template; we only set height/merge here
+  const logoRow = rows.length;
   rows.push({
-    cells: [{ col: DESC_START, value: 'Garden Office Buildings', bold: true, fontSize: 22, fg: TEAL }],
-    height: 38,
+    cells: [],  // No cell values — the template's logo image is preserved
+    height: 50,
   });
-  merges.push({ startRow: companyRow, endRow: companyRow + 1, startCol: DESC_START, endCol: PRICE_COL + 1 });
+  merges.push({ startRow: logoRow, endRow: logoRow + 1, startCol: DESC_START, endCol: PRICE_COL + 1 });
 
   // Address
   descRow('Rear of 158 Main Road, Biggin Hill, Kent, TN16 3BA', { fontSize: 9, fg: MID_GREY });
@@ -598,7 +599,7 @@ function buildQuoteSheet(q) {
 
   blank(1);
 
-  return { rows, merges, borders };
+  return { rows, merges, borders, logoRow };
 }
 
 // ─── Convert to Sheets API calls ───
@@ -785,28 +786,41 @@ module.exports = async function handler(req, res) {
 
     console.log('Creating quote for:', customerName);
 
-    // 1. Create blank spreadsheet
-    const createRes = await sheetsApi.spreadsheets.create({
-      requestBody: {
-        properties: { title },
-        sheets: [{ properties: { title: 'Quote', sheetId: 0 } }],
-      },
+    // 1. Copy from template (preserves logo image in header)
+    const copyRes = await driveApi.files.copy({
+      fileId: TEMPLATE_ID,
+      requestBody: { name: title },
     });
-
-    const spreadsheetId = createRes.data.spreadsheetId;
+    const spreadsheetId = copyRes.data.id;
 
     // 2. Build sheet data
-    const { rows, merges, borders } = buildQuoteSheet(q);
+    const { rows, merges, borders, logoRow } = buildQuoteSheet(q);
     const grid = buildSheetValues(rows);
     const formatRequests = buildFormatRequests(rows, merges, borders, 0);
 
-    // 3. Write values
-    await sheetsApi.spreadsheets.values.update({
-      spreadsheetId,
-      range: `Quote!A1:H${grid.length}`,
-      valueInputOption: 'USER_ENTERED',
-      requestBody: { values: grid },
-    });
+    // 3. Write values in two parts, skipping the logo row to preserve the image
+    const gridBefore = grid.slice(0, logoRow);
+    const gridAfter = grid.slice(logoRow + 1);
+
+    const writePromises = [];
+    if (gridBefore.length > 0) {
+      writePromises.push(sheetsApi.spreadsheets.values.update({
+        spreadsheetId,
+        range: `Quote!A1:H${gridBefore.length}`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: gridBefore },
+      }));
+    }
+    if (gridAfter.length > 0) {
+      const afterStart = logoRow + 2; // 1-indexed, skip logo row
+      writePromises.push(sheetsApi.spreadsheets.values.update({
+        spreadsheetId,
+        range: `Quote!A${afterStart}:H${afterStart + gridAfter.length - 1}`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: gridAfter },
+      }));
+    }
+    await Promise.all(writePromises);
 
     // 4. Apply formatting
     if (formatRequests.length > 0) {

@@ -41,6 +41,7 @@ const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
 const QUOTES_FOLDER_ID = '18dfAzGwqwqT-zI0yUBO60MrIFkvInULP';
+const TEMPLATE_ID = '1RZ_4OoMkdQbs-dl1-m9_rAPBQR0irch_QkzfGoZl5tI';
 
 // ─── Helpers ───
 
@@ -173,8 +174,9 @@ function buildQuoteData(q) {
   // ════════════════════════════════════════════
   addBlank(1); // Row 1 (spacer)
 
-  // Row 2: Company Name
-  addRow([{ col: 1, value: 'Garden Office Buildings', bold: true, fontSize: 18, fg: TEAL }], 30);
+  // Row 2: Logo — image is in the template; we only set height here
+  const logoRow = rows.length;
+  addRow([], 50);
 
   // Row 3: Address line 1
   addRow([{ col: 1, value: 'Rear of 158 Main Road, Biggin Hill, Kent, TN16 3BA', fontSize: 9, fg: MID_GREY }]);
@@ -583,7 +585,7 @@ function buildQuoteData(q) {
   // Footer
   addRow([{ col: 1, value: 'Garden Office Buildings  |  01689 818 400  |  info@gardenofficebuildings.co.uk', fontSize: 9, fg: TEAL }]);
 
-  return rows;
+  return { rows, logoRow };
 }
 
 // ─── Convert row data into Sheets API calls ───
@@ -729,30 +731,43 @@ app.post('/api/create-quote', async (req, res) => {
     const date = fmtDate(q.date || new Date()).replace(/\//g, '-');
     const title = formatTitle(customerName, date);
 
-    // 1. Create a new blank spreadsheet
-    const createRes = await sheets.spreadsheets.create({
-      requestBody: {
-        properties: { title },
-        sheets: [{ properties: { title: 'Quote', sheetId: 0 } }],
-      }
+    // 1. Copy from template (preserves logo image in header)
+    const copyRes = await drive.files.copy({
+      fileId: TEMPLATE_ID,
+      requestBody: { name: title },
     });
-
-    const spreadsheetId = createRes.data.spreadsheetId;
+    const spreadsheetId = copyRes.data.id;
     const sheetId = 0;
-    console.log('Created spreadsheet:', spreadsheetId);
+    console.log('Created spreadsheet from template:', spreadsheetId);
 
     // 2. Build quote data
-    const rows = buildQuoteData(q);
+    const { rows, logoRow } = buildQuoteData(q);
     const grid = buildSheetValues(rows);
     const formatRequests = buildFormatRequests(rows, sheetId);
 
-    // 3. Write all values
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `Quote!A1:J${grid.length}`,
-      valueInputOption: 'USER_ENTERED',
-      requestBody: { values: grid },
-    });
+    // 3. Write values in two parts, skipping logo row to preserve the image
+    const gridBefore = grid.slice(0, logoRow);
+    const gridAfter = grid.slice(logoRow + 1);
+
+    const writePromises = [];
+    if (gridBefore.length > 0) {
+      writePromises.push(sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `Quote!A1:J${gridBefore.length}`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: gridBefore },
+      }));
+    }
+    if (gridAfter.length > 0) {
+      const afterStart = logoRow + 2; // 1-indexed, skip logo row
+      writePromises.push(sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `Quote!A${afterStart}:J${afterStart + gridAfter.length - 1}`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: gridAfter },
+      }));
+    }
+    await Promise.all(writePromises);
 
     // 4. Apply formatting
     if (formatRequests.length > 0) {
