@@ -623,7 +623,8 @@ createApp({
       // Build extras list
       const extrasList = (this.price.extras || []).map(e => ({
         label: e.label,
-        price: e.price
+        price: e.price,
+        description: e.description || ''
       }));
       
       // Build deductions list

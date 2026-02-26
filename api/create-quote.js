@@ -503,6 +503,9 @@ function buildQuoteSheet(q) {
     if (q.extras && q.extras.length > 0) {
       for (const extra of q.extras) {
         lineItemRow(extra.label, extra.price, { bg: altBg ? LIGHT_GREY : undefined });
+        if (extra.description) {
+          detailRow(extra.description);
+        }
         altBg = !altBg;
       }
     }

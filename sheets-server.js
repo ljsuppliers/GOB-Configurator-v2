@@ -473,6 +473,9 @@ function buildQuoteData(q) {
           { col: 1, value: extra.label, fontSize: 10 },
           { col: 9, value: fmtCurrency(extra.price), fontSize: 10, align: 'RIGHT' },
         ]);
+        if (extra.description) {
+          addRow([{ col: 1, value: extra.description, fontSize: 9, fg: MID_GREY }]);
+        }
       }
     }
 
