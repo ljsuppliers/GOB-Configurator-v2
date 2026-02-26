@@ -591,18 +591,12 @@ createApp({
         }
       }
       
-      // Map cladding keys to readable names
-      const claddingLabels = {
-        'western-red-cedar': 'composite slatted cladding (coffee)',
-        'composite-latte': 'composite slatted cladding (latte)',
-        'composite-coffee': 'composite slatted cladding (coffee)',
-        'composite-black': 'composite slatted cladding (black)',
-        'anthracite-steel': 'anthracite grey steel',
-        'cedar-diagonal': 'western red cedar (diagonal)',
-        'cedar-horizontal': 'western red cedar (horizontal)',
+      // Map cladding keys to readable names (use data if available, fallback to key)
+      const getCladLabel = (key) => {
+        const def = this.appData.cladding?.types?.[key];
+        if (def) return def.label.toLowerCase();
+        return key || 'anthracite grey steel';
       };
-      
-      const getCladLabel = (key) => claddingLabels[key] || key;
       
       // Find cladding upgrade prices from price object
       const getCladdingPrice = (side) => {
@@ -667,8 +661,8 @@ createApp({
         // Corners (Signature only)
         cornerLeft: this.state.cornerLeft === 'closed' ? 'Closed' : 'Open',
         cornerRight: this.state.cornerRight === 'closed' ? 'Closed' : 'Open',
-        hasCanopy: this.state.tier === 'signature' ? (this.state.hasCanopy !== false ? 'Yes' : 'No') : 'N/A',
-        hasDecking: this.state.tier === 'signature' ? (this.state.hasDecking !== false ? 'Yes' : 'No') : 'N/A',
+        hasCanopy: this.state.hasCanopy !== false,
+        hasDecking: this.state.hasDecking !== false,
         
         // Foundation
         foundationType: this.state.foundationType || 'ground-screw',
@@ -720,10 +714,20 @@ createApp({
         discountLabel: this.price.discountLabel || this.state.discount?.description || 'Discount',
         total: this.price.totalIncVat,
         
-        // Survey info for ambassador discount
-        ambassadorEligible: this.state.survey?.ambassadorEligible || false,
-        salesRep: this.state.survey?.salesRep || '',
-        
+        // Straight partition
+        straightPartition: this.state.straightPartition?.enabled ? {
+          enabled: true,
+          hasDoor: this.state.straightPartition.hasDoor || false,
+          leftLabel: this.state.straightPartition.leftLabel || 'Office',
+          rightLabel: this.state.straightPartition.rightLabel || 'Storage',
+        } : null,
+
+        // Payment schedule
+        paymentSchedule: (this.price.paymentSchedule || []).map(ps => ({
+          label: ps.label,
+          amount: ps.amount
+        })),
+
         // Custom notes
         quoteNotes: this.state.customNotes?.quote || ''
       };

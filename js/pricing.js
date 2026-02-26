@@ -9,6 +9,43 @@ export function initPricing(prices, components) {
   componentsData = components;
 }
 
+// ─── Derived calculations (used by pricing + quote generation) ───
+
+export function getInternalDimensions(state) {
+  const isSig = state.tier === 'signature';
+  const intWidth = state.width - 300;   // 150mm each side wall
+  const intDepth = state.depth - (isSig ? 700 : 300); // Signature: 400mm canopy + 150mm front + 150mm back
+  // Height reduction depends on external height (bigger joists for taller roofs)
+  let heightReduction;
+  if (state.height <= 2500) heightReduction = 350;
+  else if (state.height <= 2750) heightReduction = 450;
+  else heightReduction = 550;
+  const intHeight = state.height - heightReduction;
+  return { width: intWidth, depth: intDepth, height: intHeight };
+}
+
+export function getDownlightCount(state) {
+  const sqm = (state.width / 1000) * (state.depth / 1000);
+  if (sqm <= 9) return 4;
+  if (sqm <= 15) return 6;
+  if (sqm <= 24) return 8;
+  if (sqm <= 32) return 10;
+  return 12;
+}
+
+export function getSpotlightCount(state) {
+  if (state.tier !== 'signature') return 0;
+  return Math.floor(state.width / 1000);
+}
+
+export function getLightingZones(state) {
+  // Base: 1 zone. Extra zone for each partitioned area
+  let zones = 1;
+  if (state.straightPartition?.enabled) zones++;
+  if (state.partitionRoom?.enabled) zones++;
+  return zones;
+}
+
 export function calculatePrice(state) {
   if (!pricesData) return null;
 
@@ -69,9 +106,15 @@ export function calculatePrice(state) {
   const struct = pricesData.extras.structural;
   const se = state.structuralExtras || {};
 
-  if (se.partition === 'basic') addExtra(result, struct.partitionStorage, 1);
-  if (se.partition === 'with-door') addExtra(result, struct.partition, 1);
-  if (se.partition === 'toilet') addExtra(result, struct.partitionToilet, 1);
+  // Straight partition (back-to-front wall)
+  if (state.straightPartition?.enabled) {
+    const partitionPrice = state.straightPartition.hasDoor ? 1800 : 1200;
+    const partitionLabel = state.straightPartition.hasDoor
+      ? 'Internal partition wall with interior door'
+      : 'Internal partition wall';
+    result.extras.push({ label: partitionLabel, price: partitionPrice });
+  }
+
   if (se.secretDoor) addExtra(result, struct.secretDoor, 1);
   if (se.additionalDecking > 0) {
     result.extras.push({
@@ -364,16 +407,15 @@ function calculateInstallation(state) {
 function calculatePaymentSchedule(result) {
   const deposit = pricesData.holdingDeposit;
   const buildingAmount = result.totalIncVat - result.installation;
-  const half1 = Math.round(buildingAmount / 2) - deposit;
-  const half2 = buildingAmount - half1 - deposit;
+  const halfBuilding = Math.round(buildingAmount / 2);
   const installHalf = Math.round(result.installation / 2);
 
   return [
-    { stage: 1, label: 'Holding deposit (deducted from first payment)', amount: deposit },
-    { stage: 2, label: '50% of building (4 weeks before delivery, less deposit)', amount: half1 },
-    { stage: 3, label: '50% of building (on delivery of materials)', amount: half2 },
-    { stage: 4, label: '50% of installation/groundworks (halfway through)', amount: installHalf },
-    { stage: 5, label: '50% of installation/groundworks (on completion)', amount: result.installation - installHalf }
+    { stage: 1, label: 'Holding deposit reserves your delivery & install date (deductible from 1st payment)', amount: deposit },
+    { stage: 2, label: '50% of Garden Office Building due 4 weeks before delivery (less holding deposit)', amount: halfBuilding - deposit },
+    { stage: 3, label: '50% of Garden Office Building due on delivery of all materials (approx 1 week into project)', amount: buildingAmount - halfBuilding },
+    { stage: 4, label: '50% of Groundworks & Installation due halfway through project*', amount: installHalf },
+    { stage: 5, label: '50% of Groundworks & Installation due on completion*', amount: result.installation - installHalf }
   ];
 }
 
