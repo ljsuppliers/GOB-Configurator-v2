@@ -281,19 +281,19 @@ function buildQuoteData(q) {
 
   // Building summary
   addRow([
-    { col: 1, value: `Your Building: ${w}m x ${d}m x ${h}m ${q.buildingType || 'Garden Office Building'}`, bold: true, fontSize: 11 },
+    { col: 1, value: `Your Building: ${w}M x ${d}M x ${h}m ${q.buildingType || 'Garden Office Building'}`, bold: true, fontSize: 11 },
     { col: 9, value: fmtCurrency(q.basePrice), bold: true, fontSize: 11, align: 'RIGHT' },
   ]);
 
   // Dimensions
   const extDimNote = isSig ? ' (incl. 400mm canopy/decking)' : '';
-  addRow([{ col: 1, value: `External Dimensions: ${q.width}mm (W) x ${q.depth}mm (D) x ${q.height}mm (H)${extDimNote}`, fontSize: 9, fg: MID_GREY }]);
-  addRow([{ col: 1, value: `Internal Dimensions: ${intW}mm (W) x ${intD}mm (D) x ${intH}mm (H) (approx)`, fontSize: 9, fg: MID_GREY }]);
+  addRow([{ col: 1, value: `External Dimensions \u2013 (W) ${q.width}mm (D) x ${q.depth}mm x (H) ${q.height}mm${extDimNote}`, fontSize: 9, fg: MID_GREY }]);
+  addRow([{ col: 1, value: `Internal Dimensions \u2013 (W) ${intW}mm x (D) ${intD}mm x (H) ${intH}mm (approx)`, fontSize: 9, fg: MID_GREY }]);
 
   // Range
   const tierDesc = isSig
-    ? 'Signature range — integrated canopy and composite decking on front of building'
-    : 'Classic range — clean, minimalist design';
+    ? 'Signature range with integrated canopy and decking on front of building'
+    : 'Classic range with clean, minimalist design';
   addRow([{ col: 1, value: tierDesc, fontSize: 10 }]);
 
   addBlank(1);
@@ -302,24 +302,15 @@ function buildQuoteData(q) {
   // STANDARD FEATURES
   // ════════════════════════════════════════════
   addRow([
-    { col: 1, value: `STANDARD FEATURES (${isSig ? 'Signature' : 'Classic'})`, bold: true, fontSize: 11, fg: TEAL },
+    { col: 1, value: `Standard Features (${isSig ? 'Signature' : 'Classic'})`, bold: true, fontSize: 11, fg: TEAL },
   ], 22);
 
-  // Insulation
+  addRow([{ col: 1, value: 'Configuration as per drawing (TBC)', fontSize: 10 }]);
   addRow([{ col: 1, value: 'Insulated timber/panel construction with 100mm PIR walls, 75mm PIR floor and ceiling', fontSize: 10 }]);
-
-  // Canopy/Decking (Signature)
   if (isSig) {
-    const hasCanopy = q.hasCanopy !== false;
-    const hasDecking = q.hasDecking !== false;
-    if (hasCanopy && hasDecking) {
-      addRow([{ col: 1, value: '400mm integrated canopy with composite decking on front of building', fontSize: 10 }]);
-    } else if (hasCanopy) {
-      addRow([{ col: 1, value: '400mm integrated canopy on front of building', fontSize: 10 }]);
-    } else if (hasDecking) {
-      addRow([{ col: 1, value: 'Integrated composite decking on front of building', fontSize: 10 }]);
-    }
+    addRow([{ col: 1, value: 'To include 400mm overhang/decking', fontSize: 10 }]);
   }
+  addRow([{ col: 1, value: 'Plaster-boarded, skimmed and decorated internal finish', fontSize: 10 }]);
 
   // Foundation
   const foundationLabels = {
@@ -329,10 +320,9 @@ function buildQuoteData(q) {
   };
   addRow([{ col: 1, value: foundationLabels[q.foundationType] || 'Ground screw foundation system', fontSize: 10 }]);
 
-  // Corners (Signature)
-  if (isSig) {
-    addRow([{ col: 1, value: `Front-left corner: ${q.cornerLeft || 'Open'}  |  Front-right corner: ${q.cornerRight || 'Open'}`, fontSize: 10 }]);
-  }
+  // Corners
+  addRow([{ col: 1, value: `Front-left corner design (open/closed): ${q.cornerLeft || 'Open'}`, fontSize: 10 }]);
+  addRow([{ col: 1, value: `Front-right corner design (open/closed): ${q.cornerRight || 'Open'}`, fontSize: 10 }]);
 
   addBlank(1);
 
@@ -351,7 +341,7 @@ function buildQuoteData(q) {
     { side: 'Rear', value: q.rearCladding },
   ];
   for (const cl of claddingRows) {
-    const cells = [{ col: 1, value: `${cl.side} cladding: ${cl.value || 'anthracite grey steel'}`, fontSize: 10 }];
+    const cells = [{ col: 1, value: `${cl.side} cladding: ${cl.value || 'anthracite grey steel cladding'}`, fontSize: 10 }];
     if (cl.price && cl.price > 0) {
       cells.push({ col: 9, value: fmtCurrency(cl.price), fontSize: 10, align: 'RIGHT' });
     }
@@ -359,9 +349,9 @@ function buildQuoteData(q) {
   }
 
   // Additional external features
-  addRow([{ col: 1, value: 'Anthracite grey aluminium fascia boards & trims', fontSize: 10 }]);
-  addRow([{ col: 1, value: 'EPDM rubber roof membrane with 25-year guarantee', fontSize: 10 }]);
-  addRow([{ col: 1, value: 'Anthracite grey aluminium guttering & downpipe', fontSize: 10 }]);
+  addRow([{ col: 1, value: 'Fascia, soffit and cappings: grey', fontSize: 10 }]);
+  addRow([{ col: 1, value: 'Roof: EPDM rubber roof', fontSize: 10 }]);
+  addRow([{ col: 1, value: 'Guttering: rear', fontSize: 10 }]);
 
   if (isSig) {
     const hasDecking = q.hasDecking !== false;
@@ -379,8 +369,8 @@ function buildQuoteData(q) {
     { col: 1, value: 'INTERNAL FINISH', bold: true, fontSize: 11, fg: TEAL },
   ], 22);
 
-  addRow([{ col: 1, value: 'Internal wall finish: plasterboarded, plastered and decorated white', fontSize: 10 }]);
   addRow([{ col: 1, value: 'Flooring: TBC (Natural Oak or Light Grey)', fontSize: 10 }]);
+  addRow([{ col: 1, value: 'Internal wall finish: plasterboarded, skimmed and decorated white', fontSize: 10 }]);
   addRow([{ col: 1, value: 'Skirting board: white', fontSize: 10 }]);
 
   addBlank(1);
@@ -389,7 +379,7 @@ function buildQuoteData(q) {
   // DOORS & WINDOWS
   // ════════════════════════════════════════════
   addRow([
-    { col: 1, value: 'DOORS & WINDOWS', bold: true, fontSize: 11, fg: TEAL },
+    { col: 1, value: 'DOORS, WINDOWS, PARTITIONS', bold: true, fontSize: 11, fg: TEAL },
   ], 22);
 
   if (q.components && q.components.length > 0) {
@@ -429,7 +419,7 @@ function buildQuoteData(q) {
   // ELECTRICAL INSTALLATION
   // ════════════════════════════════════════════
   addRow([
-    { col: 1, value: 'ELECTRICAL INSTALLATION', bold: true, fontSize: 11, fg: TEAL },
+    { col: 1, value: 'STANDARD ELECTRICAL FEATURES', bold: true, fontSize: 11, fg: TEAL },
   ], 22);
 
   addRow([{ col: 1, value: `${numDownlights} x dimmable LED downlights`, fontSize: 10 }]);
@@ -493,75 +483,57 @@ function buildQuoteData(q) {
   }
 
   // ════════════════════════════════════════════
-  // OPTIONAL EXTRAS (with qty input)
+  // OPTIONAL EXTRAS
   // ════════════════════════════════════════════
   addRow([
-    { col: 1, value: 'OPTIONAL EXTRAS (available to add)', bold: true, fontSize: 11, fg: TEAL },
+    { col: 1, value: 'Optional extras available', bold: true, fontSize: 11, fg: TEAL },
   ], 22);
 
-  // Column headers
-  addRow([
-    { col: 1, value: 'Item', bold: true, fontSize: 9, fg: TEAL, bg: TEAL_LIGHT },
-    { col: 7, value: 'Price each', bold: true, fontSize: 9, fg: TEAL, bg: TEAL_LIGHT, align: 'RIGHT' },
-    { col: 8, value: 'Qty', bold: true, fontSize: 9, fg: TEAL, bg: TEAL_LIGHT, align: 'CENTER' },
-    { col: 9, value: 'Total', bold: true, fontSize: 9, fg: TEAL, bg: TEAL_LIGHT, align: 'RIGHT' },
-  ]);
-
   const optionalExtras = [
-    ['External double plug socket', 235],
-    ['External up/down light', 95],
-    ['Oil filled electric wall panel radiator', 495],
-    ['Additional double plug socket', 60],
-    ['Additional double plug socket w/ USB', 85],
-    ['Additional lighting zone', 125],
-    ['Wireless quinetic switch system', 265],
-    ['Air conditioning (standard)', 1750],
-    ['Air conditioning (premium Mitsubishi MSZ-LN)', 2500],
-    ['CAT6 network point', 45],
-    ['HDMI cables + brush plates for TV', 30],
-    ['Flood light cabling', 50],
-    ['TV mounting preparation', 95],
+    ['External double plug socket', '£235.00'],
+    ['External up/down light', '£95.00'],
+    ['Oil filled electric wall panel radiator', '£495.00'],
+    ['Additional double plug socket', '£60.00', '£85.00 w/ USB ports'],
+    ['Additional lighting zone on separate switch', '£125.00'],
+    ['Wireless double quinetic switch system', '£265.00', 'wireless switch to turn on/off external lights from house'],
+    ['Standard air conditioning unit, heating and cooling', '£1,750.00', 'to be paid directly to air con specialist', 'Model: Mitsubishi MSZ-HR R32 Classic Inverter Heat Pump'],
+    ['Premium air conditioning unit with programming and mobile app, heating and cooling', '£2,500.00', 'to be paid directly to air con specialist', 'Model: Mitsubishi MSZ-LN R32 Inverter Heat Pump'],
+    ['Additional composite slatted cladding for sides of building', '£115 per sqm'],
+    ['Additional decking', '£250 per sqm', 'incl. foundations, framing, fixings. Subject to survey'],
   ];
 
-  for (const [label, unitPrice] of optionalExtras) {
-    const rowNum = rows.length + 1; // 1-indexed for Sheets formulas
-    rows.push({
-      cells: [
-        { col: 1, value: label, fontSize: 9, fg: MID_GREY },
-        { col: 7, value: unitPrice, fontSize: 9, fg: MID_GREY, align: 'RIGHT', numberFormat: { type: 'CURRENCY', pattern: '£#,##0.00' } },
-        { col: 8, value: '', fontSize: 9, align: 'CENTER' },
-        { col: 9, value: `=IF(AND(I${rowNum}>0,ISNUMBER(I${rowNum})),H${rowNum}*I${rowNum},"")`, fontSize: 9, fg: MID_GREY, align: 'RIGHT', numberFormat: { type: 'CURRENCY', pattern: '£#,##0.00' } },
-      ],
-      qtyBorderCol: 8,
-    });
+  for (const extra of optionalExtras) {
+    const label = extra[0];
+    const parts = extra.slice(1);
+    const priceText = `(+ ${parts.join(') (')})`;
+    addRow([{ col: 1, value: `${label} ${priceText}`, fontSize: 10 }]);
   }
 
   addBlank(1);
 
   // ════════════════════════════════════════════
-  // INSTALLATION & GROUNDWORKS
+  // INSTALLATION
   // ════════════════════════════════════════════
   addRow([
-    { col: 1, value: 'INSTALLATION & GROUNDWORKS', bold: true, fontSize: 11, fg: TEAL },
+    { col: 1, value: 'Installation', bold: true, fontSize: 11, fg: TEAL },
   ], 22);
 
   addRow([
-    { col: 1, value: 'Installation & Groundworks', fontSize: 10 },
+    { col: 1, value: 'To be conducted by our team', fontSize: 10 },
     { col: 9, value: fmtCurrency(q.installationPrice), bold: true, fontSize: 10, align: 'RIGHT' },
   ]);
-
-  addRow([{ col: 1, value: 'Includes site preparation, delivery, assembly, and all groundworks', fontSize: 9, fg: MID_GREY }]);
 
   addBlank(1);
 
   // Electrical connection note
   addRow([{ col: 1, value: 'Electrical Connection', bold: true, fontSize: 10 }]);
-  addRow([{ col: 1, value: 'To be arranged separately with our approved electrician — quoted directly to customer', fontSize: 9, fg: MID_GREY }]);
+  addRow([{ col: 1, value: 'To be arranged by electrician', fontSize: 10 }]);
 
   // Plumbing note if bathroom
   if (q.bathroom && q.bathroom.enabled) {
+    addBlank(1);
     addRow([{ col: 1, value: 'Utility Connections (Water, Waste)', bold: true, fontSize: 10 }]);
-    addRow([{ col: 1, value: 'To be arranged separately with our plumber/landscaper — quoted directly to customer', fontSize: 9, fg: MID_GREY }]);
+    addRow([{ col: 1, value: 'To be arranged separately with our plumber/landscaper', fontSize: 10 }]);
   }
 
   addBlank(1);
@@ -657,22 +629,12 @@ function buildQuoteData(q) {
   // TERMS & CONDITIONS
   // ════════════════════════════════════════════
   addRow([
-    { col: 1, value: 'TERMS & CONDITIONS', bold: true, fontSize: 10, fg: TEAL },
+    { col: 1, value: 'Terms', bold: true, fontSize: 10, fg: TEAL },
   ], 20);
 
-  const terms = [
-    'This quotation is valid for 30 days from the date shown above.',
-    'All prices include VAT at the current rate of 20%.',
-    'A holding deposit of £250 is required to reserve your delivery and installation date.',
-    'Delivery lead times are typically 6-10 weeks from receipt of deposit, subject to availability.',
-    'Electrical connection to your property\'s consumer unit is arranged separately with our approved electrician.',
-    'Skip hire for site waste removal is not included and will be arranged if required.',
-    'Any variation to the specification above may result in a revised quotation.',
-  ];
-
-  for (const term of terms) {
-    addRow([{ col: 1, value: `• ${term}`, fontSize: 9, fg: MID_GREY }]);
-  }
+  addRow([{ col: 1, value: '*Groundworks, installation & other labour to be paid directly to installation team', fontSize: 9, fg: MID_GREY }]);
+  addRow([{ col: 1, value: 'Customer to provide toilet facility and 6-yard skip for waste', fontSize: 9, fg: MID_GREY }]);
+  addRow([{ col: 1, value: 'Customer to be responsible for levelling and clearance of site prior to commencement of works', fontSize: 9, fg: MID_GREY }]);
 
   addBlank(2);
 

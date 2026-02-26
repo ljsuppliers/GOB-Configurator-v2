@@ -328,65 +328,48 @@ function buildQuoteSheet(q) {
   blank(1, 6);
 
   // Building summary line
+  const buildingType = q.buildingType || 'Garden Office Building';
   lineItemRow(
-    `${isSig ? 'Signature' : 'Classic'} Garden Office: ${w}m \u00D7 ${d}m \u00D7 ${h}m`,
+    `Your Building: ${w}M x ${d}M x ${h}m ${buildingType}`,
     q.basePrice,
     { bold: true, fontSize: 11 }
   );
 
   // Dimension details
   const extNote = isSig ? ' (incl. 400mm canopy/decking)' : '';
-  detailRow(`External: ${q.width}mm (W) \u00D7 ${q.depth}mm (D) \u00D7 ${q.height}mm (H)${extNote}`);
-  detailRow(`Internal: ${intW}mm (W) \u00D7 ${intD}mm (D) \u00D7 ${intH}mm (H) approx`);
+  detailRow(`External Dimensions \u2013 (W) ${q.width}mm (D) x ${q.depth}mm x (H) ${q.height}mm${extNote}`);
+  detailRow(`Internal Dimensions \u2013 (W) ${intW}mm x (D) ${intD}mm x (H) ${intH}mm (approx)`);
 
   blank(1, 6);
 
   // ════════════════════════════════════════
   // STANDARD FEATURES
   // ════════════════════════════════════════
-  subHeader(`Standard Features \u2014 ${isSig ? 'Signature' : 'Classic'} Range`);
+  subHeader(`Standard Features (${isSig ? 'Signature' : 'Classic'})`);
 
-  const standardFeatures = [];
-
-  // Range description
+  descRow('Configuration as per drawing (TBC)', { fontSize: 10 });
   if (isSig) {
-    standardFeatures.push('Signature range with integrated canopy and composite decking');
+    descRow('Signature range with integrated canopy and decking on front of building', { fontSize: 10 });
   } else {
-    standardFeatures.push('Classic range with clean, minimalist design');
+    descRow('Classic range with clean, minimalist design', { fontSize: 10 });
   }
-
-  // Insulation
-  standardFeatures.push('Insulated timber/panel construction with 100mm PIR walls, 75mm PIR floor and ceiling');
-
-  // Canopy/Decking
+  descRow('Insulated timber/panel construction with 100mm PIR walls, 75mm PIR floor and ceiling', { fontSize: 10 });
   if (isSig) {
-    const hasCanopy = q.hasCanopy !== false;
-    const hasDecking = q.hasDecking !== false;
-    if (hasCanopy && hasDecking) {
-      standardFeatures.push('400mm integrated canopy with composite decking on front');
-    } else if (hasCanopy) {
-      standardFeatures.push('400mm integrated canopy on front of building');
-    } else if (hasDecking) {
-      standardFeatures.push('Integrated composite decking on front of building');
-    }
+    descRow('To include 400mm overhang/decking', { fontSize: 10 });
   }
+  descRow('Plaster-boarded, skimmed and decorated internal finish', { fontSize: 10 });
 
-  // Foundation
+  // Foundation (if non-standard, e.g. existing base)
   const foundationLabels = {
     'ground-screw': 'Ground screw foundation system',
     'concrete-base': 'Concrete base foundation',
     'concrete-pile': 'Concrete pile foundation system',
   };
-  standardFeatures.push(foundationLabels[q.foundationType] || 'Ground screw foundation system');
+  descRow(foundationLabels[q.foundationType] || 'Ground screw foundation system', { fontSize: 10 });
 
-  // Corners (Signature)
-  if (isSig) {
-    standardFeatures.push(`Front corners: ${q.cornerLeft || 'Open'} (left), ${q.cornerRight || 'Open'} (right)`);
-  }
-
-  for (const feat of standardFeatures) {
-    descRow(feat, { fontSize: 10, fg: CHARCOAL });
-  }
+  // Corners
+  descRow(`Front-left corner design (open/closed): ${q.cornerLeft || 'Open'}`, { fontSize: 10 });
+  descRow(`Front-right corner design (open/closed): ${q.cornerRight || 'Open'}`, { fontSize: 10 });
 
   blank(1, 6);
 
@@ -402,7 +385,7 @@ function buildQuoteSheet(q) {
     { side: 'Rear', value: q.rearCladding },
   ];
   for (const cl of claddingItems) {
-    const label = `${cl.side} elevation: ${cl.value || 'anthracite grey steel cladding'}`;
+    const label = `${cl.side} cladding: ${cl.value || 'anthracite grey steel'}`;
     if (cl.price && cl.price > 0) {
       lineItemRow(label, cl.price);
     } else {
@@ -410,9 +393,9 @@ function buildQuoteSheet(q) {
     }
   }
 
-  descRow('Anthracite grey aluminium fascia boards and trims', { fontSize: 10 });
-  descRow('EPDM rubber roof membrane with 25-year guarantee', { fontSize: 10 });
-  descRow('Anthracite grey aluminium guttering and downpipe', { fontSize: 10 });
+  descRow('Fascia, soffit and cappings: grey', { fontSize: 10 });
+  descRow('Roof: EPDM rubber roof', { fontSize: 10 });
+  descRow('Guttering: rear', { fontSize: 10 });
 
   if (isSig && q.hasDecking !== false) {
     descRow('Integrated composite decking: dark grey', { fontSize: 10 });
@@ -425,8 +408,8 @@ function buildQuoteSheet(q) {
   // ════════════════════════════════════════
   subHeader('Internal Finish');
 
-  descRow('Internal wall finish: plasterboarded, plastered and decorated white', { fontSize: 10 });
   descRow('Flooring: TBC (Natural Oak or Light Grey)', { fontSize: 10 });
+  descRow('Internal wall finish: plasterboarded, skimmed and decorated white', { fontSize: 10 });
   descRow('Skirting board: white', { fontSize: 10 });
 
   blank(1, 6);
@@ -434,7 +417,7 @@ function buildQuoteSheet(q) {
   // ════════════════════════════════════════
   // DOORS & WINDOWS
   // ════════════════════════════════════════
-  subHeader('Doors & Windows');
+  subHeader('Doors, Windows, Partitions');
 
   if (q.components && q.components.length > 0) {
     for (const comp of q.components) {
@@ -466,10 +449,10 @@ function buildQuoteSheet(q) {
   // ════════════════════════════════════════
   // ELECTRICAL INSTALLATION
   // ════════════════════════════════════════
-  subHeader('Electrical Installation');
+  subHeader('Standard Electrical Features');
 
   descRow(`${numDownlights} x dimmable LED downlights`, { fontSize: 10 });
-  detailRow('Configuration/Quantity TBC on 1st fix electrician visit approx 1 week into project');
+  detailRow('Configuration/Quantity TBC on 1st fix electrician visit approximately 1 week into project');
 
   if (numSpotlights > 0) {
     descRow(`${numSpotlights} x external downlights in canopy soffit`, { fontSize: 10 });
@@ -521,89 +504,48 @@ function buildQuoteSheet(q) {
   }
 
   // ════════════════════════════════════════
-  // OPTIONAL EXTRAS (with qty input)
+  // OPTIONAL EXTRAS
   // ════════════════════════════════════════
-  const optR = rows.length;
-  rows.push({
-    cells: [{ col: DESC_START, value: 'Available Optional Extras', bold: true, fontSize: 11, fg: TEAL }],
-    height: 24,
-  });
-  merges.push({ startRow: optR, endRow: optR + 1, startCol: DESC_START, endCol: DESC_END });
-  borders.push({ row: optR, startCol: DESC_START, endCol: PRICE_COL + 1, side: 'bottom', color: TEAL, style: 'SOLID' });
-
-  // Column headers
-  const optHeaderRow = rows.length;
-  rows.push({
-    cells: [
-      { col: DESC_START, value: 'Item', bold: true, fontSize: 9, fg: TEAL, bg: TEAL_PALE },
-      { col: 2, value: '', bg: TEAL_PALE },
-      { col: 3, value: '', bg: TEAL_PALE },
-      { col: 4, value: 'Price each', bold: true, fontSize: 9, fg: TEAL, bg: TEAL_PALE, align: 'RIGHT' },
-      { col: 5, value: 'Qty', bold: true, fontSize: 9, fg: TEAL, bg: TEAL_PALE, align: 'CENTER' },
-      { col: PRICE_COL, value: 'Total', bold: true, fontSize: 9, fg: TEAL, bg: TEAL_PALE, align: 'RIGHT' },
-    ],
-    height: 22,
-  });
-  merges.push({ startRow: optHeaderRow, endRow: optHeaderRow + 1, startCol: DESC_START, endCol: 4 });
-  borders.push({ row: optHeaderRow, startCol: DESC_START, endCol: PRICE_COL + 1, side: 'bottom', color: TEAL, style: 'SOLID' });
+  subHeader('Optional extras available');
 
   const optionalExtras = [
-    ['External double plug socket', 235],
-    ['External up/down light', 95],
-    ['Oil filled electric wall panel radiator', 495],
-    ['Additional double plug socket', 60],
-    ['Additional double plug socket with USB', 85],
-    ['Additional lighting zone', 125],
-    ['Wireless quinetic switch system', 265],
-    ['Air conditioning (standard)', 1750],
-    ['Air conditioning (premium Mitsubishi MSZ-LN)', 2500],
-    ['CAT6 network point', 45],
-    ['HDMI cables + brush plates for TV', 30],
-    ['Flood light cabling', 50],
-    ['TV mounting preparation', 95],
+    ['External double plug socket', '£235.00'],
+    ['External up/down light', '£95.00'],
+    ['Oil filled electric wall panel radiator', '£495.00'],
+    ['Additional double plug socket', '£60.00', '£85.00 w/ USB ports'],
+    ['Additional lighting zone on separate switch', '£125.00'],
+    ['Wireless double quinetic switch system', '£265.00', 'wireless switch to turn on/off external lights from house'],
+    ['Standard air conditioning unit, heating and cooling', '£1,750.00', 'to be paid directly to air con specialist', 'Model: Mitsubishi MSZ-HR R32 Classic Inverter Heat Pump'],
+    ['Premium air conditioning unit with programming and mobile app, heating and cooling', '£2,500.00', 'to be paid directly to air con specialist', 'Model: Mitsubishi MSZ-LN R32 Inverter Heat Pump'],
+    ['Additional composite slatted cladding for sides of building', '£115 per sqm'],
+    ['Additional decking', '£250 per sqm', 'incl. foundations, framing, fixings. Subject to survey'],
   ];
 
-  let optAlt = false;
-  for (const [label, unitPrice] of optionalExtras) {
-    const r = rows.length;
-    const rowNum = r + 1; // 1-indexed for Sheets formulas
-    const bg = optAlt ? LIGHT_GREY : undefined;
-    const cells = [
-      { col: DESC_START, value: label, fontSize: 9, fg: MID_GREY },
-      { col: 4, value: unitPrice, fontSize: 9, fg: MID_GREY, align: 'RIGHT', numberFormat: { type: 'CURRENCY', pattern: '\u00A3#,##0.00' } },
-      { col: 5, value: '', fontSize: 9, align: 'CENTER' },
-      { col: PRICE_COL, value: `=IF(AND(F${rowNum}>0,ISNUMBER(F${rowNum})),E${rowNum}*F${rowNum},"")`, fontSize: 9, fg: CHARCOAL, align: 'RIGHT', numberFormat: { type: 'CURRENCY', pattern: '\u00A3#,##0.00' } },
-    ];
-    if (bg) {
-      cells.forEach(c => c.bg = bg);
-      cells.push({ col: 2, value: '', bg }, { col: 3, value: '', bg });
-    }
-    rows.push({ cells, height: 20 });
-    merges.push({ startRow: r, endRow: r + 1, startCol: DESC_START, endCol: 4 });
-    // Box border around qty cell for editable feel
-    borders.push({ row: r, startCol: 5, endCol: 6, box: true, color: BORDER_COL, style: 'SOLID' });
-    borders.push({ row: r, startCol: DESC_START, endCol: PRICE_COL + 1, side: 'bottom', color: BORDER_COL, style: 'SOLID' });
-    optAlt = !optAlt;
+  for (const extra of optionalExtras) {
+    const label = extra[0];
+    const parts = extra.slice(1);
+    const priceText = `(+ ${parts.join(') (')})`;
+    descRow(`${label} ${priceText}`, { fontSize: 10 });
   }
 
   blank(1, 6);
 
   // ════════════════════════════════════════
-  // INSTALLATION & GROUNDWORKS
+  // INSTALLATION
   // ════════════════════════════════════════
-  subHeader('Installation & Groundworks');
+  subHeader('Installation');
 
-  lineItemRow('Site preparation, delivery, assembly, and all groundworks', q.installationPrice, { bold: true });
-  detailRow('Includes foundation installation, full build, weatherproofing, and site clearance');
+  lineItemRow('To be conducted by our team', q.installationPrice);
 
   blank(1, 4);
 
-  descRow('Electrical Connection', { fontSize: 10, bold: true, fg: CHARCOAL });
-  detailRow('Arranged separately with our approved electrician \u2014 quoted directly to customer');
+  descRow('Electrical Connection', { fontSize: 10, bold: true });
+  descRow('To be arranged by electrician', { fontSize: 10 });
 
   if (q.bathroom && q.bathroom.enabled) {
-    descRow('Utility Connections (Water, Waste)', { fontSize: 10, bold: true, fg: CHARCOAL });
-    detailRow('Arranged separately with our plumber/landscaper \u2014 quoted directly to customer');
+    blank(1, 2);
+    descRow('Utility Connections (Water, Waste)', { fontSize: 10, bold: true });
+    descRow('To be arranged separately with our plumber/landscaper', { fontSize: 10 });
   }
 
   blank(1, 6);
@@ -698,21 +640,11 @@ function buildQuoteSheet(q) {
   // ════════════════════════════════════════
   // TERMS & CONDITIONS
   // ════════════════════════════════════════
-  subHeader('Terms & Conditions');
+  subHeader('Terms');
 
-  const terms = [
-    'This quotation is valid for 30 days from the date shown above.',
-    'All prices include VAT at the current rate of 20%.',
-    'A holding deposit of \u00A3250 is required to reserve your delivery and installation date.',
-    'Delivery lead times are typically 6\u201310 weeks from receipt of deposit, subject to availability.',
-    'Electrical connection to your property\'s consumer unit is arranged separately with our approved electrician.',
-    'Skip hire for site waste removal is not included and will be arranged if required.',
-    'Any variation to the specification above may result in a revised quotation.',
-  ];
-
-  for (const term of terms) {
-    descRow(`\u2022  ${term}`, { fontSize: 9, fg: MID_GREY });
-  }
+  descRow('*Groundworks, installation & other labour to be paid directly to installation team', { fontSize: 9, fg: MID_GREY });
+  descRow('Customer to provide toilet facility and 6-yard skip for waste', { fontSize: 9, fg: MID_GREY });
+  descRow('Customer to be responsible for levelling and clearance of site prior to commencement of works', { fontSize: 9, fg: MID_GREY });
 
   blank(2);
 
