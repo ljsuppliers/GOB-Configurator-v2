@@ -174,11 +174,11 @@ function buildQuoteData(q) {
       { col: 1, value: text, fontSize: opts.fontSize || 11, bold: opts.bold, fg: opts.fg, align: 'LEFT', vAlign: 'BOTTOM' },
     ];
     if (opts.detail) {
-      cells.push({ col: 5, value: opts.detail, fontSize: 10, align: 'CENTER', vAlign: 'BOTTOM' });
+      cells.push({ col: 5, value: opts.detail, fontSize: 11, align: 'CENTER', vAlign: 'BOTTOM' });
     }
     if (opts.price !== undefined && opts.price !== null) {
       const priceStr = typeof opts.price === 'string' ? opts.price : fmtCurrency(opts.price);
-      cells.push({ col: 9, value: priceStr, fontSize: 10, fg: opts.priceFg, align: 'CENTER', vAlign: 'BOTTOM' });
+      cells.push({ col: 9, value: priceStr, fontSize: 11, fg: opts.priceFg, align: 'CENTER', vAlign: 'BOTTOM' });
     }
     rows.push({
       cells,
@@ -433,9 +433,9 @@ function buildQuoteData(q) {
   const borderEndRow = rows.length;
 
   spacer(21);
-  summaryRow('SUB TOTAL (inc. VAT)', q.subtotal, { height: 29 });
 
   if (q.discount && q.discount > 0) {
+    summaryRow('SUB TOTAL (inc. VAT)', q.subtotal, { height: 29 });
     summaryRow(q.discountLabel || 'DISCOUNT', q.discount, { height: 29 });
   }
 
@@ -450,19 +450,32 @@ function buildQuoteData(q) {
 
   paymentRow('Payment Schedule', 'Amount (inc. VAT)', { bold: true, height: 42 });
 
-  if (q.paymentSchedule && q.paymentSchedule.length > 0) {
-    for (let i = 0; i < q.paymentSchedule.length; i++) {
-      const ps = q.paymentSchedule[i];
-      paymentRow(ps.label, ps.amount, {
-        amountBg: i === 0 ? LIGHT_BLUE : LIGHT_RED,
-        height: 28,
-      });
-    }
+  // Calculate payment schedule dynamically from actual quote amounts
+  const holdingDeposit = 250;
+  const buildingAmount = q.total - (q.installationPrice || 0);
+  const halfBuilding = Math.round(buildingAmount / 2);
+  const installHalf = Math.round((q.installationPrice || 0) / 2);
+
+  const schedule = [
+    { label: 'Holding deposit reserves your delivery & install date (deductible from 1st payment)', amount: holdingDeposit },
+    { label: '50% of Garden Office Building due 4 weeks before delivery (less holding deposit)', amount: halfBuilding - holdingDeposit },
+    { label: '50% of Garden Office Building due on delivery of all materials (approx 1 week into project)', amount: buildingAmount - halfBuilding },
+    { label: '50% of Groundworks & Installation due halfway through project*', amount: installHalf },
+    { label: '50% of Groundworks & Installation due on completion*', amount: (q.installationPrice || 0) - installHalf },
+  ];
+
+  const paymentStartRow = rows.length + 1;
+  for (let i = 0; i < schedule.length; i++) {
+    paymentRow(schedule[i].label, schedule[i].amount, {
+      amountBg: i === 0 ? LIGHT_BLUE : LIGHT_RED,
+      height: 28,
+    });
   }
+  const paymentEndRow = rows.length;
 
   spacer(21);
 
-  paymentRow('Total', q.total, { bold: true, height: 33 });
+  paymentRow('Total', `=SUM(I${paymentStartRow}:I${paymentEndRow})`, { bold: true, height: 33 });
 
   spacer(21);
 
