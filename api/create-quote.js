@@ -256,7 +256,7 @@ function buildQuoteData(q) {
   heading('Building Specification', 59, 25);
   spacer(21);
 
-  const extDimNote = isSig ? ' (incl. 400mm canopy)' : '';
+  const extDimNote = isSig ? ' (incl. integrated 400mm canopy/decking)' : '';
 
   sectionBar(
     `Your Building: ${w}m x ${d}m x ${h}m ${q.buildingType || 'Garden Office Building'}`,
