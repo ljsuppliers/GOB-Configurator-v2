@@ -366,11 +366,31 @@ function buildQuoteData(q) {
 
   greySpacer(28);
 
-  const hasExtras = (q.extras && q.extras.length > 0) || (q.deductions && q.deductions.length > 0);
+  // ── BATHROOM / WC SUITE ──
+  const bathroomExtras = (q.extras || []).filter(e =>
+    e.label && (e.label.toLowerCase().includes('wc suite') || e.label.toLowerCase().includes('bathroom suite'))
+  );
+  const nonBathroomExtras = (q.extras || []).filter(e =>
+    !e.label || (!e.label.toLowerCase().includes('wc suite') && !e.label.toLowerCase().includes('bathroom suite'))
+  );
+
+  if (q.bathroom && q.bathroom.enabled && bathroomExtras.length > 0) {
+    sectionBar('Bathroom / WC Suite', { amountLabel: 'Amount (\u00a3)' });
+    for (const be of bathroomExtras) {
+      contentRow(be.label, { price: be.price });
+      if (be.description) {
+        contentRow(be.description, { fontSize: 10 });
+      }
+    }
+    contentRow('Utility connections (water supply, waste) to be arranged separately \u2014 see below');
+    greySpacer(28);
+  }
+
+  const hasExtras = (nonBathroomExtras.length > 0) || (q.deductions && q.deductions.length > 0);
   if (hasExtras) {
     sectionBar('Selected Extras & Upgrades', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
-    if (q.extras && q.extras.length > 0) {
-      for (const extra of q.extras) {
+    if (nonBathroomExtras.length > 0) {
+      for (const extra of nonBathroomExtras) {
         contentRow(extra.label, { price: extra.price });
         if (extra.description) {
           contentRow(extra.description, { fontSize: 10 });
