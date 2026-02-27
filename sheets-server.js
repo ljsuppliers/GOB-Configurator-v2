@@ -93,8 +93,7 @@ function formatComponentDesc(comp) {
   if (t.includes('sliding') || t.includes('single')) {
     handleDesc = comp.handleSide === 'left' ? ' (opening left to right)' : ' (opening right to left)';
   }
-  const elev = comp.elevation ? ` \u2014 ${comp.elevation} elevation` : '';
-  return `1 x full height ${widthM}m wide ${typeDesc}: smooth anthracite grey outside, white inside${handleDesc}${elev}`;
+  return `1 x full height ${widthM}m wide ${typeDesc}: smooth anthracite grey outside, white inside${handleDesc}`;
 }
 
 // Internal dimensions (matching pricing.js logic)
