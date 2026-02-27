@@ -3,6 +3,7 @@
  * Vercel Serverless Function.
  * Exact replica of the original GOB quote layout.
  * 11-column structure with Century Gothic font and cell merges.
+ * Uses template-copy approach (logo is a floating image in the template).
  */
 
 const { google } = require('googleapis');
@@ -20,6 +21,7 @@ function getAuthClient() {
 }
 
 const QUOTES_FOLDER_ID = '18dfAzGwqwqT-zI0yUBO60MrIFkvInULP';
+const TEMPLATE_ID = '132UEM5c0yP79ec8KA_x_AxdInCpwCsDtLc3JGm3iyuo';
 
 // ─── Helpers ───
 
@@ -104,24 +106,9 @@ const FONT = 'Century Gothic';
 const NUM_COLS = 11;
 const COL_WIDTHS = [29, 132, 117, 117, 572, 76, 2, 220, 2, 208, 28];
 
-// ─── Logo lookup (cached across warm invocations) ───
-let cachedLogoFileId = null;
-
-async function findLogoFileId(driveApi) {
-  if (cachedLogoFileId) return cachedLogoFileId;
-  const searchRes = await driveApi.files.list({
-    q: `name='GOB-Logo-Text.png' and '${QUOTES_FOLDER_ID}' in parents and trashed=false`,
-    fields: 'files(id)',
-  });
-  if (searchRes.data.files && searchRes.data.files.length > 0) {
-    cachedLogoFileId = searchRes.data.files[0].id;
-  }
-  return cachedLogoFileId;
-}
-
 // ─── Sheet Builder ───
 
-function buildQuoteData(q, logoFileId) {
+function buildQuoteData(q) {
   const isSig = q.tier === 'signature';
   const { intW, intD, intH } = getInternalDims(q);
   const w = (q.width / 1000).toFixed(1);
@@ -131,7 +118,6 @@ function buildQuoteData(q, logoFileId) {
   const numSpotlights = getSpotlights(q);
 
   const rows = [];
-  let logoRow = -1;
 
   function tealFrame(height = 28) {
     rows.push({ cells: [], height, fullBg: TEAL });
@@ -139,6 +125,16 @@ function buildQuoteData(q, logoFileId) {
 
   function spacer(height = 21) {
     rows.push({ cells: [], height });
+  }
+
+  // Grey spacer — matches content row bg, used between sections within the content area
+  function greySpacer(height = 28) {
+    rows.push({
+      cells: [],
+      height,
+      merges: [[1, 5], [5, 9]], // B-E, F-I (same as content rows)
+      greyContent: true,
+    });
   }
 
   function heading(text, height = 22, fontSize = 25) {
@@ -201,6 +197,7 @@ function buildQuoteData(q, logoFileId) {
       ],
       height: opts.height || 29,
       merges: [[7, 9]],
+      isSummary: true,
     });
   }
 
@@ -235,17 +232,13 @@ function buildQuoteData(q, logoFileId) {
 
   tealFrame(28);
 
-  logoRow = rows.length;
-  const logoFormula = logoFileId
-    ? `=IMAGE("https://lh3.googleusercontent.com/d/${logoFileId}")`
-    : 'Garden Office Buildings';
+  // Header: "Quote" text centered across B-J (logo comes from template as overlay)
   rows.push({
     cells: [
-      { col: 1, value: logoFormula, fontSize: 10, vAlign: 'MIDDLE' },
-      { col: 4, value: 'Quote', fontSize: 30, bold: true, align: 'CENTER', vAlign: 'MIDDLE' },
+      { col: 1, value: 'Quote', fontSize: 30, bold: true, align: 'CENTER', vAlign: 'MIDDLE' },
     ],
     height: 101,
-    merges: [[1, 4], [4, 10]],
+    merges: [[1, 10]], // B-J
   });
 
   spacer(22);
@@ -279,7 +272,7 @@ function buildQuoteData(q, logoFileId) {
   contentRow(tierDesc, { height: 29 });
   contentRow('Configuration as per drawing (TBC). All internal sizes are approximates and subject to final drawing.', { height: 31 });
 
-  spacer(28);
+  greySpacer(28);
 
   sectionBar(`Standard Features (${isSig ? 'Signature' : 'Classic'})`);
 
@@ -296,7 +289,7 @@ function buildQuoteData(q, logoFileId) {
   };
   contentRow(foundationLabels[q.foundationType] || 'Ground screw foundation system');
 
-  spacer(28);
+  greySpacer(28);
 
   sectionBar('External Finish', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
 
@@ -319,7 +312,7 @@ function buildQuoteData(q, logoFileId) {
     contentRow('Integrated composite decking: dark grey');
   }
 
-  spacer(28);
+  greySpacer(28);
 
   sectionBar('Internal Finish');
 
@@ -327,7 +320,7 @@ function buildQuoteData(q, logoFileId) {
   contentRow('Internal wall finish: plasterboarded, plastered and decorated white');
   contentRow('Skirting board: white');
 
-  spacer(28);
+  greySpacer(28);
 
   sectionBar('Doors, Windows, Partitions', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
 
@@ -350,7 +343,7 @@ function buildQuoteData(q, logoFileId) {
     contentRow(q.heightUpgrade.label, { price: q.heightUpgrade.price });
   }
 
-  spacer(28);
+  greySpacer(28);
 
   sectionBar('Standard Electrical Features');
 
@@ -372,7 +365,7 @@ function buildQuoteData(q, logoFileId) {
   contentRow('1 x network connection port for WiFi connectivity');
   contentRow('Consumer unit');
 
-  spacer(28);
+  greySpacer(28);
 
   const hasExtras = (q.extras && q.extras.length > 0) || (q.deductions && q.deductions.length > 0);
   if (hasExtras) {
@@ -390,7 +383,7 @@ function buildQuoteData(q, logoFileId) {
         contentRow(ded.label, { fg: GREEN, price: fmtCurrency(ded.price), priceFg: GREEN });
       }
     }
-    spacer(28);
+    greySpacer(28);
   }
 
   sectionBar('Optional Extras');
@@ -412,12 +405,12 @@ function buildQuoteData(q, logoFileId) {
     contentRow(`${extra[0]} ${priceText}`);
   }
 
-  spacer(28);
+  greySpacer(28);
 
   sectionBar('Main Building Installation & Groundworks', { amountLabel: 'Amount (\u00a3)' });
   contentRow('To be conducted by our team', { price: q.installationPrice });
 
-  spacer(28);
+  greySpacer(28);
 
   sectionBar('Electrical Connection');
   contentRow('To be arranged by electrician');
@@ -426,14 +419,14 @@ function buildQuoteData(q, logoFileId) {
     contentRow('To be arranged separately with our plumber/landscaper');
   }
 
-  spacer(28);
+  greySpacer(28);
 
   if (q.quoteNotes && q.quoteNotes.trim()) {
     sectionBar('Additional Notes');
     for (const line of q.quoteNotes.trim().split('\n')) {
       contentRow(line);
     }
-    spacer(28);
+    greySpacer(28);
   }
 
   // ═══ PRICING SUMMARY ═══
@@ -502,7 +495,7 @@ function buildQuoteData(q, logoFileId) {
 
   tealFrame(28);
 
-  return { rows, logoRow, borderEndRow };
+  return { rows, borderEndRow };
 }
 
 // ─── Convert row data into Sheets API calls ───
@@ -710,7 +703,8 @@ function buildFormatRequests(rows, sheetId, borderEndRow) {
           }
         });
       }
-      if (row.greyContent || row.sectionBar) {
+      // J (col 9) is standalone in content/section/summary rows — needs its own box
+      if (row.greyContent || row.sectionBar || row.isSummary) {
         const jCovered = row.merges.some(([s, e]) => s <= 9 && e > 9);
         if (!jCovered) {
           requests.push({
@@ -747,21 +741,31 @@ module.exports = async (req, res) => {
     const date = fmtDate(q.date || new Date()).replace(/\//g, '-');
     const title = `GOB Quote - ${customerName} - ${date}`;
 
-    // Find logo on Drive
-    const logoFileId = await findLogoFileId(driveApi);
-
-    // 1. Create spreadsheet
-    const createRes = await sheetsApi.spreadsheets.create({
-      requestBody: {
-        properties: { title },
-        sheets: [{ properties: { title: 'Quote', sheetId: 0, gridProperties: { hideGridlines: true } } }],
-      },
+    // 1. Copy from template (which has the logo as a floating image)
+    const copyRes = await driveApi.files.copy({
+      fileId: TEMPLATE_ID,
+      requestBody: { name: title, parents: [QUOTES_FOLDER_ID] },
     });
-    const spreadsheetId = createRes.data.spreadsheetId;
-    const sheetId = 0;
+    const spreadsheetId = copyRes.data.id;
+
+    // Get the sheet ID from the copied spreadsheet
+    const ssInfo = await sheetsApi.spreadsheets.get({ spreadsheetId, fields: 'sheets.properties' });
+    const sheetId = ssInfo.data.sheets[0].properties.sheetId;
+
+    // Ensure gridlines are hidden
+    const initRequests = [{
+      updateSheetProperties: {
+        properties: { sheetId, gridProperties: { hideGridlines: true } },
+        fields: 'gridProperties.hideGridlines',
+      }
+    }];
+    await sheetsApi.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: { requests: initRequests },
+    });
 
     // 2. Build quote data
-    const { rows, borderEndRow } = buildQuoteData(q, logoFileId);
+    const { rows, borderEndRow } = buildQuoteData(q);
     const grid = buildSheetValues(rows);
     const formatRequests = buildFormatRequests(rows, sheetId, borderEndRow);
 
@@ -781,15 +785,6 @@ module.exports = async (req, res) => {
         requestBody: { requests: formatRequests },
       });
     }
-
-    // 5. Move to quotes folder
-    const fileInfo = await driveApi.files.get({ fileId: spreadsheetId, fields: 'parents' });
-    await driveApi.files.update({
-      fileId: spreadsheetId,
-      addParents: QUOTES_FOLDER_ID,
-      removeParents: (fileInfo.data.parents || []).join(','),
-      fields: 'id, parents',
-    });
 
     const sheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
     res.json({ success: true, spreadsheetId, url: sheetUrl, title });
