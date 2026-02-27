@@ -1,7 +1,7 @@
 /**
- * GOB Configurator - Google Sheets Quote Generator v2
- * Generates entire quote sheet from scratch — no template dependency.
- * All rows are dynamic, all formatting is applied programmatically.
+ * GOB Configurator - Google Sheets Quote Generator v3
+ * Exact replica of the original GOB quote layout.
+ * 11-column structure with Century Gothic font and cell merges.
  */
 
 const express = require('express');
@@ -41,7 +41,6 @@ const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
 const QUOTES_FOLDER_ID = '18dfAzGwqwqT-zI0yUBO60MrIFkvInULP';
-const TEMPLATE_ID = '1RZ_4OoMkdQbs-dl1-m9_rAPBQR0irch_QkzfGoZl5tI';
 
 // ─── Helpers ───
 
@@ -73,8 +72,8 @@ function fmtDate(date) {
 function fmtCurrency(amount) {
   if (!amount && amount !== 0) return '';
   const n = Number(amount);
-  if (n < 0) return '-£' + Math.abs(n).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return '£' + n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (n < 0) return '-\u00a3' + Math.abs(n).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return '\u00a3' + n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function formatComponentDesc(comp) {
@@ -93,7 +92,7 @@ function formatComponentDesc(comp) {
   if (t.includes('sliding') || t.includes('single')) {
     handleDesc = comp.handleSide === 'left' ? ' (opening left to right)' : ' (opening right to left)';
   }
-  const elev = comp.elevation ? ` — ${comp.elevation} elevation` : '';
+  const elev = comp.elevation ? ` \u2014 ${comp.elevation} elevation` : '';
   return `1 x full height ${widthM}m wide ${typeDesc}: smooth anthracite grey outside, white inside${handleDesc}${elev}`;
 }
 
@@ -131,18 +130,76 @@ function getSocketCount(q) {
   return 7;
 }
 
-// ─── Brand colours ───
-const TEAL = { red: 0.231, green: 0.659, blue: 0.659 };       // #3BA8A8
-const TEAL_LIGHT = { red: 0.878, green: 0.949, blue: 0.949 };  // #E0F2F2
+// ─── Brand colours (exact match to original quote) ───
+const TEAL = { red: 0.161, green: 0.663, blue: 0.725 };       // rgb(41,169,185) #29A9B9
 const WHITE = { red: 1, green: 1, blue: 1 };
 const BLACK = { red: 0, green: 0, blue: 0 };
-const DARK_GREY = { red: 0.2, green: 0.2, blue: 0.2 };
-const LIGHT_GREY = { red: 0.95, green: 0.95, blue: 0.95 };
-const MID_GREY = { red: 0.6, green: 0.6, blue: 0.6 };
-const BORDER_COL = { red: 0.82, green: 0.84, blue: 0.85 };
+const NEAR_BLACK = { red: 0.067, green: 0.067, blue: 0.067 };  // rgb(17,17,17)
+const GREY_BG = { red: 0.953, green: 0.953, blue: 0.953 };     // rgb(243,243,243)
+const LIGHT_BLUE = { red: 0.812, green: 0.886, blue: 0.953 };  // rgb(207,226,243) deposit bg
+const LIGHT_RED = { red: 0.957, green: 0.800, blue: 0.800 };   // rgb(244,204,204) payment bg
+const GREEN = { red: 0.1, green: 0.6, blue: 0.2 };
+
+const FONT = 'Century Gothic';
+
+// ─── 11-column layout (exact match to original) ───
+// A=border | B-D=label area | E=content | F=qty | G=sep | H=price label | I=sep | J=amount | K=border
+const NUM_COLS = 11;
+const COL_WIDTHS = [29, 132, 117, 117, 572, 76, 2, 220, 2, 208, 28];
+
+// ─── Logo upload ───
+const LOGO_PATH = path.join(__dirname, 'assets', 'logo-text.png');
+let logoFileId = null;
+
+async function ensureLogoUploaded() {
+  if (logoFileId) return;
+
+  // Search for existing upload
+  const searchRes = await drive.files.list({
+    q: `name='GOB-Logo-Text.png' and '${QUOTES_FOLDER_ID}' in parents and trashed=false`,
+    fields: 'files(id)',
+  });
+
+  if (searchRes.data.files && searchRes.data.files.length > 0) {
+    logoFileId = searchRes.data.files[0].id;
+    console.log('Found existing logo:', logoFileId);
+    return;
+  }
+
+  // Upload
+  if (!fs.existsSync(LOGO_PATH)) {
+    console.warn('Logo file not found:', LOGO_PATH);
+    return;
+  }
+  const uploadRes = await drive.files.create({
+    requestBody: {
+      name: 'GOB-Logo-Text.png',
+      parents: [QUOTES_FOLDER_ID],
+    },
+    media: {
+      mimeType: 'image/png',
+      body: fs.createReadStream(LOGO_PATH),
+    },
+    fields: 'id',
+  });
+  logoFileId = uploadRes.data.id;
+
+  // Make publicly readable so IMAGE() formula works
+  await drive.permissions.create({
+    fileId: logoFileId,
+    requestBody: { type: 'anyone', role: 'reader' },
+  });
+
+  console.log('Uploaded logo:', logoFileId);
+}
+
+// Upload logo on startup
+ensureLogoUploaded().catch(err => console.error('Logo upload failed:', err.message));
 
 // ─── Sheet Builder ───
-// Builds rows of data + formatting requests, row by row, so everything is dynamic.
+// Exact replica of original GOB quote layout.
+// Each row: { cells[], height, merges?[[startCol,endCol]], fullBg?, greyContent?, sectionBar?, borderCols? }
+// Each cell: { col, value, fontSize?, bold?, fg?, bg?, align?, vAlign? }
 
 function buildQuoteData(q) {
   const isSig = q.tier === 'signature';
@@ -153,131 +210,192 @@ function buildQuoteData(q) {
   const numDownlights = getDownlights(q);
   const numSpotlights = getSpotlights(q);
 
-  // We'll build an array of row objects. Each row object:
-  // { cells: [{ col, value, bold, fontSize, bg, fg, align, merge }], height }
-  // Col indices: A=0, B=1, ... J=9
-  // We use 10 columns (A-J). Price values go in col J (index 9).
-
   const rows = [];
-  const sectionFormats = []; // track formatting requests
+  let logoRow = -1; // unused but kept for API compat
 
-  function addBlank(count = 1) {
-    for (let i = 0; i < count; i++) rows.push({ cells: [] });
+  // ── Row helpers (matching original exactly) ──
+
+  function tealFrame(height = 28) {
+    rows.push({ cells: [], height, fullBg: TEAL });
   }
 
-  function addRow(cells, height) {
-    rows.push({ cells, height });
+  function spacer(height = 21) {
+    rows.push({ cells: [], height });
   }
 
-  // ════════════════════════════════════════════
-  // HEADER
-  // ════════════════════════════════════════════
-  addBlank(1); // Row 1 (spacer)
-
-  // Row 2: Logo — image is in the template; we only set height here
-  const logoRow = rows.length;
-  addRow([], 50);
-
-  // Row 3: Address line 1
-  addRow([{ col: 1, value: 'Rear of 158 Main Road, Biggin Hill, Kent, TN16 3BA', fontSize: 9, fg: MID_GREY }]);
-
-  // Row 4: Contact
-  addRow([{ col: 1, value: '01689 818 400  |  info@gardenofficebuildings.co.uk  |  www.gardenofficebuildings.co.uk', fontSize: 9, fg: MID_GREY }]);
-
-  addBlank(1); // Row 5
-
-  // ════════════════════════════════════════════
-  // QUOTATION TITLE
-  // ════════════════════════════════════════════
-  addRow([{ col: 1, value: 'QUOTATION', bold: true, fontSize: 16, fg: TEAL }], 28);
-
-  addBlank(1);
-
-  // ════════════════════════════════════════════
-  // CUSTOMER INFO
-  // ════════════════════════════════════════════
-  const dateStr = fmtDate(q.date || new Date());
-  const custLines = [
-    q.customerName ? `Customer:   ${q.customerName}` : null,
-    q.customerNumber ? `Customer No:   ${q.customerNumber}` : null,
-    `Date:   ${dateStr}`,
-    q.address ? `Address:   ${q.address}` : null,
-  ].filter(Boolean);
-
-  for (const line of custLines) {
-    addRow([{ col: 1, value: line, fontSize: 10 }]);
+  // Large centered heading (e.g. "Customer Information"), merged B-J
+  function heading(text, height = 22, fontSize = 25) {
+    rows.push({
+      cells: [{ col: 1, value: text, fontSize, bold: true, align: 'CENTER', vAlign: 'MIDDLE' }],
+      height,
+      merges: [[1, 10]], // B-J
+    });
   }
 
-  addBlank(1);
+  // Customer info row: teal label in B-D, white value in E-J
+  function custRow(label, value, height = 30) {
+    rows.push({
+      cells: [
+        { col: 1, value: label, fontSize: 12, bold: true, fg: WHITE, bg: TEAL, align: 'LEFT', vAlign: 'BOTTOM' },
+        { col: 4, value: value, fontSize: 12, align: 'LEFT', vAlign: 'BOTTOM' },
+      ],
+      height,
+      merges: [[1, 4], [4, 10]], // B-D, E-J
+    });
+  }
 
-  // ════════════════════════════════════════════
-  // BUILDING SPECIFICATION
-  // ════════════════════════════════════════════
-  addRow([
-    { col: 1, value: 'BUILDING SPECIFICATION', bold: true, fontSize: 12, fg: WHITE, bg: TEAL },
-    { col: 2, value: '', bg: TEAL }, { col: 3, value: '', bg: TEAL }, { col: 4, value: '', bg: TEAL },
-    { col: 5, value: '', bg: TEAL }, { col: 6, value: '', bg: TEAL }, { col: 7, value: '', bg: TEAL },
-    { col: 8, value: '', bg: TEAL },
-    { col: 9, value: 'Price', bold: true, fontSize: 10, fg: WHITE, bg: TEAL, align: 'RIGHT' },
-  ], 26);
+  // Teal section bar with optional Qty/Amount column labels
+  function sectionBar(text, opts = {}) {
+    const cells = [
+      { col: 1, value: text, fontSize: 13, bold: true, fg: WHITE, bg: TEAL, align: 'LEFT', vAlign: 'BOTTOM' },
+      { col: 5, value: opts.detailLabel || '', fontSize: 12, bold: true, fg: WHITE, bg: TEAL, align: 'CENTER', vAlign: 'BOTTOM' },
+      { col: 9, value: opts.amountLabel || '', fontSize: 12, bold: true, fg: WHITE, bg: TEAL, align: 'CENTER', vAlign: 'BOTTOM' },
+    ];
+    rows.push({
+      cells,
+      height: opts.height || 37,
+      merges: [[1, 5], [5, 9]], // B-E, F-I
+      sectionBar: true,
+    });
+  }
 
-  addBlank(1);
+  // Content row with grey bg, text in B-E, optional detail in F-I, optional price in J
+  function contentRow(text, opts = {}) {
+    const cells = [
+      { col: 1, value: text, fontSize: opts.fontSize || 11, bold: opts.bold, fg: opts.fg, align: 'LEFT', vAlign: 'BOTTOM' },
+    ];
+    if (opts.detail) {
+      cells.push({ col: 5, value: opts.detail, fontSize: 10, align: 'CENTER', vAlign: 'BOTTOM' });
+    }
+    if (opts.price !== undefined && opts.price !== null) {
+      const priceStr = typeof opts.price === 'string' ? opts.price : fmtCurrency(opts.price);
+      cells.push({ col: 9, value: priceStr, fontSize: 10, fg: opts.priceFg, align: 'CENTER', vAlign: 'BOTTOM' });
+    }
+    rows.push({
+      cells,
+      height: opts.height || 32,
+      merges: [[1, 5], [5, 9]], // B-E, F-I
+      greyContent: opts.greyBg !== false,
+    });
+  }
 
-  // Building summary
-  addRow([
-    { col: 1, value: `Your Building: ${w}M x ${d}M x ${h}m ${q.buildingType || 'Garden Office Building'}`, bold: true, fontSize: 11 },
-    { col: 9, value: fmtCurrency(q.basePrice), bold: true, fontSize: 11, align: 'RIGHT' },
-  ]);
+  // Subtotal/discount row — label in H-I, price in J, teal text on white
+  function summaryRow(label, price, opts = {}) {
+    rows.push({
+      cells: [
+        { col: 7, value: label, fontSize: 13, bold: true, fg: opts.fg || TEAL, bg: opts.bg, align: 'LEFT', vAlign: 'BOTTOM' },
+        { col: 9, value: typeof price === 'string' ? price : fmtCurrency(price), fontSize: 13, bold: true, fg: opts.fg || TEAL, bg: opts.bg, align: 'CENTER', vAlign: 'BOTTOM' },
+      ],
+      height: opts.height || 29,
+      merges: [[7, 9]], // H-I
+    });
+  }
 
-  // Dimensions
-  const extDimNote = isSig ? ' (incl. 400mm canopy/decking)' : '';
-  addRow([{ col: 1, value: `External Dimensions \u2013 (W) ${q.width}mm (D) x ${q.depth}mm x (H) ${q.height}mm${extDimNote}`, fontSize: 9, fg: MID_GREY }]);
-  addRow([{ col: 1, value: `Internal Dimensions \u2013 (W) ${intW}mm x (D) ${intD}mm x (H) ${intH}mm (approx)`, fontSize: 9, fg: MID_GREY }]);
+  // Payment schedule row — desc in B-H, amount in I-J
+  function paymentRow(desc, amount, opts = {}) {
+    const cells = [
+      { col: 1, value: desc, fontSize: 11, bold: opts.bold, fg: opts.fg || NEAR_BLACK, align: 'LEFT', vAlign: 'BOTTOM' },
+    ];
+    if (amount !== undefined && amount !== null) {
+      cells.push({
+        col: 8, value: typeof amount === 'string' ? amount : fmtCurrency(amount),
+        fontSize: 12, bold: opts.bold, fg: opts.fg || NEAR_BLACK, bg: opts.amountBg, align: 'CENTER', vAlign: 'BOTTOM',
+      });
+    }
+    rows.push({
+      cells,
+      height: opts.height || 28,
+      merges: [[1, 8], [8, 10]], // B-H, I-J
+    });
+  }
 
-  // Range
+  // Terms/footer row — text in B-J merge
+  function termsRow(text, opts = {}) {
+    rows.push({
+      cells: [{ col: 1, value: text, fontSize: opts.fontSize || 11, bold: opts.bold, fg: NEAR_BLACK, align: 'LEFT', vAlign: 'BOTTOM' }],
+      height: opts.height || 33,
+      merges: [[1, 10]], // B-J
+    });
+  }
+
+  // ════════════════════════════════════════════════════
+  // BUILD THE QUOTE
+  // ════════════════════════════════════════════════════
+
+  // ── HEADER ──
+  tealFrame(28);
+
+  // Header: GOB logo on left (B-D), "Quote" text on right (E-J)
+  logoRow = rows.length;
+  const logoFormula = logoFileId
+    ? `=IMAGE("https://lh3.googleusercontent.com/d/${logoFileId}")`
+    : 'Garden Office Buildings';
+  rows.push({
+    cells: [
+      { col: 1, value: logoFormula, fontSize: 10, vAlign: 'MIDDLE' },
+      { col: 4, value: 'Quote', fontSize: 30, bold: true, align: 'CENTER', vAlign: 'MIDDLE' },
+    ],
+    height: 101,
+    merges: [[1, 4], [4, 10]], // B-D (logo), E-J (Quote text)
+  });
+
+  // Spacer after header
+  spacer(22);
+
+  // ── CUSTOMER INFORMATION ──
+  heading('Customer Information', 50, 25);
+  spacer(22);
+
+  if (q.customerName) custRow('Name', q.customerName);
+  if (q.customerNumber) custRow('Customer #', q.customerNumber);
+  custRow('Date', fmtDate(q.date || new Date()));
+  if (q.address) custRow('Address', q.address, 74);
+
+  spacer(22);
+
+  // ── BUILDING SPECIFICATION ──
+  heading('Building Specification', 59, 25);
+  spacer(21);
+
+  const extDimNote = isSig ? ' (excl. canopy \u2013 overall depth incl. 400mm canopy)' : '';
+
+  sectionBar(
+    `Your Building: ${w}m x ${d}m x ${h}m ${q.buildingType || 'Garden Office Building'}`,
+    { detailLabel: 'Base Price', amountLabel: fmtCurrency(q.basePrice) }
+  );
+
+  contentRow(`External Dimensions \u2013 (W) ${q.width}mm x (D) ${q.depth}mm x (H) ${q.height}mm${extDimNote}`, { height: 31 });
+  contentRow(`Internal Dimensions \u2013 (W) ${intW}mm x (D) ${intD}mm x (H) ${intH}mm (approx)`, { height: 31 });
+
   const tierDesc = isSig
     ? 'Signature range with integrated canopy and decking on front of building'
     : 'Classic range with clean, minimalist design';
-  addRow([{ col: 1, value: tierDesc, fontSize: 10 }]);
+  contentRow(tierDesc, { height: 29 });
+  contentRow('Configuration as per drawing (TBC). All internal sizes are approximates and subject to final drawing.', { height: 31 });
 
-  addBlank(1);
+  spacer(28);
 
-  // ════════════════════════════════════════════
-  // STANDARD FEATURES
-  // ════════════════════════════════════════════
-  addRow([
-    { col: 1, value: `Standard Features (${isSig ? 'Signature' : 'Classic'})`, bold: true, fontSize: 11, fg: TEAL },
-  ], 22);
+  // ── STANDARD FEATURES ──
+  sectionBar(`Standard Features (${isSig ? 'Signature' : 'Classic'})`);
 
-  addRow([{ col: 1, value: 'Configuration as per drawing (TBC)', fontSize: 10 }]);
-  addRow([{ col: 1, value: 'Insulated timber/panel construction with 100mm PIR walls, 75mm PIR floor and ceiling', fontSize: 10 }]);
+  contentRow('Insulated timber/panel construction with 100mm PIR walls, 75mm PIR floor and ceiling');
   if (isSig) {
-    addRow([{ col: 1, value: 'To include 400mm overhang/decking', fontSize: 10 }]);
+    contentRow('To include 400mm canopy with down lights');
   }
-  addRow([{ col: 1, value: 'Plaster-boarded, skimmed and decorated internal finish', fontSize: 10 }]);
+  contentRow('Plaster-boarded, skimmed and decorated internal finish');
 
-  // Foundation
   const foundationLabels = {
     'ground-screw': 'Ground screw foundation system',
     'concrete-base': 'Concrete base foundation',
     'concrete-pile': 'Concrete pile foundation system'
   };
-  addRow([{ col: 1, value: foundationLabels[q.foundationType] || 'Ground screw foundation system', fontSize: 10 }]);
+  contentRow(foundationLabels[q.foundationType] || 'Ground screw foundation system');
 
-  // Corners
-  addRow([{ col: 1, value: `Front-left corner design (open/closed): ${q.cornerLeft || 'Open'}`, fontSize: 10 }]);
-  addRow([{ col: 1, value: `Front-right corner design (open/closed): ${q.cornerRight || 'Open'}`, fontSize: 10 }]);
+  spacer(28);
 
-  addBlank(1);
+  // ── EXTERNAL FINISH ──
+  sectionBar('External Finish', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
 
-  // ════════════════════════════════════════════
-  // EXTERNAL FINISH
-  // ════════════════════════════════════════════
-  addRow([
-    { col: 1, value: 'EXTERNAL FINISH', bold: true, fontSize: 11, fg: TEAL },
-  ], 22);
-
-  // Cladding per side
   const claddingRows = [
     { side: 'Front', value: q.frontCladding },
     { side: 'Right', value: q.rightCladding, price: q.rightCladdingPrice },
@@ -285,317 +403,230 @@ function buildQuoteData(q) {
     { side: 'Rear', value: q.rearCladding },
   ];
   for (const cl of claddingRows) {
-    const cells = [{ col: 1, value: `${cl.side} cladding: ${cl.value || 'anthracite grey steel cladding'}`, fontSize: 10 }];
-    if (cl.price && cl.price > 0) {
-      cells.push({ col: 9, value: fmtCurrency(cl.price), fontSize: 10, align: 'RIGHT' });
-    }
-    addRow(cells);
+    contentRow(
+      `${cl.side} cladding: ${cl.value || 'anthracite grey steel cladding'}`,
+      { price: (cl.price && cl.price > 0) ? cl.price : undefined }
+    );
+  }
+  contentRow('Fascia, soffit and cappings: anthracite');
+  contentRow('Roof: EPDM rubber roof');
+  contentRow('Guttering: rear');
+  if (isSig && q.hasDecking !== false) {
+    contentRow('Integrated composite decking: dark grey');
   }
 
-  // Additional external features
-  addRow([{ col: 1, value: 'Fascia, soffit and cappings: grey', fontSize: 10 }]);
-  addRow([{ col: 1, value: 'Roof: EPDM rubber roof', fontSize: 10 }]);
-  addRow([{ col: 1, value: 'Guttering: rear', fontSize: 10 }]);
+  spacer(28);
 
-  if (isSig) {
-    const hasDecking = q.hasDecking !== false;
-    if (hasDecking) {
-      addRow([{ col: 1, value: 'Integrated composite decking: dark grey', fontSize: 10 }]);
-    }
-  }
+  // ── INTERNAL FINISH ──
+  sectionBar('Internal Finish');
 
-  addBlank(1);
+  contentRow('Flooring: TBC (Natural Oak or Light Grey)');
+  contentRow('Internal wall finish: plasterboarded, plastered and decorated white');
+  contentRow('Skirting board: white');
 
-  // ════════════════════════════════════════════
-  // INTERNAL FINISH
-  // ════════════════════════════════════════════
-  addRow([
-    { col: 1, value: 'INTERNAL FINISH', bold: true, fontSize: 11, fg: TEAL },
-  ], 22);
+  spacer(28);
 
-  addRow([{ col: 1, value: 'Flooring: TBC (Natural Oak or Light Grey)', fontSize: 10 }]);
-  addRow([{ col: 1, value: 'Internal wall finish: plasterboarded, skimmed and decorated white', fontSize: 10 }]);
-  addRow([{ col: 1, value: 'Skirting board: white', fontSize: 10 }]);
-
-  addBlank(1);
-
-  // ════════════════════════════════════════════
-  // DOORS & WINDOWS
-  // ════════════════════════════════════════════
-  addRow([
-    { col: 1, value: 'DOORS, WINDOWS, PARTITIONS', bold: true, fontSize: 11, fg: TEAL },
-  ], 22);
+  // ── DOORS, WINDOWS & PARTITIONS ──
+  sectionBar('Doors, Windows, Partitions', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
 
   if (q.components && q.components.length > 0) {
     for (const comp of q.components) {
-      const desc = formatComponentDesc(comp);
-      const cells = [{ col: 1, value: desc, fontSize: 10 }];
-      if (comp.price && comp.price > 0) {
-        cells.push({ col: 9, value: fmtCurrency(comp.price), fontSize: 10, align: 'RIGHT' });
-      }
-      addRow(cells);
+      contentRow(formatComponentDesc(comp), {
+        detail: comp.elevation ? `${comp.elevation} elevation` : '',
+        price: (comp.price && comp.price > 0) ? comp.price : undefined,
+      });
     }
   }
+  contentRow('4mm double glazed toughened glass throughout');
 
-  addRow([{ col: 1, value: '4mm double glazed toughened glass throughout', fontSize: 10 }]);
-
-  // Component upgrades
   if (q.componentUpgrades && q.componentUpgrades.length > 0) {
     for (const u of q.componentUpgrades) {
-      addRow([
-        { col: 1, value: u.label, fontSize: 10 },
-        { col: 9, value: fmtCurrency(u.price), fontSize: 10, align: 'RIGHT' },
-      ]);
+      contentRow(u.label, { price: u.price });
     }
   }
-
-  // Height upgrade
   if (q.heightUpgrade && q.heightUpgrade.price > 0) {
-    addRow([
-      { col: 1, value: q.heightUpgrade.label, fontSize: 10 },
-      { col: 9, value: fmtCurrency(q.heightUpgrade.price), fontSize: 10, align: 'RIGHT' },
-    ]);
+    contentRow(q.heightUpgrade.label, { price: q.heightUpgrade.price });
   }
 
-  addBlank(1);
+  spacer(28);
 
-  // ════════════════════════════════════════════
-  // ELECTRICAL INSTALLATION
-  // ════════════════════════════════════════════
-  addRow([
-    { col: 1, value: 'STANDARD ELECTRICAL FEATURES', bold: true, fontSize: 11, fg: TEAL },
-  ], 22);
+  // ── ELECTRICAL ──
+  sectionBar('Standard Electrical Features');
 
-  addRow([{ col: 1, value: `${numDownlights} x dimmable LED downlights`, fontSize: 10 }]);
-  addRow([{ col: 1, value: 'Configuration/Quantity TBC on 1st fix electrician visit approximately 1 week into project', fontSize: 9, fg: MID_GREY }]);
-
+  contentRow(`${numDownlights} x dimmable LED downlights`);
+  contentRow('Configuration/Quantity TBC on 1st fix electrician visit approx. 1 week into project', { fontSize: 10 });
   if (numSpotlights > 0) {
-    addRow([{ col: 1, value: `${numSpotlights} x external downlights in canopy soffit`, fontSize: 10 }]);
+    contentRow(`${numSpotlights} x external down lights in canopy soffit`);
   }
-
   const sheetSocketCount = getSocketCount(q);
-  addRow([{ col: 1, value: `${sheetSocketCount} x double power sockets in brushed steel finish (1 w/ USB ports)`, fontSize: 10 }]);
+  contentRow(`${sheetSocketCount} x double power sockets in brushed steel finish (1 w/ USB ports)`);
 
-  // Lighting zones
   let lightingZones = 1;
   if (q.straightPartition?.enabled) lightingZones++;
   if (q.partitionRoom?.enabled) lightingZones++;
   if (lightingZones > 1) {
-    addRow([{ col: 1, value: `${lightingZones} x internal lighting zones on separate switches`, fontSize: 10 }]);
+    contentRow(`${lightingZones} x internal lighting zones on separate switches`);
   }
+  contentRow('1 x single dimmable light switch in brushed steel');
+  contentRow('1 x network connection port for WiFi connectivity');
+  contentRow('Consumer unit');
 
-  addRow([{ col: 1, value: '1 x single dimmable light switch in brushed steel', fontSize: 10 }]);
-  addRow([{ col: 1, value: '1 x network connection port', fontSize: 10 }]);
-  addRow([{ col: 1, value: 'Consumer unit', fontSize: 10 }]);
+  spacer(28);
 
-  addBlank(1);
-
-  // ════════════════════════════════════════════
-  // OPTIONAL EXTRAS (selected)
-  // ════════════════════════════════════════════
-  const hasExtras = (q.extras && q.extras.length > 0) ||
-                    (q.deductions && q.deductions.length > 0);
-
+  // ── SELECTED EXTRAS & UPGRADES ──
+  const hasExtras = (q.extras && q.extras.length > 0) || (q.deductions && q.deductions.length > 0);
   if (hasExtras) {
-    addRow([
-      { col: 1, value: 'SELECTED EXTRAS & UPGRADES', bold: true, fontSize: 11, fg: TEAL },
-    ], 22);
-
+    sectionBar('Selected Extras & Upgrades', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
     if (q.extras && q.extras.length > 0) {
       for (const extra of q.extras) {
-        addRow([
-          { col: 1, value: extra.label, fontSize: 10 },
-          { col: 9, value: fmtCurrency(extra.price), fontSize: 10, align: 'RIGHT' },
-        ]);
+        contentRow(extra.label, { price: extra.price });
         if (extra.description) {
-          addRow([{ col: 1, value: extra.description, fontSize: 9, fg: MID_GREY }]);
+          contentRow(extra.description, { fontSize: 10 });
         }
       }
     }
-
-    // Deductions
     if (q.deductions && q.deductions.length > 0) {
       for (const ded of q.deductions) {
-        addRow([
-          { col: 1, value: ded.label, fontSize: 10 },
-          { col: 9, value: fmtCurrency(ded.price), fontSize: 10, fg: { red: 0.1, green: 0.6, blue: 0.2 }, align: 'RIGHT' },
-        ]);
+        contentRow(ded.label, { fg: GREEN, price: fmtCurrency(ded.price), priceFg: GREEN });
       }
     }
-
-    addBlank(1);
+    spacer(28);
   }
 
-  // ════════════════════════════════════════════
-  // OPTIONAL EXTRAS
-  // ════════════════════════════════════════════
-  addRow([
-    { col: 1, value: 'Optional extras available', bold: true, fontSize: 11, fg: TEAL },
-  ], 22);
+  // ── OPTIONAL EXTRAS ──
+  sectionBar('Optional Extras');
 
   const optionalExtras = [
-    ['External double plug socket', '£235.00'],
-    ['External up/down light', '£95.00'],
-    ['Oil filled electric wall panel radiator', '£495.00'],
-    ['Additional double plug socket', '£60.00', '£85.00 w/ USB ports'],
-    ['Additional lighting zone on separate switch', '£125.00'],
-    ['Wireless double quinetic switch system', '£265.00', 'wireless switch to turn on/off external lights from house'],
-    ['Standard air conditioning unit, heating and cooling', '£1,750.00', 'to be paid directly to air con specialist', 'Model: Mitsubishi MSZ-HR R32 Classic Inverter Heat Pump'],
-    ['Premium air conditioning unit with programming and mobile app, heating and cooling', '£2,500.00', 'to be paid directly to air con specialist', 'Model: Mitsubishi MSZ-LN R32 Inverter Heat Pump'],
-    ['Additional composite slatted cladding for sides of building', '£115 per sqm'],
-    ['Additional decking', '£250 per sqm', 'incl. foundations, framing, fixings. Subject to survey'],
+    ['External double plug socket', '\u00a3235.00'],
+    ['External up/down light', '\u00a395.00'],
+    ['Oil filled electric wall panel radiator', '\u00a3495.00'],
+    ['Additional double plug socket', '\u00a365.00', '\u00a385.00 w/ USB ports'],
+    ['Additional lighting zone on separate switch', '\u00a3125.00'],
+    ['Wireless double quinetic switch system', '\u00a3265.00', 'wireless switch to turn on/off external lights from house'],
+    ['Standard air conditioning unit, heating and cooling', '\u00a31,750.00', 'to be paid directly to air con specialist'],
+    ['Premium air conditioning unit with programming and mobile app, heating and cooling', '\u00a32,500.00', 'to be paid directly to air con specialist'],
+    ['Additional composite cladding for sides of building', '\u00a3115 per sqm'],
+    ['Additional decking', '\u00a3300 per sqm', 'incl. foundations, framing, fixings'],
   ];
-
   for (const extra of optionalExtras) {
-    const label = extra[0];
-    const parts = extra.slice(1);
-    const priceText = `(+ ${parts.join(') (')})`;
-    addRow([{ col: 1, value: `${label} ${priceText}`, fontSize: 10 }]);
+    const priceText = `(+ ${extra.slice(1).join(') (+ ')})`;
+    contentRow(`${extra[0]} ${priceText}`);
   }
 
-  addBlank(1);
+  spacer(28);
 
-  // ════════════════════════════════════════════
-  // INSTALLATION
-  // ════════════════════════════════════════════
-  addRow([
-    { col: 1, value: 'Installation', bold: true, fontSize: 11, fg: TEAL },
-  ], 22);
+  // ── INSTALLATION ──
+  sectionBar('Main Building Installation & Groundworks', { amountLabel: 'Amount (\u00a3)' });
+  contentRow('To be conducted by our team', { price: q.installationPrice });
 
-  addRow([
-    { col: 1, value: 'To be conducted by our team', fontSize: 10 },
-    { col: 9, value: fmtCurrency(q.installationPrice), bold: true, fontSize: 10, align: 'RIGHT' },
-  ]);
+  spacer(28);
 
-  addBlank(1);
-
-  // Electrical connection note
-  addRow([{ col: 1, value: 'Electrical Connection', bold: true, fontSize: 10 }]);
-  addRow([{ col: 1, value: 'To be arranged by electrician', fontSize: 10 }]);
-
-  // Plumbing note if bathroom
+  // Electrical/plumbing notes
+  sectionBar('Electrical Connection');
+  contentRow('To be arranged by electrician');
   if (q.bathroom && q.bathroom.enabled) {
-    addBlank(1);
-    addRow([{ col: 1, value: 'Utility Connections (Water, Waste)', bold: true, fontSize: 10 }]);
-    addRow([{ col: 1, value: 'To be arranged separately with our plumber/landscaper', fontSize: 10 }]);
+    sectionBar('Utility Connections (Water, Waste)');
+    contentRow('To be arranged separately with our plumber/landscaper');
   }
 
-  addBlank(1);
+  spacer(28);
 
-  // ════════════════════════════════════════════
-  // CUSTOM NOTES
-  // ════════════════════════════════════════════
+  // ── CUSTOM NOTES ──
   if (q.quoteNotes && q.quoteNotes.trim()) {
-    addRow([
-      { col: 1, value: 'ADDITIONAL NOTES', bold: true, fontSize: 11, fg: TEAL },
-    ], 22);
-    // Split notes by newlines for cleaner display
-    const lines = q.quoteNotes.trim().split('\n');
-    for (const line of lines) {
-      addRow([{ col: 1, value: line, fontSize: 10 }]);
+    sectionBar('Additional Notes');
+    for (const line of q.quoteNotes.trim().split('\n')) {
+      contentRow(line);
     }
-    addBlank(1);
+    spacer(28);
   }
 
-  // ════════════════════════════════════════════
+  // ════════════════════════════════════════════════════
   // PRICING SUMMARY
-  // ════════════════════════════════════════════
-  const subtotalRow = rows.length;
-  addRow([
-    { col: 1, value: '', bg: LIGHT_GREY }, { col: 2, value: '', bg: LIGHT_GREY }, { col: 3, value: '', bg: LIGHT_GREY },
-    { col: 4, value: '', bg: LIGHT_GREY }, { col: 5, value: '', bg: LIGHT_GREY }, { col: 6, value: '', bg: LIGHT_GREY },
-    { col: 7, value: 'Subtotal', bold: true, fontSize: 11, bg: LIGHT_GREY, align: 'RIGHT' },
-    { col: 8, value: '', bg: LIGHT_GREY },
-    { col: 9, value: fmtCurrency(q.subtotal), bold: true, fontSize: 11, bg: LIGHT_GREY, align: 'RIGHT' },
-  ], 24);
+  // ════════════════════════════════════════════════════
 
-  // Discount
+  // Mark where content borders should end (before summary area)
+  const borderEndRow = rows.length;
+
+  spacer(21);
+  summaryRow('SUB TOTAL (inc. VAT)', q.subtotal, { height: 29 });
+
   if (q.discount && q.discount > 0) {
-    addRow([
-      { col: 7, value: q.discountLabel || 'Discount', fontSize: 10, fg: { red: 0.1, green: 0.6, blue: 0.2 }, align: 'RIGHT' },
-      { col: 8, value: '' },
-      { col: 9, value: '-' + fmtCurrency(q.discount), fontSize: 10, fg: { red: 0.1, green: 0.6, blue: 0.2 }, align: 'RIGHT' },
-    ]);
+    summaryRow(q.discountLabel || 'DISCOUNT', q.discount, { height: 29 });
   }
 
-  // Total
-  addRow([
-    { col: 1, value: '', bg: TEAL }, { col: 2, value: '', bg: TEAL }, { col: 3, value: '', bg: TEAL },
-    { col: 4, value: '', bg: TEAL }, { col: 5, value: '', bg: TEAL }, { col: 6, value: '', bg: TEAL },
-    { col: 7, value: 'TOTAL (inc. VAT)', bold: true, fontSize: 13, fg: WHITE, bg: TEAL, align: 'RIGHT' },
-    { col: 8, value: '', bg: TEAL },
-    { col: 9, value: fmtCurrency(q.total), bold: true, fontSize: 13, fg: WHITE, bg: TEAL, align: 'RIGHT' },
-  ], 30);
+  // TOTAL bar (teal bg, white text)
+  summaryRow('TOTAL (inc. VAT)', q.total, { fg: WHITE, bg: TEAL, height: 29 });
 
-  addRow([{ col: 1, value: 'All prices include VAT at 20%', fontSize: 9, fg: MID_GREY }]);
+  spacer(21);
 
-  addBlank(2);
-
-  // ════════════════════════════════════════════
+  // ════════════════════════════════════════════════════
   // PAYMENT SCHEDULE
-  // ════════════════════════════════════════════
-  addRow([
-    { col: 1, value: 'PAYMENT SCHEDULE', bold: true, fontSize: 12, fg: WHITE, bg: TEAL },
-    { col: 2, value: '', bg: TEAL }, { col: 3, value: '', bg: TEAL }, { col: 4, value: '', bg: TEAL },
-    { col: 5, value: '', bg: TEAL }, { col: 6, value: '', bg: TEAL }, { col: 7, value: '', bg: TEAL },
-    { col: 8, value: '', bg: TEAL },
-    { col: 9, value: '', bg: TEAL },
-  ], 26);
+  // ════════════════════════════════════════════════════
 
-  addBlank(1);
+  heading('Total & Payment Schedule as per Order', 60, 20);
+  spacer(21);
 
-  // Payment rows from pricing engine
+  // Payment schedule header (bold labels, matching reference ~42px)
+  paymentRow('Payment Schedule', 'Amount (inc. VAT)', { bold: true, height: 42 });
+
   if (q.paymentSchedule && q.paymentSchedule.length > 0) {
-    for (const ps of q.paymentSchedule) {
-      addRow([
-        { col: 1, value: ps.label, fontSize: 10 },
-        { col: 9, value: fmtCurrency(ps.amount), fontSize: 10, align: 'RIGHT' },
-      ]);
+    for (let i = 0; i < q.paymentSchedule.length; i++) {
+      const ps = q.paymentSchedule[i];
+      paymentRow(ps.label, ps.amount, {
+        amountBg: i === 0 ? LIGHT_BLUE : LIGHT_RED,
+        height: 28,
+      });
     }
   }
 
-  addBlank(1);
+  spacer(21);
 
   // Payment total
-  addRow([
-    { col: 1, value: '', bg: LIGHT_GREY }, { col: 2, value: '', bg: LIGHT_GREY }, { col: 3, value: '', bg: LIGHT_GREY },
-    { col: 4, value: '', bg: LIGHT_GREY }, { col: 5, value: '', bg: LIGHT_GREY }, { col: 6, value: '', bg: LIGHT_GREY },
-    { col: 7, value: 'TOTAL', bold: true, fontSize: 11, bg: LIGHT_GREY, align: 'RIGHT' },
-    { col: 8, value: '', bg: LIGHT_GREY },
-    { col: 9, value: fmtCurrency(q.total), bold: true, fontSize: 11, bg: LIGHT_GREY, align: 'RIGHT' },
-  ], 24);
+  paymentRow('Total', q.total, { bold: true, height: 33 });
 
-  addRow([{ col: 1, value: '* Groundworks & Installation schedule may be adjusted based on project timeline', fontSize: 9, fg: MID_GREY }]);
+  spacer(21);
 
-  addBlank(2);
+  // ════════════════════════════════════════════════════
+  // TERMS
+  // ════════════════════════════════════════════════════
 
-  // ════════════════════════════════════════════
-  // TERMS & CONDITIONS
-  // ════════════════════════════════════════════
-  addRow([
-    { col: 1, value: 'Terms', bold: true, fontSize: 10, fg: TEAL },
-  ], 20);
+  termsRow('Terms', { bold: true, height: 42 });
 
-  addRow([{ col: 1, value: '*Groundworks, installation & other labour to be paid directly to installation team', fontSize: 9, fg: MID_GREY }]);
-  addRow([{ col: 1, value: 'Customer to provide toilet facility and 6-yard skip for waste', fontSize: 9, fg: MID_GREY }]);
-  addRow([{ col: 1, value: 'Customer to be responsible for levelling and clearance of site prior to commencement of works', fontSize: 9, fg: MID_GREY }]);
+  const terms = [];
+  terms.push('Quote is based on our standard specification. Any upgrades or changes may affect the final price.');
+  terms.push('Quote is based on normal ground conditions. In the unlikely event of unforeseen ground issues, additional costs may apply.');
+  if (q.bathroom && q.bathroom.enabled) {
+    terms.push('Customer to provide a mini skip for duration of build.');
+  } else {
+    terms.push('Customer to provide toilet facility and mini skip for duration of build.');
+  }
+  terms.push('While Garden Office Buildings will clear and prepare the construction area, the customer is responsible for ensuring the site is accessible and clear of obstructions prior to commencement.');
 
-  addBlank(2);
+  for (const term of terms) {
+    termsRow(term);
+  }
 
-  // Footer
-  addRow([{ col: 1, value: 'Garden Office Buildings  |  01689 818 400  |  info@gardenofficebuildings.co.uk', fontSize: 9, fg: TEAL }]);
+  spacer(21);
 
-  return { rows, logoRow };
+  // ── FOOTER ──
+  rows.push({
+    cells: [{ col: 1, value: 'Garden Office Buildings  |  01689 818 400  |  info@gardenofficebuildings.co.uk', fontSize: 11, fg: TEAL, align: 'LEFT', vAlign: 'MIDDLE' }],
+    height: 28,
+    merges: [[1, 10]],
+  });
+
+  // Bottom border
+  tealFrame(28);
+
+  return { rows, logoRow, borderEndRow };
 }
 
 // ─── Convert row data into Sheets API calls ───
 
 function buildSheetValues(rows) {
-  // Convert rows into a 2D array for values.update
-  // We use 10 columns (A-J)
   const grid = [];
   for (const row of rows) {
-    const r = new Array(10).fill('');
+    const r = new Array(NUM_COLS).fill('');
     for (const cell of (row.cells || [])) {
       r[cell.col] = cell.value !== undefined && cell.value !== null ? cell.value : '';
     }
@@ -604,33 +635,50 @@ function buildSheetValues(rows) {
   return grid;
 }
 
-function buildFormatRequests(rows, sheetId) {
+function buildFormatRequests(rows, sheetId, borderEndRow) {
   const requests = [];
 
   // Column widths
-  const colWidths = [30, 450, 60, 60, 120, 60, 60, 60, 60, 120]; // A-J
-  for (let i = 0; i < colWidths.length; i++) {
+  for (let i = 0; i < COL_WIDTHS.length; i++) {
     requests.push({
       updateDimensionProperties: {
         range: { sheetId, dimension: 'COLUMNS', startIndex: i, endIndex: i + 1 },
-        properties: { pixelSize: colWidths[i] },
+        properties: { pixelSize: COL_WIDTHS[i] },
         fields: 'pixelSize',
       }
     });
   }
 
-  // Default font for entire sheet
+  // Default font for entire sheet: Century Gothic 11pt
   requests.push({
     repeatCell: {
-      range: { sheetId, startRowIndex: 0, endRowIndex: rows.length, startColumnIndex: 0, endColumnIndex: 10 },
+      range: { sheetId, startRowIndex: 0, endRowIndex: rows.length, startColumnIndex: 0, endColumnIndex: NUM_COLS },
       cell: {
         userEnteredFormat: {
-          textFormat: { fontFamily: 'Arial', fontSize: 10, foregroundColorStyle: { rgbColor: DARK_GREY } },
-          verticalAlignment: 'MIDDLE',
+          textFormat: { fontFamily: FONT, fontSize: 11, foregroundColorStyle: { rgbColor: BLACK } },
+          verticalAlignment: 'BOTTOM',
           wrapStrategy: 'WRAP',
         }
       },
       fields: 'userEnteredFormat(textFormat,verticalAlignment,wrapStrategy)',
+    }
+  });
+
+  // Left teal border (col A)
+  requests.push({
+    repeatCell: {
+      range: { sheetId, startRowIndex: 0, endRowIndex: rows.length, startColumnIndex: 0, endColumnIndex: 1 },
+      cell: { userEnteredFormat: { backgroundColor: TEAL } },
+      fields: 'userEnteredFormat.backgroundColor',
+    }
+  });
+
+  // Right teal border (col K)
+  requests.push({
+    repeatCell: {
+      range: { sheetId, startRowIndex: 0, endRowIndex: rows.length, startColumnIndex: NUM_COLS - 1, endColumnIndex: NUM_COLS },
+      cell: { userEnteredFormat: { backgroundColor: TEAL } },
+      fields: 'userEnteredFormat.backgroundColor',
     }
   });
 
@@ -649,13 +697,63 @@ function buildFormatRequests(rows, sheetId) {
       });
     }
 
-    // Cell formatting
+    // Full teal background row (border frame)
+    if (row.fullBg) {
+      requests.push({
+        repeatCell: {
+          range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: NUM_COLS },
+          cell: { userEnteredFormat: { backgroundColor: row.fullBg } },
+          fields: 'userEnteredFormat.backgroundColor',
+        }
+      });
+    }
+
+    // Section bar: teal bg across B through J (cols 1-9)
+    if (row.sectionBar) {
+      requests.push({
+        repeatCell: {
+          range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 1, endColumnIndex: 10 },
+          cell: { userEnteredFormat: { backgroundColor: TEAL } },
+          fields: 'userEnteredFormat.backgroundColor',
+        }
+      });
+    }
+
+    // Grey content rows: grey bg on merge anchor cells (B, F, J)
+    if (row.greyContent) {
+      // B-E area (cols 1-5)
+      requests.push({
+        repeatCell: {
+          range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 1, endColumnIndex: 5 },
+          cell: { userEnteredFormat: { backgroundColor: GREY_BG } },
+          fields: 'userEnteredFormat.backgroundColor',
+        }
+      });
+      // F-I area (cols 5-9)
+      requests.push({
+        repeatCell: {
+          range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 5, endColumnIndex: 9 },
+          cell: { userEnteredFormat: { backgroundColor: GREY_BG } },
+          fields: 'userEnteredFormat.backgroundColor',
+        }
+      });
+      // J (col 9)
+      requests.push({
+        repeatCell: {
+          range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 9, endColumnIndex: 10 },
+          cell: { userEnteredFormat: { backgroundColor: GREY_BG } },
+          fields: 'userEnteredFormat.backgroundColor',
+        }
+      });
+    }
+
+    // Cell-specific formatting
     for (const cell of (row.cells || [])) {
       const format = {};
       const fields = [];
 
       if (cell.bold !== undefined || cell.fontSize || cell.fg) {
-        format.textFormat = {};
+        format.textFormat = { fontFamily: FONT };
         if (cell.bold) { format.textFormat.bold = true; }
         if (cell.fontSize) { format.textFormat.fontSize = cell.fontSize; }
         if (cell.fg) { format.textFormat.foregroundColorStyle = { rgbColor: cell.fg }; }
@@ -672,9 +770,9 @@ function buildFormatRequests(rows, sheetId) {
         fields.push('userEnteredFormat.horizontalAlignment');
       }
 
-      if (cell.numberFormat) {
-        format.numberFormat = cell.numberFormat;
-        fields.push('userEnteredFormat.numberFormat');
+      if (cell.vAlign) {
+        format.verticalAlignment = cell.vAlign;
+        fields.push('userEnteredFormat.verticalAlignment');
       }
 
       if (fields.length > 0) {
@@ -688,34 +786,77 @@ function buildFormatRequests(rows, sheetId) {
       }
     }
 
-    // Box border around qty cells
-    if (row.qtyBorderCol !== undefined) {
-      const border = { style: 'SOLID', colorStyle: { rgbColor: BORDER_COL } };
-      requests.push({
-        updateBorders: {
-          range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: row.qtyBorderCol, endColumnIndex: row.qtyBorderCol + 1 },
-          top: border, bottom: border, left: border, right: border,
-        },
-      });
+    // Merges
+    if (row.merges) {
+      for (const [startCol, endCol] of row.merges) {
+        requests.push({
+          mergeCells: {
+            range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: startCol, endColumnIndex: endCol },
+            mergeType: 'MERGE_ALL',
+          }
+        });
+      }
     }
   }
 
-  // Teal border around entire quote
+  // ─── Borders (matching reference exactly) ───
+  // Pattern: outer frame on A(left)/K(right), box borders on each merged section per row
+  const bs = { style: 'SOLID', colorStyle: { rgbColor: { red: 0, green: 0, blue: 0 } } };
+
+  // Outer frame: left border on col A, right border on col K, top on first row, bottom on last
   requests.push({
     updateBorders: {
-      range: {
-        sheetId,
-        startRowIndex: 0,
-        endRowIndex: rows.length,
-        startColumnIndex: 0,
-        endColumnIndex: 10,
-      },
-      top: { style: 'SOLID_MEDIUM', colorStyle: { rgbColor: TEAL } },
-      bottom: { style: 'SOLID_MEDIUM', colorStyle: { rgbColor: TEAL } },
-      left: { style: 'SOLID_MEDIUM', colorStyle: { rgbColor: TEAL } },
-      right: { style: 'SOLID_MEDIUM', colorStyle: { rgbColor: TEAL } },
-    },
+      range: { sheetId, startRowIndex: 0, endRowIndex: rows.length, startColumnIndex: 0, endColumnIndex: 1 },
+      left: bs,
+    }
   });
+  requests.push({
+    updateBorders: {
+      range: { sheetId, startRowIndex: 0, endRowIndex: rows.length, startColumnIndex: 10, endColumnIndex: 11 },
+      right: bs,
+    }
+  });
+  requests.push({
+    updateBorders: {
+      range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 11 },
+      top: bs,
+    }
+  });
+  requests.push({
+    updateBorders: {
+      range: { sheetId, startRowIndex: rows.length - 1, endRowIndex: rows.length, startColumnIndex: 0, endColumnIndex: 11 },
+      bottom: bs,
+    }
+  });
+
+  // Per-row: box borders on each merged section (and standalone J for content/section rows)
+  for (let r = 0; r < rows.length; r++) {
+    const row = rows[r];
+    if (row.fullBg) continue; // Skip teal frame rows — they're just the coloured border
+
+    if (row.merges && row.merges.length > 0) {
+      for (const [startCol, endCol] of row.merges) {
+        requests.push({
+          updateBorders: {
+            range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: startCol, endColumnIndex: endCol },
+            top: bs, bottom: bs, left: bs, right: bs,
+          }
+        });
+      }
+      // J (col 9) is standalone in content/section rows — needs its own box
+      if (row.greyContent || row.sectionBar) {
+        const jCovered = row.merges.some(([s, e]) => s <= 9 && e > 9);
+        if (!jCovered) {
+          requests.push({
+            updateBorders: {
+              range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 9, endColumnIndex: 10 },
+              top: bs, bottom: bs, left: bs, right: bs,
+            }
+          });
+        }
+      }
+    }
+  }
 
   return requests;
 }
@@ -731,45 +872,32 @@ app.post('/api/create-quote', async (req, res) => {
     const date = fmtDate(q.date || new Date()).replace(/\//g, '-');
     const title = formatTitle(customerName, date);
 
-    // 1. Copy from template (preserves logo image in header)
-    const copyRes = await drive.files.copy({
-      fileId: TEMPLATE_ID,
-      requestBody: { name: title },
+    // 1. Create spreadsheet from scratch
+    const createRes = await sheets.spreadsheets.create({
+      requestBody: {
+        properties: { title },
+        sheets: [{ properties: { title: 'Quote', sheetId: 0, gridProperties: { hideGridlines: true } } }],
+      },
     });
-    const spreadsheetId = copyRes.data.id;
+    const spreadsheetId = createRes.data.spreadsheetId;
     const sheetId = 0;
-    console.log('Created spreadsheet from template:', spreadsheetId);
+    console.log('Created spreadsheet:', spreadsheetId);
 
     // 2. Build quote data
-    const { rows, logoRow } = buildQuoteData(q);
+    const { rows, borderEndRow } = buildQuoteData(q);
     const grid = buildSheetValues(rows);
-    const formatRequests = buildFormatRequests(rows, sheetId);
+    const formatRequests = buildFormatRequests(rows, sheetId, borderEndRow);
 
-    // 3. Write values in two parts, skipping logo row to preserve the image
-    const gridBefore = grid.slice(0, logoRow);
-    const gridAfter = grid.slice(logoRow + 1);
+    // 3. Write all values
+    const lastCol = String.fromCharCode(64 + NUM_COLS); // 'K'
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `Quote!A1:${lastCol}${grid.length}`,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: { values: grid },
+    });
 
-    const writePromises = [];
-    if (gridBefore.length > 0) {
-      writePromises.push(sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: `Quote!A1:J${gridBefore.length}`,
-        valueInputOption: 'USER_ENTERED',
-        requestBody: { values: gridBefore },
-      }));
-    }
-    if (gridAfter.length > 0) {
-      const afterStart = logoRow + 2; // 1-indexed, skip logo row
-      writePromises.push(sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: `Quote!A${afterStart}:J${afterStart + gridAfter.length - 1}`,
-        valueInputOption: 'USER_ENTERED',
-        requestBody: { values: gridAfter },
-      }));
-    }
-    await Promise.all(writePromises);
-
-    // 4. Apply formatting
+    // 4. Apply formatting (column widths, row heights, cell formats, merges)
     if (formatRequests.length > 0) {
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
@@ -778,9 +906,11 @@ app.post('/api/create-quote', async (req, res) => {
     }
 
     // 5. Move to quotes folder
+    const fileInfo = await drive.files.get({ fileId: spreadsheetId, fields: 'parents' });
     await drive.files.update({
       fileId: spreadsheetId,
       addParents: QUOTES_FOLDER_ID,
+      removeParents: (fileInfo.data.parents || []).join(','),
       fields: 'id, parents',
     });
 
@@ -802,5 +932,5 @@ app.get('/api/health', (req, res) => {
 
 const PORT = 3001;
 app.listen(PORT, () => {
-  console.log(`GOB Sheets Server v2 running on http://localhost:${PORT}`);
+  console.log(`GOB Sheets Server v3 running on http://localhost:${PORT}`);
 });

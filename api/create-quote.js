@@ -1,26 +1,11 @@
 /**
- * GOB Configurator — Google Sheets Quote Generator
- * Vercel Serverless Function — no local server needed.
- * Generates a professional, branded quote sheet from scratch.
+ * GOB Configurator — Google Sheets Quote Generator v3
+ * Vercel Serverless Function.
+ * Exact replica of the original GOB quote layout.
+ * 11-column structure with Century Gothic font and cell merges.
  */
 
 const { google } = require('googleapis');
-
-// ─── Brand Palette ───
-const TEAL       = { red: 0.231, green: 0.659, blue: 0.659 };  // #3BA8A8
-const TEAL_DARK  = { red: 0.180, green: 0.520, blue: 0.520 };  // #2E8585
-const TEAL_PALE  = { red: 0.922, green: 0.965, blue: 0.965 };  // #EBF6F6
-const WHITE      = { red: 1, green: 1, blue: 1 };
-const OFF_WHITE  = { red: 0.976, green: 0.980, blue: 0.984 };   // #F9FAFB
-const CHARCOAL   = { red: 0.173, green: 0.192, blue: 0.212 };   // #2C3136
-const DARK_GREY  = { red: 0.30, green: 0.32, blue: 0.34 };
-const MID_GREY   = { red: 0.55, green: 0.57, blue: 0.59 };
-const LIGHT_GREY = { red: 0.94, green: 0.945, blue: 0.95 };     // #F0F1F2
-const GREEN_TEXT  = { red: 0.09, green: 0.55, blue: 0.25 };
-const BORDER_COL = { red: 0.82, green: 0.84, blue: 0.85 };
-
-const QUOTES_FOLDER_ID = '18dfAzGwqwqT-zI0yUBO60MrIFkvInULP';
-const TEMPLATE_ID = '1RZ_4OoMkdQbs-dl1-m9_rAPBQR0irch_QkzfGoZl5tI';
 
 // ─── Auth ───
 function getAuthClient() {
@@ -34,7 +19,10 @@ function getAuthClient() {
   return oauth2Client;
 }
 
+const QUOTES_FOLDER_ID = '18dfAzGwqwqT-zI0yUBO60MrIFkvInULP';
+
 // ─── Helpers ───
+
 function fmtDate(date) {
   const d = new Date(date);
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -44,8 +32,28 @@ function fmtCurrency(amount) {
   if (!amount && amount !== 0) return '';
   const n = Number(amount);
   if (isNaN(n)) return '';
-  if (n < 0) return '-\u00A3' + Math.abs(n).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return '\u00A3' + n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (n < 0) return '-\u00a3' + Math.abs(n).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return '\u00a3' + n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatComponentDesc(comp) {
+  const widthM = comp.width ? (comp.width / 1000).toFixed(1) : '2.5';
+  let typeDesc = 'window';
+  const t = comp.type || '';
+  if (t.includes('sliding')) typeDesc = 'sliding door';
+  else if (t.includes('bifold')) typeDesc = 'bi-fold door';
+  else if (t.includes('single') && !t.includes('window')) typeDesc = 'single opening door';
+  else if (t.includes('cladded') || t.includes('secret')) typeDesc = 'secret cladded door';
+  else if (t.includes('opener')) typeDesc = 'window with top opener';
+  else if (t.includes('slot')) typeDesc = 'slot window';
+  else if (t.includes('fixed') || t.includes('window')) typeDesc = 'fixed window';
+
+  let handleDesc = '';
+  if (t.includes('sliding') || t.includes('single')) {
+    handleDesc = comp.handleSide === 'left' ? ' (opening left to right)' : ' (opening right to left)';
+  }
+  const elev = comp.elevation ? ` \u2014 ${comp.elevation} elevation` : '';
+  return `1 x full height ${widthM}m wide ${typeDesc}: smooth anthracite grey outside, white inside${handleDesc}${elev}`;
 }
 
 function getInternalDims(q) {
@@ -80,47 +88,40 @@ function getSocketCount(q) {
   return 7;
 }
 
-function formatComponentDesc(comp) {
-  const widthM = comp.width ? (comp.width / 1000).toFixed(1) : '2.5';
-  let typeDesc = 'window';
-  const t = comp.type || '';
-  if (t.includes('sliding')) typeDesc = 'sliding door';
-  else if (t.includes('bifold')) typeDesc = 'bi-fold door';
-  else if (t.includes('single') && !t.includes('window')) typeDesc = 'single opening door';
-  else if (t.includes('cladded') || t.includes('secret')) typeDesc = 'secret cladded door';
-  else if (t.includes('opener')) typeDesc = 'window with top opener';
-  else if (t.includes('slot')) typeDesc = 'slot window';
-  else if (t.includes('fixed') || t.includes('window')) typeDesc = 'fixed window';
+// ─── Brand colours (exact match to original quote) ───
+const TEAL = { red: 0.161, green: 0.663, blue: 0.725 };       // rgb(41,169,185)
+const WHITE = { red: 1, green: 1, blue: 1 };
+const BLACK = { red: 0, green: 0, blue: 0 };
+const NEAR_BLACK = { red: 0.067, green: 0.067, blue: 0.067 };
+const GREY_BG = { red: 0.953, green: 0.953, blue: 0.953 };
+const LIGHT_BLUE = { red: 0.812, green: 0.886, blue: 0.953 };
+const LIGHT_RED = { red: 0.957, green: 0.800, blue: 0.800 };
+const GREEN = { red: 0.1, green: 0.6, blue: 0.2 };
 
-  let handleDesc = '';
-  if (t.includes('sliding') || t.includes('single')) {
-    handleDesc = comp.handleSide === 'left' ? ' (opening left to right)' : ' (opening right to left)';
+const FONT = 'Century Gothic';
+
+// ─── 11-column layout ───
+const NUM_COLS = 11;
+const COL_WIDTHS = [29, 132, 117, 117, 572, 76, 2, 220, 2, 208, 28];
+
+// ─── Logo lookup (cached across warm invocations) ───
+let cachedLogoFileId = null;
+
+async function findLogoFileId(driveApi) {
+  if (cachedLogoFileId) return cachedLogoFileId;
+  const searchRes = await driveApi.files.list({
+    q: `name='GOB-Logo-Text.png' and '${QUOTES_FOLDER_ID}' in parents and trashed=false`,
+    fields: 'files(id)',
+  });
+  if (searchRes.data.files && searchRes.data.files.length > 0) {
+    cachedLogoFileId = searchRes.data.files[0].id;
   }
-  const elev = comp.elevation ? ` \u2014 ${comp.elevation} elevation` : '';
-  return `1 x full height ${widthM}m wide ${typeDesc}: smooth anthracite grey outside, white inside${handleDesc}${elev}`;
+  return cachedLogoFileId;
 }
 
-// ═══════════════════════════════════════════════════
-// SHEET BUILDER — builds rows, merges, borders
-// ═══════════════════════════════════════════════════
-//
-// Layout: 8 columns (A-H)
-//   A (col 0): left gutter — 18px
-//   B (col 1): main content — 520px (merges B:F for descriptions)
-//   C (col 2): 80px
-//   D (col 3): 80px
-//   E (col 4): 80px
-//   F (col 5): 80px
-//   G (col 6): price — 110px
-//   H (col 7): right gutter — 18px
+// ─── Sheet Builder ───
 
-const NUM_COLS = 8;
-const COL_WIDTHS = [18, 520, 80, 80, 80, 80, 110, 18];
-const DESC_START = 1; // column B
-const DESC_END   = 6; // merge B:F (cols 1-5)
-const PRICE_COL  = 6; // column G
-
-function buildQuoteSheet(q) {
+function buildQuoteData(q, logoFileId) {
   const isSig = q.tier === 'signature';
   const { intW, intD, intH } = getInternalDims(q);
   const w = (q.width / 1000).toFixed(1);
@@ -129,480 +130,382 @@ function buildQuoteSheet(q) {
   const numDownlights = getDownlights(q);
   const numSpotlights = getSpotlights(q);
 
-  const rows = [];     // [{cells, height}]
-  const merges = [];   // [{startRow, endRow, startCol, endCol}]
-  const borders = [];  // [{row, startCol, endCol, side, color, style}]
+  const rows = [];
+  let logoRow = -1;
 
-  // Row builders
-  function blank(count = 1, height) {
-    for (let i = 0; i < count; i++) rows.push({ cells: [], height });
+  function tealFrame(height = 28) {
+    rows.push({ cells: [], height, fullBg: TEAL });
   }
 
-  function descRow(text, opts = {}) {
-    const r = rows.length;
-    const cells = [{ col: DESC_START, value: text, ...opts }];
-    if (opts.price !== undefined) {
-      cells.push({ col: PRICE_COL, value: fmtCurrency(opts.price), fontSize: opts.priceFontSize || 10, align: 'RIGHT', bold: opts.priceBold });
-    }
-    rows.push({ cells, height: opts.height });
-    // Merge description across B:F
-    merges.push({ startRow: r, endRow: r + 1, startCol: DESC_START, endCol: DESC_END });
-    return r;
+  function spacer(height = 21) {
+    rows.push({ cells: [], height });
+  }
+
+  function heading(text, height = 22, fontSize = 25) {
+    rows.push({
+      cells: [{ col: 1, value: text, fontSize, bold: true, align: 'CENTER', vAlign: 'MIDDLE' }],
+      height,
+      merges: [[1, 10]],
+    });
+  }
+
+  function custRow(label, value, height = 30) {
+    rows.push({
+      cells: [
+        { col: 1, value: label, fontSize: 12, bold: true, fg: WHITE, bg: TEAL, align: 'LEFT', vAlign: 'BOTTOM' },
+        { col: 4, value: value, fontSize: 12, align: 'LEFT', vAlign: 'BOTTOM' },
+      ],
+      height,
+      merges: [[1, 4], [4, 10]],
+    });
   }
 
   function sectionBar(text, opts = {}) {
-    const r = rows.length;
-    const cells = [];
-    for (let c = 0; c < NUM_COLS; c++) {
-      if (c === DESC_START) {
-        cells.push({ col: c, value: text, bold: true, fontSize: opts.fontSize || 11, fg: WHITE, bg: TEAL });
-      } else if (c === PRICE_COL && opts.showPrice) {
-        cells.push({ col: c, value: 'Price', bold: true, fontSize: 10, fg: WHITE, bg: TEAL, align: 'RIGHT' });
-      } else {
-        cells.push({ col: c, value: '', bg: TEAL });
-      }
-    }
-    rows.push({ cells, height: opts.height || 28 });
-    merges.push({ startRow: r, endRow: r + 1, startCol: DESC_START, endCol: DESC_END });
-    return r;
-  }
-
-  function subHeader(text) {
-    const r = rows.length;
-    rows.push({
-      cells: [{ col: DESC_START, value: text, bold: true, fontSize: 11, fg: TEAL }],
-      height: 24,
-    });
-    merges.push({ startRow: r, endRow: r + 1, startCol: DESC_START, endCol: DESC_END });
-    // Bottom border line
-    borders.push({ row: r, startCol: DESC_START, endCol: PRICE_COL + 1, side: 'bottom', color: TEAL, style: 'SOLID' });
-    return r;
-  }
-
-  function detailRow(text, opts = {}) {
-    return descRow(text, { fontSize: 9, fg: MID_GREY, ...opts });
-  }
-
-  function lineItemRow(label, price, opts = {}) {
-    const r = rows.length;
     const cells = [
-      { col: DESC_START, value: label, fontSize: opts.fontSize || 10, fg: opts.fg || CHARCOAL, bold: opts.bold },
-      { col: PRICE_COL, value: price != null ? fmtCurrency(price) : '', fontSize: opts.fontSize || 10, fg: opts.priceFg || CHARCOAL, align: 'RIGHT', bold: opts.bold },
+      { col: 1, value: text, fontSize: 13, bold: true, fg: WHITE, bg: TEAL, align: 'LEFT', vAlign: 'BOTTOM' },
+      { col: 5, value: opts.detailLabel || '', fontSize: 12, bold: true, fg: WHITE, bg: TEAL, align: 'CENTER', vAlign: 'BOTTOM' },
+      { col: 9, value: opts.amountLabel || '', fontSize: 12, bold: true, fg: WHITE, bg: TEAL, align: 'CENTER', vAlign: 'BOTTOM' },
     ];
-    if (opts.bg) {
-      for (let c = 0; c < NUM_COLS; c++) {
-        if (c !== DESC_START && c !== PRICE_COL) cells.push({ col: c, value: '', bg: opts.bg });
-        else {
-          const existing = cells.find(cell => cell.col === c);
-          if (existing) existing.bg = opts.bg;
-        }
-      }
-    }
-    rows.push({ cells, height: opts.height });
-    merges.push({ startRow: r, endRow: r + 1, startCol: DESC_START, endCol: DESC_END });
-    // Light bottom border for readability
-    borders.push({ row: r, startCol: DESC_START, endCol: PRICE_COL + 1, side: 'bottom', color: BORDER_COL, style: 'SOLID' });
-    return r;
+    rows.push({
+      cells,
+      height: opts.height || 37,
+      merges: [[1, 5], [5, 9]],
+      sectionBar: true,
+    });
   }
 
-  // ════════════════════════════════════════
-  // HEADER
-  // ════════════════════════════════════════
-  blank(1);
+  function contentRow(text, opts = {}) {
+    const cells = [
+      { col: 1, value: text, fontSize: opts.fontSize || 11, bold: opts.bold, fg: opts.fg, align: 'LEFT', vAlign: 'BOTTOM' },
+    ];
+    if (opts.detail) {
+      cells.push({ col: 5, value: opts.detail, fontSize: 10, align: 'CENTER', vAlign: 'BOTTOM' });
+    }
+    if (opts.price !== undefined && opts.price !== null) {
+      const priceStr = typeof opts.price === 'string' ? opts.price : fmtCurrency(opts.price);
+      cells.push({ col: 9, value: priceStr, fontSize: 10, fg: opts.priceFg, align: 'CENTER', vAlign: 'BOTTOM' });
+    }
+    rows.push({
+      cells,
+      height: opts.height || 32,
+      merges: [[1, 5], [5, 9]],
+      greyContent: opts.greyBg !== false,
+    });
+  }
 
-  // Logo row — image is provided by the template; we only set height/merge here
-  const logoRow = rows.length;
-  rows.push({
-    cells: [],  // No cell values — the template's logo image is preserved
-    height: 50,
-  });
-  merges.push({ startRow: logoRow, endRow: logoRow + 1, startCol: DESC_START, endCol: PRICE_COL + 1 });
+  function summaryRow(label, price, opts = {}) {
+    rows.push({
+      cells: [
+        { col: 7, value: label, fontSize: 13, bold: true, fg: opts.fg || TEAL, bg: opts.bg, align: 'LEFT', vAlign: 'BOTTOM' },
+        { col: 9, value: typeof price === 'string' ? price : fmtCurrency(price), fontSize: 13, bold: true, fg: opts.fg || TEAL, bg: opts.bg, align: 'CENTER', vAlign: 'BOTTOM' },
+      ],
+      height: opts.height || 29,
+      merges: [[7, 9]],
+    });
+  }
 
-  // Address
-  descRow('Rear of 158 Main Road, Biggin Hill, Kent, TN16 3BA', { fontSize: 9, fg: MID_GREY });
+  function paymentRow(desc, amount, opts = {}) {
+    const cells = [
+      { col: 1, value: desc, fontSize: 11, bold: opts.bold, fg: opts.fg || NEAR_BLACK, align: 'LEFT', vAlign: 'BOTTOM' },
+    ];
+    if (amount !== undefined && amount !== null) {
+      cells.push({
+        col: 8, value: typeof amount === 'string' ? amount : fmtCurrency(amount),
+        fontSize: 12, bold: opts.bold, fg: opts.fg || NEAR_BLACK, bg: opts.amountBg, align: 'CENTER', vAlign: 'BOTTOM',
+      });
+    }
+    rows.push({
+      cells,
+      height: opts.height || 28,
+      merges: [[1, 8], [8, 10]],
+    });
+  }
 
-  // Contact
-  descRow('01689 818 400  \u2022  info@gardenofficebuildings.co.uk  \u2022  gardenofficebuildings.co.uk', { fontSize: 9, fg: MID_GREY });
+  function termsRow(text, opts = {}) {
+    rows.push({
+      cells: [{ col: 1, value: text, fontSize: opts.fontSize || 11, bold: opts.bold, fg: NEAR_BLACK, align: 'LEFT', vAlign: 'BOTTOM' }],
+      height: opts.height || 33,
+      merges: [[1, 10]],
+    });
+  }
 
-  // Teal accent line under header
-  const lineRow = rows.length;
-  blank(1, 4);
-  borders.push({ row: lineRow, startCol: DESC_START, endCol: PRICE_COL + 1, side: 'bottom', color: TEAL, style: 'SOLID_MEDIUM' });
+  // ═══════════════════════════════════════
+  // BUILD THE QUOTE
+  // ═══════════════════════════════════════
 
-  blank(1);
+  tealFrame(28);
 
-  // QUOTATION title + date
-  const titleRow = rows.length;
-  const dateStr = fmtDate(q.date || new Date());
+  logoRow = rows.length;
+  const logoFormula = logoFileId
+    ? `=IMAGE("https://lh3.googleusercontent.com/d/${logoFileId}")`
+    : 'Garden Office Buildings';
   rows.push({
     cells: [
-      { col: DESC_START, value: 'QUOTATION', bold: true, fontSize: 18, fg: CHARCOAL },
-      { col: PRICE_COL, value: dateStr, fontSize: 10, fg: MID_GREY, align: 'RIGHT' },
+      { col: 1, value: logoFormula, fontSize: 10, vAlign: 'MIDDLE' },
+      { col: 4, value: 'Quote', fontSize: 30, bold: true, align: 'CENTER', vAlign: 'MIDDLE' },
     ],
-    height: 32,
+    height: 101,
+    merges: [[1, 4], [4, 10]],
   });
-  merges.push({ startRow: titleRow, endRow: titleRow + 1, startCol: DESC_START, endCol: DESC_END });
 
-  blank(1);
+  spacer(22);
 
-  // ════════════════════════════════════════
-  // CUSTOMER INFO
-  // ════════════════════════════════════════
-  const custLines = [
-    q.customerName ? `Customer:   ${q.customerName}` : null,
-    q.customerNumber ? `Customer No:   ${q.customerNumber}` : null,
-    q.address ? `Address:   ${q.address}` : null,
-    q.email ? `Email:   ${q.email}` : null,
-    q.phone ? `Phone:   ${q.phone}` : null,
-  ].filter(Boolean);
+  heading('Customer Information', 50, 25);
+  spacer(22);
 
-  for (const field of custLines) {
-    descRow(field, { fontSize: 10, fg: CHARCOAL, height: 20 });
-  }
+  if (q.customerName) custRow('Name', q.customerName);
+  if (q.customerNumber) custRow('Customer #', q.customerNumber);
+  custRow('Date', fmtDate(q.date || new Date()));
+  if (q.address) custRow('Address', q.address, 74);
 
-  blank(1);
+  spacer(22);
 
-  // ════════════════════════════════════════
-  // BUILDING SPECIFICATION
-  // ════════════════════════════════════════
-  sectionBar('BUILDING SPECIFICATION', { showPrice: true });
-  blank(1, 6);
+  heading('Building Specification', 59, 25);
+  spacer(21);
 
-  // Building summary line
-  const buildingType = q.buildingType || 'Garden Office Building';
-  lineItemRow(
-    `Your Building: ${w}M x ${d}M x ${h}m ${buildingType}`,
-    q.basePrice,
-    { bold: true, fontSize: 11 }
+  const extDimNote = isSig ? ' (excl. canopy \u2013 overall depth incl. 400mm canopy)' : '';
+
+  sectionBar(
+    `Your Building: ${w}m x ${d}m x ${h}m ${q.buildingType || 'Garden Office Building'}`,
+    { detailLabel: 'Base Price', amountLabel: fmtCurrency(q.basePrice) }
   );
 
-  // Dimension details
-  const extNote = isSig ? ' (incl. 400mm canopy/decking)' : '';
-  detailRow(`External Dimensions \u2013 (W) ${q.width}mm (D) x ${q.depth}mm x (H) ${q.height}mm${extNote}`);
-  detailRow(`Internal Dimensions \u2013 (W) ${intW}mm x (D) ${intD}mm x (H) ${intH}mm (approx)`);
+  contentRow(`External Dimensions \u2013 (W) ${q.width}mm x (D) ${q.depth}mm x (H) ${q.height}mm${extDimNote}`, { height: 31 });
+  contentRow(`Internal Dimensions \u2013 (W) ${intW}mm x (D) ${intD}mm x (H) ${intH}mm (approx)`, { height: 31 });
 
-  blank(1, 6);
+  const tierDesc = isSig
+    ? 'Signature range with integrated canopy and decking on front of building'
+    : 'Classic range with clean, minimalist design';
+  contentRow(tierDesc, { height: 29 });
+  contentRow('Configuration as per drawing (TBC). All internal sizes are approximates and subject to final drawing.', { height: 31 });
 
-  // ════════════════════════════════════════
-  // STANDARD FEATURES
-  // ════════════════════════════════════════
-  subHeader(`Standard Features (${isSig ? 'Signature' : 'Classic'})`);
+  spacer(28);
 
-  descRow('Configuration as per drawing (TBC)', { fontSize: 10 });
+  sectionBar(`Standard Features (${isSig ? 'Signature' : 'Classic'})`);
+
+  contentRow('Insulated timber/panel construction with 100mm PIR walls, 75mm PIR floor and ceiling');
   if (isSig) {
-    descRow('Signature range with integrated canopy and decking on front of building', { fontSize: 10 });
-  } else {
-    descRow('Classic range with clean, minimalist design', { fontSize: 10 });
+    contentRow('To include 400mm canopy with down lights');
   }
-  descRow('Insulated timber/panel construction with 100mm PIR walls, 75mm PIR floor and ceiling', { fontSize: 10 });
-  if (isSig) {
-    descRow('To include 400mm overhang/decking', { fontSize: 10 });
-  }
-  descRow('Plaster-boarded, skimmed and decorated internal finish', { fontSize: 10 });
+  contentRow('Plaster-boarded, skimmed and decorated internal finish');
 
-  // Foundation (if non-standard, e.g. existing base)
   const foundationLabels = {
     'ground-screw': 'Ground screw foundation system',
     'concrete-base': 'Concrete base foundation',
-    'concrete-pile': 'Concrete pile foundation system',
+    'concrete-pile': 'Concrete pile foundation system'
   };
-  descRow(foundationLabels[q.foundationType] || 'Ground screw foundation system', { fontSize: 10 });
+  contentRow(foundationLabels[q.foundationType] || 'Ground screw foundation system');
 
-  // Corners
-  descRow(`Front-left corner design (open/closed): ${q.cornerLeft || 'Open'}`, { fontSize: 10 });
-  descRow(`Front-right corner design (open/closed): ${q.cornerRight || 'Open'}`, { fontSize: 10 });
+  spacer(28);
 
-  blank(1, 6);
+  sectionBar('External Finish', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
 
-  // ════════════════════════════════════════
-  // EXTERNAL FINISH
-  // ════════════════════════════════════════
-  subHeader('External Finish');
-
-  const claddingItems = [
+  const claddingRows = [
     { side: 'Front', value: q.frontCladding },
     { side: 'Right', value: q.rightCladding, price: q.rightCladdingPrice },
     { side: 'Left', value: q.leftCladding, price: q.leftCladdingPrice },
     { side: 'Rear', value: q.rearCladding },
   ];
-  for (const cl of claddingItems) {
-    const label = `${cl.side} cladding: ${cl.value || 'anthracite grey steel'}`;
-    if (cl.price && cl.price > 0) {
-      lineItemRow(label, cl.price);
-    } else {
-      descRow(label, { fontSize: 10 });
-    }
+  for (const cl of claddingRows) {
+    contentRow(
+      `${cl.side} cladding: ${cl.value || 'anthracite grey steel cladding'}`,
+      { price: (cl.price && cl.price > 0) ? cl.price : undefined }
+    );
   }
-
-  descRow('Fascia, soffit and cappings: grey', { fontSize: 10 });
-  descRow('Roof: EPDM rubber roof', { fontSize: 10 });
-  descRow('Guttering: rear', { fontSize: 10 });
-
+  contentRow('Fascia, soffit and cappings: anthracite');
+  contentRow('Roof: EPDM rubber roof');
+  contentRow('Guttering: rear');
   if (isSig && q.hasDecking !== false) {
-    descRow('Integrated composite decking: dark grey', { fontSize: 10 });
+    contentRow('Integrated composite decking: dark grey');
   }
 
-  blank(1, 6);
+  spacer(28);
 
-  // ════════════════════════════════════════
-  // INTERNAL FINISH
-  // ════════════════════════════════════════
-  subHeader('Internal Finish');
+  sectionBar('Internal Finish');
 
-  descRow('Flooring: TBC (Natural Oak or Light Grey)', { fontSize: 10 });
-  descRow('Internal wall finish: plasterboarded, skimmed and decorated white', { fontSize: 10 });
-  descRow('Skirting board: white', { fontSize: 10 });
+  contentRow('Flooring: TBC (Natural Oak or Light Grey)');
+  contentRow('Internal wall finish: plasterboarded, plastered and decorated white');
+  contentRow('Skirting board: white');
 
-  blank(1, 6);
+  spacer(28);
 
-  // ════════════════════════════════════════
-  // DOORS & WINDOWS
-  // ════════════════════════════════════════
-  subHeader('Doors, Windows, Partitions');
+  sectionBar('Doors, Windows, Partitions', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
 
   if (q.components && q.components.length > 0) {
     for (const comp of q.components) {
-      const desc = formatComponentDesc(comp);
-      if (comp.price && comp.price > 0) {
-        lineItemRow(desc, comp.price);
-      } else {
-        descRow(desc, { fontSize: 10 });
-      }
+      contentRow(formatComponentDesc(comp), {
+        detail: comp.elevation ? `${comp.elevation} elevation` : '',
+        price: (comp.price && comp.price > 0) ? comp.price : undefined,
+      });
     }
   }
+  contentRow('4mm double glazed toughened glass throughout');
 
-  descRow('4mm double glazed toughened glass throughout', { fontSize: 10 });
-
-  // Component upgrades
   if (q.componentUpgrades && q.componentUpgrades.length > 0) {
     for (const u of q.componentUpgrades) {
-      lineItemRow(u.label, u.price);
+      contentRow(u.label, { price: u.price });
     }
   }
-
-  // Height upgrade
   if (q.heightUpgrade && q.heightUpgrade.price > 0) {
-    lineItemRow(q.heightUpgrade.label, q.heightUpgrade.price);
+    contentRow(q.heightUpgrade.label, { price: q.heightUpgrade.price });
   }
 
-  blank(1, 6);
+  spacer(28);
 
-  // ════════════════════════════════════════
-  // ELECTRICAL INSTALLATION
-  // ════════════════════════════════════════
-  subHeader('Standard Electrical Features');
+  sectionBar('Standard Electrical Features');
 
-  descRow(`${numDownlights} x dimmable LED downlights`, { fontSize: 10 });
-  detailRow('Configuration/Quantity TBC on 1st fix electrician visit approximately 1 week into project');
-
+  contentRow(`${numDownlights} x dimmable LED downlights`);
+  contentRow('Configuration/Quantity TBC on 1st fix electrician visit approx. 1 week into project', { fontSize: 10 });
   if (numSpotlights > 0) {
-    descRow(`${numSpotlights} x external downlights in canopy soffit`, { fontSize: 10 });
+    contentRow(`${numSpotlights} x external down lights in canopy soffit`);
   }
-
-  const apiSocketCount = getSocketCount(q);
-  descRow(`${apiSocketCount} x double power sockets in brushed steel finish (1 with USB ports)`, { fontSize: 10 });
+  const sheetSocketCount = getSocketCount(q);
+  contentRow(`${sheetSocketCount} x double power sockets in brushed steel finish (1 w/ USB ports)`);
 
   let lightingZones = 1;
   if (q.straightPartition?.enabled) lightingZones++;
   if (q.partitionRoom?.enabled) lightingZones++;
   if (lightingZones > 1) {
-    descRow(`${lightingZones} x internal lighting zones on separate switches`, { fontSize: 10 });
+    contentRow(`${lightingZones} x internal lighting zones on separate switches`);
   }
+  contentRow('1 x single dimmable light switch in brushed steel');
+  contentRow('1 x network connection port for WiFi connectivity');
+  contentRow('Consumer unit');
 
-  descRow('1 x single dimmable light switch in brushed steel', { fontSize: 10 });
-  descRow('1 x network connection port', { fontSize: 10 });
-  descRow('Consumer unit', { fontSize: 10 });
+  spacer(28);
 
-  blank(1, 6);
-
-  // ════════════════════════════════════════
-  // SELECTED EXTRAS & UPGRADES
-  // ════════════════════════════════════════
   const hasExtras = (q.extras && q.extras.length > 0) || (q.deductions && q.deductions.length > 0);
-
   if (hasExtras) {
-    subHeader('Selected Extras & Upgrades');
-
-    let altBg = false;
+    sectionBar('Selected Extras & Upgrades', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
     if (q.extras && q.extras.length > 0) {
       for (const extra of q.extras) {
-        lineItemRow(extra.label, extra.price, { bg: altBg ? LIGHT_GREY : undefined });
+        contentRow(extra.label, { price: extra.price });
         if (extra.description) {
-          detailRow(extra.description);
+          contentRow(extra.description, { fontSize: 10 });
         }
-        altBg = !altBg;
       }
     }
-
     if (q.deductions && q.deductions.length > 0) {
       for (const ded of q.deductions) {
-        lineItemRow(ded.label, ded.price, { priceFg: GREEN_TEXT, bg: altBg ? LIGHT_GREY : undefined });
-        altBg = !altBg;
+        contentRow(ded.label, { fg: GREEN, price: fmtCurrency(ded.price), priceFg: GREEN });
       }
     }
-
-    blank(1, 6);
+    spacer(28);
   }
 
-  // ════════════════════════════════════════
-  // OPTIONAL EXTRAS
-  // ════════════════════════════════════════
-  subHeader('Optional extras available');
+  sectionBar('Optional Extras');
 
   const optionalExtras = [
-    ['External double plug socket', '£235.00'],
-    ['External up/down light', '£95.00'],
-    ['Oil filled electric wall panel radiator', '£495.00'],
-    ['Additional double plug socket', '£60.00', '£85.00 w/ USB ports'],
-    ['Additional lighting zone on separate switch', '£125.00'],
-    ['Wireless double quinetic switch system', '£265.00', 'wireless switch to turn on/off external lights from house'],
-    ['Standard air conditioning unit, heating and cooling', '£1,750.00', 'to be paid directly to air con specialist', 'Model: Mitsubishi MSZ-HR R32 Classic Inverter Heat Pump'],
-    ['Premium air conditioning unit with programming and mobile app, heating and cooling', '£2,500.00', 'to be paid directly to air con specialist', 'Model: Mitsubishi MSZ-LN R32 Inverter Heat Pump'],
-    ['Additional composite slatted cladding for sides of building', '£115 per sqm'],
-    ['Additional decking', '£250 per sqm', 'incl. foundations, framing, fixings. Subject to survey'],
+    ['External double plug socket', '\u00a3235.00'],
+    ['External up/down light', '\u00a395.00'],
+    ['Oil filled electric wall panel radiator', '\u00a3495.00'],
+    ['Additional double plug socket', '\u00a365.00', '\u00a385.00 w/ USB ports'],
+    ['Additional lighting zone on separate switch', '\u00a3125.00'],
+    ['Wireless double quinetic switch system', '\u00a3265.00', 'wireless switch to turn on/off external lights from house'],
+    ['Standard air conditioning unit, heating and cooling', '\u00a31,750.00', 'to be paid directly to air con specialist'],
+    ['Premium air conditioning unit with programming and mobile app, heating and cooling', '\u00a32,500.00', 'to be paid directly to air con specialist'],
+    ['Additional composite cladding for sides of building', '\u00a3115 per sqm'],
+    ['Additional decking', '\u00a3300 per sqm', 'incl. foundations, framing, fixings'],
   ];
-
   for (const extra of optionalExtras) {
-    const label = extra[0];
-    const parts = extra.slice(1);
-    const priceText = `(+ ${parts.join(') (')})`;
-    descRow(`${label} ${priceText}`, { fontSize: 10 });
+    const priceText = `(+ ${extra.slice(1).join(') (+ ')})`;
+    contentRow(`${extra[0]} ${priceText}`);
   }
 
-  blank(1, 6);
+  spacer(28);
 
-  // ════════════════════════════════════════
-  // INSTALLATION
-  // ════════════════════════════════════════
-  subHeader('Installation');
+  sectionBar('Main Building Installation & Groundworks', { amountLabel: 'Amount (\u00a3)' });
+  contentRow('To be conducted by our team', { price: q.installationPrice });
 
-  lineItemRow('To be conducted by our team', q.installationPrice);
+  spacer(28);
 
-  blank(1, 4);
-
-  descRow('Electrical Connection', { fontSize: 10, bold: true });
-  descRow('To be arranged by electrician', { fontSize: 10 });
-
+  sectionBar('Electrical Connection');
+  contentRow('To be arranged by electrician');
   if (q.bathroom && q.bathroom.enabled) {
-    blank(1, 2);
-    descRow('Utility Connections (Water, Waste)', { fontSize: 10, bold: true });
-    descRow('To be arranged separately with our plumber/landscaper', { fontSize: 10 });
+    sectionBar('Utility Connections (Water, Waste)');
+    contentRow('To be arranged separately with our plumber/landscaper');
   }
 
-  blank(1, 6);
+  spacer(28);
 
-  // ════════════════════════════════════════
-  // CUSTOM NOTES
-  // ════════════════════════════════════════
   if (q.quoteNotes && q.quoteNotes.trim()) {
-    subHeader('Additional Notes');
-    const lines = q.quoteNotes.trim().split('\n');
-    for (const line of lines) {
-      descRow(line, { fontSize: 10 });
+    sectionBar('Additional Notes');
+    for (const line of q.quoteNotes.trim().split('\n')) {
+      contentRow(line);
     }
-    blank(1, 6);
+    spacer(28);
   }
 
-  // ════════════════════════════════════════
-  // PRICING SUMMARY
-  // ════════════════════════════════════════
-  // Thin top border
-  const summaryStartRow = rows.length;
-  borders.push({ row: summaryStartRow, startCol: DESC_START, endCol: PRICE_COL + 1, side: 'top', color: BORDER_COL, style: 'SOLID' });
+  // ═══ PRICING SUMMARY ═══
 
-  // Subtotal
-  lineItemRow('Subtotal', q.subtotal, { bg: LIGHT_GREY, bold: true, fontSize: 11, height: 28 });
+  const borderEndRow = rows.length;
 
-  // Discount
+  spacer(21);
+  summaryRow('SUB TOTAL (inc. VAT)', q.subtotal, { height: 29 });
+
   if (q.discount && q.discount > 0) {
-    lineItemRow(q.discountLabel || 'Discount', -q.discount, { priceFg: GREEN_TEXT, fontSize: 11 });
+    summaryRow(q.discountLabel || 'DISCOUNT', q.discount, { height: 29 });
   }
 
-  // TOTAL bar
-  const totalRow = rows.length;
-  const totalCells = [];
-  for (let c = 0; c < NUM_COLS; c++) {
-    if (c === DESC_START) {
-      totalCells.push({ col: c, value: 'TOTAL (inc. VAT)', bold: true, fontSize: 14, fg: WHITE, bg: TEAL });
-    } else if (c === PRICE_COL) {
-      totalCells.push({ col: c, value: fmtCurrency(q.total), bold: true, fontSize: 14, fg: WHITE, bg: TEAL, align: 'RIGHT' });
-    } else {
-      totalCells.push({ col: c, value: '', bg: TEAL });
-    }
-  }
-  rows.push({ cells: totalCells, height: 36 });
-  merges.push({ startRow: totalRow, endRow: totalRow + 1, startCol: DESC_START, endCol: DESC_END });
+  summaryRow('TOTAL (inc. VAT)', q.total, { fg: WHITE, bg: TEAL, height: 29 });
 
-  detailRow('All prices include VAT at 20%');
+  spacer(21);
 
-  blank(2);
+  // ═══ PAYMENT SCHEDULE ═══
 
-  // ════════════════════════════════════════
-  // PAYMENT SCHEDULE
-  // ════════════════════════════════════════
-  sectionBar('PAYMENT SCHEDULE', { fontSize: 12 });
-  blank(1, 6);
+  heading('Total & Payment Schedule as per Order', 60, 20);
+  spacer(21);
+
+  paymentRow('Payment Schedule', 'Amount (inc. VAT)', { bold: true, height: 42 });
 
   if (q.paymentSchedule && q.paymentSchedule.length > 0) {
-    // Payment schedule header row
-    const psHeaderRow = rows.length;
-    rows.push({
-      cells: [
-        { col: DESC_START, value: 'Stage', bold: true, fontSize: 10, fg: TEAL, bg: TEAL_PALE },
-        { col: PRICE_COL, value: 'Amount', bold: true, fontSize: 10, fg: TEAL, bg: TEAL_PALE, align: 'RIGHT' },
-      ],
-      height: 24,
-    });
-    for (let c = 2; c < PRICE_COL; c++) {
-      rows[psHeaderRow].cells.push({ col: c, value: '', bg: TEAL_PALE });
-    }
-    merges.push({ startRow: psHeaderRow, endRow: psHeaderRow + 1, startCol: DESC_START, endCol: DESC_END });
-    borders.push({ row: psHeaderRow, startCol: DESC_START, endCol: PRICE_COL + 1, side: 'bottom', color: TEAL, style: 'SOLID' });
-
-    let psAlt = false;
     for (let i = 0; i < q.paymentSchedule.length; i++) {
       const ps = q.paymentSchedule[i];
-      const bg = psAlt ? LIGHT_GREY : undefined;
-      lineItemRow(`${i + 1}.  ${ps.label}`, ps.amount, { bg, height: 26 });
-      psAlt = !psAlt;
+      paymentRow(ps.label, ps.amount, {
+        amountBg: i === 0 ? LIGHT_BLUE : LIGHT_RED,
+        height: 28,
+      });
     }
-
-    // Payment total
-    const psTotalRow = rows.length;
-    lineItemRow('Total', q.total, { bold: true, bg: LIGHT_GREY, fontSize: 11, height: 28 });
-    borders.push({ row: psTotalRow, startCol: DESC_START, endCol: PRICE_COL + 1, side: 'top', color: BORDER_COL, style: 'SOLID' });
   }
 
-  blank(1, 4);
-  detailRow('* Groundworks & Installation schedule may be adjusted based on project timeline');
+  spacer(21);
 
-  blank(2);
+  paymentRow('Total', q.total, { bold: true, height: 33 });
 
-  // ════════════════════════════════════════
-  // TERMS & CONDITIONS
-  // ════════════════════════════════════════
-  subHeader('Terms');
+  spacer(21);
 
-  descRow('*Groundworks, installation & other labour to be paid directly to installation team', { fontSize: 9, fg: MID_GREY });
-  descRow('Customer to provide toilet facility and 6-yard skip for waste', { fontSize: 9, fg: MID_GREY });
-  descRow('Customer to be responsible for levelling and clearance of site prior to commencement of works', { fontSize: 9, fg: MID_GREY });
+  // ═══ TERMS ═══
 
-  blank(2);
+  termsRow('Terms', { bold: true, height: 42 });
 
-  // Footer
-  const footerRow = rows.length;
+  const terms = [];
+  terms.push('Quote is based on our standard specification. Any upgrades or changes may affect the final price.');
+  terms.push('Quote is based on normal ground conditions. In the unlikely event of unforeseen ground issues, additional costs may apply.');
+  if (q.bathroom && q.bathroom.enabled) {
+    terms.push('Customer to provide a mini skip for duration of build.');
+  } else {
+    terms.push('Customer to provide toilet facility and mini skip for duration of build.');
+  }
+  terms.push('While Garden Office Buildings will clear and prepare the construction area, the customer is responsible for ensuring the site is accessible and clear of obstructions prior to commencement.');
+
+  for (const term of terms) {
+    termsRow(term);
+  }
+
+  spacer(21);
+
   rows.push({
-    cells: [{ col: DESC_START, value: 'Garden Office Buildings  \u2022  01689 818 400  \u2022  info@gardenofficebuildings.co.uk  \u2022  gardenofficebuildings.co.uk', fontSize: 9, fg: TEAL }],
+    cells: [{ col: 1, value: 'Garden Office Buildings  |  01689 818 400  |  info@gardenofficebuildings.co.uk', fontSize: 11, fg: TEAL, align: 'LEFT', vAlign: 'MIDDLE' }],
+    height: 28,
+    merges: [[1, 10]],
   });
-  merges.push({ startRow: footerRow, endRow: footerRow + 1, startCol: DESC_START, endCol: PRICE_COL + 1 });
-  borders.push({ row: footerRow, startCol: DESC_START, endCol: PRICE_COL + 1, side: 'top', color: TEAL, style: 'SOLID_MEDIUM' });
 
-  blank(1);
+  tealFrame(28);
 
-  return { rows, merges, borders, logoRow };
+  return { rows, logoRow, borderEndRow };
 }
 
-// ─── Convert to Sheets API calls ───
+// ─── Convert row data into Sheets API calls ───
 
 function buildSheetValues(rows) {
   const grid = [];
@@ -616,36 +519,49 @@ function buildSheetValues(rows) {
   return grid;
 }
 
-function buildFormatRequests(rows, merges, borderDefs, sheetId) {
+function buildFormatRequests(rows, sheetId, borderEndRow) {
   const requests = [];
 
-  // Column widths
   for (let i = 0; i < COL_WIDTHS.length; i++) {
     requests.push({
       updateDimensionProperties: {
         range: { sheetId, dimension: 'COLUMNS', startIndex: i, endIndex: i + 1 },
         properties: { pixelSize: COL_WIDTHS[i] },
         fields: 'pixelSize',
-      },
+      }
     });
   }
 
-  // Default font for entire sheet
   requests.push({
     repeatCell: {
       range: { sheetId, startRowIndex: 0, endRowIndex: rows.length, startColumnIndex: 0, endColumnIndex: NUM_COLS },
       cell: {
         userEnteredFormat: {
-          textFormat: { fontFamily: 'Inter', fontSize: 10, foregroundColorStyle: { rgbColor: CHARCOAL } },
-          verticalAlignment: 'MIDDLE',
+          textFormat: { fontFamily: FONT, fontSize: 11, foregroundColorStyle: { rgbColor: BLACK } },
+          verticalAlignment: 'BOTTOM',
           wrapStrategy: 'WRAP',
-        },
+        }
       },
       fields: 'userEnteredFormat(textFormat,verticalAlignment,wrapStrategy)',
-    },
+    }
   });
 
-  // Row heights + cell formatting
+  requests.push({
+    repeatCell: {
+      range: { sheetId, startRowIndex: 0, endRowIndex: rows.length, startColumnIndex: 0, endColumnIndex: 1 },
+      cell: { userEnteredFormat: { backgroundColor: TEAL } },
+      fields: 'userEnteredFormat.backgroundColor',
+    }
+  });
+
+  requests.push({
+    repeatCell: {
+      range: { sheetId, startRowIndex: 0, endRowIndex: rows.length, startColumnIndex: NUM_COLS - 1, endColumnIndex: NUM_COLS },
+      cell: { userEnteredFormat: { backgroundColor: TEAL } },
+      fields: 'userEnteredFormat.backgroundColor',
+    }
+  });
+
   for (let r = 0; r < rows.length; r++) {
     const row = rows[r];
 
@@ -655,7 +571,51 @@ function buildFormatRequests(rows, merges, borderDefs, sheetId) {
           range: { sheetId, dimension: 'ROWS', startIndex: r, endIndex: r + 1 },
           properties: { pixelSize: row.height },
           fields: 'pixelSize',
-        },
+        }
+      });
+    }
+
+    if (row.fullBg) {
+      requests.push({
+        repeatCell: {
+          range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: NUM_COLS },
+          cell: { userEnteredFormat: { backgroundColor: row.fullBg } },
+          fields: 'userEnteredFormat.backgroundColor',
+        }
+      });
+    }
+
+    if (row.sectionBar) {
+      requests.push({
+        repeatCell: {
+          range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 1, endColumnIndex: 10 },
+          cell: { userEnteredFormat: { backgroundColor: TEAL } },
+          fields: 'userEnteredFormat.backgroundColor',
+        }
+      });
+    }
+
+    if (row.greyContent) {
+      requests.push({
+        repeatCell: {
+          range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 1, endColumnIndex: 5 },
+          cell: { userEnteredFormat: { backgroundColor: GREY_BG } },
+          fields: 'userEnteredFormat.backgroundColor',
+        }
+      });
+      requests.push({
+        repeatCell: {
+          range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 5, endColumnIndex: 9 },
+          cell: { userEnteredFormat: { backgroundColor: GREY_BG } },
+          fields: 'userEnteredFormat.backgroundColor',
+        }
+      });
+      requests.push({
+        repeatCell: {
+          range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 9, endColumnIndex: 10 },
+          cell: { userEnteredFormat: { backgroundColor: GREY_BG } },
+          fields: 'userEnteredFormat.backgroundColor',
+        }
       });
     }
 
@@ -664,10 +624,10 @@ function buildFormatRequests(rows, merges, borderDefs, sheetId) {
       const fields = [];
 
       if (cell.bold !== undefined || cell.fontSize || cell.fg) {
-        format.textFormat = {};
-        if (cell.bold) format.textFormat.bold = true;
-        if (cell.fontSize) format.textFormat.fontSize = cell.fontSize;
-        if (cell.fg) format.textFormat.foregroundColorStyle = { rgbColor: cell.fg };
+        format.textFormat = { fontFamily: FONT };
+        if (cell.bold) { format.textFormat.bold = true; }
+        if (cell.fontSize) { format.textFormat.fontSize = cell.fontSize; }
+        if (cell.fg) { format.textFormat.foregroundColorStyle = { rgbColor: cell.fg }; }
         fields.push('userEnteredFormat.textFormat');
       }
 
@@ -681,9 +641,9 @@ function buildFormatRequests(rows, merges, borderDefs, sheetId) {
         fields.push('userEnteredFormat.horizontalAlignment');
       }
 
-      if (cell.numberFormat) {
-        format.numberFormat = cell.numberFormat;
-        fields.push('userEnteredFormat.numberFormat');
+      if (cell.vAlign) {
+        format.verticalAlignment = cell.vAlign;
+        fields.push('userEnteredFormat.verticalAlignment');
       }
 
       if (fields.length > 0) {
@@ -692,85 +652,88 @@ function buildFormatRequests(rows, merges, borderDefs, sheetId) {
             range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: cell.col, endColumnIndex: cell.col + 1 },
             cell: { userEnteredFormat: format },
             fields: fields.join(','),
-          },
+          }
+        });
+      }
+    }
+
+    if (row.merges) {
+      for (const [startCol, endCol] of row.merges) {
+        requests.push({
+          mergeCells: {
+            range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: startCol, endColumnIndex: endCol },
+            mergeType: 'MERGE_ALL',
+          }
         });
       }
     }
   }
 
-  // Merge cells
-  for (const m of merges) {
-    requests.push({
-      mergeCells: {
-        range: { sheetId, startRowIndex: m.startRow, endRowIndex: m.endRow, startColumnIndex: m.startCol, endColumnIndex: m.endCol },
-        mergeType: 'MERGE_ALL',
-      },
-    });
-  }
+  // ─── Borders ───
+  const bs = { style: 'SOLID', colorStyle: { rgbColor: { red: 0, green: 0, blue: 0 } } };
 
-  // Borders
-  for (const b of borderDefs) {
-    const border = {
-      style: b.style || 'SOLID',
-      colorStyle: { rgbColor: b.color || BORDER_COL },
-    };
-    const range = {
-      sheetId,
-      startRowIndex: b.row,
-      endRowIndex: b.row + 1,
-      startColumnIndex: b.startCol,
-      endColumnIndex: b.endCol,
-    };
-
-    if (b.box) {
-      requests.push({
-        updateBorders: { range, top: border, bottom: border, left: border, right: border },
-      });
-    } else {
-      const borderObj = {};
-      borderObj[b.side] = border;
-      requests.push({
-        updateBorders: { range, ...borderObj },
-      });
-    }
-  }
-
-  // Teal border around entire quote
   requests.push({
     updateBorders: {
-      range: {
-        sheetId,
-        startRowIndex: 0,
-        endRowIndex: rows.length,
-        startColumnIndex: 0,
-        endColumnIndex: NUM_COLS,
-      },
-      top: { style: 'SOLID_MEDIUM', colorStyle: { rgbColor: TEAL } },
-      bottom: { style: 'SOLID_MEDIUM', colorStyle: { rgbColor: TEAL } },
-      left: { style: 'SOLID_MEDIUM', colorStyle: { rgbColor: TEAL } },
-      right: { style: 'SOLID_MEDIUM', colorStyle: { rgbColor: TEAL } },
-    },
+      range: { sheetId, startRowIndex: 0, endRowIndex: rows.length, startColumnIndex: 0, endColumnIndex: 1 },
+      left: bs,
+    }
+  });
+  requests.push({
+    updateBorders: {
+      range: { sheetId, startRowIndex: 0, endRowIndex: rows.length, startColumnIndex: 10, endColumnIndex: 11 },
+      right: bs,
+    }
+  });
+  requests.push({
+    updateBorders: {
+      range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 11 },
+      top: bs,
+    }
+  });
+  requests.push({
+    updateBorders: {
+      range: { sheetId, startRowIndex: rows.length - 1, endRowIndex: rows.length, startColumnIndex: 0, endColumnIndex: 11 },
+      bottom: bs,
+    }
   });
 
-  // Hide gridlines for a cleaner look
-  requests.push({
-    updateSheetProperties: {
-      properties: { sheetId, gridProperties: { hideGridlines: true } },
-      fields: 'gridProperties.hideGridlines',
-    },
-  });
+  for (let r = 0; r < rows.length; r++) {
+    const row = rows[r];
+    if (row.fullBg) continue;
+
+    if (row.merges && row.merges.length > 0) {
+      for (const [startCol, endCol] of row.merges) {
+        requests.push({
+          updateBorders: {
+            range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: startCol, endColumnIndex: endCol },
+            top: bs, bottom: bs, left: bs, right: bs,
+          }
+        });
+      }
+      if (row.greyContent || row.sectionBar) {
+        const jCovered = row.merges.some(([s, e]) => s <= 9 && e > 9);
+        if (!jCovered) {
+          requests.push({
+            updateBorders: {
+              range: { sheetId, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 9, endColumnIndex: 10 },
+              top: bs, bottom: bs, left: bs, right: bs,
+            }
+          });
+        }
+      }
+    }
+  }
 
   return requests;
 }
 
 // ─── Vercel Handler ───
 
-module.exports = async function handler(req, res) {
+module.exports = async (req, res) => {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -781,46 +744,35 @@ module.exports = async function handler(req, res) {
 
     const q = req.body;
     const customerName = q.customerName || 'Unknown';
-    const dateStr = fmtDate(q.date || new Date()).replace(/\//g, '-');
-    const title = `GOB Quote \u2014 ${customerName} \u2014 ${dateStr}`;
+    const date = fmtDate(q.date || new Date()).replace(/\//g, '-');
+    const title = `GOB Quote - ${customerName} - ${date}`;
 
-    console.log('Creating quote for:', customerName);
+    // Find logo on Drive
+    const logoFileId = await findLogoFileId(driveApi);
 
-    // 1. Copy from template (preserves logo image in header)
-    const copyRes = await driveApi.files.copy({
-      fileId: TEMPLATE_ID,
-      requestBody: { name: title },
+    // 1. Create spreadsheet
+    const createRes = await sheetsApi.spreadsheets.create({
+      requestBody: {
+        properties: { title },
+        sheets: [{ properties: { title: 'Quote', sheetId: 0, gridProperties: { hideGridlines: true } } }],
+      },
     });
-    const spreadsheetId = copyRes.data.id;
+    const spreadsheetId = createRes.data.spreadsheetId;
+    const sheetId = 0;
 
-    // 2. Build sheet data
-    const { rows, merges, borders, logoRow } = buildQuoteSheet(q);
+    // 2. Build quote data
+    const { rows, borderEndRow } = buildQuoteData(q, logoFileId);
     const grid = buildSheetValues(rows);
-    const formatRequests = buildFormatRequests(rows, merges, borders, 0);
+    const formatRequests = buildFormatRequests(rows, sheetId, borderEndRow);
 
-    // 3. Write values in two parts, skipping the logo row to preserve the image
-    const gridBefore = grid.slice(0, logoRow);
-    const gridAfter = grid.slice(logoRow + 1);
-
-    const writePromises = [];
-    if (gridBefore.length > 0) {
-      writePromises.push(sheetsApi.spreadsheets.values.update({
-        spreadsheetId,
-        range: `Quote!A1:H${gridBefore.length}`,
-        valueInputOption: 'USER_ENTERED',
-        requestBody: { values: gridBefore },
-      }));
-    }
-    if (gridAfter.length > 0) {
-      const afterStart = logoRow + 2; // 1-indexed, skip logo row
-      writePromises.push(sheetsApi.spreadsheets.values.update({
-        spreadsheetId,
-        range: `Quote!A${afterStart}:H${afterStart + gridAfter.length - 1}`,
-        valueInputOption: 'USER_ENTERED',
-        requestBody: { values: gridAfter },
-      }));
-    }
-    await Promise.all(writePromises);
+    // 3. Write values
+    const lastCol = String.fromCharCode(64 + NUM_COLS);
+    await sheetsApi.spreadsheets.values.update({
+      spreadsheetId,
+      range: `Quote!A1:${lastCol}${grid.length}`,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: { values: grid },
+    });
 
     // 4. Apply formatting
     if (formatRequests.length > 0) {
@@ -831,20 +783,17 @@ module.exports = async function handler(req, res) {
     }
 
     // 5. Move to quotes folder
-    try {
-      await driveApi.files.update({
-        fileId: spreadsheetId,
-        addParents: QUOTES_FOLDER_ID,
-        fields: 'id, parents',
-      });
-    } catch (moveErr) {
-      console.warn('Could not move to folder (non-fatal):', moveErr.message);
-    }
+    const fileInfo = await driveApi.files.get({ fileId: spreadsheetId, fields: 'parents' });
+    await driveApi.files.update({
+      fileId: spreadsheetId,
+      addParents: QUOTES_FOLDER_ID,
+      removeParents: (fileInfo.data.parents || []).join(','),
+      fields: 'id, parents',
+    });
 
     const sheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
-    console.log('Quote created:', title, sheetUrl);
-
     res.json({ success: true, spreadsheetId, url: sheetUrl, title });
+
   } catch (error) {
     console.error('Error creating quote:', error);
     res.status(500).json({ success: false, error: error.message });
