@@ -294,140 +294,280 @@ createApp({
       if (!template) return;
 
       const s = this.state;
+      const price = this.price;
+      const isSig = s.tier === 'signature';
       const firstName = (s.customer?.name || 'Customer').split(' ')[0];
       const dims = `${(s.width/1000).toFixed(1)}m x ${(s.depth/1000).toFixed(1)}m x ${(s.height/1000).toFixed(1)}m`;
+      const buildingTypeLower = (s.buildingType || 'garden office building').toLowerCase();
 
-      // Handle custom paragraph - add newlines if content exists
-      const customParagraph = s.customNotes?.email?.trim() 
+      // Handle custom paragraph
+      const customParagraph = s.customNotes?.email?.trim()
         ? '\n\n' + s.customNotes.email.trim()
         : '';
 
-      // Calculate days of week
+      // Days/time
       const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       const today = new Date();
       const todayDayOfWeek = dayNames[today.getDay()];
-      
-      // Calculate visit day of week
       let visitDayOfWeek = '';
       if (s.survey?.visitDate) {
-        const visitDate = new Date(s.survey.visitDate + 'T12:00:00'); // Add time to avoid timezone issues
+        const visitDate = new Date(s.survey.visitDate + 'T12:00:00');
         visitDayOfWeek = dayNames[visitDate.getDay()];
       }
-
-      // Time of day for greeting
       const hour = today.getHours();
       const todayTimeOfDay = hour < 12 ? 'morning' : 'afternoon';
 
-      // Sales rep - fallback to Richard for backwards compatibility
       const salesRep = s.survey?.salesRep || s.survey?.surveyorName || 'Richard';
 
-      // Opening paragraph - different for showroom visit vs site visit
+      // Opening paragraph (post-visit)
       let openingParagraph;
       if (s.survey?.visitedShowroom) {
-        openingParagraph = `Hope all is well. It was great to meet you${visitDayOfWeek ? ' on ' + visitDayOfWeek : ''} at our showroom to discuss your ${s.buildingType.toLowerCase()} project.`;
+        openingParagraph = `Hope all is well. It was great to meet you${visitDayOfWeek ? ' on ' + visitDayOfWeek : ''} at our showroom to discuss your ${buildingTypeLower} project.`;
       } else {
-        openingParagraph = `Hope all is well. Thank you for having ${salesRep} visit${visitDayOfWeek ? ' on ' + visitDayOfWeek : ''}, he said it was great to meet to discuss your ${s.buildingType.toLowerCase()} project.`;
+        openingParagraph = `Hope all is well. Thank you for having ${salesRep} visit${visitDayOfWeek ? ' on ' + visitDayOfWeek : ''}, he said it was great to meet to discuss your ${buildingTypeLower} project.`;
       }
 
-      // Discount paragraph - based on discount settings
+      // ─── Discount paragraph ───
       let discountParagraph = '';
       const discount = s.discount || {};
-      const price = this.price;
-      
       if (discount.type !== 'none' && discount.amount > 0 && price?.discount > 0) {
         const discountFormatted = '£' + price.discount.toLocaleString('en-GB');
         const discountReason = discount.description || 'discount';
-        
-        // Check if it's an ambassador discount
         if (discountReason.toLowerCase().includes('ambassador')) {
           discountParagraph = `\n\nI also wanted to mention that we've recently launched a new Ambassador Scheme. As local completed projects are incredibly valuable for us, we're offering a reduction for customers who are happy, once the build is complete, to allow up to two prospective customers to view the building by appointment. Given you are so local to us and would make a fantastic case study for our business, I've included a ${discountFormatted} ${discountReason} on your quote.`;
         } else {
-          // Generic discount paragraph
-          discountParagraph = `\n\nI've included a ${discountFormatted} ${discountReason} on your quote.`;
+          discountParagraph = `\n\nWe've included a ${discountFormatted} ${discountReason} on your quote.`;
         }
       }
-      
-      // Legacy ambassador paragraph support (from survey checkbox)
-      let ambassadorParagraph = '';
+      // Legacy ambassador support
       if (s.survey?.ambassadorEligible && !discountParagraph) {
-        // Only use this if no discount is already set
         let discountAmount = '£2,000';
-        if (price && price.totalIncVat >= 40000) {
-          discountAmount = '£4,000';
-        } else if (price && price.totalIncVat >= 30000) {
-          discountAmount = '£3,000';
-        }
-        ambassadorParagraph = `\n\nI also wanted to mention that we've recently launched a new Ambassador Scheme. As local completed projects are incredibly valuable for us, we're offering a reduction for customers who are happy, once the build is complete, to allow up to two prospective customers to view the building by appointment. Given you are so local to us and would make a fantastic case study for our business, I've included a ${discountAmount} discount on your quote.`;
+        if (price && price.totalIncVat >= 40000) discountAmount = '£4,000';
+        else if (price && price.totalIncVat >= 30000) discountAmount = '£3,000';
+        discountParagraph = `\n\nI also wanted to mention that we've recently launched a new Ambassador Scheme. As local completed projects are incredibly valuable for us, we're offering a reduction for customers who are happy, once the build is complete, to allow up to two prospective customers to view the building by appointment. Given you are so local to us and would make a fantastic case study for our business, I've included a ${discountAmount} discount on your quote.`;
       }
 
-      // Build "building includes" text based on tier and features
-      let buildingIncludes = `The ${s.tier === 'signature' ? 'Signature' : 'Classic'} range includes`;
-      if (s.tier === 'signature') {
-        const hasCanopy = s.hasCanopy !== false;
-        const hasDecking = s.hasDecking !== false;
-        if (hasCanopy && hasDecking) {
-          buildingIncludes += ' a 400mm integrated canopy and decking on the front of the building.';
-        } else if (hasCanopy) {
-          buildingIncludes += ' a 400mm integrated canopy on the front of the building.';
-        } else if (hasDecking) {
-          buildingIncludes += ' integrated decking on the front of the building.';
-        } else {
-          buildingIncludes += ' a sleek, minimalist finish on the front of the building.';
-        }
-      } else {
-        buildingIncludes += ' a sleek, minimalist design without the front canopy/decking.';
-      }
-      
-      // Add bathroom info if enabled
-      if (s.bathroom?.enabled && s.bathroom?.type) {
-        if (s.bathroom.type === 'wc') {
-          buildingIncludes += '\n\nThe price includes a WC suite with toilet, small vanity basin, extractor fan, tiling, and all internal plumbing. Utility connections (water supply and waste) will be arranged separately with our plumber and landscaper, similar to the electrical connection.';
-        } else if (s.bathroom.type === 'bathroom') {
-          buildingIncludes += '\n\nThe price includes a bathroom suite with toilet, vanity basin, shower tray with glass screen, extractor fan, heated towel rail, tiling, and all internal plumbing. Utility connections (water supply and waste) will be arranged separately with our plumber and landscaper, similar to the electrical connection.';
-        }
-      }
-      
-      // Exclusions paragraph - adapts based on bathroom selection
-      let exclusionsParagraph = "I've shown the prices of our paid extras, should you require any. Excluded from our price is the electrical connection that will be subject to a visit from an electrician.";
+      // ─── Exclusions paragraph ───
+      let exclusionsParagraph = 'Excluded from our price is the electrical connection, which will be subject to a visit from our electrician.';
       if (s.bathroom?.enabled && s.bathroom?.type) {
         exclusionsParagraph += ' The utility connections (water supply and waste) will also be arranged separately with our plumber and landscaper.';
         exclusionsParagraph += ' We also ask that customers provide a mini skip whilst we are on site.';
       } else {
-        exclusionsParagraph += ' We also ask that customers provide a toilet and mini skip whilst we are on site.';
+        exclusionsParagraph += ' We also ask that customers provide a toilet facility (porta-loo or downstairs toilet) and 6-yard skip to help keep the site clean and tidy throughout the build.';
       }
 
-      // Deposit next steps - mentions electrician + plumber when bathroom enabled
+      // ─── Deposit next steps ───
       let depositNextSteps = 'We will also arrange a visit from our registered electrician to assess the electrical connection.';
       if (s.bathroom?.enabled && s.bathroom?.type) {
         depositNextSteps = 'We will also arrange visits from our registered electrician and plumber to assess the electrical and utility connections.';
       }
 
+      // ─── Height upgrade paragraph (preliminary) ───
+      let heightUpgradeParagraph = '';
+      if (s.height > 2500) {
+        const heightM = (s.height / 1000).toFixed(2).replace(/0$/, '');
+        heightUpgradeParagraph = `\n\nI've also included an external height of ${heightM}m, which we recommend for buildings of this size. Our standard buildings are 2.5m in height, but for larger buildings, the additional height provides a much more comfortable space. However, this does require planning permission, which is something we can assist with and is a very straightforward process. Should you not require the additional height and would prefer 2.5m, please let me know and I'll provide an updated quote.`;
+      }
+
+      // ─── Planning paragraph (preliminary, height > 2.5m) ───
+      let planningParagraph = '';
+      if (s.height > 2500) {
+        planningParagraph = '\n\nAs the building exceeds 2.5m in height, planning permission will be required. We work closely with a planning consultant and can handle this for you. We will produce a full set of drawings with elevations and all necessary information for the proposed building/surrounding area and these are then forwarded to our planning consultant who submits the application on your/our behalf. This costs £750 + VAT + local council fee (usually £528). Should you wish to proceed we require £250 upfront and £500 once the application is ready for submission. The £250 payment will go towards the building and act as the holding deposit.';
+      }
+
       // Showroom offer
-      const showroomOffer = 'We also welcome you to visit our showroom in Biggin Hill to see our buildings first-hand. We have several display models available, and Richard is always happy to answer any questions.';
+      const showroomOffer = "Please also let me know if you'd like to visit our showroom or a previous local project to see one of our buildings first-hand.";
+
+      // ─── Cladding helper ───
+      const getCladdingLabel = (key) => {
+        const labels = {
+          'western-red-cedar': 'Western red cedar cladding',
+          'anthracite-steel': 'Anthracite steel cladding',
+          'grey-steel': 'Grey steel cladding',
+          'composite-latte': 'Composite slatted cladding in latte colour',
+          'composite-coffee': 'Composite slatted cladding in coffee colour',
+          'composite-grey': 'Composite slatted cladding in grey',
+          'composite-sage': 'Composite slatted cladding in sage green',
+          'composite-chartwell': 'Composite slatted cladding in chartwell green',
+          'larch': 'Larch cladding',
+        };
+        return labels[key] || 'premium cladding';
+      };
+
+      // ─── Building includes: detailed bullet list (post-visit) ───
+      const buildFeatures = [];
+
+      // Signature canopy/decking
+      if (isSig) {
+        buildFeatures.push('Signature integrated canopy on front of building with down lights');
+        if (s.hasDecking !== false) {
+          buildFeatures.push('Signature integrated decking on front of building');
+        }
+      }
+
+      // Cladding per side (group same types)
+      const clad = s.cladding || {};
+      const sides = { front: 'front', left: 'left side', right: 'right side', rear: 'rear' };
+      const cladGroups = {};
+      for (const [side, label] of Object.entries(sides)) {
+        const type = clad[side] || 'anthracite-steel';
+        if (!cladGroups[type]) cladGroups[type] = [];
+        cladGroups[type].push(label);
+      }
+      for (const [type, sideList] of Object.entries(cladGroups)) {
+        buildFeatures.push(`${getCladdingLabel(type)} on ${sideList.join(' and ')}`);
+      }
+
+      // External height
+      const heightM = (s.height / 1000).toFixed(1);
+      buildFeatures.push(`${heightM}m external height (${s.height > 2500 ? 'upgraded' : 'standard'})`);
+
+      // Internal finish
+      buildFeatures.push('Internal wall finish: plaster-boarded, plastered and decorated white');
+      buildFeatures.push('Flooring and skirting board');
+
+      // Electrical spec
+      const sqm = (s.width / 1000) * (s.depth / 1000);
+      let downlights = 4;
+      if (sqm > 32) downlights = 12;
+      else if (sqm > 24) downlights = 10;
+      else if (sqm > 15) downlights = 8;
+      else if (sqm > 9) downlights = 6;
+
+      let sockets = 4;
+      if (sqm > 25) sockets = 7;
+      else if (sqm > 10) sockets = 5;
+
+      let electricalDesc = `Complete internal electrical works including ${downlights} x dimmable LED downlights`;
+      if (isSig) {
+        const spotlights = Math.floor(s.width / 1000);
+        electricalDesc += `, ${spotlights} x external downlights in canopy soffit`;
+      }
+      electricalDesc += `, ${sockets} x double plug sockets, and 1 x network connection port`;
+      buildFeatures.push(electricalDesc);
+
+      // Doors & windows
+      const allDefs = { ...this.appData.components?.doors, ...this.appData.components?.windows };
+      const compDoors = [];
+      const compWindows = [];
+      for (const comp of (s.components || [])) {
+        const def = allDefs[comp.type];
+        const widthM = ((comp.customWidth || def?.width || 900) / 1000).toFixed(1);
+        const cat = def?.category || '';
+        if (cat === 'sliding' || cat === 'bifold' || cat === 'single') {
+          let desc = 'sliding door';
+          if (comp.type.includes('bifold')) desc = 'bi-fold door';
+          else if (comp.type.includes('single-cladded')) desc = 'secret cladded door';
+          else if (comp.type.includes('single')) desc = 'single opening door';
+          compDoors.push(`${widthM}m wide ${desc}`);
+        } else {
+          const opener = def?.hasOpener ? ' (with top opening window)' : '';
+          compWindows.push(`${widthM}m wide window${opener}`);
+        }
+      }
+      const doorWindowParts = [];
+      if (compDoors.length > 0) doorWindowParts.push(`${compDoors.length} x main ${compDoors.join(', ')}`);
+      if (compWindows.length > 0) doorWindowParts.push(`${compWindows.length} x additional full height ${compWindows.join(', ')}`);
+      if (doorWindowParts.length > 0) {
+        buildFeatures.push(doorWindowParts.join(' and '));
+      }
+
+      // Foundation
+      const foundationLabels = {
+        'ground-screw': 'Ground screw foundation system',
+        'concrete-base': 'Concrete base foundation',
+        'concrete-pile': 'Concrete pile foundation system'
+      };
+      buildFeatures.push(foundationLabels[s.foundationType] || 'Ground screw foundation system');
+
+      // Partition
+      if (s.straightPartition?.enabled) {
+        const leftLabel = s.straightPartition.leftLabel || 'Office';
+        const rightLabel = s.straightPartition.rightLabel || 'Storage';
+        const doorNote = s.straightPartition.hasDoor ? ' with interior door' : '';
+        buildFeatures.push(`Internal partition wall${doorNote} to create separate ${leftLabel.toLowerCase()} and ${rightLabel.toLowerCase()} spaces`);
+      } else if (s.partitionRoom?.enabled) {
+        const partLabels = { 'storage': 'storage space', 'wc': 'WC/shower room', 'shower': 'shower room' };
+        buildFeatures.push(`Internal partition wall to create separate ${partLabels[s.partitionRoom.type] || 'room'}`);
+      }
+
+      // Bathroom
+      if (s.bathroom?.enabled && s.bathroom?.type) {
+        if (s.bathroom.type === 'wc') {
+          buildFeatures.push('WC suite with toilet, small vanity basin, extractor fan, tiling, and all internal plumbing');
+        } else if (s.bathroom.type === 'bathroom') {
+          buildFeatures.push('Bathroom suite with toilet, vanity basin, shower tray with glass screen, extractor fan, heated towel rail, tiling, and all internal plumbing');
+        }
+      }
+
+      // AC
+      if (s.extras?.acUnit && s.extras.acUnit !== 'none') {
+        buildFeatures.push(s.extras.acUnit === 'premium'
+          ? 'Premium air conditioning unit with app control (heating and cooling)'
+          : 'Standard air conditioning unit (heating and cooling)');
+      }
+
+      const buildingIncludes = 'Your building includes:\n\n' + buildFeatures.map(f => `   - ${f}`).join('\n');
+
+      // ─── Building includes: flowing paragraph (preliminary) ───
+      const paragraphParts = [];
+      if (isSig) {
+        let canopyDesc = 'our signature canopy/decking feature';
+        if (s.cornerLeft === 'closed' && s.cornerRight === 'closed') canopyDesc += ' with closed side screens';
+        else if (s.cornerLeft === 'open' && s.cornerRight === 'open') canopyDesc += ' with open corners';
+        paragraphParts.push(canopyDesc);
+      }
+      paragraphParts.push((foundationLabels[s.foundationType] || 'ground screw foundation system').toLowerCase());
+      const frontClad = getCladdingLabel(clad.front || 'anthracite-steel').toLowerCase();
+      const sideClad = getCladdingLabel(clad.left || clad.right || 'anthracite-steel').toLowerCase();
+      if (frontClad === sideClad) {
+        paragraphParts.push(`${frontClad} on all sides`);
+      } else {
+        paragraphParts.push(`${frontClad} on the front of the building and ${sideClad} on the sides and rear`);
+      }
+      paragraphParts.push(`${heightM}m external height`);
+      if (s.straightPartition?.enabled) {
+        const leftLabel = (s.straightPartition.leftLabel || 'office').toLowerCase();
+        const rightLabel = (s.straightPartition.rightLabel || 'storage').toLowerCase();
+        const doorNote = s.straightPartition.hasDoor ? ' with interior door' : '';
+        paragraphParts.push(`internal partition wall${doorNote} to create separate ${leftLabel} and ${rightLabel} spaces`);
+      }
+      paragraphParts.push('plastered and decorated internal finish');
+      paragraphParts.push('all internal electrical works');
+      if (isSig) paragraphParts.push('external canopy downlights');
+      // Door/window summary for paragraph
+      const dwSummaryParts = [];
+      if (compDoors.length > 0) dwSummaryParts.push(`${compDoors.length} x main ${compDoors[0]}`);
+      if (compWindows.length > 0) dwSummaryParts.push(`${compWindows.length} x additional window${compWindows.length > 1 ? 's' : ''}`);
+      if (dwSummaryParts.length > 0) {
+        paragraphParts.push(`and door/window combination as discussed per our specification (${dwSummaryParts.join(' and ')} - configuration TBC)`);
+      }
+      const buildingIncludesParagraph = 'This includes ' + paragraphParts.join(', ') + '.';
 
       const replacements = {
         '{customerFirstName}': firstName,
         '{customerName}': s.customer?.name || '',
         '{buildingType}': s.buildingType,
-        '{buildingTypeLower}': s.buildingType.toLowerCase(),
+        '{buildingTypeLower}': buildingTypeLower,
         '{dimensions}': dims,
-        '{tier}': s.tier === 'signature' ? 'Signature' : 'Classic',
-        '{frontCladdingDesc}': this.claddingTypes[s.cladding?.front]?.label || 'cedar cladding',
-        '{cornerDescription}': `${s.cornerLeft} left corner and ${s.cornerRight} right corner`,
-        '{foundationType}': (s.foundationType || 'ground-screw').replace(/-/g, ' '),
-        '{deliveryDate}': s.customer?.date || '[TBC]',
+        '{tier}': isSig ? 'Signature' : 'Classic',
+        '{address}': s.customer?.address || '[Address]',
+        '{visitDate}': s.survey?.visitDate || '[Date TBC]',
+        '{visitTime}': s.survey?.visitTime || '[Time TBC]',
+        '{deliveryDate}': s.deliveryDate || '[TBC]',
         '{customParagraph}': customParagraph,
         '{salesRep}': salesRep,
-        '{visitDayOfWeek}': visitDayOfWeek,
         '{todayDayOfWeek}': todayDayOfWeek,
         '{todayTimeOfDay}': todayTimeOfDay,
         '{openingParagraph}': openingParagraph,
-        '{ambassadorParagraph}': ambassadorParagraph,
-        '{discountParagraph}': discountParagraph || ambassadorParagraph,
+        '{discountParagraph}': discountParagraph,
         '{buildingIncludes}': buildingIncludes,
+        '{buildingIncludesParagraph}': buildingIncludesParagraph,
         '{showroomOffer}': showroomOffer,
         '{exclusionsParagraph}': exclusionsParagraph,
         '{depositNextSteps}': depositNextSteps,
+        '{heightUpgradeParagraph}': heightUpgradeParagraph,
+        '{planningParagraph}': planningParagraph,
       };
 
       let subject = template.subject;
