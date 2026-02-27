@@ -117,9 +117,32 @@
           </div>
         </div>
 
-        <!-- Building Dimensions -->
+        <!-- Customer & Project -->
         <div class="config-section">
-          <h4>Building</h4>
+          <h4>Customer & Project</h4>
+          <label>Name <input type="text" v-model="state.customer.name" placeholder="Full name"></label>
+          <label>Email <input type="email" v-model="state.customer.email" placeholder="Email address"></label>
+          <label>Address <input type="text" v-model="state.customer.address" placeholder="Full address"></label>
+          <label>Phone <input type="tel" v-model="state.customer.number" placeholder="Phone number"></label>
+          <label>Sales Rep
+            <select v-model="state.survey.salesRep">
+              <option value="">Select...</option>
+              <option value="Liam">Liam</option>
+              <option value="Richard">Richard</option>
+              <option value="Guillaume">Guillaume</option>
+            </select>
+          </label>
+          <label>Delivery Date <input type="text" v-model="state.customer.date" placeholder="e.g. February 2026"></label>
+          <label>Building Type
+            <select v-model="state.buildingType">
+              <option v-for="bt in buildingTypes" :key="bt" :value="bt">{{ bt }}</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Building Design -->
+        <div class="config-section">
+          <h4>Building Design</h4>
           <div class="dim-row">
             <div>
               <label>Width (mm)</label>
@@ -134,16 +157,6 @@
               <input type="number" v-model.number="state.height" min="2200" max="3500" step="50">
             </div>
           </div>
-        </div>
-
-        <!-- Type & Range -->
-        <div class="config-section">
-          <h4>Type & Range</h4>
-          <label>Building Type
-            <select v-model="state.buildingType">
-              <option v-for="bt in buildingTypes" :key="bt" :value="bt">{{ bt }}</option>
-            </select>
-          </label>
           <div class="radio-group" style="margin-top:6px;">
             <label><input type="radio" v-model="state.tier" value="signature"> Signature</label>
             <label><input type="radio" v-model="state.tier" value="classic"> Classic</label>
@@ -229,7 +242,7 @@
           </label>
         </div>
 
-        <!-- Rooms -->
+        <!-- Layout & Rooms -->
         <div class="config-section">
           <h4>Rooms</h4>
           <div v-for="(room, i) in state.rooms" :key="i" class="placed-component" style="flex-wrap:wrap;">
@@ -593,15 +606,6 @@
           </div>
         </div>
 
-        <!-- Customer Info -->
-        <div class="config-section">
-          <h4>Customer</h4>
-          <label>Name <input type="text" v-model="state.customer.name" placeholder="Full name"></label>
-          <label>Email <input type="email" v-model="state.customer.email" placeholder="Email address"></label>
-          <label>Address <input type="text" v-model="state.customer.address" placeholder="Full address"></label>
-          <label>Phone <input type="tel" v-model="state.customer.number" placeholder="Phone number"></label>
-          <label>Date <input type="text" v-model="state.customer.date" placeholder="e.g. February 2026"></label>
-        </div>
 
         <!-- Site Details / Boundaries -->
         <div class="config-section">
@@ -787,7 +791,7 @@
     <div class="bottom-panel">
       <div class="tab-bar">
         <button :class="{ active: activeBottomTab === 'email' }" @click="activeBottomTab = 'email'">Email Drafter</button>
-        <button :class="{ active: activeBottomTab === 'survey' }" @click="activeBottomTab = 'survey'">Site Survey</button>
+        <button :class="{ active: activeBottomTab === 'survey' }" @click="activeBottomTab = 'survey'">Site Visit Notes</button>
       </div>
       <div class="tab-content">
 
@@ -826,28 +830,24 @@
             
             <!-- Survey Header -->
             <div class="survey-header">
-              <h3>Site Survey Form</h3>
+              <h3>Site Visit Notes</h3>
               <div class="survey-actions-top">
                 <span v-if="state.survey?.completed" class="survey-status completed">
                   ✓ Survey completed {{ state.survey.completedDate }}
                 </span>
-                <button class="btn btn-sm btn-primary" @click="applySurveyToQuote">Create Quote from Survey</button>
+                <button class="btn btn-sm btn-primary" @click="applySurveyToQuote">Apply Preferences to Design</button>
                 <button class="btn btn-sm" @click="markSurveyComplete">Mark Complete</button>
               </div>
             </div>
+            <p style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Copies customer preferences (cladding, doors, extras) into the building design</p>
 
-            <!-- Survey Sections in Columns -->
+            <!-- Survey Sections in 3 Columns -->
             <div class="survey-columns">
 
-              <!-- Column 1: Building Preferences -->
+              <!-- Column 1: Customer Preferences -->
               <div class="survey-column">
                 <div class="survey-section">
-                  <h4>Building Preferences</h4>
-                  <label>Building Type
-                    <select v-model="state.buildingType">
-                      <option v-for="bt in buildingTypes" :key="bt" :value="bt">{{ bt }}</option>
-                    </select>
-                  </label>
+                  <h4>Customer Preferences</h4>
                   <label>Use Case / Primary Purpose
                     <select v-model="state.survey.useCase">
                       <option value="">Select...</option>
@@ -865,14 +865,6 @@
                   <label v-if="state.survey.useCase === 'custom'">Custom Use
                     <input type="text" v-model="state.survey.useCaseCustom" placeholder="e.g. Photography Studio">
                   </label>
-                  <div class="survey-row-2col">
-                    <label>Desired Width (m)
-                      <input type="number" v-model.number="state.width" step="100" min="2000" max="12000">
-                    </label>
-                    <label>Desired Depth (m)
-                      <input type="number" v-model.number="state.depth" step="100" min="2000" max="8000">
-                    </label>
-                  </div>
                   <label>Budget Range
                     <select v-model="state.survey.budgetRange">
                       <option value="">Not discussed</option>
@@ -885,13 +877,9 @@
                       <option value="flexible">Flexible / Quality focused</option>
                     </select>
                   </label>
-                  <label>Ideal Start Date
+                  <label>Preferred Start Date
                     <input type="text" v-model="state.survey.preferredDelivery" placeholder="e.g. March 2026, ASAP, flexible">
                   </label>
-                </div>
-
-                <div class="survey-section">
-                  <h4>Cladding & Finish Preferences</h4>
                   <label>Cladding Preference
                     <select v-model="state.survey.claddingPreference">
                       <option value="">Not discussed</option>
@@ -902,37 +890,6 @@
                       <option value="mixed">Mixed (discuss)</option>
                     </select>
                   </label>
-                  <label>Range
-                    <div class="radio-group">
-                      <label><input type="radio" v-model="state.tier" value="signature"> Signature</label>
-                      <label><input type="radio" v-model="state.tier" value="classic"> Classic</label>
-                    </div>
-                  </label>
-                </div>
-
-                <div class="survey-section">
-                  <h4>Boundaries & Measurements</h4>
-                  <div class="survey-row-3col">
-                    <label>Left (mm)
-                      <input type="number" v-model="state.site.boundaryLeft" placeholder="1500">
-                    </label>
-                    <label>Right (mm)
-                      <input type="number" v-model="state.site.boundaryRight" placeholder="2000">
-                    </label>
-                    <label>Rear (mm)
-                      <input type="number" v-model="state.site.boundaryRear" placeholder="3000">
-                    </label>
-                  </div>
-                  <label>Adjacent Structures
-                    <textarea v-model="state.site.structures" rows="2" placeholder="e.g. Shed to left, fence at rear..."></textarea>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Column 2: Doors, Windows, Extras -->
-              <div class="survey-column">
-                <div class="survey-section">
-                  <h4>Doors & Windows</h4>
                   <label>Door Preference
                     <select v-model="state.survey.doorPreference">
                       <option value="">Not discussed</option>
@@ -954,26 +911,10 @@
                       <option value="aluminium">Aluminium frames preferred</option>
                     </select>
                   </label>
-                  <label>Corner Style
-                    <div class="survey-row-2col">
-                      <label>Left
-                        <select v-model="state.cornerLeft">
-                          <option value="open">Open</option>
-                          <option value="closed">Closed</option>
-                        </select>
-                      </label>
-                      <label>Right
-                        <select v-model="state.cornerRight">
-                          <option value="open">Open</option>
-                          <option value="closed">Closed</option>
-                        </select>
-                      </label>
-                    </div>
-                  </label>
                 </div>
 
                 <div class="survey-section">
-                  <h4>Electrical Extras</h4>
+                  <h4>Electrical Wishes</h4>
                   <div class="extras-checklist">
                     <label class="checkbox-row">
                       <input type="checkbox" v-model="state.survey.acPreference"> Air Conditioning
@@ -1003,7 +944,7 @@
                 </div>
 
                 <div class="survey-section">
-                  <h4>Partition Wall</h4>
+                  <h4>Partition Wish</h4>
                   <label class="checkbox-row">
                     <input type="checkbox" v-model="surveyExtras.partition"> Partition wall required
                   </label>
@@ -1013,7 +954,7 @@
                 </div>
 
                 <div class="survey-section">
-                  <h4>Toilet / WC / Shower Room</h4>
+                  <h4>Bathroom Wish</h4>
                   <label class="checkbox-row">
                     <input type="checkbox" v-model="surveyExtras.toilet"> WC / Bathroom required
                   </label>
@@ -1031,7 +972,7 @@
                 </div>
               </div>
 
-              <!-- Column 3: Site Details -->
+              <!-- Column 2: Site Conditions -->
               <div class="survey-column">
                 <div class="survey-section">
                   <h4>Site Location & Access</h4>
@@ -1117,6 +1058,11 @@
                 </div>
 
                 <div class="survey-section">
+                  <h4>Adjacent Structures</h4>
+                  <textarea v-model="state.site.structures" rows="2" placeholder="e.g. Shed to left, fence at rear..."></textarea>
+                </div>
+
+                <div class="survey-section">
                   <h4>Landscaping / Prep Works</h4>
                   <label>Prep works required?
                     <select v-model="state.site.prepWorks">
@@ -1133,7 +1079,7 @@
                 </div>
 
                 <div class="survey-section">
-                  <h4>Electrics</h4>
+                  <h4>Electrics / Power Source</h4>
                   <label>Consumer Unit Location
                     <select v-model="state.site.powerSource">
                       <option value="">Select...</option>
@@ -1161,36 +1107,12 @@
                 </div>
               </div>
 
-              <!-- Column 4: Customer & Sales -->
+              <!-- Column 3: Visit & Sales Context -->
               <div class="survey-column">
                 <div class="survey-section">
-                  <h4>Customer Details</h4>
-                  <label>Full Name
-                    <input type="text" v-model="state.customer.name" placeholder="Full name">
-                  </label>
-                  <label>Email
-                    <input type="email" v-model="state.customer.email" placeholder="Email address">
-                  </label>
-                  <label>Phone
-                    <input type="tel" v-model="state.customer.number" placeholder="Phone number">
-                  </label>
-                  <label>Address
-                    <textarea v-model="state.customer.address" rows="2" placeholder="Full address"></textarea>
-                  </label>
-                </div>
-
-                <div class="survey-section">
-                  <h4>Sales Context</h4>
+                  <h4>Visit & Sales Context</h4>
                   <label>Visit Date
                     <input type="date" v-model="state.survey.visitDate">
-                  </label>
-                  <label>Sales Rep (who did visit)
-                    <select v-model="state.survey.salesRep">
-                      <option value="">Select...</option>
-                      <option value="Liam">Liam</option>
-                      <option value="Richard">Richard</option>
-                      <option value="Guillaume">Guillaume</option>
-                    </select>
                   </label>
                   <div class="checkbox-row">
                     <input type="checkbox" v-model="state.survey.visitedShowroom" id="chk-visited-showroom">
@@ -1200,14 +1122,6 @@
                     <input type="checkbox" v-model="state.survey.ambassadorEligible" id="chk-ambassador">
                     <label for="chk-ambassador">Ambassador scheme eligible</label>
                   </div>
-                  <label>Surveyor (legacy)
-                    <select v-model="state.survey.surveyorName">
-                      <option value="">Select...</option>
-                      <option value="Liam">Liam</option>
-                      <option value="Richard">Richard</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </label>
                   <label>Referral Source
                     <select v-model="state.survey.referralSource">
                       <option value="">Not specified</option>
@@ -1234,7 +1148,7 @@
 
                 <div class="survey-section">
                   <h4>Additional Notes</h4>
-                  <textarea v-model="state.site.notes" rows="3" placeholder="Any other notes from the site visit..."></textarea>
+                  <textarea v-model="state.site.notes" rows="4" placeholder="Any other notes from the site visit..."></textarea>
                 </div>
               </div>
 

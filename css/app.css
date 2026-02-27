@@ -331,7 +331,7 @@ html, body {
 
 .survey-columns {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 
@@ -440,7 +440,7 @@ html, body {
 }
 
 /* Responsive for smaller screens */
-@media (max-width: 1400px) {
+@media (max-width: 1200px) {
   .survey-columns {
     grid-template-columns: repeat(2, 1fr);
   }

@@ -1052,6 +1052,8 @@ createApp({
     },
 
     applySurveyToQuote() {
+      const applied = [];
+
       // Apply cladding preferences
       if (this.state.survey?.claddingPreference) {
         const pref = this.state.survey.claddingPreference;
@@ -1059,18 +1061,22 @@ createApp({
           this.state.cladding.front = 'western-red-cedar';
           this.state.cladding.left = 'anthracite-steel';
           this.state.cladding.right = 'anthracite-steel';
+          applied.push('Cladding (cedar front)');
         } else if (pref === 'cedar-front-sides') {
           this.state.cladding.front = 'western-red-cedar';
           this.state.cladding.left = 'western-red-cedar';
           this.state.cladding.right = 'western-red-cedar';
           this.state.cladding.rear = 'anthracite-steel';
+          applied.push('Cladding (cedar front + sides)');
         } else if (pref === 'cedar-all') {
           this.state.cladding.front = 'western-red-cedar';
           this.state.cladding.left = 'western-red-cedar';
           this.state.cladding.right = 'western-red-cedar';
           this.state.cladding.rear = 'western-red-cedar';
+          applied.push('Cladding (cedar all round)');
         } else if (pref === 'composite') {
           this.state.cladding.front = 'composite-slatted';
+          applied.push('Cladding (composite front)');
         }
       }
 
@@ -1091,7 +1097,7 @@ createApp({
           'french-doors': 'single-glazed-door',
           'secret-door': 'single-cladded-door',
         };
-        
+
         const doorType = doorMap[doorPref];
         if (doorType && this.appData.components?.doors?.[doorType]) {
           const def = this.appData.components.doors[doorType];
@@ -1103,45 +1109,59 @@ createApp({
             positionX: Math.max(0, pos),
             label: def.label,
           });
+          applied.push('Door (' + def.label + ')');
         }
       }
 
       // Apply AC preference
       if (this.state.survey?.acPreference) {
         this.state.extras.acUnit = 'standard';
+        applied.push('Air conditioning');
       }
 
       // Apply survey extras checkboxes
       if (this.surveyExtras.heating) {
         this.state.extras.heater = Math.max(1, this.state.extras.heater || 0);
+        applied.push('Panel heater');
       }
       if (this.surveyExtras.externalSockets) {
         this.state.extras.externalSocket = Math.max(1, this.state.extras.externalSocket || 0);
+        applied.push('External socket');
       }
       if (this.surveyExtras.upDownLights) {
         this.state.extras.upDownLight = Math.max(2, this.state.extras.upDownLight || 0);
+        applied.push('Up/down lights');
       }
       if (this.surveyExtras.additionalDecking) {
         this.state.structuralExtras.additionalDecking = Math.max(4, this.state.structuralExtras.additionalDecking || 0);
+        applied.push('Additional decking');
       }
       if (this.surveyExtras.cat6) {
         this.state.extras.cat6Point = Math.max(2, this.state.extras.cat6Point || 0);
+        applied.push('CAT6 points');
       }
       if (this.surveyExtras.partition) {
         this.state.structuralExtras.partition = 'with-door';
         this.onPartitionChange();
+        applied.push('Partition wall');
       }
       if (this.surveyExtras.toilet) {
         this.state.structuralExtras.partition = 'toilet';
         this.onPartitionChange();
+        applied.push('WC/Bathroom');
       }
 
       // Set delivery date from preferred delivery
       if (this.state.survey?.preferredDelivery && !this.state.customer.date) {
         this.state.customer.date = this.state.survey.preferredDelivery;
+        applied.push('Delivery date');
       }
 
-      this.notify('Survey data applied to configurator');
+      if (applied.length > 0) {
+        this.notify('Applied to design: ' + applied.join(', '));
+      } else {
+        this.notify('No preferences to apply — fill in Site Visit Notes first');
+      }
     },
 
     // Site Sketch methods

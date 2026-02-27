@@ -18,5 +18,10 @@
   "test---spacing-layout": 1,
   "test---exact-layout": 1,
   "test---borders-fixed": 1,
-  "john-smith": 7
+  "john-smith": 7,
+  "test-grey-spacers": 1,
+  "test-logo-check": 1,
+  "test-logo-position": 1,
+  "test-payment-schedule": 1,
+  "test-bathroom-section": 1
 }
