@@ -676,7 +676,7 @@ function renderFront(cfg) {
     const cy = comp.y !== undefined ? comp.y : (height - comp.h);
     s += renderComp(comp.type, comp.x, cy, comp.w, comp.h, comp.id, claddingType, comp.handleSide);
   }
-  
+
   // Base trim at bottom of building - ALWAYS present on all tiers
   const trimH = deckH;
   s += rc(-sideOverhang, height, width + sideOverhang*2, trimH, { fill: COL.anthracite });
@@ -1045,6 +1045,11 @@ function renderPlan(cfg) {
   }
   const hitPad = 80; // extra padding for click targets on thin wall elements
   for (const c of (components || [])) {
+    const dimLabel = `${c.w}mm (w) x ${c.h || ''}mm (h)`;
+    const dimFontSize = 100;
+    const dimColor = '#444';
+    const dimOff = 200; // offset from wall for label
+
     if (c.wall === 'front') {
       const fy = depth - wt;
       s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="front" style="cursor:grab">`;
@@ -1059,6 +1064,8 @@ function renderPlan(cfg) {
         s += ln(c.x, fy+wt*0.7, c.x+c.w, fy+wt*0.7, 1.5, COL.anthracite);
       }
       s += '</g>';
+      // Dimension label inside building (above front wall inner edge)
+      s += dimH_comp(c.x, c.x + c.w, depth - wt, dimLabel, -dimOff);
     } else if (c.wall === 'left') {
       s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="left" style="cursor:grab">`;
       s += rc(-hitPad, c.x, wt + hitPad * 2, c.w, { fill: 'transparent' });
@@ -1066,6 +1073,8 @@ function renderPlan(cfg) {
       s += ln(wt*0.3, c.x, wt*0.3, c.x+c.w, 1.5, COL.anthracite);
       s += ln(wt*0.7, c.x, wt*0.7, c.x+c.w, 1.5, COL.anthracite);
       s += '</g>';
+      // Dimension label inside building (right of left wall inner edge)
+      s += dimV_comp(c.x, c.x + c.w, wt, dimLabel, dimOff);
     } else if (c.wall === 'right') {
       s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="right" style="cursor:grab">`;
       s += rc(width - wt - hitPad, c.x, wt + hitPad * 2, c.w, { fill: 'transparent' });
@@ -1073,6 +1082,8 @@ function renderPlan(cfg) {
       s += ln(width-wt*0.3, c.x, width-wt*0.3, c.x+c.w, 1.5, COL.anthracite);
       s += ln(width-wt*0.7, c.x, width-wt*0.7, c.x+c.w, 1.5, COL.anthracite);
       s += '</g>';
+      // Dimension label inside building (left of right wall inner edge)
+      s += dimV_comp(c.x, c.x + c.w, width - wt, dimLabel, -dimOff);
     } else if (c.wall === 'rear') {
       s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="rear" style="cursor:grab">`;
       s += rc(c.x, -hitPad, c.w, wt + hitPad * 2, { fill: 'transparent' });
@@ -1086,6 +1097,8 @@ function renderPlan(cfg) {
         s += ln(c.x, wt*0.7, c.x+c.w, wt*0.7, 1.5, COL.anthracite);
       }
       s += '</g>';
+      // Dimension label inside building (below rear wall inner edge)
+      s += dimH_comp(c.x, c.x + c.w, wt, dimLabel, dimOff);
     }
   }
   if (rooms && rooms.length > 1) {
@@ -1284,6 +1297,52 @@ function renderTitle(cfg) {
   `;
   
   return svg;
+}
+
+// ── Component Dimension Labels (Plan View) ─────────────────
+
+// Horizontal component dimension (for front/rear wall components)
+function dimH_comp(x1, x2, y, label, off) {
+  const color = '#444';
+  const yl = y + (off || 200);
+  const cw = Math.min(60, (x2 - x1) * 0.05);
+  const ch = cw * 0.5;
+  const sign = off < 0 ? -1 : 1;
+  let s = '';
+  // Extension lines
+  s += ln(x1, y, x1, yl, 1, color, { opacity: 0.5 });
+  s += ln(x2, y, x2, yl, 1, color, { opacity: 0.5 });
+  // Dimension line
+  s += ln(x1, yl, x2, yl, 2, color);
+  // Chevron arrowheads
+  s += tag('polyline', { points: `${x1 + cw},${yl - ch} ${x1},${yl} ${x1 + cw},${yl + ch}`, fill: 'none', stroke: color, 'stroke-width': 2 });
+  s += tag('polyline', { points: `${x2 - cw},${yl - ch} ${x2},${yl} ${x2 - cw},${yl + ch}`, fill: 'none', stroke: color, 'stroke-width': 2 });
+  // Text: on the far side of dim line (closer to building centre)
+  const textY = off < 0 ? yl - 70 : yl + 140;
+  s += tx((x1 + x2) / 2, textY, label, 120, { color });
+  return s;
+}
+
+// Vertical component dimension (for left/right wall components)
+function dimV_comp(y1, y2, x, label, off) {
+  const color = '#444';
+  const xl = x + (off || 200);
+  const ch = Math.min(60, (y2 - y1) * 0.05);
+  const cw = ch * 0.5;
+  let s = '';
+  // Extension lines
+  s += ln(x, y1, xl, y1, 1, color, { opacity: 0.5 });
+  s += ln(x, y2, xl, y2, 1, color, { opacity: 0.5 });
+  // Dimension line
+  s += ln(xl, y1, xl, y2, 2, color);
+  // Chevron arrowheads
+  s += tag('polyline', { points: `${xl - cw},${y1 + ch} ${xl},${y1} ${xl + cw},${y1 + ch}`, fill: 'none', stroke: color, 'stroke-width': 2 });
+  s += tag('polyline', { points: `${xl - cw},${y2 - ch} ${xl},${y2} ${xl + cw},${y2 - ch}`, fill: 'none', stroke: color, 'stroke-width': 2 });
+  // Text (rotated): on the far side of dim line (closer to building centre)
+  const cy = (y1 + y2) / 2;
+  const textX = off < 0 ? xl - 70 : xl + 70;
+  s += tx(textX, cy, label, 120, { color, transform: `rotate(-90 ${textX} ${cy})` });
+  return s;
 }
 
 // ── Dimension Lines ─────────────────────────────────────────
@@ -1496,7 +1555,7 @@ export function generateDrawing(state, componentsData, claddingData) {
 
     const elevEntry = { type: comp.type, x, w, h, y, id: comp.id, handleSide: comp.handleSide };
     const planX = comp.planPositionX ?? x;
-    const planEntry = { wall: comp.elevation, type: comp.type, x: planX, w, id: comp.id };
+    const planEntry = { wall: comp.elevation, type: comp.type, x: planX, w, h, id: comp.id };
 
     // Use custom width if specified
     if (comp.customWidth && comp.customWidth > 0) {
