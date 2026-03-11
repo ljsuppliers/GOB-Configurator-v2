@@ -63,6 +63,45 @@ export function formatMm(valueMm) {
   return `${Math.round(valueMm)}mm`;
 }
 
+// Compact dimension label for individual components (doors/windows)
+// Renders a small width dimension line below the component with "W x H" label
+export function componentDimensions(compX, compY, compW, compH, widthMm, heightMm) {
+  let svg = '';
+  const textSize = 9;
+  const color = '#555';
+  const cs = 3; // chevron size
+
+  // Position just below component
+  const gap = 1;
+  const offset = 8;
+  const lineY = compY + compH + gap + offset;
+
+  // Extension lines
+  svg += `<line x1="${compX}" y1="${compY + compH + gap}" x2="${compX}" y2="${lineY + 2}" stroke="${color}" stroke-width="0.75" opacity="0.5"/>`;
+  svg += `<line x1="${compX + compW}" y1="${compY + compH + gap}" x2="${compX + compW}" y2="${lineY + 2}" stroke="${color}" stroke-width="0.75" opacity="0.5"/>`;
+
+  // Dimension line
+  svg += `<line x1="${compX}" y1="${lineY}" x2="${compX + compW}" y2="${lineY}" stroke="${color}" stroke-width="1"/>`;
+
+  // Chevron arrowheads
+  svg += `<polyline points="${compX + cs},${lineY - cs / 2} ${compX},${lineY} ${compX + cs},${lineY + cs / 2}" fill="none" stroke="${color}" stroke-width="1"/>`;
+  svg += `<polyline points="${compX + compW - cs},${lineY - cs / 2} ${compX + compW},${lineY} ${compX + compW - cs},${lineY + cs / 2}" fill="none" stroke="${color}" stroke-width="1"/>`;
+
+  // Label text: "WIDTH x HEIGHT"
+  const label = `${widthMm} x ${heightMm}`;
+  const approxTextWidth = label.length * 5;
+
+  if (compW >= approxTextWidth + 8) {
+    // Text fits above the dimension line
+    svg += `<text x="${compX + compW / 2}" y="${lineY - 3}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${textSize}" fill="${color}">${label}</text>`;
+  } else {
+    // Component too narrow; text below the dimension line
+    svg += `<text x="${compX + compW / 2}" y="${lineY + textSize + 1}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${textSize}" fill="${color}">${label}</text>`;
+  }
+
+  return svg;
+}
+
 // Boundary annotation
 export function boundaryAnnotation(x, y, distance, side) {
   let svg = '';

@@ -4,7 +4,7 @@
 import { renderCladding } from './cladding.js';
 import { renderComponentElevation } from './components.js';
 import { renderGutterSystem } from './gutter.js';
-import { horizontalDimension } from './dimensions.js';
+import { horizontalDimension, componentDimensions } from './dimensions.js';
 
 export function renderSideElevation(state, layout, componentsData, side = 'left') {
   const { x, y, scale } = layout;
@@ -67,6 +67,9 @@ export function renderSideElevation(state, layout, componentsData, side = 'left'
       hasOpener: def.hasOpener
     });
     svg += `</g>`;
+
+    // Component dimension label
+    svg += componentDimensions(compX, compY, compW, compH, def.width, def.height || Math.round(state.height * 0.84));
   }
 
   // Gutter with downpipes on sides
@@ -76,8 +79,8 @@ export function renderSideElevation(state, layout, componentsData, side = 'left'
     downpipeRight: false
   });
 
-  // Dimension below
-  svg += horizontalDimension(x, y + h + 8, w, `${state.depth}mm overall depth`, {
+  // Dimension below (offset down to clear component dimension labels)
+  svg += horizontalDimension(x, y + h + 20, w, `${state.depth}mm overall depth`, {
     offset: 30,
     textSize: 11
   });

@@ -4,7 +4,7 @@
 import { renderCladding } from './cladding.js';
 import { renderComponentElevation } from './components.js';
 import { renderGutterSystem, renderOverhang } from './gutter.js';
-import { horizontalDimension, verticalDimension } from './dimensions.js';
+import { horizontalDimension, verticalDimension, componentDimensions } from './dimensions.js';
 
 export function renderFrontElevation(state, layout, componentsData) {
   const { x, y, scale } = layout;
@@ -55,6 +55,9 @@ export function renderFrontElevation(state, layout, componentsData) {
       leaves: def.width > 3000 ? Math.round(def.width / 800) : (def.width > 2000 ? 3 : undefined)
     });
     svg += `</g>`;
+
+    // Component dimension label
+    svg += componentDimensions(compX, compY, compW, compH, def.width, def.height || Math.round(state.height * 0.84));
   }
 
   // Gutter system
@@ -62,8 +65,8 @@ export function renderFrontElevation(state, layout, componentsData) {
     showDownpipes: false
   });
 
-  // Dimension: overall width below
-  svg += horizontalDimension(x, y + h + 8, w, `${state.width}mm overall width`, {
+  // Dimension: overall width below (offset down to clear component dimension labels)
+  svg += horizontalDimension(x, y + h + 20, w, `${state.width}mm overall width`, {
     offset: 30,
     textSize: 11
   });

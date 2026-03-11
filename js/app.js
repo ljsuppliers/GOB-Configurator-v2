@@ -2,7 +2,7 @@
 // Reactive state, live pricing, drawing preview, email drafting
 
 import { initPricing, calculatePrice, formatPrice } from './pricing.js';
-import { generateDrawing } from './drawing-engine.js?v=7';
+import { generateDrawing } from './drawing-engine.js?v=9';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
@@ -197,25 +197,28 @@ createApp({
       }
     },
 
-    addExternalFeature(type) {
-      // Default positions: lights at 1/4 and 3/4 width, sockets in middle
+    addExternalFeature(type, elevation) {
+      elevation = elevation || 'front';
+      // Default positions: lights at 1/4 and 3/4 of the relevant dimension, sockets in middle
+      const dimLength = elevation === 'front' ? this.state.width : this.state.depth;
       let defaultX;
       if (type === 'upDownLight') {
         // Stagger lights so they don't overlap
-        const existingLights = this.state.externalFeatures.filter(f => f.type === 'upDownLight');
-        defaultX = existingLights.length % 2 === 0 
-          ? Math.round(this.state.width * 0.25 / 50) * 50 
-          : Math.round(this.state.width * 0.75 / 50) * 50;
+        const existingLights = this.state.externalFeatures.filter(f => f.type === 'upDownLight' && f.elevation === elevation);
+        defaultX = existingLights.length % 2 === 0
+          ? Math.round(dimLength * 0.25 / 50) * 50
+          : Math.round(dimLength * 0.75 / 50) * 50;
       } else {
-        defaultX = Math.round(this.state.width * 0.5 / 50) * 50;
+        defaultX = Math.round(dimLength * 0.5 / 50) * 50;
       }
-      
+
       // Default Y positions: lights near top of wall, sockets lower
       const defaultY = type === 'upDownLight' ? 1800 : 800; // mm from ground
-      
+
       this.state.externalFeatures.push({
         id: 'feat-' + (this.nextFeatureId++),
         type,
+        elevation,
         x: defaultX,
         y: defaultY
       });

@@ -717,7 +717,7 @@ function renderFront(cfg) {
 // ── Side Elevation ──────────────────────────────────────────
 
 function renderSide(cfg) {
-  const { depth, height, components, side, tier, overhang, corner, claddingType, hasCanopy, hasDecking } = cfg;
+  const { depth, height, components, side, tier, overhang, corner, claddingType, hasCanopy, hasDecking, externalFeatures } = cfg;
   const cid = 'sc'+side+Math.random().toString(36).substr(2,5);
   const wallTop = ROOF_ZONE;
   const wallH = height - wallTop;
@@ -817,6 +817,19 @@ function renderSide(cfg) {
     s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.anthraciteDk);
   }
 
+  // External features (lights and sockets on side wall)
+  if (externalFeatures && externalFeatures.length > 0) {
+    for (const feat of externalFeatures) {
+      let featY;
+      if (feat.y !== undefined && feat.y !== null && feat.y > 0) {
+        featY = height - feat.y - (feat.type === 'upDownLight' ? 180 : 150);
+      } else {
+        featY = feat.type === 'upDownLight' ? (ROOF_ZONE + 250) : (height - 800);
+      }
+      s += renderExternalFeature(feat.type, feat.x, featY, feat.id);
+    }
+  }
+
   return s;
 }
 
@@ -824,54 +837,71 @@ function renderSide(cfg) {
 
 // Draw a door with swing arc - architectural plan style
 // Shows: white opening in wall, door leaf perpendicular to wall, 90° arc
-function drawDoor(x, y, width, wallThickness, direction, swingDir) {
+function drawDoor(x, y, width, wallThickness, direction, swingDir, flipped) {
   // direction: 'horizontal' or 'vertical' (which way the wall runs)
   // swingDir: 'left', 'right', 'up', 'down' (which way door swings into)
+  // flipped: if true, hinge moves to the opposite end of the opening
   let s = '';
   const doorW = width;
   const arcR = doorW * 0.95;
-  
+
   if (direction === 'horizontal') {
     // Door in a horizontal wall (wall runs left-right)
-    // Opening spans x to x+doorW
     s += rc(x, y, doorW, wallThickness, { fill: COL.white });
-    
+
     if (swingDir === 'down') {
-      // Hinge at left, swings down into room below
-      const hx = x;
-      const hy = y + wallThickness;
-      // Door leaf: straight line from hinge, perpendicular to wall (pointing down)
-      s += ln(hx, hy, hx, hy + arcR, 3, '#222');
-      // Arc: from closed position (along wall) to open position (perpendicular)
-      s += tag('path', { d: `M ${hx + arcR} ${hy} A ${arcR} ${arcR} 0 0 1 ${hx} ${hy + arcR}`, fill: 'none', stroke: '#222', 'stroke-width': 2 });
+      if (!flipped) {
+        // Hinge at left, swings down
+        const hx = x, hy = y + wallThickness;
+        s += ln(hx, hy, hx, hy + arcR, 3, '#222');
+        s += tag('path', { d: `M ${hx + arcR} ${hy} A ${arcR} ${arcR} 0 0 1 ${hx} ${hy + arcR}`, fill: 'none', stroke: '#222', 'stroke-width': 2 });
+      } else {
+        // Hinge at right, swings down
+        const hx = x + doorW, hy = y + wallThickness;
+        s += ln(hx, hy, hx, hy + arcR, 3, '#222');
+        s += tag('path', { d: `M ${hx - arcR} ${hy} A ${arcR} ${arcR} 0 0 0 ${hx} ${hy + arcR}`, fill: 'none', stroke: '#222', 'stroke-width': 2 });
+      }
     } else {
-      // Hinge at left, swings up into room above
-      const hx = x;
-      const hy = y;
-      s += ln(hx, hy, hx, hy - arcR, 3, '#222');
-      s += tag('path', { d: `M ${hx + arcR} ${hy} A ${arcR} ${arcR} 0 0 0 ${hx} ${hy - arcR}`, fill: 'none', stroke: '#222', 'stroke-width': 2 });
+      if (!flipped) {
+        // Hinge at left, swings up
+        const hx = x, hy = y;
+        s += ln(hx, hy, hx, hy - arcR, 3, '#222');
+        s += tag('path', { d: `M ${hx + arcR} ${hy} A ${arcR} ${arcR} 0 0 0 ${hx} ${hy - arcR}`, fill: 'none', stroke: '#222', 'stroke-width': 2 });
+      } else {
+        // Hinge at right, swings up
+        const hx = x + doorW, hy = y;
+        s += ln(hx, hy, hx, hy - arcR, 3, '#222');
+        s += tag('path', { d: `M ${hx - arcR} ${hy} A ${arcR} ${arcR} 0 0 1 ${hx} ${hy - arcR}`, fill: 'none', stroke: '#222', 'stroke-width': 2 });
+      }
     }
   } else {
     // Door in a vertical wall (wall runs up-down)
-    // Opening spans y to y+doorW
     s += rc(x, y, wallThickness, doorW, { fill: COL.white });
-    
+
     if (swingDir === 'right') {
-      // Hinge at top of opening, swings right into room
-      const hx = x + wallThickness;
-      const hy = y;
-      // Door leaf: straight line from hinge, perpendicular to wall (pointing right)
-      s += ln(hx, hy, hx + arcR, hy, 3, '#222');
-      // Arc: from closed (along wall, pointing down) to open (pointing right)
-      s += tag('path', { d: `M ${hx} ${hy + arcR} A ${arcR} ${arcR} 0 0 0 ${hx + arcR} ${hy}`, fill: 'none', stroke: '#222', 'stroke-width': 2 });
+      if (!flipped) {
+        // Hinge at top, swings right
+        const hx = x + wallThickness, hy = y;
+        s += ln(hx, hy, hx + arcR, hy, 3, '#222');
+        s += tag('path', { d: `M ${hx} ${hy + arcR} A ${arcR} ${arcR} 0 0 0 ${hx + arcR} ${hy}`, fill: 'none', stroke: '#222', 'stroke-width': 2 });
+      } else {
+        // Hinge at bottom, swings right
+        const hx = x + wallThickness, hy = y + doorW;
+        s += ln(hx, hy, hx + arcR, hy, 3, '#222');
+        s += tag('path', { d: `M ${hx} ${hy - arcR} A ${arcR} ${arcR} 0 0 1 ${hx + arcR} ${hy}`, fill: 'none', stroke: '#222', 'stroke-width': 2 });
+      }
     } else {
-      // Hinge at top of opening, swings left into room
-      const hx = x;
-      const hy = y;
-      // Door leaf: straight line from hinge pointing left
-      s += ln(hx, hy, hx - arcR, hy, 3, '#222');
-      // Arc: from closed (along wall, pointing down) to open (pointing left)
-      s += tag('path', { d: `M ${hx} ${hy + arcR} A ${arcR} ${arcR} 0 0 1 ${hx - arcR} ${hy}`, fill: 'none', stroke: '#222', 'stroke-width': 2 });
+      if (!flipped) {
+        // Hinge at top, swings left
+        const hx = x, hy = y;
+        s += ln(hx, hy, hx - arcR, hy, 3, '#222');
+        s += tag('path', { d: `M ${hx} ${hy + arcR} A ${arcR} ${arcR} 0 0 1 ${hx - arcR} ${hy}`, fill: 'none', stroke: '#222', 'stroke-width': 2 });
+      } else {
+        // Hinge at bottom, swings left
+        const hx = x, hy = y + doorW;
+        s += ln(hx, hy, hx - arcR, hy, 3, '#222');
+        s += tag('path', { d: `M ${hx} ${hy - arcR} A ${arcR} ${arcR} 0 0 0 ${hx - arcR} ${hy}`, fill: 'none', stroke: '#222', 'stroke-width': 2 });
+      }
     }
   }
   return s;
@@ -898,7 +928,7 @@ function renderStraightPartition(sp, buildingWidth, buildingDepth, wt) {
     const doorPos = sp.doorPosition || 0.5;
     const doorY = wallY + (wallH - doorW) * doorPos;
     const swingDir = sp.doorDirection === 'left' ? 'left' : 'right';
-    s += drawDoor(wallX, doorY, doorW, partWt, 'vertical', swingDir);
+    s += drawDoor(wallX, doorY, doorW, partWt, 'vertical', swingDir, sp.doorFlipped);
   }
   
   // Labels for each room
@@ -976,11 +1006,11 @@ function renderPartitionRoom(pr, buildingWidth, buildingDepth, wt) {
   if (doorWall === 'horizontal') {
     const doorOffset = (hWallLen - partWt - doorW) * doorPos;
     const doorX = hWallX + Math.max(30, Math.min(doorOffset, hWallLen - partWt - doorW - 30));
-    s += drawDoor(doorX, hWallY, doorW, partWt, 'horizontal', hDoorSwing);
+    s += drawDoor(doorX, hWallY, doorW, partWt, 'horizontal', hDoorSwing, pr.doorFlipped);
   } else {
     const doorOffset = (vWallLen - partWt - doorW) * doorPos;
     const doorY = vWallY + Math.max(30, Math.min(doorOffset, vWallLen - partWt - doorW - 30));
-    s += drawDoor(vWallX, doorY, doorW, partWt, 'vertical', vDoorSwing);
+    s += drawDoor(vWallX, doorY, doorW, partWt, 'vertical', vDoorSwing, pr.doorFlipped);
   }
   
   // Room label
@@ -1428,7 +1458,7 @@ function compose(b) {
   // LEFT ELEVATION
   const sideDepthDim = (isSig && oh > 0 && hasCanopy) ? D + CANOPY_DEPTH : D;
   s += tx(lX+D/2, row1Y-160, 'Left Elevation', 180, { bold:true, color:'#222' });
-  s += grp(renderSide({ depth:D, height:H, side:'left', tier:b.tier, overhang:oh, components:b.leftComponents||[], corner:cL, claddingType:b.leftCladding, hasCanopy, hasDecking }), { transform:`translate(${lX},${row1Y})` });
+  s += grp(renderSide({ depth:D, height:H, side:'left', tier:b.tier, overhang:oh, components:b.leftComponents||[], corner:cL, claddingType:b.leftCladding, hasCanopy, hasDecking, externalFeatures:b.leftExternalFeatures||[] }), { transform:`translate(${lX},${row1Y})` });
   s += dimH(lX, lX+sideDepthDim, row1Y+H+deckH+30, `${D}mm`, 250);
   // Height dimension on left side of left elevation
   s += dimV(row1Y, row1Y+H+deckH, lX, `${H}mm`, -450);
@@ -1442,7 +1472,7 @@ function compose(b) {
   // For right side, canopy extends LEFT (negative x), so dimension starts earlier
   const rX_dimStart = (isSig && oh > 0 && hasCanopy) ? rX - CANOPY_DEPTH : rX;
   s += tx(rX+D/2, row1Y-160, 'Right Elevation', 180, { bold:true, color:'#222' });
-  s += grp(renderSide({ depth:D, height:H, side:'right', tier:b.tier, overhang:oh, components:b.rightComponents||[], corner:cR, claddingType:b.rightCladding, hasCanopy, hasDecking }), { transform:`translate(${rX},${row1Y})` });
+  s += grp(renderSide({ depth:D, height:H, side:'right', tier:b.tier, overhang:oh, components:b.rightComponents||[], corner:cR, claddingType:b.rightCladding, hasCanopy, hasDecking, externalFeatures:b.rightExternalFeatures||[] }), { transform:`translate(${rX},${row1Y})` });
   s += dimH(rX_dimStart, rX+D, row1Y+H+deckH+30, `${D}mm`, 250);
 
   // PLAN VIEW
@@ -1624,7 +1654,9 @@ export function generateDrawing(state, componentsData, claddingData) {
     rooms,
     straightPartition: state.straightPartition,
     partitionRoom: state.partitionRoom,
-    externalFeatures: state.externalFeatures || [],
+    externalFeatures: (state.externalFeatures || []).filter(f => (f.elevation || 'front') === 'front'),
+    leftExternalFeatures: (state.externalFeatures || []).filter(f => f.elevation === 'left'),
+    rightExternalFeatures: (state.externalFeatures || []).filter(f => f.elevation === 'right'),
     acUnits: state.acUnits || [],
     drawingLabels: state.drawingLabels || [],
     boundaries: {

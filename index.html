@@ -298,6 +298,10 @@
                   <option value="right">Into right room</option>
                 </select>
               </label>
+              <div class="checkbox-row" style="margin-top:6px;">
+                <input type="checkbox" v-model="state.straightPartition.doorFlipped" id="chk-straight-flip">
+                <label for="chk-straight-flip">Flip hinge side</label>
+              </div>
             </div>
           </div>
         </div>
@@ -346,6 +350,10 @@
                 <option value="inward">Inward (into partition room)</option>
               </select>
             </label>
+            <div class="checkbox-row" style="margin-top:6px;">
+              <input type="checkbox" v-model="state.partitionRoom.doorFlipped" id="chk-partition-flip">
+              <label for="chk-partition-flip">Flip hinge side</label>
+            </div>
             <div class="dim-row" style="margin-top:6px;">
               <div>
                 <label>Label X</label>
@@ -445,14 +453,21 @@
         <!-- External Features on Drawing -->
         <div class="config-section">
           <h4>External Features on Drawing</h4>
-          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Add features to front elevation drawing (drag to position)</p>
-          <div style="display:flex;gap:6px;margin-bottom:10px;">
-            <button class="btn" style="flex:1;padding:6px;font-size:12px;" @click="addExternalFeature('upDownLight')">+ Up/Down Light</button>
-            <button class="btn" style="flex:1;padding:6px;font-size:12px;" @click="addExternalFeature('socket')">+ Ext. Socket</button>
+          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Add lights/sockets to elevation drawings (drag to position)</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+            <button class="btn" style="flex:1;padding:6px;font-size:11px;" @click="addExternalFeature('upDownLight', 'front')">+ Light (Front)</button>
+            <button class="btn" style="flex:1;padding:6px;font-size:11px;" @click="addExternalFeature('upDownLight', 'left')">+ Light (Left)</button>
+            <button class="btn" style="flex:1;padding:6px;font-size:11px;" @click="addExternalFeature('upDownLight', 'right')">+ Light (Right)</button>
+            <button class="btn" style="flex:1;padding:6px;font-size:12px;" @click="addExternalFeature('socket', 'front')">+ Ext. Socket</button>
           </div>
           <p v-if="!state.externalFeatures.length" class="empty-msg">Click buttons above to add.</p>
           <div v-for="feat in state.externalFeatures" :key="feat.id" class="placed-component">
             <span class="comp-label">{{ feat.type === 'upDownLight' ? 'Up/Down Light' : 'Ext. Socket' }}</span>
+            <select v-model="feat.elevation" class="input-sm" style="width:60px;font-size:11px;" title="Elevation">
+              <option value="front">Front</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+            </select>
             <input type="number" v-model.number="feat.x" class="input-sm" style="width:55px;" step="50" title="X position (mm from left)">
             <span class="comp-pos">x</span>
             <input type="number" v-model.number="feat.y" class="input-sm" style="width:55px;" step="50" title="Y position (mm from ground)">
