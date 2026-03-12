@@ -2,13 +2,24 @@
 // Reactive state, live pricing, drawing preview, email drafting
 
 import { initPricing, calculatePrice, formatPrice } from './pricing.js';
-import { generateDrawing } from './drawing-engine.js?v=9';
+import { generateDrawing } from './drawing-engine.js?v=14';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 
 const { createApp } = Vue;
+
+// Format date string (YYYY-MM-DD from input[type=date]) to dd/mm/yy UK format
+function formatDateUK(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${dd}/${mm}/${yy}`;
+}
 
 async function fetchJSON(path) {
   const r = await fetch(path);
@@ -106,6 +117,19 @@ createApp({
 
     claddingTypes() {
       return this.appData.cladding?.types || {};
+    },
+
+    emailBodyHtml() {
+      if (!this.emailBody) return '';
+      // Escape HTML entities first, then linkify URLs
+      const escaped = this.emailBody
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      return escaped.replace(
+        /(https?:\/\/[^\s<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener" style="color:#29A9B9;">$1</a>'
+      );
     },
 
     // Sorted cladding types: composite first, then others, "other" at bottom
@@ -364,18 +388,42 @@ createApp({
       if (s.bathroom?.enabled && s.bathroom?.type) {
         depositNextSteps = 'We will also arrange visits from our registered electrician and plumber to assess the electrical and utility connections.';
       }
+      if (s.landscaping?.required) {
+        const landscapeReason = s.landscaping.reason === 'custom'
+          ? (s.landscaping.customReason || 'preparation works')
+          : (s.landscaping.reason || 'preparation works');
+        depositNextSteps = depositNextSteps.replace(/\.$/, '') + `, as well as our landscaper, who can assist with the ${landscapeReason}.`;
+      }
 
       // ─── Height upgrade paragraph (preliminary) ───
       let heightUpgradeParagraph = '';
       if (s.height > 2500) {
         const heightM = (s.height / 1000).toFixed(2).replace(/0$/, '');
-        heightUpgradeParagraph = `\n\nI've also included an external height of ${heightM}m, which we recommend for buildings of this size. Our standard buildings are 2.5m in height, but for larger buildings, the additional height provides a much more comfortable space. However, this does require planning permission, which is something we can assist with and is a very straightforward process. Should you not require the additional height and would prefer 2.5m, please let me know and I'll provide an updated quote.`;
+        heightUpgradeParagraph = `\n\nI've also included an external height of ${heightM}m, which we recommend for buildings of this size. Our standard buildings are 2.5m in height, but for larger buildings, the additional height provides a much more comfortable space. Depending on the position of the building in relation to boundaries, planning permission may be required, which is something we can assist with and is a very straightforward process. Should you not require the additional height and would prefer 2.5m, please let me know and I'll provide an updated quote.`;
       }
 
-      // ─── Planning paragraph (preliminary, height > 2.5m) ───
+      // ─── Planning paragraph ───
       let planningParagraph = '';
-      if (s.height > 2500) {
-        planningParagraph = '\n\nAs the building exceeds 2.5m in height, planning permission will be required. We work closely with a planning consultant and can handle this for you. We will produce a full set of drawings with elevations and all necessary information for the proposed building/surrounding area and these are then forwarded to our planning consultant who submits the application on your/our behalf. This costs £750 + VAT + local council fee (usually £528). Should you wish to proceed we require £250 upfront and £500 once the application is ready for submission. The £250 payment will go towards the building and act as the holding deposit.';
+      if (s.planning?.required && s.planning.reasons?.length > 0) {
+        const reasonLabels = {
+          'height': 'the building exceeds 2.5m in height',
+          'conservation': 'you are in a conservation area',
+          'boundary': 'the building is within 2m of a boundary',
+          'maisonette': 'the property is a maisonette',
+          'listed': 'the property is a listed building',
+          'article4': 'the property is subject to an Article 4 direction',
+          'other': s.planning.customReason || 'other circumstances apply'
+        };
+        const activeReasons = s.planning.reasons.map(r => reasonLabels[r]).filter(Boolean);
+        let reasonText = '';
+        if (activeReasons.length === 1) {
+          reasonText = activeReasons[0];
+        } else if (activeReasons.length === 2) {
+          reasonText = activeReasons.join(' and ');
+        } else {
+          reasonText = activeReasons.slice(0, -1).join(', ') + ', and ' + activeReasons[activeReasons.length - 1];
+        }
+        planningParagraph = `\n\nAs ${reasonText}, planning permission will be required. We work closely with a planning consultant and can handle this for you. We will produce a full set of drawings with elevations and all necessary information for the proposed building/surrounding area and these are then forwarded to our planning consultant who submits the application on your/our behalf. This costs £950 + local council fee (usually £258). Should you wish to proceed we require £250 upfront and £700 once the application is ready for submission. The £250 payment will go towards the building and act as a holding deposit.`;
       }
 
       // Showroom offer
@@ -437,9 +485,7 @@ createApp({
       else if (sqm > 15) downlights = 8;
       else if (sqm > 9) downlights = 6;
 
-      let sockets = 4;
-      if (sqm > 25) sockets = 7;
-      else if (sqm > 10) sockets = 5;
+      const sockets = 5;
 
       let electricalDesc = `Complete internal electrical works including ${downlights} x dimmable LED downlights`;
       if (isSig) {
@@ -477,9 +523,10 @@ createApp({
 
       // Foundation
       const foundationLabels = {
-        'ground-screw': 'Ground screw foundation system',
-        'concrete-base': 'Concrete base foundation',
-        'concrete-pile': 'Concrete pile foundation system'
+        'ground-screw': 'Ground screw foundation system (installed by our team)',
+        'concrete-base': 'Concrete base foundation (installed by our team)',
+        'concrete-pile': 'Concrete pile foundation system (installed by our team)',
+        'concrete-existing': 'Existing concrete base foundation'
       };
       buildFeatures.push(foundationLabels[s.foundationType] || 'Ground screw foundation system');
 
@@ -571,6 +618,7 @@ createApp({
         '{depositNextSteps}': depositNextSteps,
         '{heightUpgradeParagraph}': heightUpgradeParagraph,
         '{planningParagraph}': planningParagraph,
+        '{useCase}': buildingTypeLower,
       };
 
       let subject = template.subject;
@@ -798,7 +846,7 @@ createApp({
         // Customer
         customerName: this.state.customer?.name || '',
         customerNumber: this.state.customer?.number || '',
-        date: this.state.customer?.date || new Date().toISOString().split('T')[0],
+        date: formatDateUK(this.state.customer?.date || new Date().toISOString().split('T')[0]),
         address: this.state.customer?.address || '',
         
         // Building
@@ -890,7 +938,17 @@ createApp({
         })),
 
         // Custom notes
-        quoteNotes: this.state.customNotes?.quote || ''
+        quoteNotes: this.state.customNotes?.quote || '',
+
+        // Drawing number
+        drawingNumber: this.state.customNotes?.drawingNumber || '',
+
+        // Planning
+        planning: this.state.planning?.required ? {
+          required: true,
+          reasons: this.state.planning.reasons || [],
+          customReason: this.state.planning.customReason || ''
+        } : null,
       };
       
       this.notify('Creating Google Sheet...');

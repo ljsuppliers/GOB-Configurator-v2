@@ -124,10 +124,7 @@ function getSpotlights(q) {
 }
 
 function getSocketCount(q) {
-  const sqm = (q.width / 1000) * (q.depth / 1000);
-  if (sqm <= 10) return 4;
-  if (sqm <= 25) return 5;
-  return 7;
+  return 5;
 }
 
 // ─── Brand colours (exact match to original quote) ───
@@ -344,9 +341,10 @@ function buildQuoteData(q) {
   contentRow('Plaster-boarded, skimmed and decorated internal finish');
 
   const foundationLabels = {
-    'ground-screw': 'Ground screw foundation system',
-    'concrete-base': 'Concrete base foundation',
-    'concrete-pile': 'Concrete pile foundation system'
+    'ground-screw': 'Ground screw foundation system (installed by our team)',
+    'concrete-base': 'Concrete base foundation (installed by our team)',
+    'concrete-pile': 'Concrete pile foundation system (installed by our team)',
+    'concrete-existing': 'Existing concrete base foundation'
   };
   contentRow(foundationLabels[q.foundationType] || 'Ground screw foundation system');
 
@@ -483,8 +481,8 @@ function buildQuoteData(q) {
     ['Additional double plug socket', '\u00a365.00', '\u00a385.00 w/ USB ports'],
     ['Additional lighting zone on separate switch', '\u00a3125.00'],
     ['Wireless double quinetic switch system', '\u00a3265.00', 'wireless switch to turn on/off external lights from house'],
-    ['Standard air conditioning unit, heating and cooling', '\u00a31,750.00', 'to be paid directly to air con specialist'],
-    ['Premium air conditioning unit with programming and mobile app, heating and cooling', '\u00a32,500.00', 'to be paid directly to air con specialist'],
+    ['Standard air conditioning unit, heating and cooling', '\u00a31,750.00', 'Mitsubishi MSZ-HR R32 Classic Inverter Heat Pump', 'to be paid directly to air con specialist'],
+    ['Premium air conditioning unit, heating and cooling', '\u00a32,500.00', 'Mitsubishi MSZ-LN R32 Inverter Heat Pump', 'to be paid directly to air con specialist'],
     ['Additional composite cladding for sides of building', '\u00a3115 per sqm'],
     ['Additional decking', '\u00a3300 per sqm', 'incl. foundations, framing, fixings'],
   ];
@@ -586,14 +584,9 @@ function buildQuoteData(q) {
   termsRow('Terms', { bold: true, height: 42 });
 
   const terms = [];
-  terms.push('Quote is based on our standard specification. Any upgrades or changes may affect the final price.');
-  terms.push('Quote is based on normal ground conditions. In the unlikely event of unforeseen ground issues, additional costs may apply.');
-  if (q.bathroom && q.bathroom.enabled) {
-    terms.push('Customer to provide a mini skip for duration of build.');
-  } else {
-    terms.push('Customer to provide toilet facility and mini skip for duration of build.');
-  }
-  terms.push('While Garden Office Buildings will clear and prepare the construction area, the customer is responsible for ensuring the site is accessible and clear of obstructions prior to commencement.');
+  terms.push('*Groundworks, installation & other labour to be paid directly to installation team');
+  terms.push('Customer to provide toilet facility and 6-yard skip for waste');
+  terms.push('Customer to be responsible for levelling and clearance of site prior to commencement of works');
 
   for (const term of terms) {
     termsRow(term);

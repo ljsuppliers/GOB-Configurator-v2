@@ -146,6 +146,15 @@
     "amount": 0,
     "description": ""
   },
+  "planning": {
+    "required": false,
+    "reasons": [],
+    "customReason": ""
+  },
+  "landscaping": {
+    "required": false,
+    "reason": ""
+  },
   "customNotes": {
     "quote": "",
     "email": "",

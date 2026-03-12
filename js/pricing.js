@@ -34,10 +34,7 @@ export function getDownlightCount(state) {
 }
 
 export function getSocketCount(state) {
-  const sqm = (state.width / 1000) * (state.depth / 1000);
-  if (sqm <= 10) return 4;
-  if (sqm <= 25) return 5;
-  return 7;
+  return 5;
 }
 
 export function getSpotlightCount(state) {

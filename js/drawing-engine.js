@@ -1,6 +1,17 @@
 // GOB Drawing Engine v2 — Ported from samples.html
 // All coordinates in mm. viewBox handles scaling.
 
+// Format date string (YYYY-MM-DD) to dd/mm/yy UK format
+function fmtDateUK(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${dd}/${mm}/${yy}`;
+}
+
 // Format useCase value to readable label
 function formatUseCase(value) {
   if (!value) return null;
@@ -1173,6 +1184,17 @@ function renderPlan(cfg) {
     }
   }
 
+  // Corner labels (open/closed) - outside building, near front/decking edge
+  const cornerFontSize = 100;
+  const cornerColor = '#555';
+  const leftCornerLabel = (cornerLeft === 'closed') ? 'CLOSED CORNER' : 'OPEN CORNER';
+  const rightCornerLabel = (cornerRight === 'closed') ? 'CLOSED CORNER' : 'OPEN CORNER';
+  const cLabelY = depth - 150; // near front edge, close to decking
+  // Left: just outside the left wall
+  s += `<text x="${-60}" y="${cLabelY}" font-family="Arial, sans-serif" font-size="${cornerFontSize}" fill="${cornerColor}" font-weight="bold" text-anchor="middle" transform="rotate(-90 ${-60} ${cLabelY})">${leftCornerLabel}</text>`;
+  // Right: just outside the right wall
+  s += `<text x="${width + 60}" y="${cLabelY}" font-family="Arial, sans-serif" font-size="${cornerFontSize}" fill="${cornerColor}" font-weight="bold" text-anchor="middle" transform="rotate(90 ${width + 60} ${cLabelY})">${rightCornerLabel}</text>`;
+
   return s;
 }
 
@@ -1306,8 +1328,8 @@ function renderTitle(cfg) {
     <!-- Divider -->
     <line x1="${w*0.03}" y1="${h*0.755}" x2="${w*0.97}" y2="${h*0.755}" stroke="#dddddd" stroke-width="2"/>
     
-    <!-- Date -->
-    <text x="${w*0.03}" y="${h*0.805}" font-family="Arial, sans-serif" font-size="${h*0.028}" fill="#888888">Date</text>
+    <!-- Quote Date -->
+    <text x="${w*0.03}" y="${h*0.805}" font-family="Arial, sans-serif" font-size="${h*0.028}" fill="#888888">Quote Date</text>
     <text x="${w*0.03}" y="${h*0.86}" font-family="Arial, sans-serif" font-size="${h*0.042}" font-weight="bold" fill="#222222">${date || '—'}</text>
     
     <!-- Scale -->
@@ -1669,7 +1691,7 @@ export function generateDrawing(state, componentsData, claddingData) {
     useCase: (state.survey?.useCase === 'custom' ? state.survey?.useCaseCustom : formatUseCase(state.survey?.useCase)) || state.buildingType || 'Garden Office',
     customer: state.customer?.name || '',
     address: state.customer?.address ? `@ ${state.customer.address}` : '',
-    date: state.customer?.date || '',
+    date: fmtDateUK(state.customer?.date) || '',
     spec: `${dims} | ${tierLabel}`,
     drawingNumber: state.customNotes?.drawingNumber || '',
     drawingNotes: state.customNotes?.drawing || '',

@@ -26,8 +26,15 @@ const TEMPLATE_ID = '132UEM5c0yP79ec8KA_x_AxdInCpwCsDtLc3JGm3iyuo';
 // ─── Helpers ───
 
 function fmtDate(date) {
+  if (!date) return '';
+  // If already in dd/mm/yy format, pass through
+  if (typeof date === 'string' && /^\d{2}\/\d{2}\/\d{2}$/.test(date)) return date;
   const d = new Date(date);
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  if (isNaN(d.getTime())) return String(date);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${dd}/${mm}/${yy}`;
 }
 
 function fmtCurrency(amount) {
@@ -83,10 +90,7 @@ function getSpotlights(q) {
 }
 
 function getSocketCount(q) {
-  const sqm = (q.width / 1000) * (q.depth / 1000);
-  if (sqm <= 10) return 4;
-  if (sqm <= 25) return 5;
-  return 7;
+  return 5;
 }
 
 // ─── Brand colours (exact match to original quote) ───
@@ -117,6 +121,7 @@ function buildQuoteData(q) {
   const numSpotlights = getSpotlights(q);
 
   const rows = [];
+  const priceCells = []; // Track row indices (0-based) that contain amounts for the TOTAL formula
 
   function tealFrame(height = 28) {
     rows.push({ cells: [], height, fullBg: TEAL });
@@ -156,10 +161,12 @@ function buildQuoteData(q) {
   }
 
   function sectionBar(text, opts = {}) {
+    const amountVal = opts.amountLabel !== undefined ? opts.amountLabel : '';
+    const isNumeric = typeof amountVal === 'number';
     const cells = [
       { col: 1, value: text, fontSize: 13, bold: true, fg: WHITE, bg: TEAL, align: 'LEFT', vAlign: 'BOTTOM' },
       { col: 5, value: opts.detailLabel || '', fontSize: 12, bold: true, fg: WHITE, bg: TEAL, align: 'CENTER', vAlign: 'BOTTOM' },
-      { col: 9, value: opts.amountLabel || '', fontSize: 12, bold: true, fg: WHITE, bg: TEAL, align: 'CENTER', vAlign: 'BOTTOM' },
+      { col: 9, value: isNumeric ? amountVal : (typeof amountVal === 'string' ? amountVal : ''), fontSize: 12, bold: true, fg: WHITE, bg: TEAL, align: 'CENTER', vAlign: 'BOTTOM', numberFormat: isNumeric },
     ];
     rows.push({
       cells,
@@ -177,8 +184,8 @@ function buildQuoteData(q) {
       cells.push({ col: 5, value: opts.detail, fontSize: 11, align: 'CENTER', vAlign: 'BOTTOM' });
     }
     if (opts.price !== undefined && opts.price !== null) {
-      const priceStr = typeof opts.price === 'string' ? opts.price : fmtCurrency(opts.price);
-      cells.push({ col: 9, value: priceStr, fontSize: 11, fg: opts.priceFg, align: 'CENTER', vAlign: 'BOTTOM' });
+      const isNumeric = typeof opts.price === 'number';
+      cells.push({ col: 9, value: opts.price, fontSize: 11, fg: opts.priceFg, align: 'CENTER', vAlign: 'BOTTOM', numberFormat: isNumeric });
     }
     rows.push({
       cells,
@@ -189,10 +196,12 @@ function buildQuoteData(q) {
   }
 
   function summaryRow(label, price, opts = {}) {
+    const isNumeric = typeof price === 'number';
+    const isFormula = typeof price === 'string' && price.startsWith('=');
     rows.push({
       cells: [
         { col: 7, value: label, fontSize: 13, bold: true, fg: opts.fg || TEAL, bg: opts.bg, align: 'LEFT', vAlign: 'BOTTOM' },
-        { col: 9, value: typeof price === 'string' ? price : fmtCurrency(price), fontSize: 13, bold: true, fg: opts.fg || TEAL, bg: opts.bg, align: 'CENTER', vAlign: 'BOTTOM' },
+        { col: 9, value: price, fontSize: 13, bold: true, fg: opts.fg || TEAL, bg: opts.bg, align: 'CENTER', vAlign: 'BOTTOM', numberFormat: isNumeric || isFormula },
       ],
       height: opts.height || 29,
       merges: [[7, 9]],
@@ -205,9 +214,12 @@ function buildQuoteData(q) {
       { col: 1, value: desc, fontSize: 11, bold: opts.bold, fg: opts.fg || NEAR_BLACK, align: 'LEFT', vAlign: 'BOTTOM' },
     ];
     if (amount !== undefined && amount !== null) {
+      const isNumeric = typeof amount === 'number';
+      const isFormula = typeof amount === 'string' && amount.startsWith('=');
       cells.push({
-        col: 8, value: typeof amount === 'string' ? amount : fmtCurrency(amount),
+        col: 8, value: amount,
         fontSize: 12, bold: opts.bold, fg: opts.fg || NEAR_BLACK, bg: opts.amountBg, align: 'CENTER', vAlign: 'BOTTOM',
+        numberFormat: isNumeric || isFormula,
       });
     }
     rows.push({
@@ -246,8 +258,8 @@ function buildQuoteData(q) {
   spacer(22);
 
   if (q.customerName) custRow('Name', q.customerName);
-  if (q.customerNumber) custRow('Customer #', q.customerNumber);
-  custRow('Date', fmtDate(q.date || new Date()));
+  if (q.drawingNumber) custRow('Drawing #', q.drawingNumber);
+  custRow('Quote Date', fmtDate(q.date || new Date()));
   if (q.address) custRow('Address', q.address, 74);
 
   spacer(22);
@@ -259,8 +271,9 @@ function buildQuoteData(q) {
 
   sectionBar(
     `Your Building: ${w}m x ${d}m x ${h}m ${q.buildingType || 'Garden Office Building'}`,
-    { detailLabel: 'Base Price', amountLabel: fmtCurrency(q.basePrice) }
+    { detailLabel: 'Base Price', amountLabel: q.basePrice }
   );
+  priceCells.push(rows.length); // row index (1-based for sheet = rows.length)
 
   contentRow(`External Dimensions \u2013 (W) ${q.width}mm x (D) ${q.depth}mm x (H) ${q.height}mm${extDimNote}`, { height: 31 });
   contentRow(`Internal Dimensions \u2013 (W) ${intW}mm x (D) ${intD}mm x (H) ${intH}mm (approx)`, { height: 31 });
@@ -270,6 +283,9 @@ function buildQuoteData(q) {
     : 'Classic range with clean, minimalist design';
   contentRow(tierDesc, { height: 29 });
   contentRow('Configuration as per drawing (TBC). All internal sizes are approximates and subject to final drawing.', { height: 31 });
+  if (q.planning && q.planning.required) {
+    contentRow('Planning Permission Required', { bold: true, fg: { red: 0.8, green: 0.1, blue: 0.1 } });
+  }
 
   greySpacer(28);
 
@@ -282,9 +298,10 @@ function buildQuoteData(q) {
   contentRow('Plaster-boarded, skimmed and decorated internal finish');
 
   const foundationLabels = {
-    'ground-screw': 'Ground screw foundation system',
-    'concrete-base': 'Concrete base foundation',
-    'concrete-pile': 'Concrete pile foundation system'
+    'ground-screw': 'Ground screw foundation system (installed by our team)',
+    'concrete-base': 'Concrete base foundation (installed by our team)',
+    'concrete-pile': 'Concrete pile foundation system (installed by our team)',
+    'concrete-existing': 'Existing concrete base foundation'
   };
   contentRow(foundationLabels[q.foundationType] || 'Ground screw foundation system');
 
@@ -299,10 +316,12 @@ function buildQuoteData(q) {
     { side: 'Rear', value: q.rearCladding },
   ];
   for (const cl of claddingRows) {
+    const hasPrice = cl.price && cl.price > 0;
     contentRow(
       `${cl.side} cladding: ${cl.value || 'anthracite grey steel cladding'}`,
-      { price: (cl.price && cl.price > 0) ? cl.price : undefined }
+      { price: hasPrice ? cl.price : undefined }
     );
+    if (hasPrice) priceCells.push(rows.length);
   }
   contentRow('Fascia, soffit and cappings: anthracite');
   contentRow('Roof: EPDM rubber roof');
@@ -325,10 +344,12 @@ function buildQuoteData(q) {
 
   if (q.components && q.components.length > 0) {
     for (const comp of q.components) {
+      const hasPrice = comp.price && comp.price > 0;
       contentRow(formatComponentDesc(comp), {
         detail: comp.elevation ? `${comp.elevation} elevation` : '',
-        price: (comp.price && comp.price > 0) ? comp.price : undefined,
+        price: hasPrice ? comp.price : undefined,
       });
+      if (hasPrice) priceCells.push(rows.length);
     }
   }
   contentRow('4mm double glazed toughened glass throughout');
@@ -336,10 +357,12 @@ function buildQuoteData(q) {
   if (q.componentUpgrades && q.componentUpgrades.length > 0) {
     for (const u of q.componentUpgrades) {
       contentRow(u.label, { price: u.price });
+      priceCells.push(rows.length);
     }
   }
   if (q.heightUpgrade && q.heightUpgrade.price > 0) {
     contentRow(q.heightUpgrade.label, { price: q.heightUpgrade.price });
+    priceCells.push(rows.length);
   }
 
   greySpacer(28);
@@ -347,7 +370,7 @@ function buildQuoteData(q) {
   sectionBar('Standard Electrical Features');
 
   contentRow(`${numDownlights} x dimmable LED downlights`);
-  contentRow('Configuration/Quantity TBC on 1st fix electrician visit approx. 1 week into project', { fontSize: 10 });
+  contentRow('Configuration/Quantity TBC on 1st fix electrician visit approx. 1 week into project');
   if (numSpotlights > 0) {
     contentRow(`${numSpotlights} x external down lights in canopy soffit`);
   }
@@ -378,6 +401,7 @@ function buildQuoteData(q) {
     sectionBar('Bathroom / WC Suite', { amountLabel: 'Amount (\u00a3)' });
     for (const be of bathroomExtras) {
       contentRow(be.label, { price: be.price });
+      priceCells.push(rows.length);
       if (be.description) {
         contentRow(be.description, { fontSize: 10 });
       }
@@ -392,6 +416,7 @@ function buildQuoteData(q) {
     if (nonBathroomExtras.length > 0) {
       for (const extra of nonBathroomExtras) {
         contentRow(extra.label, { price: extra.price });
+        priceCells.push(rows.length);
         if (extra.description) {
           contentRow(extra.description, { fontSize: 10 });
         }
@@ -399,7 +424,8 @@ function buildQuoteData(q) {
     }
     if (q.deductions && q.deductions.length > 0) {
       for (const ded of q.deductions) {
-        contentRow(ded.label, { fg: GREEN, price: fmtCurrency(ded.price), priceFg: GREEN });
+        contentRow(ded.label, { fg: GREEN, price: ded.price, priceFg: GREEN });
+        priceCells.push(rows.length);
       }
     }
     greySpacer(28);
@@ -414,8 +440,8 @@ function buildQuoteData(q) {
     ['Additional double plug socket', '\u00a365.00', '\u00a385.00 w/ USB ports'],
     ['Additional lighting zone on separate switch', '\u00a3125.00'],
     ['Wireless double quinetic switch system', '\u00a3265.00', 'wireless switch to turn on/off external lights from house'],
-    ['Standard air conditioning unit, heating and cooling', '\u00a31,750.00', 'to be paid directly to air con specialist'],
-    ['Premium air conditioning unit with programming and mobile app, heating and cooling', '\u00a32,500.00', 'to be paid directly to air con specialist'],
+    ['Standard air conditioning unit, heating and cooling', '\u00a31,750.00', 'Mitsubishi MSZ-HR R32 Classic Inverter Heat Pump', 'to be paid directly to air con specialist'],
+    ['Premium air conditioning unit, heating and cooling', '\u00a32,500.00', 'Mitsubishi MSZ-LN R32 Inverter Heat Pump', 'to be paid directly to air con specialist'],
     ['Additional composite cladding for sides of building', '\u00a3115 per sqm'],
     ['Additional decking', '\u00a3300 per sqm', 'incl. foundations, framing, fixings'],
   ];
@@ -428,6 +454,8 @@ function buildQuoteData(q) {
 
   sectionBar('Main Building Installation & Groundworks', { amountLabel: 'Amount (\u00a3)' });
   contentRow('To be conducted by our team', { price: q.installationPrice });
+  const installRowNum = rows.length; // track for payment schedule formulas
+  priceCells.push(rows.length);
 
   greySpacer(28);
 
@@ -454,12 +482,19 @@ function buildQuoteData(q) {
 
   spacer(21);
 
-  if (q.discount && q.discount > 0) {
-    summaryRow('SUB TOTAL (inc. VAT)', q.subtotal, { height: 29 });
-    summaryRow(q.discountLabel || 'DISCOUNT', q.discount, { height: 29 });
-  }
+  // Build TOTAL formula: sum of all price cells in column J
+  const priceRefs = priceCells.map(r => `J${r}`).join('+');
 
-  summaryRow('TOTAL (inc. VAT)', q.total, { fg: WHITE, bg: TEAL, height: 29 });
+  if (q.discount && q.discount > 0) {
+    summaryRow('SUB TOTAL (inc. VAT)', `=${priceRefs}`, { height: 29 });
+    const subTotalRowNum = rows.length;
+    summaryRow(q.discountLabel || 'DISCOUNT', -Math.abs(q.discount), { height: 29 });
+    const discountRowNum = rows.length;
+    summaryRow('TOTAL (inc. VAT)', `=J${subTotalRowNum}+J${discountRowNum}`, { fg: WHITE, bg: TEAL, height: 29 });
+  } else {
+    summaryRow('TOTAL (inc. VAT)', `=${priceRefs}`, { fg: WHITE, bg: TEAL, height: 29 });
+  }
+  const totalRowNum = rows.length; // 1-based row of the TOTAL
 
   spacer(21);
 
@@ -470,23 +505,23 @@ function buildQuoteData(q) {
 
   paymentRow('Payment Schedule', 'Amount (inc. VAT)', { bold: true, height: 42 });
 
-  // Calculate payment schedule dynamically from actual quote amounts
-  const holdingDeposit = 250;
-  const buildingAmount = q.total - (q.installationPrice || 0);
-  const halfBuilding = Math.round(buildingAmount / 2);
-  const installHalf = Math.round((q.installationPrice || 0) / 2);
+  // Payment schedule with formulas referencing TOTAL (J) and Installation (J) cells
+  // Building amount = TOTAL - Installation
+  // J{totalRowNum} = total, J{installRowNum} = installation
+  const tRef = `J${totalRowNum}`;
+  const iRef = `J${installRowNum}`;
 
-  const schedule = [
-    { label: 'Holding deposit reserves your delivery & install date (deductible from 1st payment)', amount: holdingDeposit },
-    { label: '50% of Garden Office Building due 4 weeks before delivery (less holding deposit)', amount: halfBuilding - holdingDeposit },
-    { label: '50% of Garden Office Building due on delivery of all materials (approx 1 week into project)', amount: buildingAmount - halfBuilding },
-    { label: '50% of Groundworks & Installation due halfway through project*', amount: installHalf },
-    { label: '50% of Groundworks & Installation due on completion*', amount: (q.installationPrice || 0) - installHalf },
+  const scheduleItems = [
+    { label: 'Holding deposit reserves your delivery & install date (deductible from 1st payment)', formula: `=250` },
+    { label: '50% of Garden Office Building due 4 weeks before delivery (less holding deposit)', formula: `=ROUND((${tRef}-${iRef})/2,0)-250` },
+    { label: '50% of Garden Office Building due on delivery of all materials (approx 1 week into project)', formula: `=(${tRef}-${iRef})-ROUND((${tRef}-${iRef})/2,0)` },
+    { label: '50% of Groundworks & Installation due halfway through project*', formula: `=ROUND(${iRef}/2,0)` },
+    { label: '50% of Groundworks & Installation due on completion*', formula: `=${iRef}-ROUND(${iRef}/2,0)` },
   ];
 
   const paymentStartRow = rows.length + 1;
-  for (let i = 0; i < schedule.length; i++) {
-    paymentRow(schedule[i].label, schedule[i].amount, {
+  for (let i = 0; i < scheduleItems.length; i++) {
+    paymentRow(scheduleItems[i].label, scheduleItems[i].formula, {
       amountBg: i === 0 ? LIGHT_BLUE : LIGHT_RED,
       height: 28,
     });
@@ -504,14 +539,9 @@ function buildQuoteData(q) {
   termsRow('Terms', { bold: true, height: 42 });
 
   const terms = [];
-  terms.push('Quote is based on our standard specification. Any upgrades or changes may affect the final price.');
-  terms.push('Quote is based on normal ground conditions. In the unlikely event of unforeseen ground issues, additional costs may apply.');
-  if (q.bathroom && q.bathroom.enabled) {
-    terms.push('Customer to provide a mini skip for duration of build.');
-  } else {
-    terms.push('Customer to provide toilet facility and mini skip for duration of build.');
-  }
-  terms.push('While Garden Office Buildings will clear and prepare the construction area, the customer is responsible for ensuring the site is accessible and clear of obstructions prior to commencement.');
+  terms.push('*Groundworks, installation & other labour to be paid directly to installation team');
+  terms.push('Customer to provide toilet facility and 6-yard skip for waste');
+  terms.push('Customer to be responsible for levelling and clearance of site prior to commencement of works');
 
   for (const term of terms) {
     termsRow(term);
@@ -671,6 +701,11 @@ function buildFormatRequests(rows, sheetId, borderEndRow) {
         fields.push('userEnteredFormat.verticalAlignment');
       }
 
+      if (cell.numberFormat) {
+        format.numberFormat = { type: 'CURRENCY', pattern: '\u00a3#,##0.00' };
+        fields.push('userEnteredFormat.numberFormat');
+      }
+
       if (fields.length > 0) {
         requests.push({
           repeatCell: {
@@ -770,8 +805,7 @@ module.exports = async (req, res) => {
 
     const q = req.body;
     const customerName = q.customerName || 'Unknown';
-    const date = fmtDate(q.date || new Date()).replace(/\//g, '-');
-    const title = `GOB Quote - ${customerName} - ${date}`;
+    const title = `Drawing for ${customerName}`;
 
     // 1. Copy from template (which has the logo as a floating image)
     const copyRes = await driveApi.files.copy({

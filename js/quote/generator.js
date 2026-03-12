@@ -286,7 +286,7 @@ export function generateQuotePDF(state, price) {
   const standardFeatures = [
     'Insulated timber/panel construction with 100mm PIR walls, 75mm PIR floor and ceiling',
     state.tier === 'signature' ? '400mm canopy with integrated decking feature' : 'Flush front design with clean lines',
-    `${state.foundationType === 'ground-screw' ? 'Ground screw' : 'Concrete'} foundation system`,
+    `${{ 'ground-screw': 'Ground screw foundation system', 'concrete-base': 'Concrete base foundation', 'concrete-pile': 'Concrete pile foundation system', 'concrete-existing': 'Existing concrete base foundation' }[state.foundationType] || 'Ground screw foundation system'}`,
     `${state.cornerLeft === 'open' ? 'Open' : 'Closed'} left corner, ${state.cornerRight === 'open' ? 'open' : 'closed'} right corner`
   ];
 
@@ -608,6 +608,75 @@ export function generateQuotePDF(state, price) {
   });
 
   y += 8;
+
+  // ═══════════════════════════════════════════════════════════════
+  // PLANNING PERMISSION (if required)
+  // ═══════════════════════════════════════════════════════════════
+
+  if (state.planning?.required && state.planning.reasons?.length > 0) {
+    y = checkPageBreak(y, 40);
+
+    setColor(colors.primary);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PLANNING PERMISSION', margins.left, y);
+    y += 6;
+
+    setColor(colors.dark);
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+
+    const reasonLabels = {
+      'height': 'building exceeds 2.5m in height',
+      'conservation': 'property is in a conservation area',
+      'boundary': 'building is within 2m of a boundary',
+      'maisonette': 'property is a maisonette',
+      'listed': 'property is a listed building',
+      'article4': 'property is subject to an Article 4 direction',
+      'other': state.planning.customReason || 'other circumstances'
+    };
+    const activeReasons = state.planning.reasons.map(r => reasonLabels[r]).filter(Boolean);
+    const reasonText = activeReasons.join(', ');
+
+    const planningLines = doc.splitTextToSize(
+      `Planning permission is required as the ${reasonText}. We work closely with a planning consultant and can handle this on your behalf.`,
+      contentWidth - 6
+    );
+    planningLines.forEach(line => {
+      y = checkPageBreak(y, 5);
+      doc.text(line, margins.left + 3, y);
+      y += 4;
+    });
+
+    y += 2;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Planning costs:', margins.left + 3, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+
+    const planningItems = [
+      { label: 'Planning application (drawings, submission, consultant)', amount: '\u00a3950' },
+      { label: 'Local council fee (usually)', amount: '\u00a3258' },
+    ];
+    planningItems.forEach(item => {
+      doc.text(`\u2022 ${item.label}`, margins.left + 6, y);
+      doc.text(item.amount, headerRight, y, { align: 'right' });
+      y += 4.5;
+    });
+
+    y += 2;
+    const paymentNote = doc.splitTextToSize(
+      '\u00a3250 is required upfront and \u00a3700 once the application is ready for submission. The \u00a3250 acts as a holding deposit towards the building.',
+      contentWidth - 6
+    );
+    paymentNote.forEach(line => {
+      y = checkPageBreak(y, 5);
+      doc.text(line, margins.left + 3, y);
+      y += 4;
+    });
+
+    y += 8;
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // TERMS & CONDITIONS

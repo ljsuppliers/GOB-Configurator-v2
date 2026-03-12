@@ -158,9 +158,7 @@ function generateBuildingIncludesList(state, price) {
   else if (sqm > 15) downlights = 8;
   else if (sqm > 9) downlights = 6;
 
-  let sockets = 4;
-  if (sqm > 25) sockets = 7;
-  else if (sqm > 10) sockets = 5;
+  const sockets = 5;
 
   let electricalDesc = `Complete internal electrical works including ${downlights} x dimmable LED downlights`;
   if (isSig) {
@@ -178,9 +176,10 @@ function generateBuildingIncludesList(state, price) {
 
   // Foundation
   const foundationLabels = {
-    'ground-screw': 'Ground screw foundation system',
-    'concrete-base': 'Concrete base foundation',
-    'concrete-pile': 'Concrete pile foundation system'
+    'ground-screw': 'Ground screw foundation system (installed by our team)',
+    'concrete-base': 'Concrete base foundation (installed by our team)',
+    'concrete-pile': 'Concrete pile foundation system (installed by our team)',
+    'concrete-existing': 'Existing concrete base foundation'
   };
   features.push(foundationLabels[state.foundationType] || 'Ground screw foundation system');
 
@@ -232,12 +231,13 @@ function generateBuildingIncludesParagraph(state, price) {
   }
 
   // Foundation
-  const foundationLabels = {
+  const foundationLabelsLower = {
     'ground-screw': 'ground screw foundation system',
     'concrete-base': 'concrete base foundation',
-    'concrete-pile': 'concrete pile foundation system'
+    'concrete-pile': 'concrete pile foundation system',
+    'concrete-existing': 'existing concrete base foundation'
   };
-  parts.push(foundationLabels[state.foundationType] || 'ground screw foundation system');
+  parts.push(foundationLabelsLower[state.foundationType] || 'ground screw foundation system');
 
   // Cladding summary
   const frontClad = getCladdingLabel(state.cladding?.front);

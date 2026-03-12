@@ -132,12 +132,72 @@
               <option value="Guillaume">Guillaume</option>
             </select>
           </label>
-          <label>Delivery Date <input type="text" v-model="state.customer.date" placeholder="e.g. February 2026"></label>
+          <label>Quote Date <input type="date" v-model="state.customer.date"></label>
           <label>Building Type
             <select v-model="state.buildingType">
               <option v-for="bt in buildingTypes" :key="bt" :value="bt">{{ bt }}</option>
             </select>
           </label>
+          <label>Drawing Number
+            <input type="text" v-model="state.customNotes.drawingNumber" placeholder="GOB-001" style="width:120px;">
+          </label>
+          <div style="margin-top:8px;border-top:1px solid #e0e0e0;padding-top:8px;">
+            <div class="checkbox-row">
+              <input type="checkbox" v-model="state.planning.required" id="chk-planning">
+              <label for="chk-planning" style="font-weight:600;">Planning permission required</label>
+            </div>
+            <div v-if="state.planning.required" style="margin-top:6px;padding-left:4px;">
+              <div style="font-size:11px;color:#666;margin-bottom:4px;">Reason(s):</div>
+              <label class="checkbox-row" style="font-size:12px;">
+                <input type="checkbox" value="height" v-model="state.planning.reasons"> Building exceeds 2.5m in height
+              </label>
+              <label class="checkbox-row" style="font-size:12px;">
+                <input type="checkbox" value="conservation" v-model="state.planning.reasons"> Property is in a conservation area
+              </label>
+              <label class="checkbox-row" style="font-size:12px;">
+                <input type="checkbox" value="boundary" v-model="state.planning.reasons"> Within 2m of boundary
+              </label>
+              <label class="checkbox-row" style="font-size:12px;">
+                <input type="checkbox" value="maisonette" v-model="state.planning.reasons"> Property is a maisonette
+              </label>
+              <label class="checkbox-row" style="font-size:12px;">
+                <input type="checkbox" value="listed" v-model="state.planning.reasons"> Listed building
+              </label>
+              <label class="checkbox-row" style="font-size:12px;">
+                <input type="checkbox" value="article4" v-model="state.planning.reasons"> Article 4 direction
+              </label>
+              <label class="checkbox-row" style="font-size:12px;">
+                <input type="checkbox" value="other" v-model="state.planning.reasons"> Other
+              </label>
+              <label v-if="state.planning.reasons.includes('other')" style="margin-top:4px;">
+                <input type="text" v-model="state.planning.customReason" placeholder="Specify reason...">
+              </label>
+            </div>
+          </div>
+          <div style="margin-top:8px;border-top:1px solid #e0e0e0;padding-top:8px;">
+            <div class="checkbox-row">
+              <input type="checkbox" v-model="state.landscaping.required" id="chk-landscaping">
+              <label for="chk-landscaping" style="font-weight:600;">Landscaper required</label>
+            </div>
+            <div v-if="state.landscaping.required" style="margin-top:6px;padding-left:4px;">
+              <label style="font-size:12px;">Reason
+                <select v-model="state.landscaping.reason" style="font-size:12px;">
+                  <option value="">Select or type below...</option>
+                  <option value="removal of existing shed">Removal of existing shed</option>
+                  <option value="removal of existing garage">Removal of existing garage</option>
+                  <option value="removal of existing base">Removal of existing base</option>
+                  <option value="removal of existing structure">Removal of existing structure</option>
+                  <option value="tree removal">Tree removal</option>
+                  <option value="levelling of ground">Levelling of ground</option>
+                  <option value="clearance and preparation of site">Clearance and preparation of site</option>
+                  <option value="custom">Custom (type below)</option>
+                </select>
+              </label>
+              <label v-if="state.landscaping.reason === 'custom'" style="margin-top:4px;font-size:12px;">
+                <input type="text" v-model="state.landscaping.customReason" placeholder="e.g. removal of old summerhouse and concrete base">
+              </label>
+            </div>
+          </div>
         </div>
 
         <!-- Building Design -->
@@ -233,11 +293,12 @@
               <span v-if="!state.hasDecking" class="extra-price deduction">-&pound;750</span>
             </div>
           </div>
-          <label>Foundation
+          <label>Foundation / Groundworks
             <select v-model="state.foundationType">
-              <option value="ground-screw">Ground Screw</option>
-              <option value="concrete-base">Concrete Base</option>
-              <option value="concrete-pile">Concrete Pile System</option>
+              <option value="ground-screw">Ground Screw (installed by our team)</option>
+              <option value="concrete-base">Concrete Base (installed by our team)</option>
+              <option value="concrete-pile">Concrete Pile System (installed by our team)</option>
+              <option value="concrete-existing">Concrete Base (existing)</option>
             </select>
           </label>
         </div>
@@ -688,9 +749,6 @@
           <label>Custom Paragraph for Email
             <textarea v-model="state.customNotes.email" rows="3" placeholder="Custom paragraph to insert in quote email (e.g. specific discussion points, use case details)..."></textarea>
           </label>
-          <label>Drawing Number
-            <input type="text" v-model="state.customNotes.drawingNumber" placeholder="GOB-001" style="width:120px;">
-          </label>
           <label>Notes for Drawing
             <textarea v-model="state.customNotes.drawing" rows="2" placeholder="Notes to display on the drawing (e.g. construction notes, site access)..."></textarea>
           </label>
@@ -833,7 +891,7 @@
             <div v-if="emailSubject" class="email-output">
               <div class="email-preview">
                 <div class="email-field"><strong>Subject:</strong> {{ emailSubject }}</div>
-                <div class="email-body"><pre>{{ emailBody }}</pre></div>
+                <div class="email-body"><pre v-html="emailBodyHtml"></pre></div>
               </div>
             </div>
           </div>
