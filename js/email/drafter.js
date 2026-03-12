@@ -179,7 +179,8 @@ function generateBuildingIncludesList(state, price) {
     'ground-screw': 'Ground screw foundation system (installed by our team)',
     'concrete-base': 'Concrete base foundation (installed by our team)',
     'concrete-pile': 'Concrete pile foundation system (installed by our team)',
-    'concrete-existing': 'Existing concrete base foundation'
+    'concrete-existing': 'Existing concrete base foundation',
+    'hybrid': 'Hybrid foundation: existing concrete base + ground screws'
   };
   features.push(foundationLabels[state.foundationType] || 'Ground screw foundation system');
 
@@ -235,7 +236,8 @@ function generateBuildingIncludesParagraph(state, price) {
     'ground-screw': 'ground screw foundation system',
     'concrete-base': 'concrete base foundation',
     'concrete-pile': 'concrete pile foundation system',
-    'concrete-existing': 'existing concrete base foundation'
+    'concrete-existing': 'existing concrete base foundation',
+    'hybrid': 'hybrid foundation: existing concrete base + ground screws'
   };
   parts.push(foundationLabelsLower[state.foundationType] || 'ground screw foundation system');
 

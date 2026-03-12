@@ -547,7 +547,8 @@ createApp({
         'ground-screw': 'Ground screw foundation system (installed by our team)',
         'concrete-base': 'Concrete base foundation (installed by our team)',
         'concrete-pile': 'Concrete pile foundation system (installed by our team)',
-        'concrete-existing': 'Existing concrete base foundation'
+        'concrete-existing': 'Existing concrete base foundation',
+        'hybrid': 'Hybrid foundation: existing concrete base + ground screws'
       };
       buildFeatures.push(foundationLabels[s.foundationType] || 'Ground screw foundation system');
 
