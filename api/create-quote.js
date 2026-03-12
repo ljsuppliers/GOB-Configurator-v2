@@ -805,7 +805,7 @@ module.exports = async (req, res) => {
 
     const q = req.body;
     const customerName = q.customerName || 'Unknown';
-    const title = `Drawing for ${customerName}`;
+    const title = `Quote for ${customerName}`;
 
     // 1. Copy from template (which has the logo as a floating image)
     const copyRes = await driveApi.files.copy({
