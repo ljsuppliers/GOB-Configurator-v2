@@ -21,6 +21,27 @@ function formatDateUK(dateStr) {
   return `${dd}/${mm}/${yy}`;
 }
 
+// Ensure loaded state has all required nested objects (backwards compat with older saves)
+function ensureStateDefaults(state) {
+  if (!state.externalFeatures) state.externalFeatures = [];
+  if (!state.acUnits) state.acUnits = [];
+  if (!state.drawingLabels) state.drawingLabels = [];
+  if (!state.planning) state.planning = { required: false, reasons: [], customReason: '' };
+  if (!state.planning.reasons) state.planning.reasons = [];
+  if (!state.landscaping) state.landscaping = { required: false, reason: '' };
+  if (!state.customNotes) state.customNotes = { quote: '', email: '', drawing: '', drawingNumber: '' };
+  if (!state.straightPartition) state.straightPartition = { enabled: false, position: 2500, leftLabel: 'Office', rightLabel: 'Storage', hasDoor: true, doorPosition: 0.5, doorDirection: 'right' };
+  if (!state.customer) state.customer = { name: '', address: '', number: '', email: '', date: '' };
+  if (!state.site) state.site = {};
+  if (!state.survey) state.survey = {};
+  if (!state.discount) state.discount = { type: 'none', amount: 0, description: '' };
+  if (!state.extras) state.extras = {};
+  if (!state.cladding) state.cladding = { front: 'anthracite-steel', left: 'anthracite-steel', right: 'anthracite-steel', rear: 'anthracite-steel' };
+  if (!state.partitionRoom) state.partitionRoom = { enabled: false };
+  if (!state.bathroom) state.bathroom = { enabled: false };
+  return state;
+}
+
 async function fetchJSON(path) {
   const r = await fetch(path);
   if (!r.ok) throw new Error(`Failed to load ${path}: ${r.statusText}`);
@@ -665,21 +686,11 @@ createApp({
         if (!file) return;
         try {
           const text = await file.text();
-          this.state = JSON.parse(text);
+          this.state = ensureStateDefaults(JSON.parse(text));
           this.nextCompId = 100 + (this.state.components?.length || 0);
           this.nextFeatureId = 1000 + (this.state.externalFeatures?.length || 0);
           this.nextAcUnitId = 2000 + (this.state.acUnits?.length || 0);
           this.nextLabelId = 3000 + (this.state.drawingLabels?.length || 0);
-          // Ensure externalFeatures exists for older configs
-          if (!this.state.externalFeatures) {
-            this.state.externalFeatures = [];
-          }
-          if (!this.state.acUnits) {
-            this.state.acUnits = [];
-          }
-          if (!this.state.drawingLabels) {
-            this.state.drawingLabels = [];
-          }
           this.notify('Configuration loaded: ' + (this.state.customer?.name || file.name));
         } catch (err) {
           alert('Invalid configuration file: ' + err.message);
@@ -1049,7 +1060,7 @@ createApp({
       this.cloudError = null;
       try {
         const loadedState = await loadDesign(design.id);
-        this.state = loadedState;
+        this.state = ensureStateDefaults(loadedState);
         this.currentCloudId = design.id;
         this.currentCloudName = design.name;
         // Reset ID counters
@@ -1057,10 +1068,6 @@ createApp({
         this.nextFeatureId = 1000 + (this.state.externalFeatures?.length || 0);
         this.nextAcUnitId = 2000 + (this.state.acUnits?.length || 0);
         this.nextLabelId = 3000 + (this.state.drawingLabels?.length || 0);
-        // Ensure arrays exist for older configs
-        if (!this.state.externalFeatures) this.state.externalFeatures = [];
-        if (!this.state.acUnits) this.state.acUnits = [];
-        if (!this.state.drawingLabels) this.state.drawingLabels = [];
         this.notify('Loaded: ' + design.name);
       } catch (err) {
         console.error('Cloud load error:', err);
