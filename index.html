@@ -121,9 +121,7 @@
         <div class="config-section">
           <h4>Customer & Project</h4>
           <label>Name <input type="text" v-model="state.customer.name" placeholder="Full name"></label>
-          <label>Email <input type="email" v-model="state.customer.email" placeholder="Email address"></label>
           <label>Address <input type="text" v-model="state.customer.address" placeholder="Full address"></label>
-          <label>Phone <input type="tel" v-model="state.customer.number" placeholder="Phone number"></label>
           <label>Sales Rep
             <select v-model="state.survey.salesRep">
               <option value="">Select...</option>
@@ -138,7 +136,7 @@
               <option v-for="bt in buildingTypes" :key="bt" :value="bt">{{ bt }}</option>
             </select>
           </label>
-          <label>Drawing Number
+          <label>Customer Number
             <input type="text" v-model="state.customNotes.drawingNumber" placeholder="GOB-001" style="width:120px;">
           </label>
           <div style="margin-top:8px;border-top:1px solid #e0e0e0;padding-top:8px;">
