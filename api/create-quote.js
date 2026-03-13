@@ -448,7 +448,8 @@ function buildQuoteData(q) {
   ];
   for (const extra of optionalExtras) {
     const priceText = `(+ ${extra.slice(1).join(') (+ ')})`;
-    contentRow(`${extra[0]} ${priceText}`);
+    const isAc = extra[0].toLowerCase().includes('air conditioning');
+    contentRow(`${extra[0]} ${priceText}`, { height: isAc ? 56 : 32 });
   }
 
   greySpacer(28);
