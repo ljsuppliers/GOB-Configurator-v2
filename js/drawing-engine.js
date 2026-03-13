@@ -66,7 +66,7 @@ const FASCIA_H = 300;
 const TOP_TRIM = 75;
 const ROOF_ZONE = FASCIA_H + TOP_TRIM; // 375mm from top
 const GUTTER_H = 30;
-const CANOPY_DEPTH = 400; // front projection only
+// oh removed - now uses overhang value from state
 
 function svgDefs() {
   return `<defs>
@@ -463,23 +463,28 @@ function renderUpDownLight(x, y) {
 }
 
 function renderExternalSocket(x, y) {
-  // Weatherproof outdoor socket box
-  const w = 150, h = 150;
+  // Weatherproof outdoor double socket box
+  const w = 220, h = 150;
   let s = '';
-  // Weatherproof box
-  s += rc(x, y, w, h, { fill: COL.white, sw: 2, stroke: '#999', rx: 6 });
+  // Weatherproof box (grey)
+  s += rc(x, y, w, h, { fill: '#D0D0D0', sw: 2, stroke: '#888', rx: 6 });
   // Outer rim (weatherproof seal)
-  s += rc(x+10, y+10, w-20, h-20, { fill: '#E8E8E8', sw: 1.5, stroke: '#AAA', rx: 4 });
-  // Socket face
-  const socketSize = 60;
-  const socketX = x + (w-socketSize)/2;
-  const socketY = y + (h-socketSize)/2;
-  s += rc(socketX, socketY, socketSize, socketSize, { fill: COL.white, sw: 1, stroke: '#777', rx: 2 });
-  // Socket pins (UK 3-pin)
-  const pinW = 8, pinH = 18;
-  s += rc(socketX+socketSize/2-pinW/2, socketY+10, pinW, pinH, { fill: '#333' }); // Top (earth)
-  s += rc(socketX+15, socketY+35, pinW, pinH, { fill: '#333' }); // Left (live)
-  s += rc(socketX+socketSize-15-pinW, socketY+35, pinW, pinH, { fill: '#333' }); // Right (neutral)
+  s += rc(x+10, y+10, w-20, h-20, { fill: '#C0C0C0', sw: 1.5, stroke: '#999', rx: 4 });
+  // Two socket faces side by side
+  const socketSize = 55;
+  const gap = 16;
+  const totalW = socketSize * 2 + gap;
+  const startX = x + (w - totalW) / 2;
+  const socketY = y + (h - socketSize) / 2;
+  const pinW = 7, pinH = 16;
+  for (let i = 0; i < 2; i++) {
+    const sx = startX + i * (socketSize + gap);
+    s += rc(sx, socketY, socketSize, socketSize, { fill: '#E8E8E8', sw: 1, stroke: '#777', rx: 2 });
+    // UK 3-pin layout
+    s += rc(sx+socketSize/2-pinW/2, socketY+8, pinW, pinH, { fill: '#555' }); // Earth (top)
+    s += rc(sx+12, socketY+30, pinW, pinH, { fill: '#555' }); // Live (left)
+    s += rc(sx+socketSize-12-pinW, socketY+30, pinW, pinH, { fill: '#555' }); // Neutral (right)
+  }
   return s;
 }
 
@@ -572,7 +577,8 @@ function renderAcUnit(unit) {
 function renderDrawingLabel(label) {
   const { id, text, x, y, arrowEnabled, arrowX, arrowY } = label;
   let s = '';
-  const fontSize = label.fontSize || 140;
+  const fontSize = label.fontSize || 150;
+  const color = label.color || '#000000';
   const padX = 60, padY = 30;
   const textW = text.length * fontSize * 0.55;
   const textH = fontSize + padY * 2;
@@ -585,7 +591,7 @@ function renderDrawingLabel(label) {
     const len = Math.sqrt(dx * dx + dy * dy);
     if (len > 10) {
       // Line from label centre to arrow tip
-      s += ln(x, y, arrowX, arrowY, 3, '#D32F2F');
+      s += ln(x, y, arrowX, arrowY, 3, color);
       // Arrowhead
       const headLen = 80, headW = 40;
       const ux = dx / len, uy = dy / len;
@@ -594,20 +600,20 @@ function renderDrawingLabel(label) {
       const baseX = tipX - ux * headLen, baseY = tipY - uy * headLen;
       s += tag('polygon', {
         points: `${tipX},${tipY} ${baseX + px * headW},${baseY + py * headW} ${baseX - px * headW},${baseY - py * headW}`,
-        fill: '#D32F2F'
+        fill: color
       });
     }
     // Arrow tip drag handle (invisible hit circle)
     s += `<g class="label-arrow draggable" data-label-id="${id}" style="cursor:move">`;
-    s += tag('circle', { cx: arrowX, cy: arrowY, r: 60, fill: '#D32F2F', opacity: 0.3 });
-    s += tag('circle', { cx: arrowX, cy: arrowY, r: 20, fill: '#D32F2F' });
+    s += tag('circle', { cx: arrowX, cy: arrowY, r: 60, fill: color, opacity: 0.3 });
+    s += tag('circle', { cx: arrowX, cy: arrowY, r: 20, fill: color });
     s += '</g>';
   }
 
   // Label text with background box
   s += `<g class="label-text draggable" data-label-id="${id}" style="cursor:move">`;
-  s += rc(boxX, boxY, textW + padX * 2, textH, { fill: '#FFFFFF', sw: 2.5, stroke: '#D32F2F', rx: 6 });
-  s += tx(x, y + fontSize * 0.35, text, fontSize, { color: '#D32F2F', bold: true });
+  s += rc(boxX, boxY, textW + padX * 2, textH, { fill: '#FFFFFF', sw: 2.5, stroke: color, rx: 6 });
+  s += tx(x, y + fontSize * 0.35, text, fontSize, { color, bold: true });
   s += '</g>';
 
   return s;
@@ -728,7 +734,7 @@ function renderFront(cfg) {
 // ── Side Elevation ──────────────────────────────────────────
 
 function renderSide(cfg) {
-  const { depth, height, components, side, tier, overhang, corner, claddingType, hasCanopy, hasDecking, externalFeatures } = cfg;
+  const { depth, height, components, side, tier, overhang, corner, claddingType, hasCanopy, hasDecking, deckingDepth, externalFeatures } = cfg;
   const cid = 'sc'+side+Math.random().toString(36).substr(2,5);
   const wallTop = ROOF_ZONE;
   const wallH = height - wallTop;
@@ -736,7 +742,10 @@ function renderSide(cfg) {
   const deckH = 100;
   const sideOverhang = 25; // 25mm fascia overhang at rear (matches front elevation sides)
   const showCanopy = isSig && hasCanopy !== false;
-  const frontProj = showCanopy && overhang > 0 ? CANOPY_DEPTH : 50; // Signature w/ canopy: 400mm, otherwise: 50mm front overhang
+  const showDecking = isSig && hasDecking !== false;
+  const canopyProj = showCanopy && overhang > 0 ? overhang : 0;
+  const deckingSideProj = showDecking ? (deckingDepth || 400) : 0;
+  const frontProj = canopyProj > 0 ? canopyProj : 50; // fascia only extends for canopy, not decking
   const rearProj = sideOverhang; // 25mm rear overhang for seamless fascia wrap
   const frontRight = side === 'left';
   // Fascia extends from rear overhang to front overhang - SEAMLESS with front elevation
@@ -783,43 +792,62 @@ function renderSide(cfg) {
   }
   const trimH = deckH;
 
-  if (isSig && frontProj > 50) {
-    // SIGNATURE with canopy (400mm front)
-    const feStart = frontRight ? depth : -frontProj;
-    const feEnd = frontRight ? depth + frontProj : 0;
-    const proj = frontProj;
+  if (isSig && (canopyProj > 0 || deckingSideProj > 0)) {
+    // SIGNATURE with canopy and/or decking
+    const canopyStart = frontRight ? depth : -canopyProj;
+    const canopyEnd = frontRight ? depth + canopyProj : 0;
     const bldgEdge = frontRight ? depth : 0;
 
-    // Base trim on main building only (not canopy projection)
+    // Base trim on main building only (not projections)
     s += rc(0, height, depth, trimH, { fill: COL.anthracite });
     s += ln(0, height, depth, height, 1.5, COL.anthraciteDk);
     s += ln(0, height + trimH, depth, height + trimH, 1, COL.anthraciteDk);
 
-    if (corner === 'closed') {
-      // Closed corner - side screen is continuous with main building (no vertical break)
+    // Canopy screen walls (closed corners)
+    if (canopyProj > 0 && corner === 'closed') {
       const scCid = 'ssc'+Math.random().toString(36).substr(2,5);
-      s += `<defs><clipPath id="${scCid}"><rect x="${feStart}" y="${wallTop}" width="${proj}" height="${wallH}"/></clipPath></defs>`;
-      s += rc(feStart, wallTop, proj, wallH, { fill: cladFill(claddingType || 'steel'), clip: `url(#${scCid})` });
-      // Only outer edge and bottom - NO vertical line at junction with main building
-      s += ln(feEnd, ROOF_ZONE, feEnd, height, 3, '#222'); // outer edge only (far end)
-      s += ln(feStart, height, feEnd, height, 3, '#222'); // bottom of screen
+      const feStart = canopyStart;
+      const feEnd = canopyEnd;
+      s += `<defs><clipPath id="${scCid}"><rect x="${feStart}" y="${wallTop}" width="${canopyProj}" height="${wallH}"/></clipPath></defs>`;
+      s += rc(feStart, wallTop, canopyProj, wallH, { fill: cladFill(claddingType || 'steel'), clip: `url(#${scCid})` });
+      s += ln(feEnd, ROOF_ZONE, feEnd, height, 3, '#222');
+      s += ln(feStart, height, feEnd, height, 3, '#222');
       const uX = frontRight ? feEnd - 180 : feStart;
       s += rc(uX, ROOF_ZONE, 180, wallH, { fill: COL.anthracite, sw: 0 });
-      if (hasDecking !== false) {
-        // Decking covers full width including canopy (drawn on top of base trim)
-        s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.decking });
-        s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.deckingLine);
-      }
-    } else {
-      // Open corner
+    } else if (canopyProj > 0) {
+      // Open corner with canopy
       const trimX = frontRight ? bldgEdge - 180 : bldgEdge;
       s += rc(trimX, ROOF_ZONE, 180, wallH, { fill: COL.anthracite, sw: 0 });
-      if (hasDecking !== false) {
-        // Decking only on the 400mm canopy projection (drawn on top of base trim)
-        s += rc(feStart, height, proj, trimH, { fill: COL.decking });
-        const deckEdge = frontRight ? feEnd : feStart;
-        s += ln(deckEdge, height, deckEdge, height + trimH, 1, COL.deckingLine);
+    }
+
+    // Decking - independent of canopy, uses its own depth
+    if (showDecking && deckingSideProj > 0) {
+      const deckStartX = frontRight ? depth : -deckingSideProj;
+      const deckEndX = frontRight ? depth + deckingSideProj : 0;
+      const deckFullX = frontRight ? -rearProj : -deckingSideProj;
+      const deckFullW = depth + deckingSideProj + rearProj;
+      if (corner === 'closed') {
+        // Decking covers full width including building + decking projection
+        s += rc(deckFullX, height, deckFullW, trimH, { fill: COL.decking });
+        s += ln(deckFullX, height + trimH, deckFullX + deckFullW, height + trimH, 1, COL.deckingLine);
+      } else {
+        // Decking only on the projection area in front of building
+        s += rc(deckStartX, height, deckingSideProj, trimH, { fill: COL.decking });
+        s += ln(deckEndX, height, deckEndX, height + trimH, 1, COL.deckingLine);
       }
+    }
+
+    // Canopy dimension at the top (near fascia)
+    if (canopyProj > 0) {
+      const x1 = frontRight ? depth : -canopyProj;
+      const x2 = frontRight ? depth + canopyProj : 0;
+      s += dimH_comp(x1, x2, -15, `Canopy ${canopyProj}mm`, -90);
+    }
+    // Decking dimension at the bottom (below base trim)
+    if (showDecking && deckingSideProj > 0) {
+      const x1 = frontRight ? depth : -deckingSideProj;
+      const x2 = frontRight ? depth + deckingSideProj : 0;
+      s += dimH_comp(x1, x2, height + trimH + 15, `Decking ${deckingSideProj}mm`, 60);
     }
   } else {
     // Classic or Signature without canopy - base trim full fascia width
@@ -1028,44 +1056,92 @@ function renderPartitionRoom(pr, buildingWidth, buildingDepth, wt) {
   const labelX = rx + roomW / 2 + (pr.labelOffsetX || 0);
   const labelY = ry + roomD / 2 + 50 + (pr.labelOffsetY || 0);
   s += tx(labelX, labelY, pr.label || 'Room', 180, { color: '#444', bold: true });
-  
+
+  // Dimension labels for partition room (internal dimensions)
+  const intColor = '#2288CC';
+  const dimOff = 200;
+  const wLabel = `${roomW}mm`;
+  const dLabel = `${roomD}mm`;
+
+  switch (pr.corner) {
+    case 'rear-left':
+      // Width dim along bottom partition wall, offset up into room
+      s += dimH_comp(rx, rx + roomW, ry + roomD, wLabel, -dimOff, intColor);
+      // Depth dim along right partition wall, offset left into room
+      s += dimV_comp(ry, ry + roomD, rx + roomW, dLabel, -dimOff, intColor);
+      break;
+    case 'rear-right':
+      // Width dim along bottom partition wall, offset up into room
+      s += dimH_comp(rx, rx + roomW, ry + roomD, wLabel, -dimOff, intColor);
+      // Depth dim along left partition wall, offset right into room
+      s += dimV_comp(ry, ry + roomD, rx, dLabel, dimOff, intColor);
+      break;
+    case 'front-left':
+      // Width dim along top partition wall, offset down into room
+      s += dimH_comp(rx, rx + roomW, ry, wLabel, dimOff, intColor);
+      // Depth dim along right partition wall, offset left into room
+      s += dimV_comp(ry, ry + roomD, rx + roomW, dLabel, -dimOff, intColor);
+      break;
+    case 'front-right':
+      // Width dim along top partition wall, offset down into room
+      s += dimH_comp(rx, rx + roomW, ry, wLabel, dimOff, intColor);
+      // Depth dim along left partition wall, offset right into room
+      s += dimV_comp(ry, ry + roomD, rx, dLabel, dimOff, intColor);
+      break;
+  }
+
   return s;
 }
 
 // ── Plan View ───────────────────────────────────────────────
 
 function renderPlan(cfg) {
-  const { width, depth, wallThickness, overhang, tier, components, rooms, cornerLeft, cornerRight, hasCanopy } = cfg;
+  const { width, depth, wallThickness, overhang, tier, components, rooms, cornerLeft, cornerRight, hasCanopy, hasDecking, deckingDepth } = cfg;
   const wt = wallThickness || 150;
   const isSig = tier === 'signature';
   const showCanopy = isSig && hasCanopy !== false;
-  const proj = CANOPY_DEPTH;
+  const showDecking = isSig && hasDecking !== false;
+  const canopyProj = overhang || 400;
+  const deckProj = deckingDepth || 400;
   let s = '';
 
   // For Classic: depth includes canopy area, so internal floor is larger (no external canopy projection)
-  // For Signature: depth is building only, canopy projects additional 400mm in front
+  // For Signature: depth is building only, canopy projects in front, decking may extend further
+
+  // Render decking that extends beyond canopy
+  if (showDecking && deckProj > 0) {
+    const deckStart = showCanopy && overhang > 0 ? canopyProj : 0;
+    const deckVisible = deckProj - deckStart;
+    if (deckVisible > 0) {
+      s += rc(0, depth + deckStart, width, deckVisible, { fill: COL.wallFill, sw: 2, stroke: '#999' });
+      // Decking plank lines
+      const plankW = 130;
+      for (let px = 0; px < width; px += plankW) {
+        s += ln(px, depth + deckStart, px, depth + deckProj, 1, '#B0B0B0');
+      }
+    }
+  }
 
   if (showCanopy && overhang > 0) {
-    // SIGNATURE: Show canopy as external projection
-    s += rc(0, depth, width, proj, { fill: COL.white, sw: 4, stroke: '#222' });
+    // SIGNATURE: Show canopy as external projection - always solid white
+    s += rc(0, depth, width, canopyProj, { fill: COL.white, sw: 4, stroke: '#222' });
     if (cornerLeft === 'closed') {
-      s += rc(0, depth, wt, proj, { fill: COL.wallFill, sw: 3, stroke: '#222' });
+      s += rc(0, depth, wt, canopyProj, { fill: COL.wallFill, sw: 3, stroke: '#222' });
     }
     if (cornerRight === 'closed') {
-      s += rc(width-wt, depth, wt, proj, { fill: COL.wallFill, sw: 3, stroke: '#222' });
+      s += rc(width-wt, depth, wt, canopyProj, { fill: COL.wallFill, sw: 3, stroke: '#222' });
     }
     // Dashed line to indicate canopy projection above
-    s += tag('rect', { x: 0, y: depth, width: width, height: proj,
+    s += tag('rect', { x: 0, y: depth, width: width, height: canopyProj,
       fill: 'none', stroke: '#888', 'stroke-width': 1, 'stroke-dasharray': '15,10' });
-    
+
     // Spotlights in canopy - 1 per metre of width, rounded down
     const numSpotlights = Math.floor(width / 1000);
     if (numSpotlights > 0) {
       const spotSpacing = width / (numSpotlights + 1);
-      const spotY = depth + proj / 2;
+      const spotY = depth + canopyProj / 2;
       for (let i = 1; i <= numSpotlights; i++) {
         const spotX = spotSpacing * i;
-        // Draw spotlight as small circle with inner highlight
         s += tag('circle', { cx: spotX, cy: spotY, r: 42, fill: '#D0D0D0', stroke: '#555', 'stroke-width': 2.5 });
         s += tag('circle', { cx: spotX, cy: spotY, r: 24, fill: '#FFFDE8', stroke: '#999', 'stroke-width': 1.5 });
       }
@@ -1166,15 +1242,54 @@ function renderPlan(cfg) {
   if (cfg.straightPartition && cfg.straightPartition.enabled) {
     s += renderStraightPartition(cfg.straightPartition, width, depth, wt);
   }
-  
+
   // Render corner partition room
   if (cfg.partitionRoom && cfg.partitionRoom.enabled) {
     s += renderPartitionRoom(cfg.partitionRoom, width, depth, wt);
   }
-  
+
+  // Internal dimensions
+  const intColor = '#2288CC';
+  const canopyDeduction = (showCanopy && overhang > 0) ? overhang : 0;
+  const intDepthMeasure = depth - wt * 2 - canopyDeduction; // measurement shown on label
+  const intDepthLine = depth - wt * 2; // full line span (rear inner wall to front inner wall)
+  const intDimW = cfg.intDimWidthOffset || depth * 0.15;
+  const intDimD = cfg.intDimDepthOffset || width * 0.15;
+  const sp = cfg.straightPartition;
+  if (rooms && rooms.length > 1) {
+    // Multiple rooms (left/right partition via rooms)
+    let acc = 0;
+    for (let i = 0; i < rooms.length; i++) {
+      const intW = rooms[i].width - (i === 0 ? wt : 0) - (i === rooms.length - 1 ? wt : 0);
+      const x1 = (i === 0 ? wt : acc + wt);
+      const x2 = x1 + intW;
+      s += dimH_comp(x1, x2, wt, `${Math.round(intW)}mm`, intDimW, intColor);
+      acc += rooms[i].width + wt;
+    }
+    // Internal depth (same for all rooms)
+    s += dimV_comp(wt, wt + intDepthLine, wt, `${Math.round(intDepthMeasure)}mm`, intDimD, intColor);
+  } else if (sp && sp.enabled) {
+    // Straight partition (back to front)
+    const partWt = 150;
+    const pos = sp.position || width / 2;
+    const leftIntW = pos - partWt / 2 - wt;
+    const rightIntW = width - pos - partWt / 2 - wt;
+    // Left room width
+    s += dimH_comp(wt, pos - partWt / 2, wt, `${Math.round(leftIntW)}mm`, intDimW, intColor);
+    // Right room width
+    s += dimH_comp(pos + partWt / 2, width - wt, wt, `${Math.round(rightIntW)}mm`, intDimW, intColor);
+    // Internal depth
+    s += dimV_comp(wt, wt + intDepthLine, wt, `${Math.round(intDepthMeasure)}mm`, intDimD, intColor);
+  } else {
+    // No partition - single room
+    const intW = width - wt * 2;
+    s += dimH_comp(wt, wt + intW, wt, `${Math.round(intW)}mm`, intDimW, intColor);
+    s += dimV_comp(wt, wt + intDepthLine, wt, `${Math.round(intDepthMeasure)}mm`, intDimD, intColor);
+  }
+
   // Render boundary lines if enabled
   if (cfg.boundaries && cfg.boundaries.show) {
-    s += renderBoundaries(cfg.boundaries, width, depth, isSig ? proj : 0);
+    s += renderBoundaries(cfg.boundaries, width, depth, isSig ? Math.max(showCanopy ? canopyProj : 0, showDecking ? deckProj : 0) : 0);
   }
 
   // Render AC units
@@ -1354,8 +1469,8 @@ function renderTitle(cfg) {
 // ── Component Dimension Labels (Plan View) ─────────────────
 
 // Horizontal component dimension (for front/rear wall components)
-function dimH_comp(x1, x2, y, label, off) {
-  const color = '#444';
+function dimH_comp(x1, x2, y, label, off, customColor) {
+  const color = customColor || '#444';
   const yl = y + (off || 200);
   const cw = Math.min(60, (x2 - x1) * 0.05);
   const ch = cw * 0.5;
@@ -1376,8 +1491,8 @@ function dimH_comp(x1, x2, y, label, off) {
 }
 
 // Vertical component dimension (for left/right wall components)
-function dimV_comp(y1, y2, x, label, off) {
-  const color = '#444';
+function dimV_comp(y1, y2, x, label, off, customColor) {
+  const color = customColor || '#444';
   const xl = x + (off || 200);
   const ch = Math.min(60, (y2 - y1) * 0.05);
   const cw = ch * 0.5;
@@ -1392,7 +1507,7 @@ function dimV_comp(y1, y2, x, label, off) {
   s += tag('polyline', { points: `${xl - cw},${y2 - ch} ${xl},${y2} ${xl + cw},${y2 - ch}`, fill: 'none', stroke: color, 'stroke-width': 2 });
   // Text (rotated): on the far side of dim line (closer to building centre)
   const cy = (y1 + y2) / 2;
-  const textX = off < 0 ? xl - 70 : xl + 70;
+  const textX = off < 0 ? xl - 140 : xl + 140;
   s += tx(textX, cy, label, 120, { color, transform: `rotate(-90 ${textX} ${cy})` });
   return s;
 }
@@ -1440,8 +1555,11 @@ function compose(b) {
   const isSig = b.tier === 'signature';
   const hasCanopy = b.hasCanopy !== false;
   const hasDecking = b.hasDecking !== false;
+  const deckingDepth = b.deckingDepth || 400;
   // Only Signature with canopy shows external canopy projection
-  const proj = (isSig && oh > 0 && hasCanopy) ? CANOPY_DEPTH : 0;
+  const proj = (isSig && oh > 0 && hasCanopy) ? oh : 0;
+  const deckProj = (isSig && hasDecking) ? deckingDepth : 0;
+  const frontProj = Math.max(proj, deckProj); // largest front projection for layout
   const margin=700, dim=600, labH=350;
   const deckH = oh > 0 ? 100 : 0;
   const cL = b.cornerLeft || 'open';
@@ -1450,9 +1568,10 @@ function compose(b) {
 
   const row1Y = margin + labH;
   const lX = margin + dim;
-  const fX = lX + D + proj + gap;
-  const rX = fX + W + gap + proj;
-  const row1Right = rX + D + proj + dim;
+  const sideExtra = frontProj; // space needed for side elevation projections (canopy or decking)
+  const fX = lX + D + sideExtra + gap;
+  const rX = fX + W + gap + sideExtra;
+  const row1Right = rX + D + sideExtra + dim;
   const row1Bottom = row1Y + H + deckH + 650;
 
   // Calculate boundary offsets for plan view
@@ -1462,8 +1581,8 @@ function compose(b) {
 
   const row2Y = row1Bottom + 250 + labH + boundaryRear;
   const pX = margin + dim + boundaryLeft;
-  // Only add extra plan space for Signature canopy (when canopy is enabled)
-  const planExtra = (isSig && oh > 0 && hasCanopy) ? CANOPY_DEPTH + 300 : 0;
+  // Add extra plan space for canopy and/or decking projection
+  const planExtra = frontProj > 0 ? frontProj + 300 : 0;
 
   const tiW = Math.max(4000, D*2 + 1000);
   const tiH = Math.max(D + planExtra + 600, 2800);
@@ -1478,9 +1597,9 @@ function compose(b) {
   s += rc(margin*0.4, margin*0.4, totW-margin*0.8, totH-margin*0.8, { sw: 4, stroke: '#333' });
 
   // LEFT ELEVATION
-  const sideDepthDim = (isSig && oh > 0 && hasCanopy) ? D + CANOPY_DEPTH : D;
+  const sideDepthDim = (isSig && oh > 0 && hasCanopy) ? D + oh : D;
   s += tx(lX+D/2, row1Y-160, 'Left Elevation', 180, { bold:true, color:'#222' });
-  s += grp(renderSide({ depth:D, height:H, side:'left', tier:b.tier, overhang:oh, components:b.leftComponents||[], corner:cL, claddingType:b.leftCladding, hasCanopy, hasDecking, externalFeatures:b.leftExternalFeatures||[] }), { transform:`translate(${lX},${row1Y})` });
+  s += grp(renderSide({ depth:D, height:H, side:'left', tier:b.tier, overhang:oh, components:b.leftComponents||[], corner:cL, claddingType:b.leftCladding, hasCanopy, hasDecking, deckingDepth, externalFeatures:b.leftExternalFeatures||[] }), { transform:`translate(${lX},${row1Y})` });
   s += dimH(lX, lX+sideDepthDim, row1Y+H+deckH+30, `${D}mm`, 250);
   // Height dimension on left side of left elevation
   s += dimV(row1Y, row1Y+H+deckH, lX, `${H}mm`, -450);
@@ -1492,32 +1611,33 @@ function compose(b) {
 
   // RIGHT ELEVATION
   // For right side, canopy extends LEFT (negative x), so dimension starts earlier
-  const rX_dimStart = (isSig && oh > 0 && hasCanopy) ? rX - CANOPY_DEPTH : rX;
+  const rX_dimStart = (isSig && oh > 0 && hasCanopy) ? rX - oh : rX;
   s += tx(rX+D/2, row1Y-160, 'Right Elevation', 180, { bold:true, color:'#222' });
-  s += grp(renderSide({ depth:D, height:H, side:'right', tier:b.tier, overhang:oh, components:b.rightComponents||[], corner:cR, claddingType:b.rightCladding, hasCanopy, hasDecking, externalFeatures:b.rightExternalFeatures||[] }), { transform:`translate(${rX},${row1Y})` });
+  s += grp(renderSide({ depth:D, height:H, side:'right', tier:b.tier, overhang:oh, components:b.rightComponents||[], corner:cR, claddingType:b.rightCladding, hasCanopy, hasDecking, deckingDepth, externalFeatures:b.rightExternalFeatures||[] }), { transform:`translate(${rX},${row1Y})` });
   s += dimH(rX_dimStart, rX+D, row1Y+H+deckH+30, `${D}mm`, 250);
 
   // PLAN VIEW
   const planLabelY = boundaryRear ? row2Y - boundaryRear - 160 : row2Y - 160;
   s += tx(pX+W/2, planLabelY, 'Plan View', 180, { bold:true, color:'#222' });
-  s += grp(renderPlan({ width:W, depth:D, wallThickness:150, overhang:oh, tier:b.tier, components:b.planComponents||[], rooms:b.rooms, cornerLeft:cL, cornerRight:cR, straightPartition:b.straightPartition, partitionRoom:b.partitionRoom, boundaries:b.boundaries, hasCanopy, hasDecking, acUnits:b.acUnits||[] }), { transform:`translate(${pX},${row2Y})` });
-  // Only add canopy space to dimension line for Signature
-  const planDimY = (isSig && oh > 0 && hasCanopy) ? row2Y+D+CANOPY_DEPTH+80 : row2Y+D+80;
+  s += grp(renderPlan({ width:W, depth:D, wallThickness:150, overhang:oh, tier:b.tier, components:b.planComponents||[], rooms:b.rooms, cornerLeft:cL, cornerRight:cR, straightPartition:b.straightPartition, partitionRoom:b.partitionRoom, boundaries:b.boundaries, hasCanopy, hasDecking, deckingDepth, acUnits:b.acUnits||[], intDimWidthOffset:b.intDimWidthOffset, intDimDepthOffset:b.intDimDepthOffset }), { transform:`translate(${pX},${row2Y})` });
+  // Add canopy/decking space to dimension line
+  const planDimY = frontProj > 0 ? row2Y+D+frontProj+80 : row2Y+D+80;
   // Width dimension - offset 450 to match depth dimension distance, label below line
   s += dimH(pX, pX+W, planDimY, `${W}mm`, 450, false);
   // Depth dimension - for Signature, stated depth includes canopy so measure to end of canopy
-  const planDepthEnd = (isSig && oh > 0 && hasCanopy) ? row2Y+D+CANOPY_DEPTH : row2Y+D;
+  const planDepthEnd = frontProj > 0 ? row2Y+D+frontProj : row2Y+D;
   s += dimV(row2Y, planDepthEnd, pX, `${D}mm`, -450);
 
   // Canopy/decking text below the plan view (only for Signature with overhang)
-  if (isSig && oh > 0 && (hasCanopy || hasDecking)) {
+  if (isSig && (hasCanopy || hasDecking)) {
     const numSpotlights = hasCanopy ? Math.floor(W / 1000) : 0;
-    const features = [];
-    if (hasCanopy) features.push('canopy');
-    if (hasDecking) features.push('decking');
-    let featureText = `Integrated ${features.join(' and ')} feature`;
-    if (hasCanopy) featureText += ` (400mm) with ${numSpotlights} spotlight${numSpotlights !== 1 ? 's' : ''}`;
-    s += tx(pX+W/2, planDimY+900, featureText, 120, { italic:true, color:'#666' });
+    const parts = [];
+    if (hasCanopy && oh > 0) parts.push(`canopy (${oh}mm) with ${numSpotlights} spotlight${numSpotlights !== 1 ? 's' : ''}`);
+    if (hasDecking) parts.push(`decking (${deckingDepth}mm)`);
+    if (parts.length > 0) {
+      const featureText = `Integrated ${parts.join(' and ')}`;
+      s += tx(pX+W/2, planDimY+900, featureText, 120, { italic:true, color:'#666' });
+    }
   }
 
   // TITLE BLOCK
@@ -1528,8 +1648,8 @@ function compose(b) {
     const notesX = tiX;
     const notesY = tiY + tiH + 120;
     const notesW = tiW;
-    const notesFontSize = 120;
-    const notesLineHeight = 150;
+    const notesFontSize = 160;
+    const notesLineHeight = 200;
     const maxCharsPerLine = Math.floor(notesW / (notesFontSize * 0.5));
     
     // Word wrap the notes text
@@ -1650,6 +1770,8 @@ export function generateDrawing(state, componentsData, claddingData) {
   const rooms = (state.rooms || [{ label: 'Office', widthMm: state.width }]).map(r => ({
     label: r.label,
     width: r.widthMm,
+    labelOffsetX: r.labelOffsetX || 0,
+    labelOffsetY: r.labelOffsetY || 0,
   }));
 
   const tierLabel = state.tier === 'signature' ? 'Signature' : 'Classic';
@@ -1669,6 +1791,7 @@ export function generateDrawing(state, componentsData, claddingData) {
     cornerRight: state.cornerRight || 'open',
     hasCanopy: state.tier === 'signature' ? (state.hasCanopy !== false) : false,
     hasDecking: state.tier === 'signature' ? (state.hasDecking !== false) : false,
+    deckingDepth: state.deckingDepth || 400,
     frontComponents,
     leftComponents,
     rightComponents,
@@ -1681,6 +1804,8 @@ export function generateDrawing(state, componentsData, claddingData) {
     rightExternalFeatures: (state.externalFeatures || []).filter(f => f.elevation === 'right'),
     acUnits: state.acUnits || [],
     drawingLabels: state.drawingLabels || [],
+    intDimWidthOffset: state.intDimWidthOffset || 0,
+    intDimDepthOffset: state.intDimDepthOffset || 0,
     boundaries: {
       show: state.showBoundaries || false,
       left: parseInt(state.site?.boundaryLeft) || 0,
@@ -1688,7 +1813,7 @@ export function generateDrawing(state, componentsData, claddingData) {
       rear: parseInt(state.site?.boundaryRear) || 0,
     },
     title: `Proposed ${state.buildingType || 'Garden Office Building'} for:`,
-    useCase: (state.survey?.useCase === 'custom' ? state.survey?.useCaseCustom : formatUseCase(state.survey?.useCase)) || state.buildingType || 'Garden Office',
+    useCase: (state.primaryUse === 'custom' ? state.primaryUseCustom : formatUseCase(state.primaryUse)) || (state.survey?.useCase === 'custom' ? state.survey?.useCaseCustom : formatUseCase(state.survey?.useCase)) || state.buildingType || 'Garden Office',
     customer: state.customer?.name || '',
     address: state.customer?.address ? `@ ${state.customer.address}` : '',
     date: fmtDateUK(state.customer?.date) || '',

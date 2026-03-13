@@ -9,7 +9,9 @@
   "rooms": [
     {
       "label": "Office",
-      "widthMm": 5000
+      "widthMm": 5000,
+      "labelOffsetX": 0,
+      "labelOffsetY": 0
     }
   ],
   "cladding": {
@@ -59,6 +61,7 @@
   },
   "hasCanopy": true,
   "hasDecking": true,
+  "deckingDepth": 400,
   "deductions": {
     "removeDecking": false,
     "removeCanopy": false,
@@ -69,8 +72,8 @@
     "corner": "rear-left",
     "width": 1500,
     "depth": 1500,
-    "type": "storage",
-    "label": "Storage",
+    "type": "wc",
+    "label": "WC",
     "doorPosition": 0.5,
     "labelOffsetX": 0,
     "labelOffsetY": 0,

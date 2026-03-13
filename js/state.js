@@ -62,7 +62,7 @@ export function updateComponent(id, updates) {
 
 // Room management
 export function addRoom(label, widthMm) {
-  _state.rooms.push({ label, widthMm });
+  _state.rooms.push({ label, widthMm, labelOffsetX: 0, labelOffsetY: 0 });
   notify();
 }
 

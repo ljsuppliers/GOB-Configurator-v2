@@ -49,7 +49,7 @@
         <!-- Cloud Saves -->
         <div class="config-section cloud-saves-section">
           <h4 @click="cloudPanelOpen = !cloudPanelOpen" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;">
-            Cloud Saves
+            Saved Projects
             <span style="font-size:11px;color:#888;">{{ cloudPanelOpen ? '&#9650;' : '&#9660;' }}</span>
           </h4>
           <div v-show="cloudPanelOpen">
@@ -135,6 +135,23 @@
             <select v-model="state.buildingType">
               <option v-for="bt in buildingTypes" :key="bt" :value="bt">{{ bt }}</option>
             </select>
+          </label>
+          <label>Primary Use
+            <select v-model="state.primaryUse">
+              <option value="">Select...</option>
+              <option value="home-office">Home Office (WFH)</option>
+              <option value="gym">Home Gym</option>
+              <option value="studio">Art/Music Studio</option>
+              <option value="therapy">Therapy/Treatment Room</option>
+              <option value="guest-room">Guest Accommodation</option>
+              <option value="annexe">Dependent Relative Annexe</option>
+              <option value="multi-purpose">Multi-Purpose</option>
+              <option value="rental">Airbnb/Rental</option>
+              <option value="custom">Custom...</option>
+            </select>
+          </label>
+          <label v-if="state.primaryUse === 'custom'">Custom Use
+            <input type="text" v-model="state.primaryUseCustom" placeholder="e.g. Photography Studio">
           </label>
           <label>Customer Number
             <input type="text" v-model="state.customNotes.drawingNumber" placeholder="GOB-001" style="width:120px;">
@@ -276,22 +293,39 @@
               </div>
             </div>
           </div>
-          <label>Canopy Depth (mm)
-            <input type="number" v-model.number="state.overhangDepth" min="0" max="1000" step="50">
-          </label>
           <div v-if="state.tier === 'signature'" style="margin-top:8px;">
             <div class="checkbox-row">
               <input type="checkbox" v-model="state.hasCanopy" id="chk-has-canopy">
               <label for="chk-has-canopy">Include canopy</label>
               <span v-if="!state.hasCanopy" class="extra-price deduction">-&pound;750</span>
             </div>
+            <div v-if="state.hasCanopy" style="margin-left:22px;margin-bottom:4px;">
+              <label style="font-size:11px;">Canopy Depth: {{ state.overhangDepth }}mm
+                <input type="range" v-model.number="state.overhangDepth" min="200" max="1000" step="50" style="width:100%;">
+              </label>
+            </div>
             <div class="checkbox-row">
               <input type="checkbox" v-model="state.hasDecking" id="chk-has-decking">
               <label for="chk-has-decking">Include decking</label>
               <span v-if="!state.hasDecking" class="extra-price deduction">-&pound;750</span>
             </div>
+            <div v-if="state.hasDecking" style="margin-left:22px;margin-bottom:4px;">
+              <label style="font-size:11px;">Decking Depth: {{ state.deckingDepth }}mm
+                <input type="range" v-model.number="state.deckingDepth" min="200" max="5000" step="50" style="width:100%;">
+              </label>
+            </div>
           </div>
-          <label>Foundation / Groundworks
+          <div v-else>
+            <label>Canopy Depth (mm)
+              <input type="number" v-model.number="state.overhangDepth" min="0" max="1000" step="50">
+            </label>
+          </div>
+        </div>
+
+        <!-- Foundation / Groundworks -->
+        <div class="config-section">
+          <h4>Foundation / Groundworks</h4>
+          <label>Foundation Type
             <select v-model="state.foundationType">
               <option value="ground-screw">Ground Screw (installed by our team)</option>
               <option value="concrete-base">Concrete Base (installed by our team)</option>
@@ -308,18 +342,41 @@
           <div v-for="(room, i) in state.rooms" :key="i" class="placed-component" style="flex-wrap:wrap;">
             <div style="display:flex;align-items:center;gap:4px;width:100%;">
               <input type="text" v-model="room.label" class="input-sm" style="width:90px;">
-              <input type="number" v-model.number="room.widthMm" class="input-sm" style="width:65px;" step="50">
-              <span class="comp-pos">mm</span>
+              <template v-if="state.rooms.length > 1">
+                <input type="number" v-model.number="room.widthMm" class="input-sm" style="width:65px;" step="50">
+                <span class="comp-pos">mm</span>
+              </template>
               <button v-if="state.rooms.length > 1" class="comp-delete" @click="removeRoom(i)">&#215;</button>
             </div>
-            <div style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;">
-              <span style="color:#888;">Label:</span>
-              <span style="color:#888;">X</span>
-              <input type="number" v-model.number="room.labelOffsetX" class="input-sm" style="width:50px;" step="50">
-              <span style="color:#888;">Y</span>
-              <input type="number" v-model.number="room.labelOffsetY" class="input-sm" style="width:50px;" step="50">
-            </div>
+            <details style="width:100%;margin-top:4px;font-size:11px;">
+              <summary style="color:#888;cursor:pointer;user-select:none;">Move label position</summary>
+              <div style="margin-top:6px;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                  <span style="color:#888;width:65px;">Left/Right</span>
+                  <input type="range" :value="room.labelOffsetX" @input="room.labelOffsetX = Number($event.target.value)" min="-500" max="500" step="50" style="flex:1;">
+                  <span style="color:#888;width:45px;text-align:right;font-size:10px;">{{ room.labelOffsetX }}px</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span style="color:#888;width:65px;">Up/Down</span>
+                  <input type="range" :value="room.labelOffsetY" @input="room.labelOffsetY = Number($event.target.value)" min="-500" max="500" step="50" style="flex:1;">
+                  <span style="color:#888;width:45px;text-align:right;font-size:10px;">{{ room.labelOffsetY }}px</span>
+                </div>
+              </div>
+            </details>
           </div>
+          <details style="margin-top:6px;font-size:11px;">
+            <summary style="color:#888;cursor:pointer;user-select:none;">Adjust internal dimension positions</summary>
+            <div style="margin-top:6px;">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                <span style="color:#888;width:80px;">Width label</span>
+                <input type="range" :value="state.intDimWidthOffset || 0" @input="state.intDimWidthOffset = Number($event.target.value)" min="100" :max="state.depth - 300" step="50" style="flex:1;">
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="color:#888;width:80px;">Depth label</span>
+                <input type="range" :value="state.intDimDepthOffset || 0" @input="state.intDimDepthOffset = Number($event.target.value)" min="100" :max="state.width - 300" step="50" style="flex:1;">
+              </div>
+            </div>
+          </details>
         </div>
 
         <!-- Straight Partition (back to front) -->
@@ -487,26 +544,39 @@
           <h4>Placed Components</h4>
           <p v-if="!state.components.length" class="empty-msg">Double-click doors/windows above to add.</p>
           <div v-for="comp in state.components" :key="comp.id" class="placed-component" style="flex-wrap:wrap;gap:4px;">
-            <span class="comp-label" style="flex:1;min-width:100px;">{{ comp.label }}</span>
-            <select v-model="comp.elevation" class="input-sm" style="width:55px;">
-              <option value="front">Front</option>
-              <option value="left">Left</option>
-              <option value="right">Right</option>
-              <option value="rear">Rear</option>
-            </select>
-            <input type="number" v-model.number="comp.positionX" class="input-sm" style="width:50px;" step="50" title="X position (mm from left)">
-            <span class="comp-pos">x</span>
-            <button @click="comp.positionX = Math.max(0, comp.positionX - 50)" class="btn-sm" title="Move left/rear 50mm" style="padding:2px 6px;font-size:11px;">◀</button>
-            <button @click="comp.positionX = comp.positionX + 50" class="btn-sm" title="Move right/front 50mm" style="padding:2px 6px;font-size:11px;">▶</button>
-            <input type="number" v-model.number="comp.positionY" class="input-sm" style="width:50px;" step="50" title="Y position (mm from ground)" :disabled="!canMoveVertically(comp)" :placeholder="canMoveVertically(comp) ? '850' : 'fixed'">
-            <span class="comp-pos">y</span>
-            <input type="number" v-model.number="comp.customWidth" class="input-sm" style="width:50px;" step="50" :placeholder="getCompWidth(comp)" title="Custom width (mm)">
-            <span class="comp-pos">w</span>
-            <select v-if="comp.type.includes('sliding') || comp.type.includes('single')" v-model="comp.handleSide" class="input-sm" style="width:50px;" title="Handle side">
-              <option value="left">L</option>
-              <option value="right">R</option>
-            </select>
-            <button class="comp-delete" @click="removeComponent(comp.id)">&#215;</button>
+            <div style="display:flex;align-items:center;gap:4px;width:100%;">
+              <span class="comp-label" style="flex:1;min-width:80px;">{{ comp.label }}</span>
+              <select v-model="comp.elevation" class="input-sm" style="width:55px;">
+                <option value="front">Front</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+                <option value="rear">Rear</option>
+              </select>
+              <select v-if="comp.type.includes('sliding') || comp.type.includes('single')" v-model="comp.handleSide" class="input-sm" style="width:50px;" title="Handle side">
+                <option value="left">L</option>
+                <option value="right">R</option>
+              </select>
+              <button class="comp-delete" @click="removeComponent(comp.id)">&#215;</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;width:100%;font-size:11px;">
+              <span style="color:#888;width:50px;">Position</span>
+              <button @click="comp.positionX = Math.max(0, comp.positionX - 50)" class="btn-sm" title="Move left 50mm" style="padding:2px 6px;font-size:11px;">&#9664;</button>
+              <input type="number" v-model.number="comp.positionX" class="input-sm" style="width:50px;" step="50" title="Position from left (mm)">
+              <span style="color:#888;">mm</span>
+              <button @click="comp.positionX = comp.positionX + 50" class="btn-sm" title="Move right 50mm" style="padding:2px 6px;font-size:11px;">&#9654;</button>
+            </div>
+            <div v-if="canMoveVertically(comp)" style="display:flex;align-items:center;gap:4px;width:100%;font-size:11px;">
+              <span style="color:#888;width:50px;">Height</span>
+              <input type="number" v-model.number="comp.positionY" class="input-sm" style="width:50px;" step="50" title="Height from ground (mm)">
+              <span style="color:#888;">mm from ground</span>
+            </div>
+            <details style="width:100%;font-size:11px;">
+              <summary style="color:#888;cursor:pointer;user-select:none;">Custom width</summary>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:4px;">
+                <input type="number" v-model.number="comp.customWidth" class="input-sm" style="width:60px;" step="50" :placeholder="getCompWidth(comp)">
+                <span style="color:#888;">mm (default: {{ getCompWidth(comp) }})</span>
+              </div>
+            </details>
           </div>
         </div>
 
@@ -577,6 +647,7 @@
               <input type="text" v-model="lbl.text" class="input-sm" style="flex:1;min-width:80px;" placeholder="Label text">
               <span style="color:#888;font-size:11px;">Size</span>
               <input type="number" v-model.number="lbl.fontSize" class="input-sm" style="width:50px;" step="10" min="40" max="400" title="Font size">
+              <input type="color" v-model="lbl.color" style="width:24px;height:24px;padding:0;border:1px solid #ccc;border-radius:3px;cursor:pointer;" title="Text colour">
               <button class="comp-delete" @click="removeDrawingLabel(lbl.id)">&#215;</button>
             </div>
             <div style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;">

@@ -2,7 +2,7 @@
 // Reactive state, live pricing, drawing preview, email drafting
 
 import { initPricing, calculatePrice, formatPrice } from './pricing.js';
-import { generateDrawing } from './drawing-engine.js?v=14';
+import { generateDrawing } from './drawing-engine.js?v=32';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
@@ -36,6 +36,13 @@ function ensureStateDefaults(state) {
   if (!state.survey) state.survey = {};
   if (!state.discount) state.discount = { type: 'none', amount: 0, description: '' };
   if (!state.extras) state.extras = {};
+  if (state.deckingDepth === undefined) state.deckingDepth = 400;
+  if (state.rooms) {
+    for (const room of state.rooms) {
+      if (room.labelOffsetX === undefined) room.labelOffsetX = 0;
+      if (room.labelOffsetY === undefined) room.labelOffsetY = 0;
+    }
+  }
   if (!state.cladding) state.cladding = { front: 'anthracite-steel', left: 'anthracite-steel', right: 'anthracite-steel', rear: 'anthracite-steel' };
   if (!state.partitionRoom) state.partitionRoom = { enabled: false };
   if (!state.bathroom) state.bathroom = { enabled: false };
@@ -286,8 +293,8 @@ createApp({
         type,
         x,
         y,
-        w: 800,
-        h: 400,
+        w: 700,
+        h: 300,
         rotated: false,
       });
     },
@@ -300,7 +307,8 @@ createApp({
       this.state.drawingLabels.push({
         id: 'lbl-' + (this.nextLabelId++),
         text: 'Label',
-        fontSize: 140,
+        fontSize: 150,
+        color: '#000000',
         x: 5000,
         y: 2000,
         arrowEnabled: false,
@@ -321,9 +329,11 @@ createApp({
         this.state.rooms.push({
           label: partition === 'toilet' ? 'WC' : 'Storage',
           widthMm: this.state.width - splitWidth,
+          labelOffsetX: 0,
+          labelOffsetY: 0,
         });
       } else if (partition === 'none' && this.state.rooms.length > 1) {
-        this.state.rooms = [{ label: this.state.rooms[0].label, widthMm: this.state.width }];
+        this.state.rooms = [{ label: this.state.rooms[0].label, widthMm: this.state.width, labelOffsetX: 0, labelOffsetY: 0 }];
       }
     },
 
@@ -399,7 +409,7 @@ createApp({
       let exclusionsParagraph = 'Excluded from our price is the electrical connection, which will be subject to a visit from our electrician.';
       if (s.bathroom?.enabled && s.bathroom?.type) {
         exclusionsParagraph += ' The utility connections (water supply and waste) will also be arranged separately with our plumber and landscaper.';
-        exclusionsParagraph += ' We also ask that customers provide a mini skip whilst we are on site.';
+        exclusionsParagraph += ' We also ask that customers provide a 6-yard skip whilst we are on site, to keep everything clean and tidy.';
       } else {
         exclusionsParagraph += ' We also ask that customers provide a toilet facility (porta-loo or downstairs toilet) and 6-yard skip to help keep the site clean and tidy throughout the build.';
       }
@@ -559,8 +569,8 @@ createApp({
         const doorNote = s.straightPartition.hasDoor ? ' with interior door' : '';
         buildFeatures.push(`Internal partition wall${doorNote} to create separate ${leftLabel.toLowerCase()} and ${rightLabel.toLowerCase()} spaces`);
       } else if (s.partitionRoom?.enabled) {
-        const partLabels = { 'storage': 'storage space', 'wc': 'WC/shower room', 'shower': 'shower room' };
-        buildFeatures.push(`Internal partition wall to create separate ${partLabels[s.partitionRoom.type] || 'room'}`);
+        const roomLabel = (s.partitionRoom.label || 'room').toLowerCase();
+        buildFeatures.push(`Internal partition wall to create separate ${roomLabel} space`);
       }
 
       // Bathroom
@@ -1452,6 +1462,18 @@ createApp({
       if (!this.state.survey.bathroomType) this.state.survey.bathroomType = '';
       if (!this.state.survey.bathroomNotes) this.state.survey.bathroomNotes = '';
       
+      // Ensure primaryUse field exists
+      if (this.state.primaryUse === undefined) this.state.primaryUse = '';
+      if (this.state.primaryUseCustom === undefined) this.state.primaryUseCustom = '';
+
+      // Auto-populate customer number if empty
+      if (!this.state.customNotes.drawingNumber) {
+        const counterKey = 'gob-customer-number';
+        let nextNum = parseInt(localStorage.getItem(counterKey)) || 4500;
+        this.state.customNotes.drawingNumber = `GOB-${nextNum}`;
+        localStorage.setItem(counterKey, nextNum + 1);
+      }
+
       this.nextCompId = 100 + (this.state.components?.length || 0);
       this.nextFeatureId = 1000 + (this.state.externalFeatures?.length || 0);
 

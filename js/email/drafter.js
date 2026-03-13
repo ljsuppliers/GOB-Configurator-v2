@@ -24,6 +24,25 @@ export function generateEmail(templateName) {
   const salesRep = state.salesRep || 'Richard';
   const buildingTypeLower = (state.buildingType || 'garden office building').toLowerCase();
 
+  // Primary use (for {useCase} in templates)
+  const useCaseLabels = {
+    'home-office': 'Home Office',
+    'gym': 'Home Gym',
+    'studio': 'Art/Music Studio',
+    'therapy': 'Therapy/Treatment Room',
+    'guest-room': 'Guest Accommodation',
+    'annexe': 'Dependent Relative Annexe',
+    'multi-purpose': 'Multi-Purpose Space',
+    'rental': 'Airbnb/Rental',
+  };
+  const primaryUseLabel = state.primaryUse === 'custom'
+    ? (state.primaryUseCustom || '')
+    : (useCaseLabels[state.primaryUse] || '');
+  const surveyUseLabel = state.survey?.useCase === 'custom'
+    ? (state.survey?.useCaseCustom || '')
+    : (useCaseLabels[state.survey?.useCase] || '');
+  const useCase = primaryUseLabel || surveyUseLabel || buildingTypeLower;
+
   // Dynamic opening paragraph (post-visit)
   let openingParagraph;
   if (state.visitedShowroom) {
@@ -36,7 +55,7 @@ export function generateEmail(templateName) {
   let exclusionsParagraph = 'Excluded from our price is the electrical connection, which will be subject to a visit from our electrician.';
   if (state.bathroom?.enabled && state.bathroom?.type) {
     exclusionsParagraph += ' The utility connections (water supply and waste) will also be arranged separately with our plumber and landscaper.';
-    exclusionsParagraph += ' We also ask that customers provide a mini skip whilst we are on site.';
+    exclusionsParagraph += ' We also ask that customers provide a 6-yard skip whilst we are on site, to keep everything clean and tidy.';
   } else {
     exclusionsParagraph += ' We also ask that customers provide a toilet facility (porta-loo or downstairs toilet) and 6-yard skip to help keep the site clean and tidy throughout the build.';
   }
@@ -79,6 +98,7 @@ export function generateEmail(templateName) {
     '{customerFirstName}': derived.customerFirstName || '[Name]',
     '{buildingType}': state.buildingType || 'Garden Office Building',
     '{buildingTypeLower}': buildingTypeLower,
+    '{useCase}': useCase,
     '{dimensions}': derived.dimensions,
     '{tier}': isSig ? 'Signature' : 'Classic',
     '{totalPrice}': formatPrice(price?.totalIncVat || 0),
@@ -186,12 +206,8 @@ function generateBuildingIncludesList(state, price) {
 
   // Partition
   if (state.partitionRoom?.enabled) {
-    const partLabels = {
-      'storage': 'Internal partition wall to create separate storage space',
-      'wc': 'Internal partition wall with WC/shower room',
-      'shower': 'Internal partition wall with shower room',
-    };
-    features.push(partLabels[state.partitionRoom.type] || 'Internal partition wall');
+    const roomLabel = state.partitionRoom.label || 'room';
+    features.push(`Internal partition wall to create separate ${roomLabel.toLowerCase()} space`);
   }
   if (state.straightPartition?.enabled) {
     const leftLabel = state.straightPartition.leftLabel || 'Office';
@@ -261,7 +277,8 @@ function generateBuildingIncludesParagraph(state, price) {
     const doorNote = state.straightPartition.hasDoor ? ' with interior door' : '';
     parts.push(`internal partition wall${doorNote} to create separate ${leftLabel.toLowerCase()} and ${rightLabel.toLowerCase()} spaces`);
   } else if (state.partitionRoom?.enabled) {
-    parts.push('internal partition wall');
+    const roomLabel = (state.partitionRoom.label || 'room').toLowerCase();
+    parts.push(`internal partition wall to create separate ${roomLabel} space`);
   }
 
   // Standard finishes
