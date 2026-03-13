@@ -123,19 +123,13 @@ export function generateEmail(templateName) {
     '{planningParagraph}': planningParagraph,
   };
 
-  let subject = template.subject;
   let body = template.body;
 
   for (const [key, value] of Object.entries(vars)) {
-    subject = subject.replaceAll(key, value);
     body = body.replaceAll(key, value);
   }
 
-  // Append signature if it exists
-  const sig = templates.signature || '';
-  body += sig;
-
-  return { subject, body, templateName };
+  return { subject: '', body, templateName };
 }
 
 // ─── Detailed bullet-point list (post-visit quote email) ───
@@ -301,17 +295,32 @@ function buildCladdingDescription(state) {
   const sides = { front: 'front', left: 'left side', right: 'right side', rear: 'rear' };
   const clad = state.cladding || {};
 
-  // Group sides by cladding type
+  // Group sides by cladding family (e.g. all composite variants together)
   const groups = {};
   for (const [side, label] of Object.entries(sides)) {
     const type = clad[side] || 'anthracite-steel';
-    if (!groups[type]) groups[type] = [];
-    groups[type].push(label);
+    const family = type.startsWith('composite-') ? 'composite' : type;
+    if (!groups[family]) groups[family] = [];
+    groups[family].push({ label, type });
   }
 
-  for (const [type, sideList] of Object.entries(groups)) {
-    const claddingName = getCladdingLabel(type);
-    lines.push(`${claddingName} on ${sideList.join(' and ')}`);
+  for (const [family, entries] of Object.entries(groups)) {
+    if (family === 'composite') {
+      // Group composite by colour variant
+      const colourGroups = {};
+      for (const e of entries) {
+        const name = getCladdingLabel(e.type);
+        if (!colourGroups[name]) colourGroups[name] = [];
+        colourGroups[name].push(e.label);
+      }
+      const parts = Object.entries(colourGroups).map(([name, sideList]) =>
+        `${name} on ${sideList.join(' and ')}`
+      );
+      lines.push(parts.join(', '));
+    } else {
+      const claddingName = getCladdingLabel(entries[0].type);
+      lines.push(`${claddingName} on ${entries.map(e => e.label).join(' and ')}`);
+    }
   }
 
   return lines;

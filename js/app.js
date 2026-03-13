@@ -653,24 +653,17 @@ createApp({
         '{useCase}': buildingTypeLower,
       };
 
-      let subject = template.subject;
       let body = template.body;
       for (const [key, val] of Object.entries(replacements)) {
-        subject = subject.replaceAll(key, val);
         body = body.replaceAll(key, val);
       }
 
-      // Append signature
-      if (this.appData.emailTemplates.signature) {
-        body += this.appData.emailTemplates.signature;
-      }
-
-      this.emailSubject = subject;
+      this.emailSubject = '';
       this.emailBody = body;
     },
 
     copyEmail() {
-      const text = `Subject: ${this.emailSubject}\n\n${this.emailBody}`;
+      const text = this.emailBody;
       navigator.clipboard.writeText(text).then(() => this.notify('Email copied to clipboard'));
     },
 
@@ -1001,7 +994,7 @@ createApp({
       const svg = document.querySelector('#drawing-canvas svg');
       if (!svg) return;
       const win = window.open('', '_blank');
-      win.document.write(`<!DOCTYPE html><html><head><title>GOB Drawing - ${this.state.customer?.name || 'Preview'}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;}svg{max-width:100%;max-height:100vh;}</style></head><body>${svg.outerHTML}</body></html>`);
+      win.document.write(`<!DOCTYPE html><html><head><title>Drawing for ${this.state.customer?.name || 'Customer'}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;}svg{max-width:100%;max-height:100vh;}</style></head><body>${svg.outerHTML}</body></html>`);
       win.document.close();
       win.print();
     },

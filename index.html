@@ -965,9 +965,8 @@
               <button class="btn btn-sm btn-primary" @click="generateEmail">Generate</button>
               <button class="btn btn-sm" @click="copyEmail">Copy</button>
             </div>
-            <div v-if="emailSubject" class="email-output">
+            <div v-if="emailBody" class="email-output">
               <div class="email-preview">
-                <div class="email-field"><strong>Subject:</strong> {{ emailSubject }}</div>
                 <div class="email-body"><pre v-html="emailBodyHtml"></pre></div>
               </div>
             </div>

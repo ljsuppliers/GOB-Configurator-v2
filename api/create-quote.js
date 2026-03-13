@@ -280,7 +280,7 @@ function buildQuoteData(q) {
 
   const tierDesc = isSig
     ? 'Signature range with integrated canopy and decking on front of building'
-    : 'Classic range with clean, minimalist design';
+    : 'Classic Design';
   contentRow(tierDesc, { height: 29 });
   contentRow('Configuration as per drawing (TBC). All internal sizes are approximates and subject to final drawing.', { height: 31 });
   if (q.planning && q.planning.required) {
