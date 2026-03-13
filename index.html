@@ -360,12 +360,12 @@
               <div style="margin-top:6px;">
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
                   <span style="color:#888;width:65px;">Left/Right</span>
-                  <input type="range" :value="room.labelOffsetX" @input="room.labelOffsetX = Number($event.target.value)" min="-500" max="500" step="50" style="flex:1;">
+                  <input type="range" :value="room.labelOffsetX" @input="room.labelOffsetX = Number($event.target.value)" :min="-Math.round(room.widthMm / 2)" :max="Math.round(room.widthMm / 2)" step="50" style="flex:1;">
                   <span style="color:#888;width:45px;text-align:right;font-size:10px;">{{ room.labelOffsetX }}px</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                   <span style="color:#888;width:65px;">Up/Down</span>
-                  <input type="range" :value="room.labelOffsetY" @input="room.labelOffsetY = Number($event.target.value)" min="-500" max="500" step="50" style="flex:1;">
+                  <input type="range" :value="room.labelOffsetY" @input="room.labelOffsetY = Number($event.target.value)" :min="-Math.round(state.depth / 2)" :max="Math.round(state.depth / 2)" step="50" style="flex:1;">
                   <span style="color:#888;width:45px;text-align:right;font-size:10px;">{{ room.labelOffsetY }}px</span>
                 </div>
               </div>
