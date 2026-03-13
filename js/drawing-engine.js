@@ -1252,7 +1252,7 @@ function renderPlan(cfg) {
   const intColor = '#2288CC';
   const canopyDeduction = (showCanopy && overhang > 0) ? overhang : 0;
   const intDepthMeasure = depth - wt * 2 - canopyDeduction; // measurement shown on label
-  const intDepthLine = depth - wt * 2; // full line span (rear inner wall to front inner wall)
+  const intDepthLine = depth - wt * 2; // line spans full building interior
   const intDimW = cfg.intDimWidthOffset || depth * 0.15;
   const intDimD = cfg.intDimDepthOffset || width * 0.15;
   const sp = cfg.straightPartition;
@@ -1555,6 +1555,10 @@ function compose(b) {
   const isSig = b.tier === 'signature';
   const hasCanopy = b.hasCanopy !== false;
   const hasDecking = b.hasDecking !== false;
+  // Depth includes standard 400mm canopy; if canopy is larger, external depth label increases
+  const standardCanopy = 400;
+  const canopyExtra = (isSig && hasCanopy && oh > standardCanopy) ? oh - standardCanopy : 0;
+  const depthLabel = D + canopyExtra;
   const deckingDepth = b.deckingDepth || 400;
   // Only Signature with canopy shows external canopy projection
   const proj = (isSig && oh > 0 && hasCanopy) ? oh : 0;
@@ -1600,7 +1604,7 @@ function compose(b) {
   const sideDepthDim = (isSig && oh > 0 && hasCanopy) ? D + oh : D;
   s += tx(lX+D/2, row1Y-160, 'Left Elevation', 180, { bold:true, color:'#222' });
   s += grp(renderSide({ depth:D, height:H, side:'left', tier:b.tier, overhang:oh, components:b.leftComponents||[], corner:cL, claddingType:b.leftCladding, hasCanopy, hasDecking, deckingDepth, externalFeatures:b.leftExternalFeatures||[] }), { transform:`translate(${lX},${row1Y})` });
-  s += dimH(lX, lX+sideDepthDim, row1Y+H+deckH+30, `${D}mm`, 250);
+  s += dimH(lX, lX+sideDepthDim, row1Y+H+deckH+30, `${depthLabel}mm`, 250);
   // Height dimension on left side of left elevation
   s += dimV(row1Y, row1Y+H+deckH, lX, `${H}mm`, -450);
 
@@ -1614,7 +1618,7 @@ function compose(b) {
   const rX_dimStart = (isSig && oh > 0 && hasCanopy) ? rX - oh : rX;
   s += tx(rX+D/2, row1Y-160, 'Right Elevation', 180, { bold:true, color:'#222' });
   s += grp(renderSide({ depth:D, height:H, side:'right', tier:b.tier, overhang:oh, components:b.rightComponents||[], corner:cR, claddingType:b.rightCladding, hasCanopy, hasDecking, deckingDepth, externalFeatures:b.rightExternalFeatures||[] }), { transform:`translate(${rX},${row1Y})` });
-  s += dimH(rX_dimStart, rX+D, row1Y+H+deckH+30, `${D}mm`, 250);
+  s += dimH(rX_dimStart, rX+D, row1Y+H+deckH+30, `${depthLabel}mm`, 250);
 
   // PLAN VIEW
   const planLabelY = boundaryRear ? row2Y - boundaryRear - 160 : row2Y - 160;
@@ -1624,9 +1628,10 @@ function compose(b) {
   const planDimY = frontProj > 0 ? row2Y+D+frontProj+80 : row2Y+D+80;
   // Width dimension - offset 450 to match depth dimension distance, label below line
   s += dimH(pX, pX+W, planDimY, `${W}mm`, 450, false);
-  // Depth dimension - for Signature, stated depth includes canopy so measure to end of canopy
-  const planDepthEnd = frontProj > 0 ? row2Y+D+frontProj : row2Y+D;
-  s += dimV(row2Y, planDepthEnd, pX, `${D}mm`, -450);
+  // Depth dimension - measure to end of canopy only (not decking)
+  const planCanopyProj = (isSig && hasCanopy && oh > 0) ? oh : 0;
+  const planDepthEnd = planCanopyProj > 0 ? row2Y+D+planCanopyProj : row2Y+D;
+  s += dimV(row2Y, planDepthEnd, pX, `${depthLabel}mm`, -450);
 
   // Canopy/decking text below the plan view (only for Signature with overhang)
   if (isSig && (hasCanopy || hasDecking)) {
