@@ -276,8 +276,9 @@
 
         <!-- Corners, Canopy & Decking -->
         <div class="config-section">
-          <h4>Corners, Canopy & Decking</h4>
-          <div class="corner-row">
+          <h4 v-if="state.tier === 'signature'">Corners, Canopy & Decking</h4>
+          <h4 v-else>Decking</h4>
+          <div v-if="state.tier === 'signature'" class="corner-row">
             <div>
               <label class="corner-label">Left Corner</label>
               <div class="radio-group">
@@ -316,9 +317,15 @@
             </div>
           </div>
           <div v-else>
-            <label>Canopy Depth (mm)
-              <input type="number" v-model.number="state.overhangDepth" min="0" max="1000" step="50">
-            </label>
+            <div class="checkbox-row">
+              <input type="checkbox" v-model="state.hasDecking" id="chk-has-decking-classic">
+              <label for="chk-has-decking-classic">Include decking</label>
+            </div>
+            <div v-if="state.hasDecking" style="margin-left:22px;margin-bottom:4px;">
+              <label style="font-size:11px;">Decking Depth: {{ state.deckingDepth }}mm
+                <input type="range" v-model.number="state.deckingDepth" min="200" max="5000" step="50" style="width:100%;">
+              </label>
+            </div>
           </div>
         </div>
 

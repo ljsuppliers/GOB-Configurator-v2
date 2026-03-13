@@ -710,6 +710,10 @@ function renderFront(cfg) {
       s += ln(-sideOverhang, height, width + sideOverhang, height, 1.5, COL.deckingLine);
       s += ln(-sideOverhang, height + trimH, width + sideOverhang, height + trimH, 1, COL.deckingLine);
     }
+  } else {
+    // CLASSIC: 150mm anthracite L-shape corner trims
+    s += rc(0, ROOF_ZONE, 150, wallH, { fill: COL.anthracite, sw: 0 });
+    s += rc(width - 150, ROOF_ZONE, 150, wallH, { fill: COL.anthracite, sw: 0 });
   }
   
   // External features (lights and sockets on front wall) - rendered LAST so they appear on top
@@ -854,6 +858,12 @@ function renderSide(cfg) {
     s += rc(fasciaX, height, fasciaW, trimH, { fill: COL.anthracite });
     s += ln(fasciaX, height, fasciaX + fasciaW, height, 1.5, COL.anthraciteDk);
     s += ln(fasciaX, height + trimH, fasciaX + fasciaW, height + trimH, 1, COL.anthraciteDk);
+
+    if (!isSig) {
+      // CLASSIC: 150mm anthracite L-shape corner trims at front and rear edges
+      s += rc(0, ROOF_ZONE, 150, wallH, { fill: COL.anthracite, sw: 0 });
+      s += rc(depth - 150, ROOF_ZONE, 150, wallH, { fill: COL.anthracite, sw: 0 });
+    }
   }
 
   // External features (lights and sockets on side wall)
