@@ -1790,7 +1790,7 @@ export function generateDrawing(state, componentsData, claddingData) {
   }));
 
   const tierLabel = state.tier === 'signature' ? 'Signature' : 'Classic';
-  const dims = `${(state.width/1000).toFixed(1)}m x ${(state.depth/1000).toFixed(1)}m x ${(state.height/1000).toFixed(1)}m`;
+  const dims = `${(state.width/1000).toFixed(1)}m x ${(state.depth/1000).toFixed(1)}m x ${(state.height/1000).toFixed(2).replace(/0$/, '')}m`;
   const frontCladLabel = frontClad?.label || 'Cedar';
 
   return compose({

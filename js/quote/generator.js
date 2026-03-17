@@ -36,7 +36,7 @@ function formatVersionedFilename(baseType, customerName, date) {
 export function generateQuotePDF(state, price) {
   const widthM = (state.width / 1000).toFixed(1);
   const depthM = (state.depth / 1000).toFixed(1);
-  const heightM = (state.height / 1000).toFixed(1);
+  const heightM = (state.height / 1000).toFixed(2).replace(/0$/, '');
   const dimensions = `${widthM}m x ${depthM}m x ${heightM}m`;
   const derived = { dimensions };
 
@@ -343,7 +343,7 @@ export function generateQuotePDF(state, price) {
 
   y = renderSection('INTERNAL FINISH', internalFinish);
 
-  // DOORS, WINDOWS & PARTITIONS
+  // DOORS & WINDOWS
   y = checkPageBreak(y, 20);
   const components = [];
   
@@ -385,7 +385,7 @@ export function generateQuotePDF(state, price) {
   }
 
   if (components.length > 0) {
-    y = renderSection('DOORS, WINDOWS & PARTITIONS', components, true);
+    y = renderSection('DOORS & WINDOWS', components, true);
   }
 
   // ELECTRICAL INSTALLATION
@@ -766,9 +766,9 @@ export async function generateCombinedPDF(state, price, svgString) {
   // Then export drawing with matching version
   const widthM = (state.width / 1000).toFixed(1);
   const depthM = (state.depth / 1000).toFixed(1);
-  const heightM = (state.height / 1000).toFixed(1);
-  const dimensions = `${widthM}m x ${depthM}m x ${heightM}m`;
-  
+  const heightM2 = (state.height / 1000).toFixed(2).replace(/0$/, '');
+  const dimensions = `${widthM}m x ${depthM}m x ${heightM2}m`;
+
   if (typeof jspdf === 'undefined' && typeof jsPDF === 'undefined') {
     console.error('jsPDF not loaded');
     return;

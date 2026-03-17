@@ -47,7 +47,7 @@ export function renderTitleBlock(state, layout) {
 
   // Building specs summary
   const specs = [
-    `${(state.width / 1000).toFixed(1)}m x ${(state.depth / 1000).toFixed(1)}m x ${(state.height / 1000).toFixed(1)}m`,
+    `${(state.width / 1000).toFixed(1)}m x ${(state.depth / 1000).toFixed(1)}m x ${(state.height / 1000).toFixed(2).replace(/0$/, '')}m`,
     `${state.tier === 'signature' ? 'Signature' : 'Classic'} Range`,
     `${formatCladding(state.cladding?.front)} front cladding`
   ];

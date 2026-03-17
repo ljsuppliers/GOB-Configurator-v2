@@ -110,7 +110,7 @@ export function getDerived() {
   const areaSqm = (s.width / 1000) * (s.depth / 1000);
   const widthM = (s.width / 1000).toFixed(1);
   const depthM = (s.depth / 1000).toFixed(1);
-  const heightM = (s.height / 1000).toFixed(1);
+  const heightM = (s.height / 1000).toFixed(2).replace(/0$/, '');
   const dimensions = `${widthM}m x ${depthM}m x ${heightM}m`;
   const customerFirstName = (s.customer?.name || '').split(' ')[0] || '';
 

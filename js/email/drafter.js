@@ -153,7 +153,7 @@ function generateBuildingIncludesList(state, price) {
   }
 
   // External height
-  const heightM = (state.height / 1000).toFixed(1);
+  const heightM = (state.height / 1000).toFixed(2).replace(/0$/, '');
   if (state.height > 2500) {
     features.push(`${heightM}m external height (upgraded)`);
   } else {
@@ -174,7 +174,14 @@ function generateBuildingIncludesList(state, price) {
 
   const sockets = 5;
 
+  let lightingZones = 1;
+  if (state.straightPartition?.enabled) lightingZones++;
+  if (state.partitionRoom?.enabled) lightingZones++;
+
   let electricalDesc = `Complete internal electrical works including ${downlights} x dimmable LED downlights`;
+  if (lightingZones > 1) {
+    electricalDesc += `, ${lightingZones} x internal lighting zones on separate switches`;
+  }
   if (isSig) {
     const spotlights = Math.floor(state.width / 1000);
     electricalDesc += `, ${spotlights} x external downlights in canopy soffit`;
@@ -261,8 +268,8 @@ function generateBuildingIncludesParagraph(state, price) {
   }
 
   // Height
-  const heightM = (state.height / 1000).toFixed(1);
-  parts.push(`${heightM}m external height`);
+  const heightM2 = (state.height / 1000).toFixed(2).replace(/0$/, '');
+  parts.push(`${heightM2}m external height`);
 
   // Partition
   if (state.straightPartition?.enabled) {
@@ -331,33 +338,26 @@ function buildDoorWindowDescription(state) {
   const components = state.components || [];
   if (components.length === 0) return null;
 
-  const allDefs = appData ? { ...appData.components?.doors, ...appData.components?.windows } : {};
-
-  const doors = [];
-  const windows = [];
-
+  const items = [];
   for (const comp of components) {
-    const def = allDefs[comp.type];
-    const widthM = (comp.customWidth || def?.width || 900) / 1000;
-    const label = def?.label || comp.type;
-
-    if (def?.category === 'sliding' || def?.category === 'bifold' || def?.category === 'single') {
-      doors.push(`${widthM}m wide ${getComponentShortDesc(comp.type, def)}`);
-    } else {
-      const opener = def?.hasOpener ? ' (with top opening window)' : '';
-      windows.push(`${widthM}m wide ${getComponentShortDesc(comp.type, def)}${opener}`);
-    }
+    const t = comp.type || '';
+    const widthMm = comp.customWidth || comp.w || getDefaultWidth(t);
+    const widthM = (widthMm / 1000).toFixed(1);
+    const desc = getComponentShortDesc(t);
+    items.push(`1 x ${widthM}m ${desc}`);
   }
 
-  const parts = [];
-  if (doors.length > 0) {
-    parts.push(`${doors.length} x main ${doors.join(', ')}`);
-  }
-  if (windows.length > 0) {
-    parts.push(`${windows.length} x additional full height ${windows.join(', ')} window${windows.length > 1 ? 's' : ''}`);
-  }
+  return items.join(', ');
+}
 
-  return parts.join(' and ') + ' - configuration TBC';
+function getDefaultWidth(type) {
+  if (type.includes('2500')) return 2500;
+  if (type.includes('3000')) return 3000;
+  if (type.includes('1800')) return 1800;
+  if (type.includes('1200')) return 1200;
+  if (type.includes('600')) return 600;
+  if (type.includes('900')) return 900;
+  return 900;
 }
 
 // ─── Helper: short door/window summary for preliminary paragraph ───
@@ -365,40 +365,25 @@ function buildDoorWindowSummary(state) {
   const components = state.components || [];
   if (components.length === 0) return null;
 
-  const allDefs = appData ? { ...appData.components?.doors, ...appData.components?.windows } : {};
-
-  let doorCount = 0;
-  let windowCount = 0;
-  let mainDoorDesc = '';
-
+  const items = [];
   for (const comp of components) {
-    const def = allDefs[comp.type];
-    if (def?.category === 'sliding' || def?.category === 'bifold' || def?.category === 'single') {
-      doorCount++;
-      if (!mainDoorDesc) {
-        const widthM = (comp.customWidth || def?.width || 900) / 1000;
-        mainDoorDesc = `${widthM}m wide ${getComponentShortDesc(comp.type, def)}`;
-      }
-    } else {
-      windowCount++;
-    }
+    const t = comp.type || '';
+    const widthMm = comp.customWidth || comp.w || getDefaultWidth(t);
+    const widthM = (widthMm / 1000).toFixed(1);
+    items.push(`1 x ${widthM}m ${getComponentShortDesc(t)}`);
   }
 
-  const parts = [];
-  if (doorCount > 0) parts.push(`${doorCount} x main ${mainDoorDesc}`);
-  if (windowCount > 0) parts.push(`${windowCount} x additional window${windowCount > 1 ? 's' : ''}`);
-
-  return `door/window combination as discussed per our specification (${parts.join(' and ')} - configuration TBC)`;
+  return `door/window configuration (${items.join(', ')})`;
 }
 
-function getComponentShortDesc(type, def) {
+function getComponentShortDesc(type) {
   if (!type) return 'door';
-  if (type.includes('sliding')) return 'sliding door';
+  if (type.includes('sliding')) return 'UPVC sliding door';
   if (type.includes('bifold')) return 'bi-fold door';
   if (type.includes('single-cladded')) return 'secret cladded door';
-  if (type.includes('single')) return 'single opening door';
+  if (type.includes('single')) return 'single opening glazed door';
   if (type.includes('slot')) return 'slot window';
-  if (def?.hasOpener) return 'window with opener';
+  if (type.includes('opener') || type.includes('top-open')) return 'window with top opener';
   return 'fixed window';
 }
 

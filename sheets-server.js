@@ -154,7 +154,7 @@ function buildQuoteData(q) {
   const { intW, intD, intH } = getInternalDims(q);
   const w = (q.width / 1000).toFixed(1);
   const d = (q.depth / 1000).toFixed(1);
-  const h = (q.height / 1000).toFixed(1);
+  const h = (q.height / 1000).toFixed(2).replace(/0$/, '');
   const numDownlights = getDownlights(q);
   const numSpotlights = getSpotlights(q);
 
@@ -385,7 +385,7 @@ function buildQuoteData(q) {
   greySpacer(28);
 
   // ── DOORS, WINDOWS & PARTITIONS ──
-  sectionBar('Doors, Windows, Partitions', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
+  sectionBar('Doors & Windows', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
 
   if (q.components && q.components.length > 0) {
     for (const comp of q.components) {
@@ -397,11 +397,6 @@ function buildQuoteData(q) {
   }
   contentRow('4mm double glazed toughened glass throughout');
 
-  if (q.componentUpgrades && q.componentUpgrades.length > 0) {
-    for (const u of q.componentUpgrades) {
-      contentRow(u.label, { price: u.price });
-    }
-  }
   if (q.heightUpgrade && q.heightUpgrade.price > 0) {
     contentRow(q.heightUpgrade.label, { price: q.heightUpgrade.price });
   }
@@ -412,19 +407,18 @@ function buildQuoteData(q) {
   sectionBar('Standard Electrical Features');
 
   contentRow(`${numDownlights} x dimmable LED downlights`);
-  contentRow('Configuration/Quantity TBC on 1st fix electrician visit approx. 1 week into project', { fontSize: 10 });
-  if (numSpotlights > 0) {
-    contentRow(`${numSpotlights} x external down lights in canopy soffit`);
-  }
-  const sheetSocketCount = getSocketCount(q);
-  contentRow(`${sheetSocketCount} x double power sockets in brushed steel finish (1 w/ USB ports)`);
-
   let lightingZones = 1;
   if (q.straightPartition?.enabled) lightingZones++;
   if (q.partitionRoom?.enabled) lightingZones++;
   if (lightingZones > 1) {
     contentRow(`${lightingZones} x internal lighting zones on separate switches`);
   }
+  contentRow('Configuration/Quantity TBC on 1st fix electrician visit approx. 1 week into project', { fontSize: 10 });
+  if (numSpotlights > 0) {
+    contentRow(`${numSpotlights} x external down lights in canopy soffit`);
+  }
+  const sheetSocketCount = getSocketCount(q);
+  contentRow(`${sheetSocketCount} x double power sockets in brushed steel finish (1 w/ USB ports)`);
   contentRow('1 x single dimmable light switch in brushed steel');
   contentRow('1 x network connection port for WiFi connectivity');
   contentRow('Consumer unit');

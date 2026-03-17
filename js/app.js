@@ -355,7 +355,7 @@ createApp({
       const price = this.price;
       const isSig = s.tier === 'signature';
       const firstName = (s.customer?.name || 'Customer').split(' ')[0];
-      const dims = `${(s.width/1000).toFixed(1)}m x ${(s.depth/1000).toFixed(1)}m x ${(s.height/1000).toFixed(1)}m`;
+      const dims = `${(s.width/1000).toFixed(1)}m x ${(s.depth/1000).toFixed(1)}m x ${(s.height/1000).toFixed(2).replace(/0$/, '')}m`;
       const buildingTypeLower = (s.buildingType || 'garden office building').toLowerCase();
 
       // Handle custom paragraph
@@ -501,7 +501,7 @@ createApp({
       }
 
       // External height
-      const heightM = (s.height / 1000).toFixed(1);
+      const heightM = (s.height / 1000).toFixed(2).replace(/0$/, '');
       buildFeatures.push(`${heightM}m external height (${s.height > 2500 ? 'upgraded' : 'standard'})`);
 
       // Internal finish
@@ -518,7 +518,14 @@ createApp({
 
       const sockets = 5;
 
+      let lightingZones = 1;
+      if (s.straightPartition?.enabled) lightingZones++;
+      if (s.partitionRoom?.enabled) lightingZones++;
+
       let electricalDesc = `Complete internal electrical works including ${downlights} x dimmable LED downlights`;
+      if (lightingZones > 1) {
+        electricalDesc += `, ${lightingZones} x internal lighting zones on separate switches`;
+      }
       if (isSig) {
         const spotlights = Math.floor(s.width / 1000);
         electricalDesc += `, ${spotlights} x external downlights in canopy soffit`;
@@ -546,10 +553,10 @@ createApp({
         }
       }
       const doorWindowParts = [];
-      if (compDoors.length > 0) doorWindowParts.push(`${compDoors.length} x main ${compDoors.join(', ')}`);
-      if (compWindows.length > 0) doorWindowParts.push(`${compWindows.length} x additional full height ${compWindows.join(', ')}`);
+      for (const d of compDoors) doorWindowParts.push(`1 x ${d}`);
+      for (const w of compWindows) doorWindowParts.push(`1 x ${w}`);
       if (doorWindowParts.length > 0) {
-        buildFeatures.push(doorWindowParts.join(' and '));
+        buildFeatures.push(doorWindowParts.join(', '));
       }
 
       // Foundation
