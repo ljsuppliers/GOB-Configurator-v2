@@ -1741,7 +1741,7 @@ export function generateDrawing(state, componentsData, claddingData) {
     }
     // else: full-height doors/windows default to ground level (y undefined → height - h)
 
-    const elevEntry = { type: comp.type, x, w, h, y, id: comp.id, handleSide: comp.handleSide };
+    const elevEntry = { type: comp.type, x, w, h, y, id: comp.id, handleSide: comp.handleSide || 'right' };
     const planX = comp.planPositionX ?? x;
     const planEntry = { wall: comp.elevation, type: comp.type, x: planX, w, h, id: comp.id };
 
