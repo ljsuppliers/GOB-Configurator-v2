@@ -346,16 +346,17 @@ function singleDoor(x, y, w, h, handleSide) {
   return grp(s);
 }
 
-function secretCladdedDoor(x, y, w, h, claddingType) {
+function secretCladdedDoor(x, y, w, h, claddingType, handleSide) {
   // A door that blends into the cladding - just a faint outline
   let s = '';
   // Fill with cladding pattern (or neutral if not specified)
   s += rc(x, y, w, h, { fill: cladFill(claddingType || 'steel') });
   // Faint door outline - dashed to show it's a hidden door
   s += rc(x+10, y+10, w-20, h-20, { fill: 'none', sw: 3, stroke: '#555', 'stroke-dasharray': '15,8' });
-  // Small handle indication on the right side
+  // Handle position based on handleSide
   const handleY = y + h * 0.45;
-  s += rc(x + w - 60, handleY, 30, 80, { fill: '#444', sw: 1, stroke: '#333', rx: 4 });
+  const handleX = handleSide === 'left' ? x + 30 : x + w - 60;
+  s += rc(handleX, handleY, 30, 80, { fill: '#444', sw: 1, stroke: '#333', rx: 4 });
   return grp(s);
 }
 
@@ -497,7 +498,7 @@ function renderComp(type, x, y, w, h, compId, claddingType, handleSide) {
   else if (type.includes('bifold-35')||type.includes('bifold-36')) inner = bifoldDoor(x,y,w,h,4);
   else if (type.includes('bifold-45')) inner = bifoldDoor(x,y,w,h,5);
   else if (type.includes('bifold')) inner = bifoldDoor(x,y,w,h,3);
-  else if (type.includes('cladded')) inner = secretCladdedDoor(x,y,w,h, claddingType);
+  else if (type.includes('cladded')) inner = secretCladdedDoor(x,y,w,h, claddingType, handleSide);
   else if (type.includes('single')) inner = singleDoor(x,y,w,h, handleSide);
   else if (type.includes('slot')) inner = slotWindow(x,y,w,h);
   else if (type.includes('opener')) inner = windowOpener(x,y,w,h);

@@ -1181,13 +1181,17 @@ createApp({
         if (doorType && this.appData.components?.doors?.[doorType]) {
           const def = this.appData.components.doors[doorType];
           const pos = Math.round((this.state.width / 2 - def.width / 2) / 50) * 50;
-          this.state.components.push({
+          const surveyComp = {
             id: 'comp-' + (this.nextCompId++),
             type: doorType,
             elevation: 'front',
             positionX: Math.max(0, pos),
             label: def.label,
-          });
+          };
+          if (doorType.includes('sliding') || doorType.includes('single')) {
+            surveyComp.handleSide = 'right';
+          }
+          this.state.components.push(surveyComp);
           applied.push('Door (' + def.label + ')');
         }
       }
