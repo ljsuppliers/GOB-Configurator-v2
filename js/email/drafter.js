@@ -2,7 +2,7 @@
 // Templates from email-templates.json, parameterised with building state
 
 import { getState, getDerived } from '../state.js';
-import { calculatePrice, formatPrice } from '../pricing.js';
+import { calculatePrice, formatPrice, getDownlightCount } from '../pricing.js';
 
 let templates = null;
 let appData = null;
@@ -164,13 +164,8 @@ function generateBuildingIncludesList(state, price) {
   features.push('Internal wall finish: plaster-boarded, plastered and decorated white');
   features.push('Flooring and skirting board');
 
-  // Electrical
-  const sqm = (state.width / 1000) * (state.depth / 1000);
-  let downlights = 4;
-  if (sqm > 32) downlights = 12;
-  else if (sqm > 24) downlights = 10;
-  else if (sqm > 15) downlights = 8;
-  else if (sqm > 9) downlights = 6;
+  // Electrical (use shared function for consistency with Google Sheet)
+  const downlights = getDownlightCount(state);
 
   const sockets = 5;
 

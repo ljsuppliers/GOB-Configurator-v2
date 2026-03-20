@@ -48,18 +48,23 @@ function fmtCurrency(amount) {
 function formatComponentDesc(comp) {
   const widthM = comp.width ? (comp.width / 1000).toFixed(1) : '2.5';
   let typeDesc = 'window';
+  let isSlot = false;
   const t = comp.type || '';
   if (t.includes('sliding')) typeDesc = 'sliding door';
   else if (t.includes('bifold')) typeDesc = 'bi-fold door';
   else if (t.includes('single') && !t.includes('window')) typeDesc = 'single opening door';
   else if (t.includes('cladded') || t.includes('secret')) typeDesc = 'secret cladded door';
+  else if (t.includes('opener') && t.includes('slot')) { typeDesc = 'slot window with opener'; isSlot = true; }
+  else if (t.includes('slot')) { typeDesc = 'slot window (fixed)'; isSlot = true; }
   else if (t.includes('opener')) typeDesc = 'window with top opener';
-  else if (t.includes('slot')) typeDesc = 'slot window';
   else if (t.includes('fixed') || t.includes('window')) typeDesc = 'fixed window';
 
   let handleDesc = '';
   if (t.includes('sliding') || t.includes('single')) {
     handleDesc = comp.handleSide === 'left' ? ' (opening left to right)' : ' (opening right to left)';
+  }
+  if (isSlot) {
+    return `1 x ${widthM}m x 0.45m ${typeDesc}: smooth anthracite grey outside, white inside`;
   }
   return `1 x full height ${widthM}m wide ${typeDesc}: smooth anthracite grey outside, white inside${handleDesc}`;
 }
@@ -267,7 +272,8 @@ function buildQuoteData(q) {
   heading('Building Specification', 59, 25);
   spacer(21);
 
-  const extDimNote = isSig ? ' (incl. integrated 400mm canopy/decking)' : '';
+  const hasDecking = isSig && q.hasDecking !== false;
+  const extDimNote = isSig ? ` (incl. integrated 400mm canopy${hasDecking ? ' & decking' : ''})` : '';
 
   sectionBar(
     `Your Building: ${w}m x ${d}m x ${h}m ${q.buildingType || 'Garden Office Building'}`,
@@ -279,7 +285,7 @@ function buildQuoteData(q) {
   contentRow(`Internal Dimensions \u2013 (W) ${intW}mm x (D) ${intD}mm x (H) ${intH}mm (approx)`, { height: 31 });
 
   const tierDesc = isSig
-    ? 'Signature range with integrated canopy and decking on front of building'
+    ? `Signature range with integrated canopy${hasDecking ? ' and decking' : ''} on front of building`
     : 'Classic Design';
   contentRow(tierDesc, { height: 29 });
   contentRow('Configuration as per drawing (TBC). All internal sizes are approximates and subject to final drawing.', { height: 31 });
@@ -320,7 +326,7 @@ function buildQuoteData(q) {
     const hasPrice = cl.price && cl.price > 0;
     contentRow(
       `${cl.side} cladding: ${cl.value || 'anthracite grey steel cladding'}`,
-      { price: hasPrice ? cl.price : undefined }
+      { detail: hasPrice ? '1' : '', price: hasPrice ? cl.price : undefined }
     );
     if (hasPrice) priceCells.push(rows.length);
   }
@@ -356,7 +362,7 @@ function buildQuoteData(q) {
   contentRow('4mm double glazed toughened glass throughout');
 
   if (q.heightUpgrade && q.heightUpgrade.price > 0) {
-    contentRow(q.heightUpgrade.label, { price: q.heightUpgrade.price });
+    contentRow(q.heightUpgrade.label, { detail: '1', price: q.heightUpgrade.price });
     priceCells.push(rows.length);
   }
 
@@ -392,9 +398,9 @@ function buildQuoteData(q) {
   );
 
   if (q.bathroom && q.bathroom.enabled && bathroomExtras.length > 0) {
-    sectionBar('Bathroom / WC Suite', { amountLabel: 'Amount (\u00a3)' });
+    sectionBar('Bathroom / WC Suite', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
     for (const be of bathroomExtras) {
-      contentRow(be.label, { price: be.price });
+      contentRow(be.label, { detail: '1', price: be.price });
       priceCells.push(rows.length);
       if (be.description) {
         contentRow(be.description, { fontSize: 10 });
@@ -409,7 +415,7 @@ function buildQuoteData(q) {
     sectionBar('Selected Extras & Upgrades', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
     if (nonBathroomExtras.length > 0) {
       for (const extra of nonBathroomExtras) {
-        contentRow(extra.label, { price: extra.price });
+        contentRow(extra.label, { detail: '1', price: extra.price });
         priceCells.push(rows.length);
         if (extra.description) {
           contentRow(extra.description, { fontSize: 10 });
@@ -418,7 +424,7 @@ function buildQuoteData(q) {
     }
     if (q.deductions && q.deductions.length > 0) {
       for (const ded of q.deductions) {
-        contentRow(ded.label, { fg: GREEN, price: ded.price, priceFg: GREEN });
+        contentRow(ded.label, { detail: '1', fg: GREEN, price: ded.price, priceFg: GREEN });
         priceCells.push(rows.length);
       }
     }
@@ -537,6 +543,7 @@ function buildQuoteData(q) {
   terms.push('*Groundworks, installation & other labour to be paid directly to installation team');
   terms.push('Customer to provide toilet facility and 6-yard skip for waste');
   terms.push('Customer to be responsible for levelling and clearance of site prior to commencement of works');
+  terms.push('Possible step at front of building may be required depending on final ground/building level');
 
   for (const term of terms) {
     termsRow(term);

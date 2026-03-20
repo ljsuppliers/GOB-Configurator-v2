@@ -701,7 +701,8 @@ export function generateQuotePDF(state, price) {
     'Installation and groundworks are paid directly to our installer team.',
     'Electrical connection to mains supply is excluded and must be arranged by the customer.',
     'Lead time: typically 8-12 weeks from deposit payment.',
-    'A holding deposit of £250 is required to reserve your delivery and installation date.'
+    'A holding deposit of £250 is required to reserve your delivery and installation date.',
+    'Possible step at front of building may be required depending on final ground/building level.'
   ];
 
   terms.forEach(term => {
