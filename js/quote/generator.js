@@ -286,7 +286,7 @@ export function generateQuotePDF(state, price) {
   const standardFeatures = [
     'Insulated timber/panel construction with 100mm PIR walls, 75mm PIR floor and ceiling',
     state.tier === 'signature' ? '400mm canopy with integrated decking feature' : 'Flush front design with clean lines',
-    `${{ 'ground-screw': 'Ground screw foundation system', 'concrete-base': 'Concrete base foundation', 'concrete-pile': 'Concrete pile foundation system', 'concrete-existing': 'Existing concrete base foundation', 'hybrid': 'Hybrid foundation: existing concrete base + ground screws' }[state.foundationType] || 'Ground screw foundation system'}`,
+    `${{ 'ground-screw': 'Ground screw foundation system', 'concrete-base': 'Concrete base foundation', 'concrete-pile': 'Concrete pile foundation system', 'concrete-existing': 'Existing concrete base foundation', 'concrete-landscaper': 'Concrete base foundation (arranged via our landscaper, paid directly)', 'hybrid': 'Hybrid foundation: existing concrete base + ground screws' }[state.foundationType] || 'Ground screw foundation system'}`,
     `${state.cornerLeft === 'open' ? 'Open' : 'Closed'} left corner, ${state.cornerRight === 'open' ? 'open' : 'closed'} right corner`
   ];
 

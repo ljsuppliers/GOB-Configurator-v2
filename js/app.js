@@ -7,6 +7,7 @@ import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
+import { copyRichText } from './email/rich-copy.js';
 
 const { createApp } = Vue;
 
@@ -405,14 +406,23 @@ createApp({
         discountParagraph = `\n\nI also wanted to mention that we've recently launched a new Ambassador Scheme. As local completed projects are incredibly valuable for us, we're offering a reduction for customers who are happy, once the build is complete, to allow up to two prospective customers to view the building by appointment. Given you are so local to us and would make a fantastic case study for our business, I've included a ${discountAmount} discount on your quote.`;
       }
 
-      // ─── Exclusions paragraph ───
-      let exclusionsParagraph = 'Excluded from our price is the electrical connection, which will be subject to a visit from our electrician.';
-      if (s.bathroom?.enabled && s.bathroom?.type) {
-        exclusionsParagraph += ' The utility connections (water supply and waste) will also be arranged separately with our plumber and landscaper.';
-        exclusionsParagraph += ' We also ask that customers provide a 6-yard skip whilst we are on site, to keep everything clean and tidy.';
-      } else {
-        exclusionsParagraph += ' We also ask that customers provide a toilet facility (porta-loo or downstairs toilet) and 6-yard skip to help keep the site clean and tidy throughout the build.';
+      // ─── Exclusions: bulleted section (Liam's 2026-08-24 format) ───
+      const hasBathroom = !!(s.bathroom?.enabled && s.bathroom?.type);
+      const exclusionBullets = [
+        '* Electrical connection, which will be subject to a visit from our electrician (£1k to £2k on average)',
+      ];
+      if (hasBathroom) {
+        exclusionBullets.push('* Utility connections (water supply and waste), which will be arranged separately with our plumber and landscaper');
       }
+      if (s.foundationType === 'concrete-landscaper') {
+        exclusionBullets.push('* Concrete base foundation, which is subject to a visit from our landscaper (£2k to £4k on average). The landscaper can also assist with any preparation works or post-build landscaping.');
+      }
+      exclusionBullets.push(hasBathroom
+        ? '* We also ask that customers provide a 6-yard skip whilst we are on site, to keep everything clean and tidy'
+        : '* We also ask that customers provide a toilet facility (porta-loo or downstairs toilet) and 6-yard skip to help keep the site clean and tidy throughout the build (~£500 for both)');
+      const exclusionsParagraph =
+        'Excluded from our price are the following, but we will arrange and liaise throughout the project, we just ask that you pay the contractors directly:\n\n'
+        + exclusionBullets.join('\n');
 
       // ─── Deposit next steps ───
       let depositNextSteps = 'We will also arrange a visit from our registered electrician to assess the electrical connection.';
@@ -500,6 +510,48 @@ createApp({
         buildFeatures.push(`${getCladdingLabel(type)} on ${sideList.join(' and ')}`);
       }
 
+      // Component definitions — needed by the corner line and the
+      // doors & windows list below.
+      const allDefs = { ...this.appData.components?.doors, ...this.appData.components?.windows };
+
+      // ─── Open/closed corners (signature fronts only) ───
+      // cornerLeft/cornerRight are explicit UI state; the explanatory second
+      // sentence is only added when we can name what actually meets at that
+      // corner (a component on the side wall + the front component nearest
+      // that corner).
+      if (isSig && (s.cornerLeft === 'open' || s.cornerRight === 'open')) {
+        const kindOf = (comp) => {
+          const cat = allDefs[comp.type]?.category || '';
+          return (cat === 'sliding' || cat === 'bifold' || cat === 'single') ? 'door' : 'window';
+        };
+        const comps = s.components || [];
+        const describeOpenCorner = (side) => {
+          const other = side === 'left' ? 'right' : 'left';
+          let line = `Open corner on front ${side}, closed corner on front ${other}.`;
+          const sideComps = comps.filter((c) => c.elevation === side);
+          const sideComp = sideComps.find((c) => kindOf(c) === 'door') || sideComps[0];
+          const frontComps = comps.filter((c) => c.elevation === 'front');
+          const frontComp = frontComps.length
+            ? frontComps.reduce((best, c) => {
+                const edge = (comp) => {
+                  const w = comp.customWidth || allDefs[comp.type]?.width || 900;
+                  return side === 'left' ? comp.positionX : s.width - (comp.positionX + w);
+                };
+                return edge(c) < edge(best) ? c : best;
+              })
+            : null;
+          if (sideComp && frontComp) {
+            line += ` The open corner on the front ${side} will be where the ${kindOf(sideComp)} on the ${side}, and ${kindOf(frontComp)} on the front, meet together to form an 'open corner'.`;
+          }
+          return line;
+        };
+        if (s.cornerLeft === 'open' && s.cornerRight === 'open') {
+          buildFeatures.push('Open corners on front left and front right');
+        } else {
+          buildFeatures.push(describeOpenCorner(s.cornerLeft === 'open' ? 'left' : 'right'));
+        }
+      }
+
       // External height
       const heightM = (s.height / 1000).toFixed(2).replace(/0$/, '');
       buildFeatures.push(`${heightM}m external height (${s.height > 2500 ? 'upgraded' : 'standard'})`);
@@ -534,7 +586,6 @@ createApp({
       buildFeatures.push(electricalDesc);
 
       // Doors & windows
-      const allDefs = { ...this.appData.components?.doors, ...this.appData.components?.windows };
       const compDoors = [];
       const compWindows = [];
       for (const comp of (s.components || [])) {
@@ -559,7 +610,8 @@ createApp({
         buildFeatures.push(doorWindowParts.join(', '));
       }
 
-      // Foundation
+      // Foundation. 'concrete-landscaper' deliberately gets NO includes line —
+      // that base is customer-paid and lives in the exclusions list instead.
       const foundationLabels = {
         'ground-screw': 'Ground screw foundation system (installed by our team)',
         'concrete-base': 'Concrete base foundation (installed by our team)',
@@ -567,7 +619,9 @@ createApp({
         'concrete-existing': 'Existing concrete base foundation',
         'hybrid': 'Hybrid foundation: existing concrete base + ground screws'
       };
-      buildFeatures.push(foundationLabels[s.foundationType] || 'Ground screw foundation system');
+      if (s.foundationType !== 'concrete-landscaper') {
+        buildFeatures.push(foundationLabels[s.foundationType] || 'Ground screw foundation system');
+      }
 
       // Partition
       if (s.straightPartition?.enabled) {
@@ -669,9 +723,19 @@ createApp({
       this.emailBody = body;
     },
 
-    copyEmail() {
-      const text = this.emailBody;
-      navigator.clipboard.writeText(text).then(() => this.notify('Email copied to clipboard'));
+    async copyEmail() {
+      try {
+        const rich = await copyRichText(this.emailBody);
+        this.notify(rich
+          ? 'Email copied — paste into Gmail with formatting and links'
+          : 'Rich copy unavailable in this browser — plain text copied');
+      } catch {
+        this.notify('Copy failed — select the text and copy manually');
+      }
+    },
+
+    copyEmailPlain() {
+      navigator.clipboard.writeText(this.emailBody).then(() => this.notify('Email copied as plain text'));
     },
 
     saveConfig() {

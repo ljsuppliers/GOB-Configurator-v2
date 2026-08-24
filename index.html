@@ -338,6 +338,7 @@
               <option value="concrete-base">Concrete Base (installed by our team)</option>
               <option value="concrete-pile">Concrete Pile System (installed by our team)</option>
               <option value="concrete-existing">Concrete Base (existing)</option>
+              <option value="concrete-landscaper">Concrete Base (via our landscaper, customer pays directly)</option>
               <option value="hybrid">Hybrid: Existing Concrete Base + Ground Screws</option>
             </select>
           </label>
@@ -963,7 +964,8 @@
                 <option value="buildComplete">10. Build Complete</option>
               </select>
               <button class="btn btn-sm btn-primary" @click="generateEmail">Generate</button>
-              <button class="btn btn-sm" @click="copyEmail">Copy</button>
+              <button class="btn btn-sm btn-primary" @click="copyEmail" title="Keeps bullets and clickable links when pasted into Gmail">Copy for Gmail</button>
+              <button class="btn btn-sm" @click="copyEmailPlain" title="Unformatted plain text">Copy plain</button>
             </div>
             <div v-if="emailBody" class="email-output">
               <div class="email-preview">
