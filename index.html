@@ -1064,14 +1064,36 @@
 
               <!-- Purchase orders -->
               <h3 style="margin-top:18px">Purchase orders ({{ orders.length }})</h3>
+              <div class="po-sendbar">
+                <template v-if="gmailReady">
+                  <button v-if="!sendReview" class="btn btn-primary" :disabled="sending || !orders.some(o => o.supplier && o.supplier.email && !o.sentAt)" @click="sendReview = true">Send all purchase orders from {{ senderEmail }}</button>
+                  <template v-else>
+                    <div class="po-review">
+                      <strong>Review before sending</strong> - {{ orders.filter(o => o.supplier && o.supplier.email && !o.sentAt).length }} email{{ orders.filter(o => o.supplier && o.supplier.email && !o.sentAt).length === 1 ? '' : 's' }} will go from <strong>{{ senderEmail }}</strong> (Google will ask you to sign in the first time):
+                      <ul>
+                        <li v-for="o in orders.filter(o => o.supplier && o.supplier.email && !o.sentAt)" :key="'rv'+o.supplierName+o.destination">{{ o.supplierName }} → {{ o.supplier.email }} · {{ o.items.length }} line{{ o.items.length === 1 ? '' : 's' }} · deliver to {{ o.destination === 'factory' ? 'FACTORY' : 'SITE' }}</li>
+                      </ul>
+                      <span v-if="orders.some(o => !o.supplier || !o.supplier.email)" class="bom-warn">Skipped (no email set): {{ orders.filter(o => !o.supplier || !o.supplier.email).map(o => o.supplierName).join(', ') }}</span>
+                      <div style="margin-top:8px;display:flex;gap:8px">
+                        <button class="btn btn-primary" :disabled="sending" @click="sendAllOrders()">{{ sending ? 'Sending…' : 'Yes, send them now' }}</button>
+                        <button class="btn btn-sm" :disabled="sending" @click="sendReview = false">Cancel</button>
+                      </div>
+                    </div>
+                  </template>
+                </template>
+                <span v-else class="bom-deriv">One-button sending from {{ senderEmail }} needs the Google client ID (see js/google-config.js). Until then use Copy email / Open in mail.</span>
+                <div v-if="sendLog.length" class="po-log"><div v-for="(l, i) in sendLog" :key="i">{{ l }}</div></div>
+              </div>
               <div v-for="o in orders" :key="o.supplierName + o.destination" class="po-card">
                 <div class="po-head">
                   <strong>{{ o.supplierName }}</strong>
                   <span class="po-dest">→ {{ o.destination === 'factory' ? 'FACTORY (Biggin Hill)' : 'SITE' }}</span>
                   <span v-if="!o.supplier || !o.supplier.email" class="bom-warn">no order email set</span>
                   <span style="flex:1"></span>
+                  <span v-if="o.sentAt" class="po-sent">Sent {{ new Date(o.sentAt).toLocaleString('en-GB') }}</span>
                   <button class="btn btn-sm" @click="copyOrderEmail(o)">{{ o.copied ? 'Copied ✓' : 'Copy email' }}</button>
                   <a v-if="o.supplier && o.supplier.email" class="btn btn-sm" :href="mailtoOrder(o)">Open in mail</a>
+                  <button v-if="gmailReady && o.supplier && o.supplier.email" class="btn btn-sm" :disabled="sending" @click="sendOrder(o)">{{ o.sentAt ? 'Send again' : 'Send from Gmail' }}</button>
                 </div>
                 <pre class="po-body">{{ o.email.body }}</pre>
               </div>
@@ -1445,6 +1467,13 @@
 <div id="notification"></div>
 
 <!-- Libraries -->
+<style>
+.po-sendbar{margin:6px 0 12px;padding:10px 12px;background:#f4f7f8;border:1px solid #dde3e6;border-radius:6px}
+.po-review ul{margin:6px 0 4px 18px;padding:0;font-size:13px}
+.po-review li{margin:2px 0}
+.po-log{margin-top:8px;font-size:12px;color:#334;white-space:pre-wrap}
+.po-sent{font-size:12px;color:#1a7f37;font-weight:600;margin-right:6px}
+</style>
 <script src="lib/vue.global.prod.js"></script>
 <script src="lib/jspdf.min.js"></script>
 
@@ -1453,7 +1482,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=42"></script>
+<script type="module" src="js/app.js?v=43"></script>
 
 </body>
 </html>

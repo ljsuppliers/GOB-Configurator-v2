@@ -10,6 +10,8 @@ import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, l
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom } from './bom/premium-bom.js?v=3';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=3';
+import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
+import { SENDER_EMAIL } from './google-config.js?v=1';
 
 const { createApp } = Vue;
 
@@ -87,6 +89,12 @@ createApp({
       suppliersOpen: false,
       catalogueFilter: '',
       catSaveStatus: '',
+      // One-button ordering from Liam's Gmail
+      gmailReady: gmailConfigured(),
+      senderEmail: SENDER_EMAIL,
+      sendReview: false,      // review step shown before the real send
+      sending: false,
+      sendLog: [],
 
       // Cloud saves
       cloudReady: false,
@@ -247,6 +255,34 @@ createApp({
         ref: this.orderRef,
         siteAddress: [this.state.customer?.name, this.state.customer?.address].filter(Boolean).join('\n'),
       });
+      // Mark orders already sent for this job (saved in the design state).
+      const sent = this.state.ordersSent || {};
+      for (const o of this.orders) o.sentAt = sent[this.orderKey(o)]?.at || '';
+    },
+    orderKey(o) { return `${this.orderRef}||${o.supplierName}||${o.destination}`; },
+    async sendOrder(order) {
+      if (!order.supplier?.email) { this.bomStatus = `${order.supplierName}: no order email set (Suppliers editor)`; return false; }
+      try {
+        this.sending = true;
+        const id = await sendEmail({ to: order.supplier.email, subject: order.email.subject, body: order.email.body });
+        if (!this.state.ordersSent) this.state.ordersSent = {};
+        this.state.ordersSent[this.orderKey(order)] = { at: new Date().toISOString(), to: order.supplier.email, gmailId: id, lines: order.items.length };
+        order.sentAt = this.state.ordersSent[this.orderKey(order)].at;
+        this.sendLog.unshift(`Sent to ${order.supplierName} (${order.supplier.email}) from ${gmailSignedInAs() || this.senderEmail}`);
+        return true;
+      } catch (e) {
+        this.sendLog.unshift(`FAILED ${order.supplierName}: ${e.message}`);
+        return false;
+      } finally { this.sending = false; }
+    },
+    /** One button: review, then send every unsent order with an email address. */
+    async sendAllOrders() {
+      const todo = this.orders.filter((o) => o.supplier?.email && !o.sentAt);
+      let ok = 0;
+      for (const o of todo) { if (await this.sendOrder(o)) ok += 1; }
+      this.sendReview = false;
+      const noEmail = this.orders.filter((o) => !o.supplier?.email).length;
+      this.bomStatus = `${ok} of ${todo.length} purchase orders sent${noEmail ? ` - ${noEmail} supplier${noEmail === 1 ? '' : 's'} still have no email set` : ''}`;
     },
     // Per-JOB overrides (saved with the quote state, NOT the catalogue):
     // everything is site delivery as standard; Liam allocates leftover factory
