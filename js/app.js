@@ -8,7 +8,7 @@ import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom } from './bom/premium-bom.js?v=3';
+import { buildPremiumBom } from './bom/premium-bom.js?v=4';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES } from './bom/orders.js?v=7';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=3';
@@ -217,7 +217,7 @@ createApp({
         sent: (this.orders || []).filter((o) => o.sentAt).length,
         noEmail: (this.orders || []).filter((o) => !o.supplier?.email).length,
         notInCatalogue: lines.filter((l) => !l.inCatalogue).length,
-        missingCost: lines.filter((l) => l.inCatalogue && !l.inStock && !(l.unitCost > 0)).length,
+        missingCost: lines.filter((l) => l.inCatalogue && !l.inStock && !(l.unitCost > 0) && !/Site equipment/.test(l.material?.category || '')).length,
       };
     },
     supplierSections() {

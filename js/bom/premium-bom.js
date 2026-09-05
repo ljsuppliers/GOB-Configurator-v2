@@ -125,7 +125,6 @@ export function buildPremiumBom(state, componentDefs) {
   } else {
     add('Adjustable plastic pedestal', pedestals, `${cols}x${rowsN} grid (max 1.3m spacing), rows under the 5x2 joist lines - frame builds DIRECTLY on the heads (no bearers). Anchored to the slab`);
     add('DPM sheet', Math.ceil(w * d * 1.1), `Over the slab under the pedestals (${(w * d).toFixed(1)}m2 + 10% laps)`);
-    add('Concrete frame anchor', pedestals * 2, `2 per pedestal (${pedestals} pedestals)`);
   }
 
   /* ---------- FLOOR (5x2, doubled ring + 1.2m grid) ---------- */
@@ -135,14 +134,10 @@ export function buildPremiumBom(state, componentDefs) {
   add('5x2 tanalised C24 timber', Math.ceil((fJoists * d + 2 * w + fDoubledLm) * 1.10),
     `Floor: ${fJoists} joists x ${d.toFixed(2)}m @400mm front-to-back + rim (2 x ${w.toFixed(2)}m) + DOUBLING (outer ring + every 3rd joist / 1.2m grid: ${fDoubledInternals} x ${d.toFixed(2)}m), +10%`,
     [{ len: d, n: fJoists + 2 + fDoubledInternals, what: 'floor joists incl. doubled sides + grid doubles' }, { len: w, n: 4, what: 'front + rear rim, doubled' }]);
-  add('Structural timber screw (100mm)', Math.ceil(fDoubledLm / 0.4),
-    `Laminating the doubled ring + grid pairs, 1 per 400mm staggered (${fDoubledLm.toFixed(1)}m of doubled run)`);
-  add('Wood screw 40mm', pedestals * 4, `Joists/rim to pedestal head plates, 4 per pedestal`);
   add('18x38 treated batten', Math.ceil(2 * (fJoists - 1) * d), `Floor PIR support battens, joist sides, tops 75mm down`,
     [{ len: d, n: 2 * (fJoists - 1), what: 'floor PIR battens' }]);
   add('75mm PIR insulation board', Math.ceil(w * d), `Floor: friction-fit between the 5x2 joists, ${(w * d).toFixed(1)}m2`);
   add('22mm P5 T&G chipboard (2400x600)', Math.ceil((w * d) * 1.05 / CHIPBOARD_M2), `Floor deck: ${(w * d).toFixed(1)}m2 + 5%, glued at every joint`);
-  add('Wood screw 60mm', Math.ceil(w * d * 12), `Floor deck ~12 screws/m2`);
 
   /* ---------- WALLS ---------- */
   // Panel walls: rear always; sides when steel-clad. Side run excludes the
@@ -162,6 +157,7 @@ export function buildPremiumBom(state, componentDefs) {
     panelCount += n;
     panelBits.push(`${pw.label}: ${n}`);
   }
+  let liningStudsTotal = 0, liningRunTotal = 0;
   if (panelCount > 0) {
     add('Kingspan 100mm insulated wall panel (1.1m wide)', panelCount,
       `TOTAL: ${panelCount} panels, ALL @ ${wallH.toFixed(2)}m length (square building, no angle cuts). ${panelBits.join(', ')}. Anthracite. Headers above openings cut from the opening cut-outs`);
@@ -172,6 +168,7 @@ export function buildPremiumBom(state, componentDefs) {
     // 3x2 CLS lining frame inside panel walls
     const liningRun = panelWalls.reduce((s, p) => s + Math.max(0, p.run - p.openings.reduce((x, o) => x + o.widthM, 0)), 0);
     const liningStuds = Math.ceil(liningRun / 0.6) + panelWalls.length;
+    liningStudsTotal = liningStuds; liningRunTotal = liningRun;
     add('CLS 3x2 timber', Math.ceil((liningStuds * wallH + 2 * liningRun) * 1.10),
       `Lining frame on panel walls: studs @600mm (${liningStuds} x ${wallH.toFixed(2)}m) + top & bottom plates, +10%. Bays empty (panels insulate)`,
       [{ len: wallH, n: liningStuds, what: 'lining studs' }, ...panelWalls.map((p) => ({ len: p.run, n: 2, what: `${p.label} lining plates` }))]);
@@ -243,7 +240,6 @@ export function buildPremiumBom(state, componentDefs) {
   add('12mm Plywood (1220×2440 sheet)', plySheets, `Stick wall external sheathing + 10% (openings cut out on site)`);
   add('Tyvek breather membrane', tyvekM2, `Over the ply, under the battens (m2 + 10%)`);
   add('Tyvek/breather tape (roll)', 1, `Tape laps + around openings`);
-  add('Staple box', 1, `Fix Tyvek before battens`);
   if (pirWallM2 > 0) add('75mm PIR insulation board', pirWallM2, `ALL stick wall bays (${stickWalls.map((x) => x.label).join(' + ')}): 75mm PIR friction-fit between the 4x2 studs (no Rockwool - partitions only)`);
   // Cladding boards + double-batten sub-frame on every slat-clad wall
   // (front always clad; sides when not steel). Closed-corner returns add
@@ -273,7 +269,6 @@ export function buildPremiumBom(state, componentDefs) {
   if (cladBattenLm > 0) {
     add('18x38 treated batten', Math.ceil(cladBattenLm * 1.05), `Cladding double-batten sub-frame (vertical counter-battens + horizontal rows @400mm) on the clad walls`,
       cladWalls.flatMap((cw) => [{ len: wallH, n: Math.ceil(cw.run / 0.4) + 1, what: `${cw.wall} vertical counter-battens` }, { len: cw.run, n: Math.ceil(wallH / 0.4) + 1, what: `${cw.wall} horizontal batten rows` }]));
-    add('Stainless cladding screw', Math.ceil(cladBattenLm / 0.4) , `~1 per slat per batten crossing (approx by batten run)`);
   }
 
   // Flitch over wide front openings
@@ -333,13 +328,9 @@ export function buildPremiumBom(state, componentDefs) {
     if (canopyMethod === 'firrings-overhang') {
       add('2x2 tanalised C16 timber', canopy2x2Lm,
         `CANOPY FRAME (2.5m method): 2x2 frame on the TOP-FRONT of the front wall, UNDER the ${canopyMm}mm firring overhang - 2 runs x ${w.toFixed(2)}m + ${crossPieces} cross pieces @400mm x ${canopyMm}mm, +10%. Fixed to the front top plate AND to the flitch beam over the door opening`, canopyCuts);
-      add('Structural timber screw (100mm)', Math.ceil(w / 0.4) * 2 + 8,
-        `Canopy frame: into the front top plate / flitch @400mm + frame assembly`);
     } else {
       add('2x2 tanalised C16 timber', canopy2x2Lm,
         `CANOPY BOX (${h.toFixed(2)}m method): ONE layer of 2x2 fixed UNDER the oversailed roof joists to deepen the overhang box - 2 runs x ${w.toFixed(2)}m + ${crossPieces} cross pieces @400mm x ${canopyMm}mm, +10%`, canopyCuts);
-      add('Structural timber screw (100mm)', Math.ceil(w / 0.4) * 2 + 8,
-        `Canopy box: 2x2 up into the oversailed joists @400mm + frame assembly`);
     }
     add('12mm Plywood (1220×2440 sheet)', Math.ceil((w * 0.3 + w * canopyM) * 1.10 / PLY_SHEET_M2),
       `CANOPY BOX PLY: front face (${w.toFixed(2)} x 0.30m) + underside (${w.toFixed(2)} x ${canopyM.toFixed(2)}m) + 10% - solid fixing for the fascia + soffit (needed on the 2x2 frame AND the oversailed-joist box)`);
@@ -348,7 +339,6 @@ export function buildPremiumBom(state, componentDefs) {
   }
   add('Soffit vent strip (2.5m)', Math.ceil((2 * w) / 2.5), `Front soffit vent + rear rim mesh vents (cross-flow)`);
   add('Vapour control layer (roll)', 2, `Warm-side VCL under the roof joists + continuous VCL to all walls behind the lining`);
-  add('Grab adhesive (tube)', Math.ceil((ladder.web ? rJoists * joistLen / 6 : 0) + 2), `OSB webs into joist pairs (~6m/tube) + skirting`);
 
   /* ---------- EXTERNAL TRIMS / RAINWATER ---------- */
   add('300mm plastic fascia (5m length, GAP)', Math.ceil((w + 2 * roofLen) / 5), `Front (${w.toFixed(2)}m) + both sides (2 x ${roofLen.toFixed(2)}m incl. canopy + rear oversail)`);
@@ -374,11 +364,8 @@ export function buildPremiumBom(state, componentDefs) {
   add('Plasterboard scrim/jointing tape (90m roll)', Math.ceil(boardM2 / 45), `Board joints`);
   add('Plasterboard corner bead (2.4m)', 4 + [...front, ...rear, ...left, ...right].length, `Corners + reveals`);
   add('Multi-finish plaster (25kg bag)', Math.ceil(boardM2 / 10), `Skim ~10m2/bag`);
-  add('Drywall screw (35mm)', Math.ceil(boardM2 * 12), `~12/m2`);
   add('White trade emulsion paint (10L)', Math.ceil(boardM2 / 50), `2 coats (3 on fresh skim where needed)`);
   add('Skirting board', Math.ceil(Math.max(0, 2 * (w + d) - fhWidth(front) - fhWidth(rear) - fhWidth(left) - fhWidth(right))), `Perimeter minus full-height openings, linear m`);
-  add('Decorators caulk (tube)', 2, `Internal junctions`);
-  add('White silicone', 2, `Thresholds + trim edges`);
   add('Medium Oak vinyl', Math.ceil((w - 0.2) * (d - 0.2)), `Internal floor area (colour per customer choice)`);
   add('Vinyl spray adhesive (500ml can)', Math.ceil((w - 0.2) * (d - 0.2) / 4), `~4m2 per can`);
 
@@ -409,9 +396,6 @@ export function buildPremiumBom(state, componentDefs) {
   }
   const opCount = [...front, ...rear, ...left, ...right].length;
   if (opCount > 0) {
-    add('Expanding foam can', opCount, `~1 per opening`);
-    add('External silicone (anthracite)', opCount, `~1 per opening`);
-    add('Packer shim assortment (box)', 1, `Level + plumb every frame`);
     add('uPVC frame fixing screw', opCount * 8, `~8 per opening`);
     add('Door/window seal', opCount, `1 per opening`);
     add('25x25mm white PVC reveal trim (2.5m length)', Math.ceil(opCount * 5.5 / 2.5) + 2, `Reveals + 2 spare`);
@@ -421,16 +405,86 @@ export function buildPremiumBom(state, componentDefs) {
   if (hasDecking) {
     const deckDepthM = ((state.deckingDepth || 400) + (state.structuralExtras?.additionalDecking || 0) * 140) / 1000;
     add('Composite decking board (3.6m)', Math.ceil((w * deckDepthM) / (3.6 * 0.14) * 1.1), `Front decking ${w.toFixed(2)}m x ${deckDepthM.toFixed(2)}m + 10%`);
-    add('Grey-headed composite decking screw (stainless)', Math.ceil(w * deckDepthM * 25), `~25/m2`);
+    add('Decking screws - colour-headed (Winchester grey)', Math.ceil(w * deckDepthM * 25 * 1.25), `~25/m2 + 25% over-estimate (Liam: over on fixings)`);
   }
 
   add('Door mat', 1, `Complimentary with every job`);
+
+  /* ======================================================================
+     INSTALLATION KIT (factory stock, mostly Montravia / online fixings).
+     Liam 2026-09-05: calculate what we actually need per part of the job,
+     OVER-estimate on fixings to be safe, then the logistics team converts to
+     boxes when loading (catalogue packSize = box count).
+     ====================================================================== */
+  const OVER = 1.25; // +25% on every screw/nail count
+  const up = (n) => Math.ceil(n * OVER);
+  const perim = 2 * (w + d);
+  const totalStuds = stickWalls.reduce((t, sw) => t + Math.ceil(sw.run / 0.4) + 1, 0) + closedCorners * 2 + openCorners * 4;
+  const openingsAll = [...front, ...rear, ...left, ...right];
+  const floorM2 = w * d;
+  const roofDeckM2 = (w + 0.2) * roofLen;
+
+  // -- TimberLok structural screws (Liam's confirmed uses) --
+  add('TimberLok 150mm', up(fDoubledLm / 0.4 + rJoists * ladder.ply * 0), `FLOOR DOUBLING: laminating the doubled ring + 1.2m-grid joist pairs, 1 per 400mm staggered (${fDoubledLm.toFixed(1)}m of doubled run) +25%`);
+  add('TimberLok 100mm', up(rJoists * 4 + (2 * sideRun + w) / 0.6 + 8), `ROOF: joists to wall plates/flitch (~4 skew per joist position, ${rJoists} joists) + flat 4x2 wall plate down into panel tops @600mm + rim, +25%`);
+  add('TimberLok 89mm', up(liningStudsTotal * 3 + liningRunTotal / 0.6), `CLS 3x2 LINING FRAME into the panels: 3 per stud (${liningStudsTotal} studs) + top/bottom plates @600mm, +25%. (89mm not a FastenMaster size - Timberfix/Spax 6x90 equivalent)`);
+  add('TimberLok 225mm', up(fJoists * 2 * 2 + 8), `FLOOR RIM through into the joist ends: 2 per joist end, both rims (${fJoists} joists) + 8 spare, +25%. (nearest stock size 200/250mm TimberLok)`);
+  // -- Wood screws --
+  add('Wood screw 5.0 x 100mm', up(totalStuds * 6 + (hasCanopy ? Math.ceil(w / 0.4) * 2 + 8 : 0) + wideFront.length * 12), `STICK FRAMING: ~6 per stud (studs to plates, noggins, kings; ${totalStuds} studs) + canopy 2x2 frame/box fixings + flitch packing, +25%`);
+  add('Wood screw 5.0 x 70mm', up(cladBattenLm / 0.4 + 2 * (fJoists - 1) * d / 0.6 + (rJoists + 4) * roofLen / 0.4), `BATTENS + FIRRINGS: cladding sub-frame battens @400mm crossings (${cladBattenLm.toFixed(0)}m) + floor PIR battens @600mm + firrings down into joists @400mm, +25%`);
+  add('Wood screw 5.0 x 50mm', up(plySheets * 30 + floorM2 * 12 + roofDeckM2 * 10 + pedestals * 4), `SHEET FIXING: ply sheathing ~30/sheet (${plySheets} sheets) + 22mm floor deck ~12/m² (${floorM2.toFixed(1)}m²) + 18mm roof deck ~10/m² (${roofDeckM2.toFixed(1)}m²) + 4 per pedestal head, +25%`);
+  add('Drywall screw 3.5 x 38mm black (coarse)', up(boardM2 * 12), `PLASTERBOARD: ~12/m² over ${boardM2.toFixed(0)}m² of board, +25%`);
+  // -- Steel / trim fixings --
+  const trimRunM = (panelWalls.reduce((t, p) => t + p.run, 0)) /* base trims */ + 4 * wallH /* corners */ + (w + 2 * roofLen) /* top cap */ + (panelWalls.reduce((t, p) => t + p.run, 0) + 8 * wallH) /* U-channel */;
+  add('Grey RAL 7016 self-drilling trim screw 25mm', up(trimRunM / 0.3), `ANTHRACITE STEEL TRIMS onto the building @300mm: base trims + corner trims + top cap + U-channel (~${trimRunM.toFixed(0)}m of trim), +25%`);
+  add('Bay pole self-drilling screw 70mm (timber to panel)', up(((2 * sideRun + w) / 0.4) + liningRunTotal / 0.6), `4x2 WALL PLATE + lining plates into the panel steel @400-600mm, +25%`);
+  if (!groundScrews) add('Concrete screw 100mm (Ammo)', up(pedestals * 2), `PEDESTALS anchored to the slab: 2 per pedestal (${pedestals}), +25%`);
+  add('Stainless self-drilling screw 40mm (gutters/fascia)', up(Math.ceil(w / 0.5) * 2 + 3 * 2 + 12), `GUTTER brackets 2 each (${Math.ceil(w / 0.5)}) + downpipe clips + fascia corners, +25%`);
+  add('Polytop pins 40mm anthracite', up(((w + 2 * roofLen) + w) / 0.4 * 2), `FASCIA (front + sides + rear, both edges @400mm), +25%`);
+  if (hasCanopy) add('Polytop pins 65mm anthracite', up((w / 0.4) * 2 + 12), `SOFFIT boards into the 2x2 canopy frame @400mm both edges, +25%`);
+  // -- Cladding fixings --
+  const timberCladRuns = [...cladTotals].filter(([n]) => /cedar|larch/i.test(n)).reduce((t, [, c]) => t + c, 0);
+  if (timberCladRuns > 0) add('Stainless angled brad 16g x 38mm', up(timberCladRuns * Math.ceil(wallH / 0.4) * 2), `CEDAR/LARCH boards: 2 brads per board per batten row (${timberCladRuns} boards x ${Math.ceil(wallH / 0.4)} rows), +25%`);
+  // -- Roof joist hangers + ties --
+  add('Jiffy hanger 47mm (mini joist hanger)', up(rJoists * 2), `ROOF JOISTS: 1 hanger per joist end on the front + rear plates (${rJoists} joists x 2), +25%`);
+  add('Square twist nails 30mm (1kg bag)', Math.ceil(up(rJoists * 2) * 8 / 350), `~8 nails per jiffy hanger, ~350 nails per 1kg bag`);
+  add('Twisted restraint strap 30x2.5x600mm', Math.ceil(w / 1.2) * 2, `ROOF TIE-DOWN: straps over the joists down the face of the front + rear plates/panels @1.2m centres - resists wind uplift on a lightweight flat roof (${Math.ceil(w / 1.2)} per side)`);
+  // -- Sealants + adhesives (Liam: we use a LOT of silicone; 14.5 tubes on a 17m-perimeter Maxi) --
+  add('Silicone - anthracite grey RAL 7016 (310ml)', Math.ceil(perim * 0.85), `EXTERNAL: trims, panel joints, openings - ~0.85 tubes per metre of external perimeter (${perim.toFixed(1)}m)`);
+  add('Silicone - clear (310ml)', Math.ceil(perim * 0.85), `Panel T&G joints, flashings, glazing - ~0.85 tubes per metre of perimeter`);
+  add('Silicone - white (310ml)', 2, `Internal thresholds + trim edges (avg 2/job)`);
+  add('Decorators caulk (tube)', 2, `Internal junctions (avg 1.75/job)`);
+  add('Grab adhesive / Gripfill (tube)', 3 + (ladder.web ? 1 : 0), `Skirting, reveals, general (avg 2.5/job, rounded up) + 1 for OSB webs on doubled-joist roofs (webs are PVA-glued + screwed)`);
+  add('Mitre bond kit (adhesive + activator)', floorM2 > 20 ? 2 : 1, `Trim mitres - 1 per job, 2 on Multi/Multi+`);
+  add('PVA wood glue (1L)', Math.ceil(floorM2 / 15), `22mm T&G floor deck glued at every joint (~1L per 15m², ${floorM2.toFixed(1)}m²)`);
+  add('Gun foam (can)', Math.ceil(openingsAll.length / 3) + 1, `Openings + perimeter gaps (~1 can per 3 openings + 1)`);
+  add('Packer shim assortment (box)', 1, `Level + plumb every frame; flat packers under timber`);
+  // -- Tapes + consumables --
+  add('8mm staples (box)', 1, `Tyvek + DPM stapling (avg half a box/job - order whole box)`);
+  add('Duck tape (roll)', 2, `DPM/Tyvek laps + general (avg 1.25/job)`);
+  add('Masking tape (roll)', 2, `Decorating + spraying (avg 1.25/job)`);
+  add('Stanley blades (pack)', 2, `avg 1.25 packs/job`);
+  add('115mm angle grinder disc', Math.ceil(trimRunM / 20) + 2, `Cutting steel trims / panels (~1 disc per 20m of trim + 2; avg 4.25/job)`);
+  add('Drill bits 3.2mm + 4.2mm (set)', 1, `1 of each per job`);
+  add('Glass cleaner', 1, `Cleaning kit`);
+  add('Solvent cleaner', 2, `Cleaning kit`);
+  add('Hand wipes (tub)', 3, `Cleaning kit`);
+  add('Roll tissue', 5, `Cleaning kit`);
   add('Anthracite touch-up pen', 1, `Per job`);
-  add('Mitre bond kit (adhesive + activator)', 1, `Per job`);
-  add('Clear silicone', 4, `Panel T&G joints + general`);
-  add('Anthracite stitching screw (self-drilling, box of 50)', 3, `Steel trims into panel steel @300mm`);
-  add('Self-drilling screw 50mm (wood to metal)', Math.ceil((2 * (w + d) * 2.5) / 0.4 / 50) * 50, `Battens/plates into panel steel`);
-  add('Wood screw 40mm', Math.ceil(plySheets * 30), `Ply sheathing ~30 per sheet`);
+  // -- Decorating (plastered + decorated standard) --
+  add('Paint roller & tray set (large + small)', 1, `Per job`);
+  add('Paint brushes (pack)', 2, `Cutting in + bitumen`);
+  add('White trade emulsion paint (10L)', Math.ceil((boardM2 * 3) / 120), `Mist coat + 2 coats over ${boardM2.toFixed(0)}m² of plaster; 10L covers ~120m² per coat`);
+  add('Satin wood paint (750ml)', Math.ceil((perim * 0.12 * 2) / 12), `Skirting boards: ${perim.toFixed(1)}m x 120mm x 2 coats, ~12m² per tin`);
+  if (hasDecking) add('Bitumen paint (1L)', 1, `Decking sub-frame protection`);
+  // -- Site equipment (loaded from the factory, comes back) --
+  if (groundScrews) add('Auger + fuel', 1, `Ground screws`);
+  add('Shovel / spade / post hole digger', 1, `Site kit`);
+  add('Tarpaulins x2 + tonne bag + black bin', 1, `Site kit`);
+  add('Marketing sign board + banner', 1, `If applicable`);
+  add('Gazebo tent + case', 1, `Site kit`);
+  add('Rubber protection mats', 1, `Site kit`);
+  add('Timber bearers / risers (under panels on site)', 1, `Site kit`);
 
   return rows;
 }
