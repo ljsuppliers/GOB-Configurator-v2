@@ -559,7 +559,15 @@ html, body {
    scrolls vertically inside it. */
 .materials-page { grid-row: 2 / span 2; overflow-y: auto; overflow-x: hidden; height: 100%; min-height: 0; background: #fff; padding: 18px 28px 80px; }
 .materials-page > * { max-width: 1500px; margin-left: auto; margin-right: auto; }
-@media print { .materials-page { overflow: visible; height: auto; } }
+@media print {
+  /* The app shell is a fixed 100vh grid with overflow hidden - for print every
+     ancestor must be allowed to grow, or the browser prints one clipped page. */
+  html, body { height: auto !important; overflow: visible !important; }
+  .app { display: block !important; height: auto !important; overflow: visible !important; }
+  .materials-page { overflow: visible !important; height: auto !important; max-height: none !important; padding: 0 !important; }
+  .materials-page > * { max-width: none; }
+  .sup-body, .po-body, .cat-scroll { max-height: none !important; overflow: visible !important; }
+}
 .mp-top { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 8px; }
 .mp-job { flex: 1; min-width: 320px; }
 .mp-job-name { font-size: 20px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
