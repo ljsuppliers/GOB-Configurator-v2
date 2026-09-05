@@ -204,7 +204,7 @@ createApp({
       const quoteExVat = quoteIncVat / 1.2;
       const labourCost = this.installerDeal.fee + this.labour.electrician.total + this.labour.subcontract.total;
       const installPrice = this.price?.installation || 0;
-      const margin = quoteExVat - materialCost - labourCost;
+      const margin = Math.round((quoteExVat - materialCost - labourCost) * 100) / 100;
       const sups = new Set(lines.filter((l) => l.inCatalogue && !l.inStock).map((l) => l.supplier || 'NO SUPPLIER SET'));
       return {
         materialCost, quoteIncVat, quoteExVat, margin, labourCost, installPrice, engineIncVat, overridden: override > 0,
