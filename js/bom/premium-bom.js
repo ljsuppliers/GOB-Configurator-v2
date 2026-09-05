@@ -13,6 +13,17 @@
 //  - Flat timber roof: joist ladder by span, stock firrings 75/100mm -> 0
 //    at the rear + 4 reverse firrings squaring the sides, 18mm T&G OSB,
 //    one-piece EPDM. Vented cold roof: 100mm PIR set 30mm below joist tops.
+//  - CANOPY METHOD (Liam 2026-09-05, corrects the earlier "joists always
+//    oversail" rule):
+//      * 2.5m building: joists STOP at the front wall (no height to spare).
+//        The firrings (tall 75mm end) run on over the joists and OVERHANG the
+//        front by 400mm - they form the canopy. A 2x2 frame is then built on
+//        the top-front of the front wall underneath them, fixed to the front
+//        top plate and to the flitch beam over the door.
+//      * 2.75m / 3.0m building: roof JOISTS oversail the front by 400mm,
+//        firrings on top, plus ONE layer of 2x2 under the oversailed joists to
+//        make a bigger overhang box.
+//      * Classic (no canopy): 100mm overhang only (a token canopy).
 //  - Plastered + decorated interior ONLY. Electrical pack ALWAYS included,
 //    canopy lights standard with the signature canopy.
 //  - Corners: open or closed (closed = side wall carried +400mm forward).
@@ -63,7 +74,12 @@ function openingsOn(state, componentDefs, elevation) {
 export function buildPremiumBom(state, componentDefs) {
   const w = state.width / 1000;          // external width, m
   const d = state.depth / 1000;          // external depth, m
-  const h = state.height / 1000;         // external height, m
+  // External height: the height box OR 2.5m + the priced height upgrade
+  // (250/450/500mm), whichever is taller - Liam sets one or the other.
+  const heightUpgradeMm = state.structuralExtras?.heightUpgrade || 0;
+  const extHeightMm = Math.max(state.height || 2500, 2500 + heightUpgradeMm);
+  const h = extHeightMm / 1000;          // external height, m
+  const tall = extHeightMm >= 2750;      // 2.75m / 3.0m builds: joists oversail
   const wallH = wallPanelHeightFor(h);
   const rows = [];
   const add = (name, qty, derivation) => { if (qty > 0) rows.push({ name, qty, derivation }); };
@@ -71,7 +87,12 @@ export function buildPremiumBom(state, componentDefs) {
   const groundScrews = state.foundationType === 'ground-screw';
   const hasCanopy = !!state.hasCanopy && !state.deductions?.removeCanopy;
   const hasDecking = !!state.hasDecking && !state.deductions?.removeDecking;
-  const canopyM = hasCanopy ? (state.overhangDepth || 400) / 1000 : 0.05;
+  // Signature canopy = 400mm. Classic = 100mm token overhang (Liam 2026-09-05).
+  const canopyM = hasCanopy ? (state.overhangDepth || 400) / 1000 : 0.10;
+  // How the canopy is formed depends on height (see header):
+  const canopyMethod = !hasCanopy
+    ? 'classic'
+    : tall ? 'joists-oversail' : 'firrings-overhang';
   const closedCorners = ['cornerLeft', 'cornerRight'].filter((k) => state[k] === 'closed').length;
   const openCorners = (hasCanopy && hasDecking) ? 2 - closedCorners : 0;
 
@@ -160,8 +181,9 @@ export function buildPremiumBom(state, componentDefs) {
   // Closed corners (Liam 2026-09-05): the +400mm forward section is built the
   // SAME WAY as that side wall (panel if steel side, 4x2 stick if clad side),
   // shares the side's external cladding, and its inside return is clad in the
-  // FRONT wall's cladding. The canopy comes from the roof joists oversailing
-  // the front by 400mm; the closed corner gives it a little support.
+  // FRONT wall's cladding. The canopy above it comes from the firring
+  // overhang (2.5m) or the oversailing joists (2.75m/3.0m) - see header; the
+  // closed corner gives it a little support.
   const closedCornerSides = ['cornerLeft', 'cornerRight']
     .filter((k) => state[k] === 'closed')
     .map((k) => (k === 'cornerLeft' ? 'left' : 'right'));
@@ -240,17 +262,51 @@ export function buildPremiumBom(state, componentDefs) {
   /* ---------- ROOF ---------- */
   const span = d - 0.2;
   const ladder = premiumRoofLadder(span);
+  // Joists: rear wall plate to front top plate = external depth. They only run
+  // on past the front wall on TALL builds (joists-oversail method).
+  const joistOversailM = canopyMethod === 'joists-oversail' ? canopyM : 0;
+  const joistLen = d + joistOversailM + 0.05;
+  // Firrings + deck + EPDM always run the full depth PLUS the canopy/overhang.
   const roofLen = d + canopyM + 0.05;
   const rJoists = Math.ceil(w / ladder.spacing) + 1;
-  add(ladder.sku, Math.ceil((rJoists * ladder.ply * roofLen + 2 * w) * 1.10),
-    `Roof: ${ladder.label} - ${rJoists} x ${roofLen.toFixed(2)}m @${(ladder.spacing * 1000).toFixed(0)}mm + rim, +10%. Bears on front top plate/flitch + rear wall plate, cantilevers the ${hasCanopy ? 'canopy' : 'drip'}`);
+  const canopyMm = (canopyM * 1000).toFixed(0);
+  add(ladder.sku, Math.ceil((rJoists * ladder.ply * joistLen + 2 * w) * 1.10),
+    `Roof: ${ladder.label} - ${rJoists} x ${joistLen.toFixed(2)}m @${(ladder.spacing * 1000).toFixed(0)}mm + rim, +10%. Bears on front top plate/flitch + rear wall plate. ${
+      canopyMethod === 'joists-oversail'
+        ? `${(h).toFixed(2)}m BUILD: joists OVERSAIL the front by ${canopyMm}mm to form the canopy`
+        : canopyMethod === 'firrings-overhang'
+          ? `2.5m BUILD: joists STOP at the front wall (no height to oversail) - the canopy is formed by the firring overhang + 2x2 frame below`
+          : `CLASSIC: joists stop at the front wall, ${canopyMm}mm token overhang in the firrings/deck only`
+    }`);
   add('4x2 tanalised C24 timber', Math.ceil((2 * sideRun + w) * 1.05), `Flat 4x2 wall plate on the panel wall tops (sides + rear)`);
-  if (ladder.web) add('18mm OSB3 board (2440x1220)', Math.ceil((rJoists * roofLen * ladder.depthM * 1.10) / PLY_SHEET_M2), `OSB webs glued+screwed between the doubled joist pairs, ripped from full sheets`);
+  if (ladder.web) add('18mm OSB3 board (2440x1220)', Math.ceil((rJoists * joistLen * ladder.depthM * 1.10) / PLY_SHEET_M2), `OSB webs glued+screwed between the doubled joist pairs, ripped from full sheets`);
   const firrFront = roofLen <= 3.0 ? 75 : 100;
-  add('Tapered firring (47mm, 1:40)', Math.ceil((rJoists + 4) * roofLen), `Stock ${firrFront}mm->0 tapers: 1 per joist + 4 REVERSE firrings squaring the side edges (fall to the REAR)`);
-  add('18mm T&G OSB3 roof board (2400x590)', Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2), `Roof deck incl. 100mm side overhangs, +5%`);
+  add('Tapered firring (47mm, 1:40)', Math.ceil((rJoists + 4) * roofLen), `Stock ${firrFront}mm->0 tapers x ${roofLen.toFixed(2)}m: 1 per joist + 4 REVERSE firrings squaring the side edges (fall to the REAR). ${
+      canopyMethod === 'firrings-overhang'
+        ? `TALL (${firrFront}mm) END OVERHANGS THE FRONT BY ${canopyMm}mm ON TOP OF THE JOISTS - this overhang IS the canopy (2.5m method)`
+        : canopyMethod === 'joists-oversail'
+          ? `sit on top of the oversailed joists right out to the canopy edge`
+          : `run ${canopyMm}mm past the front wall (classic token overhang)`
+    }`);
+  add('18mm T&G OSB3 roof board (2400x590)', Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2), `Roof deck ${(w + 0.2).toFixed(2)} x ${roofLen.toFixed(2)}m incl. 100mm side overhangs + ${canopyMm}mm front, +5%`);
   add('EPDM roof kit (membrane, adhesive, edge trims)', Math.ceil((w + 0.2) * roofLen * 1.15), `One-piece EPDM, deck m2 + 15% wraps/upstands, up-and-over the squared side edges`);
-  add('100mm PIR insulation board', Math.ceil(w * roofLen), `VENTED COLD ROOF: between joists, set 30mm BELOW joist tops (50mm air path)`);
+  add('100mm PIR insulation board', Math.ceil(w * d), `VENTED COLD ROOF: between joists over the room only (${w.toFixed(2)} x ${d.toFixed(2)}m), set 30mm BELOW joist tops (50mm air path)`);
+  // Canopy 2x2 frame - one layer either way, method decides where it sits.
+  if (hasCanopy) {
+    const crossPieces = Math.ceil(w / 0.4) + 1;
+    const canopy2x2Lm = Math.ceil((2 * w + crossPieces * canopyM) * 1.10);
+    if (canopyMethod === 'firrings-overhang') {
+      add('2x2 tanalised C16 timber', canopy2x2Lm,
+        `CANOPY FRAME (2.5m method): 2x2 frame on the TOP-FRONT of the front wall, UNDER the ${canopyMm}mm firring overhang - 2 runs x ${w.toFixed(2)}m + ${crossPieces} cross pieces @400mm x ${canopyMm}mm, +10%. Fixed to the front top plate AND to the flitch beam over the door opening`);
+      add('Structural timber screw (100mm)', Math.ceil(w / 0.4) * 2 + 8,
+        `Canopy frame: into the front top plate / flitch @400mm + frame assembly`);
+    } else {
+      add('2x2 tanalised C16 timber', canopy2x2Lm,
+        `CANOPY BOX (${h.toFixed(2)}m method): ONE layer of 2x2 fixed UNDER the oversailed roof joists to deepen the overhang box - 2 runs x ${w.toFixed(2)}m + ${crossPieces} cross pieces @400mm x ${canopyMm}mm, +10%`);
+      add('Structural timber screw (100mm)', Math.ceil(w / 0.4) * 2 + 8,
+        `Canopy box: 2x2 up into the oversailed joists @400mm + frame assembly`);
+    }
+  }
   add('Soffit vent strip (2.5m)', Math.ceil((2 * w) / 2.5), `Front soffit vent + rear rim mesh vents (cross-flow)`);
   add('Vapour control layer (roll)', 2, `Warm-side VCL under the roof joists + continuous VCL to all walls behind the lining`);
   add('Foam tape', Math.ceil(2 * (w + d)), `Wall tops, full perimeter (draft-proof seal under the roof structure) - no roof laps on EPDM`);
@@ -259,7 +315,7 @@ export function buildPremiumBom(state, componentDefs) {
   /* ---------- EXTERNAL TRIMS / RAINWATER ---------- */
   add('300mm plastic fascia (5m length, GAP)', Math.ceil((w + 2 * (d + canopyM)) / 5), `Front + both sides`);
   add('200mm plastic fascia (5m length, GAP)', Math.ceil(w / 5), `Rear`);
-  add('400mm plastic soffit (5m length, GAP)', Math.ceil(w / 5), `Front canopy soffit`);
+  if (hasCanopy) add('400mm plastic soffit (5m length, GAP)', Math.ceil(w / 5), `Front canopy soffit (closes the 2x2 frame underside)`);
   add('Fascia corner (500mm plastic)', 4, `4 corners`);
   add('Steel top cap', Math.ceil((w + 2 * (d + canopyM)) / 3), `Over the EPDM edge, front + sides / 3m lengths`);
   add('Half-Round Gutter 4 Mtr (Black)', Math.ceil(w / 4), `Rear gutter`);
