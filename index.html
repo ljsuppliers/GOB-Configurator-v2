@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=3">
+  <link rel="stylesheet" href="css/app.css?v=4">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -1017,7 +1017,8 @@
         <div class="mp-cards">
           <div class="mp-card"><div class="mp-card-label">Material cost</div><div class="mp-card-value">{{ fmt(bomSummary.materialCost) }}</div><div class="mp-card-sub">{{ bomSummary.lines }} lines · {{ bomSummary.inStock }} from stock</div></div>
           <div class="mp-card"><div class="mp-card-label">Quote (ex VAT)</div><div class="mp-card-value">{{ bomSummary.quoteExVat ? fmt(bomSummary.quoteExVat) : '—' }}</div><div class="mp-card-sub">{{ bomSummary.quoteIncVat ? fmt(bomSummary.quoteIncVat) + ' inc VAT' : 'no price yet' }}</div></div>
-          <div class="mp-card"><div class="mp-card-label">Labour + subcontract</div><div class="mp-card-value">{{ fmt(bomSummary.labourCost) }}</div><div class="mp-card-sub">install {{ fmt(installerDeal.fee) }} ({{ installerDeal.days }} days) · electrician {{ fmt(labour.electrician.total) }}<template v-if="labour.subcontract.total"> · other {{ fmt(labour.subcontract.total) }}</template></div></div>
+          <div class="mp-card"><div class="mp-card-label">Install fee (installer agreement)</div><div class="mp-card-value">{{ fmt(installerDeal.fee) }}</div><div class="mp-card-sub">{{ installerDeal.days }} days · team of 2 @ {{ fmt(labour.dayRate) }}/day</div></div>
+          <div class="mp-card"><div class="mp-card-label">Electrician + other trades</div><div class="mp-card-value">{{ fmt(labour.electrician.total + labour.subcontract.total) }}</div><div class="mp-card-sub">paid direct by GOB, not in the agreement</div></div>
           <div class="mp-card" :class="{ 'mp-card-good': bomSummary.marginPct >= 40, 'mp-card-bad': bomSummary.quoteExVat && bomSummary.marginPct < 30 }"><div class="mp-card-label">Gross margin</div><div class="mp-card-value">{{ bomSummary.quoteExVat ? fmt(bomSummary.margin) : '—' }}</div><div class="mp-card-sub">{{ bomSummary.quoteExVat ? bomSummary.marginPct.toFixed(0) + '% of ex-VAT price, after materials + labour + subcontract' : '' }}</div></div>
           <div class="mp-card"><div class="mp-card-label">Suppliers</div><div class="mp-card-value">{{ bomSummary.suppliers }}</div><div class="mp-card-sub">{{ bomSummary.sent }} sent · {{ bomSummary.noEmail }} without email</div></div>
           <div class="mp-card" :class="{ 'mp-card-bad': bomSummary.notInCatalogue || bomSummary.missingCost }"><div class="mp-card-label">Data gaps</div><div class="mp-card-value">{{ bomSummary.notInCatalogue + bomSummary.missingCost }}</div><div class="mp-card-sub">{{ bomSummary.notInCatalogue }} not in catalogue · {{ bomSummary.missingCost }} with no cost</div></div>
@@ -1030,7 +1031,7 @@
             <strong class="sup-name">Labour &amp; subcontract</strong>
             <span class="sup-meta">{{ labour.model }} band: {{ labour.buildDays }} build days + 1 delivery + 2 groundworks{{ labour.install.days > labour.buildDays + 3 ? ' + ' + (labour.install.days - labour.buildDays - 3) + ' extras' : '' }} = {{ labour.install.days }} days @ {{ fmt(labour.dayRate) }}/day (team of 2) · quote charges the customer {{ fmt(bomSummary.installPrice) }} for installation</span>
             <span style="flex:1"></span>
-            <span class="sup-total">{{ fmt(bomSummary.labourCost) }}</span>
+            <span class="sup-total">Install fee {{ fmt(installerDeal.fee) }} <span class="sup-meta">+ electrician {{ fmt(labour.electrician.total) }}{{ labour.subcontract.total ? ' + other ' + fmt(labour.subcontract.total) : '' }} paid direct by GOB</span></span>
           </div>
           <div v-show="labourOpen" class="sup-body">
             <div class="lab-settings" v-if="state.labour">
@@ -1045,7 +1046,8 @@
               <thead><tr><th>Item</th><th class="num">Days</th><th class="num">£</th></tr></thead>
               <tbody>
                 <tr v-for="l in labour.install.lines" :key="l.id"><td>{{ l.label }}<span v-if="l.estimate" class="bom-warn">estimate</span></td><td class="num">{{ l.days !== null ? l.days : '—' }}</td><td class="num">{{ fmt(l.amount) }}</td></tr>
-                <tr class="lab-sub"><td><strong>Install team total</strong> <span class="bom-deriv" v-if="installerDeal.overridden">agreed fee overridden to {{ fmt(installerDeal.fee) }} on the installer page</span></td><td class="num"><strong>{{ labour.install.days }}</strong></td><td class="num"><strong>{{ fmt(labour.install.total) }}</strong></td></tr>
+                <tr class="lab-sub"><td><strong>INSTALL FEE - the installer agreement figure</strong> <span class="bom-deriv" v-if="installerDeal.overridden">agreed fee overridden to {{ fmt(installerDeal.fee) }} on the installer page</span></td><td class="num"><strong>{{ labour.install.days }}</strong></td><td class="num"><strong>{{ fmt(labour.install.total) }}</strong></td></tr>
+                <tr class="lab-note"><td colspan="3">Below: NOT part of the installer agreement. The electrician (1st + 2nd fix) and any other trades are separate contractors GOB pays direct. They count in the job margin only.</td></tr>
                 <tr v-for="l in labour.electrician.lines" :key="l.id"><td>{{ l.label }}</td><td class="num">—</td><td class="num">{{ fmt(l.amount) }}</td></tr>
                 <tr class="lab-sub"><td><strong>Electrician total</strong></td><td></td><td class="num"><strong>{{ fmt(labour.electrician.total) }}</strong></td></tr>
                 <tr v-for="l in labour.subcontract.lines" :key="l.id"><td>{{ l.label }}</td><td class="num">—</td><td class="num">{{ fmt(l.amount) }}</td></tr>
@@ -1724,7 +1726,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=47"></script>
+<script type="module" src="js/app.js?v=48"></script>
 
 </body>
 </html>

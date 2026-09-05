@@ -648,3 +648,4 @@ html, body {
   .pack-break { break-before: page; }
   .pack-cat { break-inside: avoid; }
 }
+.lab-note td { background: #fffbeb; color: #92400e; font-size: 12px; font-weight: 600; }
