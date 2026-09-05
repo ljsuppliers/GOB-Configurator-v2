@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=2">
+  <link rel="stylesheet" href="css/app.css?v=3">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -25,7 +25,7 @@
       <img src="assets/logo.png" alt="Garden Office Buildings" class="header-logo">
       <span class="header-title">GOB Configurator</span>
       <div class="header-actions">
-        <button class="btn btn-materials" @click="materialsPage ? (materialsPage = false) : openMaterialsPage()">{{ materialsPage ? '← Back to design' : 'Materials & Orders' }}</button>
+        <button class="btn btn-materials" @click="(materialsPage || installerPage) ? (materialsPage = false, installerPage = false) : openMaterialsPage()">{{ (materialsPage || installerPage) ? '← Back to design' : 'Materials & Orders' }}</button>
         <button class="btn" @click="saveConfig">Save</button>
         <button class="btn" @click="loadConfig">Load</button>
         <div class="export-wrapper">
@@ -42,7 +42,7 @@
     </header>
 
     <!-- ─── MAIN 3-PANEL LAYOUT ─── -->
-    <main class="main-content" v-show="!materialsPage">
+    <main class="main-content" v-show="!materialsPage && !installerPage">
 
       <!-- LEFT: Config Panel -->
       <aside class="config-panel">
@@ -955,6 +955,7 @@
           <button class="btn" :class="{ active: suppliersOpen }" @click="suppliersOpen = !suppliersOpen; catalogueOpen = false">Suppliers</button>
           <button class="btn" v-if="bomLines.length" @click="copyAllOrders">Copy all orders</button>
           <button class="btn" v-if="bomLines.length" @click="printMaterials">Print / PDF</button>
+          <button class="btn btn-installer" @click="openInstallerPage">Installer pack &amp; agreement</button>
         </div>
       </div>
       <div class="mp-status" v-if="bomStatus">{{ bomStatus }}</div>
@@ -1016,9 +1017,40 @@
         <div class="mp-cards">
           <div class="mp-card"><div class="mp-card-label">Material cost</div><div class="mp-card-value">{{ fmt(bomSummary.materialCost) }}</div><div class="mp-card-sub">{{ bomSummary.lines }} lines · {{ bomSummary.inStock }} from stock</div></div>
           <div class="mp-card"><div class="mp-card-label">Quote (ex VAT)</div><div class="mp-card-value">{{ bomSummary.quoteExVat ? fmt(bomSummary.quoteExVat) : '—' }}</div><div class="mp-card-sub">{{ bomSummary.quoteIncVat ? fmt(bomSummary.quoteIncVat) + ' inc VAT' : 'no price yet' }}</div></div>
-          <div class="mp-card" :class="{ 'mp-card-good': bomSummary.marginPct >= 50, 'mp-card-bad': bomSummary.quoteExVat && bomSummary.marginPct < 40 }"><div class="mp-card-label">Gross margin after materials</div><div class="mp-card-value">{{ bomSummary.quoteExVat ? fmt(bomSummary.margin) : '—' }}</div><div class="mp-card-sub">{{ bomSummary.quoteExVat ? bomSummary.marginPct.toFixed(0) + '% of ex-VAT price · labour not included' : '' }}</div></div>
+          <div class="mp-card"><div class="mp-card-label">Labour + subcontract</div><div class="mp-card-value">{{ fmt(bomSummary.labourCost) }}</div><div class="mp-card-sub">install {{ fmt(installerDeal.fee) }} ({{ installerDeal.days }} days) · electrician {{ fmt(labour.electrician.total) }}<template v-if="labour.subcontract.total"> · other {{ fmt(labour.subcontract.total) }}</template></div></div>
+          <div class="mp-card" :class="{ 'mp-card-good': bomSummary.marginPct >= 40, 'mp-card-bad': bomSummary.quoteExVat && bomSummary.marginPct < 30 }"><div class="mp-card-label">Gross margin</div><div class="mp-card-value">{{ bomSummary.quoteExVat ? fmt(bomSummary.margin) : '—' }}</div><div class="mp-card-sub">{{ bomSummary.quoteExVat ? bomSummary.marginPct.toFixed(0) + '% of ex-VAT price, after materials + labour + subcontract' : '' }}</div></div>
           <div class="mp-card"><div class="mp-card-label">Suppliers</div><div class="mp-card-value">{{ bomSummary.suppliers }}</div><div class="mp-card-sub">{{ bomSummary.sent }} sent · {{ bomSummary.noEmail }} without email</div></div>
           <div class="mp-card" :class="{ 'mp-card-bad': bomSummary.notInCatalogue || bomSummary.missingCost }"><div class="mp-card-label">Data gaps</div><div class="mp-card-value">{{ bomSummary.notInCatalogue + bomSummary.missingCost }}</div><div class="mp-card-sub">{{ bomSummary.notInCatalogue }} not in catalogue · {{ bomSummary.missingCost }} with no cost</div></div>
+        </div>
+
+        <!-- Labour & subcontract -->
+        <div class="sup-section lab-section" :class="{ collapsed: !labourOpen }">
+          <div class="sup-head" @click="labourOpen = !labourOpen">
+            <span class="sup-caret">{{ labourOpen ? '▾' : '▸' }}</span>
+            <strong class="sup-name">Labour &amp; subcontract</strong>
+            <span class="sup-meta">install team {{ labour.install.days }} days @ {{ fmt(labour.dayRate) }}/day · quote charges the customer {{ fmt(bomSummary.installPrice) }} for installation</span>
+            <span style="flex:1"></span>
+            <span class="sup-total">{{ fmt(bomSummary.labourCost) }}</span>
+          </div>
+          <div v-show="labourOpen" class="sup-body">
+            <div class="lab-settings" v-if="state.labour">
+              <label>Day rate £ <input type="number" v-model.number="state.labour.dayRate" min="0" step="10"></label>
+              <label>Premium build extra days <input type="number" v-model.number="state.labour.premiumExtraDays" min="0" step="0.5" title="Extra install days for the timber floor + timber roof/EPDM vs the panel system. Default is an ESTIMATE."> <span class="bom-warn" v-if="state.labour.premiumExtraDays === defaultPremiumExtraDays">estimate</span></label>
+              <label>Other subcontract £ <input type="number" v-model.number="state.labour.otherSubcontract" min="0" step="50"></label>
+              <label>for <input type="text" v-model="state.labour.otherSubcontractLabel" placeholder="e.g. plumber (WC), groundworks"></label>
+              <span v-if="labour.subcontract.needsPlumber" class="bom-warn">bathroom/WC on this job - add the plumber cost</span>
+            </div>
+            <table class="cat-table bom-table lab-table">
+              <thead><tr><th>Item</th><th class="num">Days</th><th class="num">£</th></tr></thead>
+              <tbody>
+                <tr v-for="l in labour.install.lines" :key="l.id"><td>{{ l.label }}<span v-if="l.estimate" class="bom-warn">estimate</span></td><td class="num">{{ l.days !== null ? l.days : '—' }}</td><td class="num">{{ fmt(l.amount) }}</td></tr>
+                <tr class="lab-sub"><td><strong>Install team total</strong> <span class="bom-deriv" v-if="installerDeal.overridden">agreed fee overridden to {{ fmt(installerDeal.fee) }} on the installer page</span></td><td class="num"><strong>{{ labour.install.days }}</strong></td><td class="num"><strong>{{ fmt(labour.install.total) }}</strong></td></tr>
+                <tr v-for="l in labour.electrician.lines" :key="l.id"><td>{{ l.label }}</td><td class="num">—</td><td class="num">{{ fmt(l.amount) }}</td></tr>
+                <tr class="lab-sub"><td><strong>Electrician total</strong></td><td></td><td class="num"><strong>{{ fmt(labour.electrician.total) }}</strong></td></tr>
+                <tr v-for="l in labour.subcontract.lines" :key="l.id"><td>{{ l.label }}</td><td class="num">—</td><td class="num">{{ fmt(l.amount) }}</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div class="po-sendbar">
@@ -1141,8 +1173,142 @@
       </div>
     </section>
 
+
+    <!-- ─── INSTALLER PACK & AGREEMENT: FULL PAGE ─── -->
+    <section v-if="installerPage" class="materials-page installer-page">
+      <div class="mp-top no-print">
+        <div class="mp-job">
+          <div class="mp-job-name">Installer pack · {{ state.customer && state.customer.name ? state.customer.name : 'Unnamed job' }} <span class="mp-ref">· ref {{ orderRef }}</span></div>
+          <div class="mp-job-sub">{{ jobSummary }}</div>
+        </div>
+        <div class="mp-actions">
+          <button class="btn" @click="installerPage = false; openMaterialsPage()">← Materials &amp; Orders</button>
+          <button class="btn" :class="{ active: installersOpen }" @click="installersOpen = !installersOpen">Installer register</button>
+          <button class="btn btn-primary" @click="printInstallerPack">Print / PDF pack</button>
+        </div>
+      </div>
+
+      <!-- Installer register -->
+      <div v-if="installersOpen" class="cat-editor no-print">
+        <div class="mat-toolbar">
+          <button class="btn btn-sm" @click="addInstallerRow">+ Add installer</button>
+          <button class="btn btn-sm btn-primary" @click="saveInstallerList">Save register</button>
+          <span class="mat-status">{{ installersSaveStatus }}</span>
+        </div>
+        <table class="cat-table">
+          <thead><tr><th>Installer / team</th><th>Email</th><th>Phone</th><th>Day rate £</th><th>Notes</th><th></th></tr></thead>
+          <tbody>
+            <tr v-for="(i, idx) in installers" :key="idx">
+              <td><input v-model="i.name"></td><td><input v-model="i.email"></td><td><input v-model="i.phone" style="width:130px"></td><td><input type="number" v-model.number="i.dayRate" style="width:80px"></td><td><input v-model="i.notes"></td>
+              <td><button class="btn btn-sm" @click="removeInstallerRow(i)">✕</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Assignment (no-print) -->
+      <div class="lab-settings no-print" v-if="state.installer">
+        <label>Installer
+          <select :value="state.installer.name" @change="pickInstaller($event.target.value)">
+            <option value="">— choose —</option>
+            <option v-for="i in installers" :key="i.name" :value="i.name">{{ i.name }}</option>
+            <option v-if="state.installer.name && !installers.some(i => i.name === state.installer.name)" :value="state.installer.name">{{ state.installer.name }}</option>
+          </select>
+        </label>
+        <label>or type name <input type="text" v-model="state.installer.name" placeholder="Installer name"></label>
+        <label>Agreed fee £ <input type="number" v-model.number="state.installer.agreedPrice" :placeholder="installerDeal.computedFee" step="50"></label>
+        <label>Days <input type="number" v-model.number="state.installer.daysOverride" :placeholder="installerDeal.computedDays" step="0.5"></label>
+        <label>Start <input type="date" v-model="state.installer.startDate"></label>
+        <label>End <input type="date" v-model="state.installer.endDate"></label>
+        <span class="bom-deriv">Leave fee/days blank to use the computed {{ fmt(installerDeal.computedFee) }} / {{ installerDeal.computedDays }} days. Saved with this design.</span>
+      </div>
+
+      <!-- ===== PRINTABLE PACK ===== -->
+      <div class="pack">
+        <div class="pack-cover">
+          <div class="pack-brand">Garden Office Buildings</div>
+          <h1>Job pack</h1>
+          <div class="pack-ref">Ref {{ orderRef }}</div>
+          <div class="pack-cover-grid">
+            <div class="pack-box"><div class="pack-box-t">Customer</div><div>{{ state.customer && state.customer.name }}</div><div class="pack-small">{{ state.customer && state.customer.phone }} {{ state.customer && state.customer.email }}</div></div>
+            <div class="pack-box"><div class="pack-box-t">Site</div><div>{{ state.customer && state.customer.address }}</div></div>
+            <div class="pack-box"><div class="pack-box-t">Installer</div><div>{{ state.installer && state.installer.name || '________________' }}</div><div class="pack-small">{{ state.installer && state.installer.phone }} {{ state.installer && state.installer.email }}</div></div>
+            <div class="pack-box"><div class="pack-box-t">Install start</div><div>{{ fmtDateLong(state.installer && state.installer.startDate) }}</div></div>
+            <div class="pack-box"><div class="pack-box-t">Install end</div><div>{{ fmtDateLong(state.installer && state.installer.endDate) }}</div></div>
+            <div class="pack-box"><div class="pack-box-t">Agreed install fee</div><div><strong>{{ fmt(installerDeal.fee) }}</strong> · {{ installerDeal.days }} working days</div></div>
+          </div>
+        </div>
+
+        <h2 class="pack-h2">1. Build summary</h2>
+        <table class="pack-table">
+          <tr><th>External size</th><td>{{ (state.width/1000).toFixed(2) }}m wide × {{ (state.depth/1000).toFixed(2) }}m deep × {{ (state.height/1000).toFixed(2) }}m high (excludes canopy/decking)</td></tr>
+          <tr><th>Internal size</th><td>{{ ((state.width-300)/1000).toFixed(2) }}m × {{ ((state.depth-300)/1000).toFixed(2) }}m (150mm per wall)</td></tr>
+          <tr><th>Build system</th><td>PREMIUM: 5x2 C24 floor on pedestals/screws + 75mm PIR + 22mm chipboard · 100mm Kingspan panels on unclad walls with 3x2 CLS lining · 4x2 CLS stick walls where clad (75mm PIR) · flat timber roof, firrings 1:40 to the rear, 18mm T&G OSB, EPDM · plastered &amp; decorated</td></tr>
+          <tr><th>Foundation</th><td>{{ state.foundationType === 'ground-screw' ? 'Radix ground screws' : 'Adjustable pedestals on customer slab' }}</td></tr>
+          <tr><th>Cladding</th><td>Front {{ (state.cladding.front||'').replace(/-/g,' ') }} · Left {{ (state.cladding.left||'').replace(/-/g,' ') }} · Right {{ (state.cladding.right||'').replace(/-/g,' ') }} · Rear {{ (state.cladding.rear||'').replace(/-/g,' ') }}</td></tr>
+          <tr v-if="state.tier === 'signature'"><th>Canopy / decking</th><td>{{ state.hasCanopy !== false ? ((state.overhangDepth||400)) + 'mm canopy' : 'no canopy' }}{{ state.hasDecking !== false ? ' · decking ' + (((state.deckingDepth||400) + (state.structuralExtras && state.structuralExtras.additionalDecking||0)*140)) + 'mm deep' : '' }} · corners left {{ state.cornerLeft || 'open' }}, right {{ state.cornerRight || 'open' }}<template v-if="state.hasCanopy !== false"> · canopy method: {{ state.height >= 2750 ? 'joists oversail 400mm + 2x2 layer under' : 'firrings overhang 400mm, 2x2 frame on the front wall top' }}</template></td></tr>
+          <tr v-for="elev in ['front','left','right','rear']" :key="elev" v-if="openingsOn(elev).length"><th style="text-transform:capitalize">{{ elev }} openings</th><td><span v-for="c in openingsOn(elev)" :key="c.id" class="pack-chip">{{ c.def.label || c.type }}<template v-if="c.def.width"> · {{ c.def.width }}mm</template> @ {{ c.positionX }}mm from left</span></td></tr>
+          <tr v-if="state.partitionRoom && state.partitionRoom.enabled"><th>Partition</th><td>{{ state.partitionRoom.label || state.partitionRoom.type }} {{ state.partitionRoom.width }}×{{ state.partitionRoom.depth }}mm in the {{ state.partitionRoom.corner }} corner, with door</td></tr>
+          <tr v-if="state.bathroom && state.bathroom.enabled"><th>Bathroom</th><td>{{ state.bathroom.type === 'wc' ? 'WC: toilet, basin, extractor, tiling' : 'Shower room: toilet, basin, shower, extractor, towel rail, tiling' }} · plumber to be arranged</td></tr>
+          <tr><th>Electrics</th><td>Standard pack: consumer unit, 5 double sockets (1 USB), dimmable downlights, RJ45 point{{ state.tier === 'signature' && state.hasCanopy !== false ? ', canopy lights 1 per metre' : '' }}{{ (state.acUnits||[]).length ? ', air conditioning ×' + state.acUnits.length : '' }} · by the electrician, 1st fix after frame, 2nd fix after plaster</td></tr>
+          <tr v-if="state.structuralExtras && (state.structuralExtras.secretDoor || state.structuralExtras.premiumFlooring || state.structuralExtras.heightUpgrade)"><th>Extras</th><td>{{ [state.structuralExtras.secretDoor ? 'secret cladded door' : '', state.structuralExtras.premiumFlooring ? 'premium flooring' : '', state.structuralExtras.heightUpgrade ? 'height upgrade +' + state.structuralExtras.heightUpgrade + 'mm' : ''].filter(Boolean).join(' · ') }}</td></tr>
+          <tr v-if="state.customer && state.customer.notes"><th>Notes</th><td>{{ state.customer.notes }}</td></tr>
+        </table>
+
+        <h2 class="pack-h2">2. Drawings</h2>
+        <div class="pack-drawing" v-html="drawingSvg"></div>
+
+        <h2 class="pack-h2">3. Installation payment</h2>
+        <table class="pack-table pack-pay">
+          <tr v-for="l in labour.install.lines" :key="l.id"><td>{{ l.label.replace(/ - EXTRA DAYS.*$/, '') }}</td><td class="num">{{ l.days !== null ? l.days + ' d' : '' }}</td><td class="num">{{ fmt(l.amount) }}</td></tr>
+          <tr class="pack-total"><td>Agreed install fee{{ installerDeal.overridden ? ' (agreed figure)' : '' }}</td><td class="num">{{ installerDeal.days }} d</td><td class="num">{{ fmt(installerDeal.fee) }}</td></tr>
+          <tr><td>50% halfway, once watertight</td><td></td><td class="num">{{ fmt(installerDeal.half) }}</td></tr>
+          <tr><td>50% on completion</td><td></td><td class="num">{{ fmt(installerDeal.fee - installerDeal.half) }}</td></tr>
+        </table>
+        <p class="pack-note">Electrical work is by the electrician and is not part of the install fee. Materials are supplied by the Company - check every delivery against the checklist below and report damage or shortages the same day.</p>
+
+        <h2 class="pack-h2">4. Materials checklist</h2>
+        <div v-for="sec in categorySections" :key="'pk'+sec.name" class="pack-cat">
+          <h3>{{ sec.name }}</h3>
+          <table class="pack-table pack-check">
+            <tr v-for="l in sec.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}<span v-if="l.inStock" class="pack-small"> · from GOB stock</span></td><td class="num">{{ l.stockPlan && l.stockPlan.text ? l.stockPlan.text : (l.orderQty + (l.orderUnit && l.orderUnit !== l.unit ? ' × ' + l.orderUnit : ' ' + (l.unit||''))) }}</td><td class="pack-small">{{ l.supplier }}</td></tr>
+          </table>
+        </div>
+
+        <h2 class="pack-h2 pack-break">5. Installer agreement</h2>
+        <p class="pack-p">This agreement is made between <strong>Garden Office Buildings</strong> ("the Company") and <strong>{{ state.installer && state.installer.name || '________________' }}</strong> ("the Installer") for the installation of one garden room at the site detailed below.</p>
+        <h4>1. Parties &amp; site</h4>
+        <table class="pack-table pack-kv">
+          <tr><th>Company</th><td>Garden Office Buildings, Rear of 158 Main Road, Biggin Hill, Kent TN16 3BA</td></tr>
+          <tr><th>Installer</th><td>{{ state.installer && state.installer.name || '________________' }}<template v-if="state.installer && state.installer.email"> · {{ state.installer.email }}</template><template v-if="state.installer && state.installer.phone"> · {{ state.installer.phone }}</template></td></tr>
+          <tr><th>Customer</th><td>{{ state.customer && state.customer.name }}</td></tr>
+          <tr><th>Site address</th><td>{{ state.customer && state.customer.address }}</td></tr>
+          <tr><th>Job reference</th><td>{{ orderRef }}</td></tr>
+        </table>
+        <h4>2. Scope of work</h4>
+        <p class="pack-p">The Installer is contracted to fully install the building at the site address, as per the job specification (this job pack: build summary, drawings and materials checklist) and company standards.</p>
+        <p class="pack-p">The Company is responsible for supplying all materials and components. The Installer is responsible for checking the materials on delivery and reporting anything damaged or missing to the Company as soon as possible.</p>
+        <h4>3. Agreed price &amp; schedule</h4>
+        <table class="pack-table pack-kv">
+          <tr><th>Agreed install fee</th><td><strong>{{ fmt(installerDeal.fee) }}</strong> ({{ installerDeal.days }} working days)</td></tr>
+          <tr><th>Install start</th><td>{{ fmtDateLong(state.installer && state.installer.startDate) }}</td></tr>
+          <tr><th>Install end</th><td>{{ fmtDateLong(state.installer && state.installer.endDate) }}</td></tr>
+        </table>
+        <p class="pack-p">The fee is fixed for the scope above. Any variation requested by the customer or Company on site must be agreed in writing (email is sufficient) before the work is carried out, with a separate price agreed for the additional scope.</p>
+        <h4>4. Payment terms</h4>
+        <p class="pack-p">The agreed fee is payable as follows:</p>
+        <ul class="pack-ul"><li>50% halfway through the install, once the building is watertight.</li><li>50% on completion.</li></ul>
+        <h4>5. Defects period</h4>
+        <p class="pack-p">The Installer warrants their workmanship for 1 year from completion. Any defects attributable to the installation (as distinct from materials defects, which the Company handles directly with suppliers) will be remedied by the Installer at no charge within 2 weeks of notice.</p>
+        <h4>6. Insurance</h4>
+        <p class="pack-p">The Installer must hold their own valid insurance for the duration of the install. Evidence of cover must be provided to the Company on request.</p>
+        <h4>7. Health &amp; safety</h4>
+        <p class="pack-p">The Installer is responsible for safe working practices on site, including (but not limited to) appropriate PPE, safe handling of panels and timber, electrical safety during fit-out, and securing the site at the end of each working day.</p>
+      </div>
+    </section>
+
     <!-- ─── BOTTOM PANEL ─── -->
-    <div class="bottom-panel" v-show="!materialsPage">
+    <div class="bottom-panel" v-show="!materialsPage && !installerPage">
       <div class="tab-bar">
         <button :class="{ active: activeBottomTab === 'email' }" @click="activeBottomTab = 'email'">Email Drafter</button>
         <button :class="{ active: activeBottomTab === 'survey' }" @click="activeBottomTab = 'survey'">Site Visit Notes</button>
@@ -1557,7 +1723,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=45"></script>
+<script type="module" src="js/app.js?v=46"></script>
 
 </body>
 </html>

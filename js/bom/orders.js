@@ -55,7 +55,7 @@ export async function loadCatalogue() {
  */
 export function mergeShipped(saved, base) {
   if (!base || !Array.isArray(base.materials)) return saved;
-  const out = { ...saved, materials: [...saved.materials], suppliers: [...(saved.suppliers || [])] };
+  const out = { ...saved, materials: [...saved.materials], suppliers: [...(saved.suppliers || [])], installers: [...(saved.installers || [])] };
   const have = new Map(out.materials.map((m) => [m.name.toLowerCase(), m]));
   for (const bm of base.materials) {
     const sm = have.get(bm.name.toLowerCase());

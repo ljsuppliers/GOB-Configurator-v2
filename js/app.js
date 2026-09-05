@@ -9,8 +9,10 @@ import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom } from './bom/premium-bom.js?v=3';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=5';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=6';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
+import { computeLabour, DEFAULT_DAY_RATE, DEFAULT_PREMIUM_EXTRA_DAYS } from './bom/labour.js?v=1';
+import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=1';
 
 const { createApp } = Vue;
@@ -29,6 +31,11 @@ function formatDateUK(dateStr) {
 // Ensure loaded state has all required nested objects (backwards compat with older saves)
 function ensureStateDefaults(state) {
   if (!state.externalFeatures) state.externalFeatures = [];
+  if (!state.labour) state.labour = { dayRate: DEFAULT_DAY_RATE, premiumExtraDays: DEFAULT_PREMIUM_EXTRA_DAYS, otherSubcontract: 0, otherSubcontractLabel: '' };
+  if (!state.installer) state.installer = { name: '', email: '', phone: '', agreedPrice: '', daysOverride: '', startDate: '', endDate: '', notes: '' };
+  if (!state.bomOverrides) state.bomOverrides = {};
+  if (!state.orderNotes) state.orderNotes = {};
+  if (!state.ordersSent) state.ordersSent = {};
   if (!state.acUnits) state.acUnits = [];
   if (!state.drawingLabels) state.drawingLabels = [];
   if (!state.planning) state.planning = { required: false, reasons: [], customReason: '' };
@@ -91,7 +98,14 @@ createApp({
       catSaveStatus: '',
       // Full-page materials view
       materialsPage: false,
+      installerPage: false,
       orderRefManual: false,
+      labourOpen: true,
+      installers: [],
+      installersOpen: false,
+      installersSaveStatus: '',
+      defaultDayRate: DEFAULT_DAY_RATE,
+      defaultPremiumExtraDays: DEFAULT_PREMIUM_EXTRA_DAYS,
       bomView: 'supplier',
       showDerivations: false,
       collapsed: {},
@@ -166,15 +180,31 @@ createApp({
       const corners = s.tier === 'signature' ? ` · corners ${s.cornerLeft || 'open'}/${s.cornerRight || 'open'}` : '';
       return `${(s.width / 1000).toFixed(1)}m × ${(s.depth / 1000).toFixed(1)}m × ${(s.height / 1000).toFixed(2).replace(/0$/, '')}m external${canopy} · ${s.tier || 'signature'} · front ${pretty(c.front)}, ${sidesTxt}${corners} · ${s.foundationType === 'ground-screw' ? 'ground screws' : 'pedestals'}`;
     },
+    labour() {
+      if (!this.state) return { dayRate: DEFAULT_DAY_RATE, install: { lines: [], total: 0, days: 0 }, electrician: { lines: [], total: 0 }, subcontract: { lines: [], total: 0, needsPlumber: false }, total: 0 };
+      const defs = { ...(this.appData.components?.doors || {}), ...(this.appData.components?.windows || {}) };
+      return computeLabour(this.state, defs);
+    },
+    /** Installer agreement figures: override or the computed install-team total. */
+    installerDeal() {
+      const inst = this.state.installer || {};
+      const computedFee = this.labour.install.total;
+      const computedDays = Math.round(this.labour.install.days * 2) / 2;
+      const fee = inst.agreedPrice > 0 ? Number(inst.agreedPrice) : computedFee;
+      const days = inst.daysOverride > 0 ? Number(inst.daysOverride) : computedDays;
+      return { fee, days, computedFee, computedDays, overridden: inst.agreedPrice > 0, half: Math.round(fee / 2) };
+    },
     bomSummary() {
       const lines = this.bomLines || [];
       const materialCost = this.bomMaterialCost;
       const quoteIncVat = this.price?.totalIncVat || 0;
       const quoteExVat = quoteIncVat / 1.2;
-      const margin = quoteExVat - materialCost;
+      const labourCost = this.installerDeal.fee + this.labour.electrician.total + this.labour.subcontract.total;
+      const installPrice = this.price?.installation || 0;
+      const margin = quoteExVat - materialCost - labourCost;
       const sups = new Set(lines.filter((l) => l.inCatalogue && !l.inStock).map((l) => l.supplier || 'NO SUPPLIER SET'));
       return {
-        materialCost, quoteIncVat, quoteExVat, margin,
+        materialCost, quoteIncVat, quoteExVat, margin, labourCost, installPrice,
         marginPct: quoteExVat > 0 ? (margin / quoteExVat) * 100 : 0,
         lines: lines.length,
         inStock: lines.filter((l) => l.inStock).length,
@@ -345,6 +375,8 @@ createApp({
       this.rebuildOrders();
     },
     async openMaterialsPage() {
+      this.ensureLabourState();
+      this.installerPage = false;
       this.materialsPage = true;
       this.catalogueOpen = false; this.suppliersOpen = false;
       await this.ensureCatalogue();
@@ -352,6 +384,59 @@ createApp({
       window.scrollTo(0, 0);
     },
     toggleCollapse(key) { this.collapsed[key] = !this.collapsed[key]; },
+    ensureLabourState() {
+      if (!this.state) return;
+      if (!this.state.labour) this.state.labour = { dayRate: DEFAULT_DAY_RATE, premiumExtraDays: DEFAULT_PREMIUM_EXTRA_DAYS, otherSubcontract: 0, otherSubcontractLabel: '' };
+      if (!this.state.installer) this.state.installer = { name: '', email: '', phone: '', agreedPrice: '', daysOverride: '', startDate: '', endDate: '', notes: '' };
+    },
+    // Installer register lives INSIDE the catalogue document (settings/catalogue),
+    // the one Firestore doc the rules already allow - a separate doc was refused.
+    async ensureInstallers() {
+      await this.ensureCatalogue();
+      if (!Array.isArray(this.catalogue.installers)) this.catalogue.installers = [];
+      this.installers = this.catalogue.installers;
+    },
+    async openInstallerPage() {
+      this.ensureLabourState();
+      await this.ensureCatalogue();
+      await this.ensureInstallers();
+      if (!this.bomLines.length) await this.generateBom();
+      this.materialsPage = false;
+      this.installerPage = true;
+      window.scrollTo(0, 0);
+    },
+    pickInstaller(name) {
+      this.ensureLabourState();
+      const i = this.installers.find((x) => x.name === name);
+      this.state.installer.name = name;
+      if (i) {
+        this.state.installer.email = i.email || '';
+        this.state.installer.phone = i.phone || '';
+        if (i.dayRate > 0) this.state.labour.dayRate = i.dayRate;
+      }
+    },
+    addInstallerRow() { this.installers.unshift(emptyInstaller()); },
+    removeInstallerRow(i) { this.installers = this.installers.filter((x) => x !== i); },
+    async saveInstallerList() {
+      this.installersSaveStatus = 'Saving…';
+      try {
+        this.catalogue.installers = this.installers.filter((i) => i.name && i.name.trim());
+        this.installers = this.catalogue.installers;
+        const where = await saveCatalogue(this.catalogue);
+        this.installersSaveStatus = where === 'cloud' ? 'Saved (cloud)' : 'Saved locally';
+      }
+      catch (e) { this.installersSaveStatus = 'Save failed: ' + e.message; }
+      setTimeout(() => { this.installersSaveStatus = ''; }, 3000);
+    },
+    printInstallerPack() { this.$nextTick(() => window.print()); },
+    fmtDateLong(iso) {
+      if (!iso) return '________________';
+      return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    },
+    openingsOn(elev) {
+      const defs = { ...(this.appData.components?.doors || {}), ...(this.appData.components?.windows || {}) };
+      return (this.state.components || []).filter((c) => c.elevation === elev).map((c) => ({ ...c, def: defs[c.type] || {} }));
+    },
     collapseAll(flag) {
       const keys = this.bomView === 'supplier' ? this.supplierSections.map((x) => x.name) : this.categorySections.map((x) => 'cat:' + x.name);
       for (const k of keys) this.collapsed[k] = flag;
@@ -1642,8 +1727,6 @@ createApp({
   },
 
   mounted() {
-    // Deep link: ?materials=1 opens the Materials & Orders page straight away
-    if (/[?&]materials=1/.test(window.location.search)) this.$nextTick(() => this.openMaterialsPage());
     // Close export menu on outside click
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.export-wrapper')) {
@@ -1672,7 +1755,10 @@ createApp({
       ]);
 
       this.appData = { prices, components, cladding, emailTemplates };
-      this.state = JSON.parse(JSON.stringify(defaults));
+      this.state = ensureStateDefaults(JSON.parse(JSON.stringify(defaults)));
+      // Deep links (state must exist first): ?materials=1 / ?installer=1
+      if (/[?&]materials=1/.test(window.location.search)) this.$nextTick(() => this.openMaterialsPage());
+      else if (/[?&]installer=1/.test(window.location.search)) this.$nextTick(() => this.openInstallerPage());
       
       // Ensure survey and site objects exist
       if (!this.state.survey) {

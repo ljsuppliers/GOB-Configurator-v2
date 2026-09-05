@@ -607,3 +607,44 @@ html, body {
   .sup-head { background: #eee !important; }
   .po-body { display: block !important; }
 }
+
+/* ─── Labour panel + installer pack ─── */
+.btn-installer { background: #1e293b; color: #fff; border-color: #1e293b; }
+.lab-settings { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; padding: 8px 0 10px; font-size: 13px; color: #334155; }
+.lab-settings label { display: flex; align-items: center; gap: 6px; }
+.lab-settings input, .lab-settings select { padding: 4px 6px; border: 1px solid #d8dee9; border-radius: 4px; font-size: 13px; }
+.lab-settings input[type=number] { width: 80px; }
+.lab-table td.num { text-align: right; white-space: nowrap; }
+.lab-sub td { background: #f8fafc; }
+.installer-page .pack { max-width: 900px; margin: 10px auto; color: #1f2937; }
+.pack-cover { border: 2px solid #0f766e; border-radius: 10px; padding: 18px 22px; margin-bottom: 18px; }
+.pack-brand { font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: #0f766e; font-weight: 700; }
+.pack-cover h1 { font-size: 26px; margin: 4px 0 2px; }
+.pack-ref { font-family: ui-monospace, Menlo, monospace; color: #475569; margin-bottom: 12px; }
+.pack-cover-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pack-box { border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; font-size: 13px; }
+.pack-box-t { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; font-weight: 700; }
+.pack-small { font-size: 11px; color: #64748b; }
+.pack-h2 { font-size: 17px; border-bottom: 2px solid #0f766e; padding-bottom: 4px; margin: 22px 0 10px; }
+.pack-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.pack-table th, .pack-table td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; }
+.pack-table th { width: 160px; color: #475569; font-weight: 600; background: #f8fafc; }
+.pack-table td.num { text-align: right; white-space: nowrap; }
+.pack-chip { display: inline-block; background: #f1f5f9; border-radius: 4px; padding: 2px 6px; margin: 1px 4px 1px 0; font-size: 12px; }
+.pack-drawing svg { max-width: 100%; height: auto; }
+.pack-pay td:first-child { width: auto; }
+.pack-total td { font-weight: 800; border-top: 2px solid #0f766e; }
+.pack-note { font-size: 12px; color: #475569; margin: 8px 0; }
+.pack-cat h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #0f766e; margin: 12px 0 4px; }
+.pack-check td { padding: 3px 8px; font-size: 12px; }
+.pack-tick { width: 22px; font-size: 14px; }
+.pack-p { font-size: 12.5px; line-height: 1.45; margin: 4px 0; }
+.pack-ul { font-size: 12.5px; line-height: 1.45; margin: 4px 0 4px 20px; }
+.installer-page h4 { font-size: 12.5px; margin: 10px 0 3px; }
+.pack-kv th { width: 140px; }
+@media print {
+  .no-print { display: none !important; }
+  .installer-page { padding: 0; }
+  .pack-break { break-before: page; }
+  .pack-cat { break-inside: avoid; }
+}
