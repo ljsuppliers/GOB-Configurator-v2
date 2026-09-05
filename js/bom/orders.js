@@ -29,7 +29,7 @@ export async function loadCatalogue() {
       const doc = await db.collection('settings').doc('catalogue').get();
       if (doc.exists) {
         const saved = doc.data();
-        if (saved && Array.isArray(saved.materials)) return saved;
+        if (saved && Array.isArray(saved.materials)) return mergeShipped(saved, base);
       }
     }
   } catch (e) { console.warn('Firestore catalogue load failed', e); }
@@ -37,10 +37,34 @@ export async function loadCatalogue() {
     const ls = localStorage.getItem(LS_KEY);
     if (ls) {
       const saved = JSON.parse(ls);
-      if (saved && Array.isArray(saved.materials)) return saved;
+      if (saved && Array.isArray(saved.materials)) return mergeShipped(saved, base);
     }
   } catch (e) { /* ignore */ }
   return base || { version: 1, suppliers: [], materials: [] };
+}
+
+/**
+ * Bring a SAVED catalogue up to date with the shipped data/catalogue.json
+ * without overwriting anything Liam has edited: new materials/suppliers are
+ * added, and a saved cost of £0 is filled from the shipped cost (with its
+ * notes). Non-zero saved costs, suppliers and routing are left alone.
+ */
+export function mergeShipped(saved, base) {
+  if (!base || !Array.isArray(base.materials)) return saved;
+  const out = { ...saved, materials: [...saved.materials], suppliers: [...(saved.suppliers || [])] };
+  const have = new Map(out.materials.map((m) => [m.name.toLowerCase(), m]));
+  for (const bm of base.materials) {
+    const sm = have.get(bm.name.toLowerCase());
+    if (!sm) { out.materials.push({ ...bm }); continue; }
+    if (!(sm.unitCost > 0) && bm.unitCost > 0) {
+      sm.unitCost = bm.unitCost;
+      if (bm.notes && !(sm.notes || '').includes('CLAUDE ESTIMATE')) sm.notes = bm.notes;
+      if (!sm.supplier && bm.supplier) sm.supplier = bm.supplier;
+    }
+  }
+  const haveSup = new Set(out.suppliers.map((s) => s.name.toLowerCase()));
+  for (const bs of base.suppliers || []) if (!haveSup.has(bs.name.toLowerCase())) out.suppliers.push({ ...bs });
+  return out;
 }
 
 export async function saveCatalogue(cat) {

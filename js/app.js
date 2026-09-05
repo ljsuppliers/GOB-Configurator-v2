@@ -9,7 +9,7 @@ import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom } from './bom/premium-bom.js?v=3';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=2';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=3';
 
 const { createApp } = Vue;
 
