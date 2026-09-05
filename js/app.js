@@ -8,6 +8,8 @@ import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
+import { buildPremiumBom } from './bom/premium-bom.js?v=1';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=1';
 
 const { createApp } = Vue;
 
@@ -75,6 +77,17 @@ createApp({
       nextAcUnitId: 2000,
       nextLabelId: 3000,
 
+      // Materials & Orders (premium BOM + supplier POs)
+      catalogue: null,
+      bomLines: [],
+      orders: [],
+      orderRef: '',
+      bomStatus: '',
+      catalogueOpen: false,
+      suppliersOpen: false,
+      catalogueFilter: '',
+      catSaveStatus: '',
+
       // Cloud saves
       cloudReady: false,
       cloudDesigns: [],
@@ -126,6 +139,15 @@ createApp({
   },
 
   computed: {
+    bomMaterialCost() {
+      return (this.bomLines || []).reduce((sum, l) => sum + (l.inStock ? 0 : l.lineCost), 0);
+    },
+    filteredCatalogue() {
+      if (!this.catalogue) return [];
+      const f = (this.catalogueFilter || '').toLowerCase();
+      if (!f) return this.catalogue.materials;
+      return this.catalogue.materials.filter((mt) => (mt.name + ' ' + mt.category + ' ' + mt.supplier).toLowerCase().includes(f));
+    },
     price() {
       if (!this.state || !this.appData.prices) return null;
       return calculatePrice(this.state);
@@ -201,6 +223,76 @@ createApp({
 
   methods: {
     fmt: formatPrice,
+
+    // ─── Materials & Orders ───
+    async ensureCatalogue() {
+      if (!this.catalogue) this.catalogue = await loadCatalogue();
+      return this.catalogue;
+    },
+    async generateBom() {
+      await this.ensureCatalogue();
+      const defs = { ...(this.appData.components?.doors || {}), ...(this.appData.components?.windows || {}) };
+      const raw = buildPremiumBom(this.state, defs);
+      this.bomLines = joinBom(raw, this.catalogue);
+      if (!this.orderRef) {
+        const cust = (this.state.customer?.name || '').split(' ')[0] || 'JOB';
+        this.orderRef = `GOB-${cust.toUpperCase()}-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}`;
+      }
+      this.rebuildOrders();
+      this.bomStatus = `${this.bomLines.length} lines - material cost ${formatPrice(this.bomMaterialCost)}`;
+    },
+    rebuildOrders() {
+      this.orders = buildOrders(this.bomLines, this.catalogue, {
+        ref: this.orderRef,
+        siteAddress: [this.state.customer?.name, this.state.customer?.address].filter(Boolean).join('\n'),
+      });
+    },
+    setLineDestination(line, dest) {
+      line.destination = dest;
+      const mat = line.material;
+      if (mat) mat.destination = dest; // remember as the material default
+      this.rebuildOrders();
+    },
+    toggleLineStock(line) {
+      line.inStock = !line.inStock;
+      if (line.material) line.material.inStock = line.inStock;
+      this.rebuildOrders();
+    },
+    async saveCat() {
+      this.catSaveStatus = 'Saving…';
+      try {
+        const where = await saveCatalogue(this.catalogue);
+        this.catSaveStatus = where === 'cloud' ? 'Saved to cloud ✓' : 'Saved on this device ✓ (cloud offline)';
+      } catch (e) {
+        this.catSaveStatus = 'Save failed: ' + (e.message || e);
+      }
+      setTimeout(() => { this.catSaveStatus = ''; }, 4000);
+    },
+    addCatalogueRow() {
+      this.catalogue.materials.unshift(catalogueEmptyMaterial());
+    },
+    removeCatalogueRow(mat) {
+      if (!confirm(`Delete "${mat.name}" from the catalogue?`)) return;
+      this.catalogue.materials = this.catalogue.materials.filter((m) => m !== mat);
+    },
+    addSupplierRow() {
+      this.catalogue.suppliers.unshift({ name: '', email: '', phone: '', notes: '' });
+    },
+    async copyOrderEmail(order) {
+      const txt = `To: ${order.supplier?.email || '[no email set - add it under Suppliers]'}\nSubject: ${order.email.subject}\n\n${order.email.body}`;
+      await navigator.clipboard.writeText(txt);
+      order.copied = true;
+      setTimeout(() => { order.copied = false; }, 2500);
+    },
+    async copyAllOrders() {
+      const txt = this.orders.map((o) => `To: ${o.supplier?.email || '[no email]'}\nSubject: ${o.email.subject}\n\n${o.email.body}`).join('\n\n========================================\n\n');
+      await navigator.clipboard.writeText(txt);
+      this.bomStatus = 'All purchase orders copied to clipboard';
+    },
+    mailtoOrder(order) {
+      const to = order.supplier?.email || '';
+      return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(order.email.subject)}&body=${encodeURIComponent(order.email.body)}`;
+    },
 
     step(obj, key, delta, min = 0, max = 10) {
       obj[key] = Math.max(min, Math.min(max, (obj[key] || 0) + delta));
