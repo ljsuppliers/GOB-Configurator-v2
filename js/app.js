@@ -9,7 +9,7 @@ import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom } from './bom/premium-bom.js?v=3';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=3';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=4';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { SENDER_EMAIL } from './google-config.js?v=1';
 
@@ -89,6 +89,11 @@ createApp({
       suppliersOpen: false,
       catalogueFilter: '',
       catSaveStatus: '',
+      // Full-page materials view
+      materialsPage: false,
+      bomView: 'supplier',
+      showDerivations: false,
+      collapsed: {},
       // One-button ordering from Liam's Gmail
       gmailReady: gmailConfigured(),
       senderEmail: SENDER_EMAIL,
@@ -149,6 +154,69 @@ createApp({
   computed: {
     bomMaterialCost() {
       return (this.bomLines || []).reduce((sum, l) => sum + (l.inStock ? 0 : l.lineCost), 0);
+    },
+    jobSummary() {
+      const s = this.state;
+      const c = s.cladding || {};
+      const pretty = (v) => (v || '').replace(/-/g, ' ');
+      const sides = [c.left, c.right].map(pretty).filter(Boolean);
+      const sidesTxt = sides.length && sides[0] === sides[1] ? `sides ${sides[0]}` : `left ${pretty(c.left)}, right ${pretty(c.right)}`;
+      const canopy = s.tier === 'signature' && s.hasCanopy !== false ? ` + ${((s.overhangDepth || 400) / 1000).toFixed(1)}m canopy/decking` : '';
+      const corners = s.tier === 'signature' ? ` · corners ${s.cornerLeft || 'open'}/${s.cornerRight || 'open'}` : '';
+      return `${(s.width / 1000).toFixed(1)}m × ${(s.depth / 1000).toFixed(1)}m × ${(s.height / 1000).toFixed(2).replace(/0$/, '')}m external${canopy} · ${s.tier || 'signature'} · front ${pretty(c.front)}, ${sidesTxt}${corners} · ${s.foundationType === 'ground-screw' ? 'ground screws' : 'pedestals'}`;
+    },
+    bomSummary() {
+      const lines = this.bomLines || [];
+      const materialCost = this.bomMaterialCost;
+      const quoteIncVat = this.price?.totalIncVat || 0;
+      const quoteExVat = quoteIncVat / 1.2;
+      const margin = quoteExVat - materialCost;
+      const sups = new Set(lines.filter((l) => l.inCatalogue && !l.inStock).map((l) => l.supplier || 'NO SUPPLIER SET'));
+      return {
+        materialCost, quoteIncVat, quoteExVat, margin,
+        marginPct: quoteExVat > 0 ? (margin / quoteExVat) * 100 : 0,
+        lines: lines.length,
+        inStock: lines.filter((l) => l.inStock).length,
+        suppliers: sups.size,
+        sent: (this.orders || []).filter((o) => o.sentAt).length,
+        noEmail: (this.orders || []).filter((o) => !o.supplier?.email).length,
+        notInCatalogue: lines.filter((l) => !l.inCatalogue).length,
+        missingCost: lines.filter((l) => l.inCatalogue && !l.inStock && !(l.unitCost > 0)).length,
+      };
+    },
+    supplierSections() {
+      const groups = new Map();
+      for (const l of this.bomLines || []) {
+        const key = l.inStock ? 'IN STOCK' : (l.inCatalogue ? (l.supplier || 'NO SUPPLIER SET') : 'NOT IN CATALOGUE');
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(l);
+      }
+      const supByName = new Map((this.catalogue?.suppliers || []).map((sp) => [sp.name.toLowerCase(), sp]));
+      const secs = [...groups.entries()].map(([name, lines]) => {
+        lines.sort((a, b) => (a.material?.category || '').localeCompare(b.material?.category || '') || a.name.localeCompare(b.name));
+        const sup = supByName.get(name.toLowerCase()) || null;
+        const orders = (this.orders || []).filter((o) => o.supplierName === name);
+        return {
+          name, lines, supplier: sup, email: sup?.email || '',
+          subtotal: lines.reduce((t, l) => t + (l.inStock ? 0 : l.lineCost), 0),
+          destinations: [...new Set(lines.map((l) => l.destination))],
+          orders,
+          allSent: orders.length > 0 && orders.every((o) => o.sentAt),
+        };
+      });
+      const rank = (n) => (n === 'NOT IN CATALOGUE' ? 2 : n === 'NO SUPPLIER SET' ? 1 : n === 'IN STOCK' ? 3 : 0);
+      return secs.sort((a, b) => rank(a.name) - rank(b.name) || b.subtotal - a.subtotal || a.name.localeCompare(b.name));
+    },
+    categorySections() {
+      const groups = new Map();
+      for (const l of this.bomLines || []) {
+        const key = l.material?.category || 'Other';
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(l);
+      }
+      return [...groups.entries()].map(([name, lines]) => ({
+        name, lines, subtotal: lines.reduce((t, l) => t + (l.inStock ? 0 : l.lineCost), 0),
+      })).sort((a, b) => a.name.localeCompare(b.name));
     },
     filteredCatalogue() {
       if (!this.catalogue) return [];
@@ -251,15 +319,41 @@ createApp({
       this.bomStatus = `${this.bomLines.length} lines - material cost ${formatPrice(this.bomMaterialCost)}`;
     },
     rebuildOrders() {
+      const open = new Set((this.orders || []).filter((o) => o.showEmail).map((o) => o.supplierName + o.destination));
       this.orders = buildOrders(this.bomLines, this.catalogue, {
         ref: this.orderRef,
         siteAddress: [this.state.customer?.name, this.state.customer?.address].filter(Boolean).join('\n'),
+        supplierNotes: this.state.orderNotes || {},
       });
+      for (const o of this.orders) o.showEmail = open.has(o.supplierName + o.destination);
       // Mark orders already sent for this job (saved in the design state).
       const sent = this.state.ordersSent || {};
       for (const o of this.orders) o.sentAt = sent[this.orderKey(o)]?.at || '';
     },
     orderKey(o) { return `${this.orderRef}||${o.supplierName}||${o.destination}`; },
+    async openMaterialsPage() {
+      this.materialsPage = true;
+      this.catalogueOpen = false; this.suppliersOpen = false;
+      await this.ensureCatalogue();
+      if (!this.bomLines.length) await this.generateBom();
+      window.scrollTo(0, 0);
+    },
+    toggleCollapse(key) { this.collapsed[key] = !this.collapsed[key]; },
+    collapseAll(flag) {
+      const keys = this.bomView === 'supplier' ? this.supplierSections.map((x) => x.name) : this.categorySections.map((x) => 'cat:' + x.name);
+      for (const k of keys) this.collapsed[k] = flag;
+    },
+    orderNoteFor(supplierName) { return (this.state.orderNotes || {})[supplierName] || { delivery: '', notes: '' }; },
+    setOrderNote(supplierName, field, value) {
+      if (!this.state.orderNotes) this.state.orderNotes = {};
+      this.state.orderNotes[supplierName] = { ...this.orderNoteFor(supplierName), [field]: value };
+      this.rebuildOrders();
+    },
+    printMaterials() {
+      this.showDerivations = true;
+      this.collapseAll(false);
+      this.$nextTick(() => window.print());
+    },
     async sendOrder(order) {
       if (!order.supplier?.email) { this.bomStatus = `${order.supplierName}: no order email set (Suppliers editor)`; return false; }
       try {

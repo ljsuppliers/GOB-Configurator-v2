@@ -253,6 +253,7 @@ function orderEmailText(order, opts = {}) {
     return s;
   });
   const subject = `Purchase order ${ref} - Garden Office Buildings`;
+  const note = (opts.supplierNotes || {})[order.supplierName] || {};
   const body = [
     'Hi,',
     '',
@@ -262,6 +263,8 @@ function orderEmailText(order, opts = {}) {
     '',
     'Delivery address:',
     dest,
+    ...(note.delivery ? ['', `Requested delivery: ${note.delivery}`] : []),
+    ...(note.notes ? ['', `Notes: ${note.notes}`] : []),
     '',
     'Please confirm price and delivery date. Any questions, call us on 01689 818 400.',
     '',

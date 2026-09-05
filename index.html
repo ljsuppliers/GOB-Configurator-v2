@@ -25,6 +25,7 @@
       <img src="assets/logo.png" alt="Garden Office Buildings" class="header-logo">
       <span class="header-title">GOB Configurator</span>
       <div class="header-actions">
+        <button class="btn btn-materials" @click="materialsPage ? (materialsPage = false) : openMaterialsPage()">{{ materialsPage ? '← Back to design' : 'Materials & Orders' }}</button>
         <button class="btn" @click="saveConfig">Save</button>
         <button class="btn" @click="loadConfig">Load</button>
         <div class="export-wrapper">
@@ -41,7 +42,7 @@
     </header>
 
     <!-- ─── MAIN 3-PANEL LAYOUT ─── -->
-    <main class="main-content">
+    <main class="main-content" v-show="!materialsPage">
 
       <!-- LEFT: Config Panel -->
       <aside class="config-panel">
@@ -938,12 +939,213 @@
 
     </main>
 
+
+    <!-- ─── MATERIALS & ORDERS: FULL PAGE ─── -->
+    <section v-if="materialsPage" class="materials-page">
+      <div class="mp-top">
+        <div class="mp-job">
+          <div class="mp-job-name">{{ state.customer && state.customer.name ? state.customer.name : 'Unnamed job' }} <span class="mp-ref">· ref <input v-model="orderRef" class="mat-ref" placeholder="Order ref" @change="rebuildOrders"></span></div>
+          <div class="mp-job-sub">{{ jobSummary }}</div>
+          <div class="mp-job-sub" v-if="state.customer && state.customer.address">Site: {{ state.customer.address }}</div>
+        </div>
+        <div class="mp-actions">
+          <button class="btn btn-primary" @click="generateBom">{{ bomLines.length ? 'Refresh materials list' : 'Generate materials list' }}</button>
+          <button class="btn" :class="{ active: catalogueOpen }" @click="catalogueOpen = !catalogueOpen; suppliersOpen = false">Catalogue</button>
+          <button class="btn" :class="{ active: suppliersOpen }" @click="suppliersOpen = !suppliersOpen; catalogueOpen = false">Suppliers</button>
+          <button class="btn" v-if="bomLines.length" @click="copyAllOrders">Copy all orders</button>
+          <button class="btn" v-if="bomLines.length" @click="printMaterials">Print / PDF</button>
+        </div>
+      </div>
+      <div class="mp-status" v-if="bomStatus">{{ bomStatus }}</div>
+
+      <!-- Catalogue editor -->
+      <div v-if="catalogueOpen && catalogue" class="cat-editor">
+        <div class="mat-toolbar">
+          <input v-model="catalogueFilter" placeholder="Filter materials…" class="mat-ref">
+          <button class="btn btn-sm" @click="addCatalogueRow">+ Add material</button>
+          <button class="btn btn-sm btn-primary" @click="saveCat">Save catalogue</button>
+          <span class="mat-status">{{ catSaveStatus }}</span>
+        </div>
+        <div class="cat-scroll">
+          <table class="cat-table">
+            <thead><tr><th>Material</th><th>Category</th><th>Supplier</th><th>Unit</th><th>Unit cost £</th><th>Pack size</th><th>Ordered as</th><th>Default dest.</th><th>In stock</th><th></th></tr></thead>
+            <tbody>
+              <tr v-for="mt in filteredCatalogue" :key="mt.name + mt.category">
+                <td><input v-model="mt.name"></td>
+                <td><input v-model="mt.category" style="width:90px"></td>
+                <td>
+            <select v-model="mt.supplier"><option value="">—</option><option v-for="sp in catalogue.suppliers" :value="sp.name">{{ sp.name }}</option></select>
+                </td>
+                <td><input v-model="mt.unit" style="width:60px"></td>
+                <td><input v-model.number="mt.unitCost" type="number" step="0.01" style="width:70px"></td>
+                <td><input v-model.number="mt.packSize" type="number" step="0.01" style="width:60px"></td>
+                <td><input v-model="mt.orderUnit" style="width:100px"></td>
+                <td><select v-model="mt.destination"><option value="site">Site</option><option value="factory">Factory</option></select></td>
+                <td style="text-align:center"><input type="checkbox" v-model="mt.inStock"></td>
+                <td><button class="btn btn-sm" @click="removeCatalogueRow(mt)">✕</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Suppliers editor -->
+      <div v-if="suppliersOpen && catalogue" class="cat-editor">
+        <div class="mat-toolbar">
+          <button class="btn btn-sm" @click="addSupplierRow">+ Add supplier</button>
+          <button class="btn btn-sm btn-primary" @click="saveCat">Save</button>
+          <span class="mat-status">{{ catSaveStatus }}</span>
+        </div>
+        <table class="cat-table">
+          <thead><tr><th>Supplier</th><th>Order email</th><th>Phone</th><th>Notes (account no. etc.)</th></tr></thead>
+          <tbody>
+            <tr v-for="sp in catalogue.suppliers" :key="sp.name">
+              <td><input v-model="sp.name"></td>
+              <td><input v-model="sp.email" placeholder="orders@…"></td>
+              <td><input v-model="sp.phone" style="width:120px"></td>
+              <td><input v-model="sp.notes"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+
+      <template v-if="bomLines.length && !catalogueOpen && !suppliersOpen">
+        <!-- Summary cards -->
+        <div class="mp-cards">
+          <div class="mp-card"><div class="mp-card-label">Material cost</div><div class="mp-card-value">{{ fmt(bomSummary.materialCost) }}</div><div class="mp-card-sub">{{ bomSummary.lines }} lines · {{ bomSummary.inStock }} from stock</div></div>
+          <div class="mp-card"><div class="mp-card-label">Quote (ex VAT)</div><div class="mp-card-value">{{ bomSummary.quoteExVat ? fmt(bomSummary.quoteExVat) : '—' }}</div><div class="mp-card-sub">{{ bomSummary.quoteIncVat ? fmt(bomSummary.quoteIncVat) + ' inc VAT' : 'no price yet' }}</div></div>
+          <div class="mp-card" :class="{ 'mp-card-good': bomSummary.marginPct >= 50, 'mp-card-bad': bomSummary.quoteExVat && bomSummary.marginPct < 40 }"><div class="mp-card-label">Gross margin after materials</div><div class="mp-card-value">{{ bomSummary.quoteExVat ? fmt(bomSummary.margin) : '—' }}</div><div class="mp-card-sub">{{ bomSummary.quoteExVat ? bomSummary.marginPct.toFixed(0) + '% of ex-VAT price · labour not included' : '' }}</div></div>
+          <div class="mp-card"><div class="mp-card-label">Suppliers</div><div class="mp-card-value">{{ bomSummary.suppliers }}</div><div class="mp-card-sub">{{ bomSummary.sent }} sent · {{ bomSummary.noEmail }} without email</div></div>
+          <div class="mp-card" :class="{ 'mp-card-bad': bomSummary.notInCatalogue || bomSummary.missingCost }"><div class="mp-card-label">Data gaps</div><div class="mp-card-value">{{ bomSummary.notInCatalogue + bomSummary.missingCost }}</div><div class="mp-card-sub">{{ bomSummary.notInCatalogue }} not in catalogue · {{ bomSummary.missingCost }} with no cost</div></div>
+        </div>
+
+        <div class="po-sendbar">
+          <template v-if="gmailReady">
+            <button v-if="!sendReview" class="btn btn-primary" :disabled="sending || !orders.some(o => o.supplier && o.supplier.email && !o.sentAt)" @click="sendReview = true">Send all purchase orders from {{ senderEmail }}</button>
+            <template v-else>
+              <div class="po-review">
+                <strong>Review before sending</strong> - {{ orders.filter(o => o.supplier && o.supplier.email && !o.sentAt).length }} email{{ orders.filter(o => o.supplier && o.supplier.email && !o.sentAt).length === 1 ? '' : 's' }} will go from <strong>{{ senderEmail }}</strong> (Google will ask you to sign in the first time):
+                <ul>
+                  <li v-for="o in orders.filter(o => o.supplier && o.supplier.email && !o.sentAt)" :key="'rv'+o.supplierName+o.destination">{{ o.supplierName }} → {{ o.supplier.email }} · {{ o.items.length }} line{{ o.items.length === 1 ? '' : 's' }} · deliver to {{ o.destination === 'factory' ? 'FACTORY' : 'SITE' }}</li>
+                </ul>
+                <span v-if="orders.some(o => !o.supplier || !o.supplier.email)" class="bom-warn">Skipped (no email set): {{ orders.filter(o => !o.supplier || !o.supplier.email).map(o => o.supplierName).join(', ') }}</span>
+                <div style="margin-top:8px;display:flex;gap:8px">
+                  <button class="btn btn-primary" :disabled="sending" @click="sendAllOrders()">{{ sending ? 'Sending…' : 'Yes, send them now' }}</button>
+                  <button class="btn btn-sm" :disabled="sending" @click="sendReview = false">Cancel</button>
+                </div>
+              </div>
+            </template>
+          </template>
+          <span v-else class="bom-deriv">One-button sending from {{ senderEmail }} needs the Google client ID (see js/google-config.js). Until then use Copy email / Open in mail.</span>
+          <div v-if="sendLog.length" class="po-log"><div v-for="(l, i) in sendLog" :key="i">{{ l }}</div></div>
+        </div>
+
+        <div class="mp-viewbar">
+          <button :class="{ active: bomView === 'supplier' }" @click="bomView = 'supplier'">By supplier (purchase orders)</button>
+          <button :class="{ active: bomView === 'category' }" @click="bomView = 'category'">By category (build sections)</button>
+          <span style="flex:1"></span>
+          <label class="mp-check"><input type="checkbox" v-model="showDerivations"> show workings</label>
+          <button class="btn btn-sm" @click="collapseAll(true)">Collapse all</button>
+          <button class="btn btn-sm" @click="collapseAll(false)">Expand all</button>
+        </div>
+
+        <!-- Not-in-catalogue warning -->
+        <div v-if="bomSummary.notInCatalogue" class="mp-warn">
+          <strong>{{ bomSummary.notInCatalogue }} line{{ bomSummary.notInCatalogue === 1 ? '' : 's' }} not in the catalogue</strong> (no supplier, no cost, will not appear on any order):
+          {{ bomLines.filter(l => !l.inCatalogue).map(l => l.name).join(' · ') }} — add them under Catalogue.
+        </div>
+
+        <!-- BY SUPPLIER -->
+        <template v-if="bomView === 'supplier'">
+          <div v-for="sec in supplierSections" :key="sec.name" class="sup-section" :class="{ collapsed: collapsed[sec.name], 'sup-noemail': !sec.email && sec.name !== 'IN STOCK', 'sup-sent': sec.allSent }">
+            <div class="sup-head" @click="toggleCollapse(sec.name)">
+              <span class="sup-caret">{{ collapsed[sec.name] ? '▸' : '▾' }}</span>
+              <strong class="sup-name">{{ sec.name }}</strong>
+              <span class="sup-meta" v-if="sec.email">{{ sec.email }}</span>
+              <span class="bom-warn" v-else-if="sec.name !== 'IN STOCK' && sec.name !== 'NO SUPPLIER SET'">no order email — add under Suppliers</span>
+              <span class="bom-warn" v-else-if="sec.name === 'NO SUPPLIER SET'">assign a supplier in the Catalogue</span>
+              <span class="sup-meta">{{ sec.lines.length }} line{{ sec.lines.length === 1 ? '' : 's' }}<template v-if="sec.destinations.length > 1"> · split {{ sec.destinations.join(' + ') }}</template></span>
+              <span style="flex:1"></span>
+              <span v-if="sec.allSent" class="po-sent">Sent</span>
+              <span class="sup-total">{{ fmt(sec.subtotal) }}</span>
+            </div>
+            <div v-show="!collapsed[sec.name]" class="sup-body">
+              <table class="cat-table bom-table">
+                <thead><tr><th title="Tick = supply from factory stock, don't order">Stock</th><th>Material</th><th>Needed</th><th>Order as</th><th>£/unit</th><th>Line £</th><th>Deliver to</th></tr></thead>
+                <tbody>
+                  <tr v-for="l in sec.lines" :key="l.name" :class="{ 'bom-stock': l.inStock, 'bom-missing': !l.inCatalogue }">
+                    <td style="text-align:center"><input type="checkbox" :checked="l.inStock" @change="toggleLineStock(l)"></td>
+                    <td><strong>{{ l.name }}</strong><span v-if="l.material && l.material.category" class="bom-cat">{{ l.material.category }}</span><div v-if="showDerivations" class="bom-deriv">{{ l.derivation }}</div></td>
+                    <td class="num">{{ l.qty }} {{ l.unit }}</td>
+                    <td><template v-if="l.stockPlan && l.stockPlan.text"><strong>{{ l.stockPlan.text }}</strong><div v-if="showDerivations" class="bom-deriv" v-for="n in l.stockPlan.notes">{{ n }}</div></template><template v-else>{{ l.orderQty }}<span v-if="l.orderUnit && l.orderUnit !== l.unit"> × {{ l.orderUnit }}</span></template></td>
+                    <td class="num">{{ l.unitCost ? fmt(l.unitCost) : '—' }}</td>
+                    <td class="num">{{ l.lineCost ? fmt(l.lineCost) : '—' }}</td>
+                    <td><select :value="l.destination" @change="setLineDestination(l, $event.target.value)"><option value="site">Site</option><option value="factory">Factory</option></select></td>
+                  </tr>
+                </tbody>
+              </table>
+              <!-- Purchase order(s) for this supplier: one per destination -->
+              <div v-for="o in sec.orders" :key="o.supplierName + o.destination" class="po-card">
+                <div class="po-head">
+                  <span class="po-dest">Purchase order → {{ o.destination === 'factory' ? 'FACTORY (Biggin Hill)' : 'SITE' }}</span>
+                  <input class="po-note" :value="orderNoteFor(sec.name).delivery" @change="setOrderNote(sec.name, 'delivery', $event.target.value)" placeholder="Requested delivery (e.g. w/c 15 Sept, AM)">
+                  <input class="po-note po-note-wide" :value="orderNoteFor(sec.name).notes" @change="setOrderNote(sec.name, 'notes', $event.target.value)" placeholder="Notes to supplier (account no., call before delivery, offload…)">
+                  <span style="flex:1"></span>
+                  <span v-if="o.sentAt" class="po-sent">Sent {{ new Date(o.sentAt).toLocaleString('en-GB') }}</span>
+                  <button class="btn btn-sm" @click="copyOrderEmail(o)">{{ o.copied ? 'Copied ✓' : 'Copy email' }}</button>
+                  <a v-if="o.supplier && o.supplier.email" class="btn btn-sm" :href="mailtoOrder(o)">Open in mail</a>
+                  <button v-if="gmailReady && o.supplier && o.supplier.email" class="btn btn-sm btn-primary" :disabled="sending" @click="sendOrder(o)">{{ o.sentAt ? 'Send again' : 'Send from Gmail' }}</button>
+                  <button class="btn btn-sm" @click="o.showEmail = !o.showEmail">{{ o.showEmail ? 'Hide email' : 'Preview email' }}</button>
+                </div>
+                <pre v-if="o.showEmail" class="po-body">{{ o.email.body }}</pre>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- BY CATEGORY -->
+        <template v-else>
+          <div v-for="sec in categorySections" :key="sec.name" class="sup-section" :class="{ collapsed: collapsed['cat:' + sec.name] }">
+            <div class="sup-head" @click="toggleCollapse('cat:' + sec.name)">
+              <span class="sup-caret">{{ collapsed['cat:' + sec.name] ? '▸' : '▾' }}</span>
+              <strong class="sup-name">{{ sec.name }}</strong>
+              <span class="sup-meta">{{ sec.lines.length }} line{{ sec.lines.length === 1 ? '' : 's' }}</span>
+              <span style="flex:1"></span>
+              <span class="sup-total">{{ fmt(sec.subtotal) }}</span>
+            </div>
+            <div v-show="!collapsed['cat:' + sec.name]" class="sup-body">
+              <table class="cat-table bom-table">
+                <thead><tr><th>Stock</th><th>Material</th><th>Supplier</th><th>Needed</th><th>Order as</th><th>£/unit</th><th>Line £</th></tr></thead>
+                <tbody>
+                  <tr v-for="l in sec.lines" :key="l.name" :class="{ 'bom-stock': l.inStock, 'bom-missing': !l.inCatalogue }">
+                    <td style="text-align:center"><input type="checkbox" :checked="l.inStock" @change="toggleLineStock(l)"></td>
+                    <td><strong>{{ l.name }}</strong><div v-if="showDerivations" class="bom-deriv">{{ l.derivation }}</div></td>
+                    <td>{{ l.supplier || '—' }}</td>
+                    <td class="num">{{ l.qty }} {{ l.unit }}</td>
+                    <td><template v-if="l.stockPlan && l.stockPlan.text">{{ l.stockPlan.text }}</template><template v-else>{{ l.orderQty }}<span v-if="l.orderUnit && l.orderUnit !== l.unit"> × {{ l.orderUnit }}</span></template></td>
+                    <td class="num">{{ l.unitCost ? fmt(l.unitCost) : '—' }}</td>
+                    <td class="num">{{ l.lineCost ? fmt(l.lineCost) : '—' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </template>
+
+        <div class="bom-total">Material cost (excl. in-stock): <strong>{{ fmt(bomMaterialCost) }}</strong></div>
+      </template>
+      <div v-else-if="!bomLines.length && !catalogueOpen && !suppliersOpen" class="bom-empty">
+        Press <strong>Generate materials list</strong> for the full premium-system BOM for this design: quantities, stock lengths, costs, margin, and one purchase order per supplier.
+      </div>
+    </section>
+
     <!-- ─── BOTTOM PANEL ─── -->
-    <div class="bottom-panel">
+    <div class="bottom-panel" v-show="!materialsPage">
       <div class="tab-bar">
         <button :class="{ active: activeBottomTab === 'email' }" @click="activeBottomTab = 'email'">Email Drafter</button>
         <button :class="{ active: activeBottomTab === 'survey' }" @click="activeBottomTab = 'survey'">Site Visit Notes</button>
-        <button :class="{ active: activeBottomTab === 'materials' }" @click="activeBottomTab = 'materials'; ensureCatalogue()">Materials &amp; Orders</button>
+        <button class="tab-open-page" @click="openMaterialsPage()">Materials &amp; Orders ↗</button>
       </div>
       <div class="tab-content">
 
@@ -972,134 +1174,6 @@
               <div class="email-preview">
                 <div class="email-body"><pre v-html="emailBodyHtml"></pre></div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Materials & Orders (premium BOM + supplier POs) -->
-        <div class="tab-panel" :class="{ active: activeBottomTab === 'materials' }">
-          <div class="materials-tab">
-            <div class="mat-toolbar">
-              <button class="btn btn-primary" @click="generateBom">Generate materials list</button>
-              <input v-model="orderRef" placeholder="Order ref" class="mat-ref" @change="rebuildOrders">
-              <button class="btn" @click="catalogueOpen = !catalogueOpen; suppliersOpen = false">{{ catalogueOpen ? 'Close catalogue' : 'Edit catalogue' }}</button>
-              <button class="btn" @click="suppliersOpen = !suppliersOpen; catalogueOpen = false">{{ suppliersOpen ? 'Close suppliers' : 'Suppliers' }}</button>
-              <button class="btn" v-if="orders.length" @click="copyAllOrders">Copy ALL purchase orders</button>
-              <span class="mat-status">{{ bomStatus }}</span>
-            </div>
-
-            <!-- Catalogue editor -->
-            <div v-if="catalogueOpen && catalogue" class="cat-editor">
-              <div class="mat-toolbar">
-                <input v-model="catalogueFilter" placeholder="Filter materials…" class="mat-ref">
-                <button class="btn btn-sm" @click="addCatalogueRow">+ Add material</button>
-                <button class="btn btn-sm btn-primary" @click="saveCat">Save catalogue</button>
-                <span class="mat-status">{{ catSaveStatus }}</span>
-              </div>
-              <div class="cat-scroll">
-                <table class="cat-table">
-                  <thead><tr><th>Material</th><th>Category</th><th>Supplier</th><th>Unit</th><th>Unit cost £</th><th>Pack size</th><th>Ordered as</th><th>Default dest.</th><th>In stock</th><th></th></tr></thead>
-                  <tbody>
-                    <tr v-for="mt in filteredCatalogue" :key="mt.name + mt.category">
-                      <td><input v-model="mt.name"></td>
-                      <td><input v-model="mt.category" style="width:90px"></td>
-                      <td>
-                        <select v-model="mt.supplier"><option value="">—</option><option v-for="sp in catalogue.suppliers" :value="sp.name">{{ sp.name }}</option></select>
-                      </td>
-                      <td><input v-model="mt.unit" style="width:60px"></td>
-                      <td><input v-model.number="mt.unitCost" type="number" step="0.01" style="width:70px"></td>
-                      <td><input v-model.number="mt.packSize" type="number" step="0.01" style="width:60px"></td>
-                      <td><input v-model="mt.orderUnit" style="width:100px"></td>
-                      <td><select v-model="mt.destination"><option value="site">Site</option><option value="factory">Factory</option></select></td>
-                      <td style="text-align:center"><input type="checkbox" v-model="mt.inStock"></td>
-                      <td><button class="btn btn-sm" @click="removeCatalogueRow(mt)">✕</button></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Suppliers editor -->
-            <div v-if="suppliersOpen && catalogue" class="cat-editor">
-              <div class="mat-toolbar">
-                <button class="btn btn-sm" @click="addSupplierRow">+ Add supplier</button>
-                <button class="btn btn-sm btn-primary" @click="saveCat">Save</button>
-                <span class="mat-status">{{ catSaveStatus }}</span>
-              </div>
-              <table class="cat-table">
-                <thead><tr><th>Supplier</th><th>Order email</th><th>Phone</th><th>Notes (account no. etc.)</th></tr></thead>
-                <tbody>
-                  <tr v-for="sp in catalogue.suppliers" :key="sp.name">
-                    <td><input v-model="sp.name"></td>
-                    <td><input v-model="sp.email" placeholder="orders@…"></td>
-                    <td><input v-model="sp.phone" style="width:120px"></td>
-                    <td><input v-model="sp.notes"></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- BOM list -->
-            <div v-if="bomLines.length && !catalogueOpen && !suppliersOpen" class="bom-list">
-              <table class="cat-table">
-                <thead><tr><th>Stock</th><th>Material</th><th>Needed</th><th>Order</th><th>£/unit</th><th>Line £</th><th>Supplier</th><th>Deliver to</th></tr></thead>
-                <tbody>
-                  <tr v-for="l in bomLines" :key="l.name + l.derivation" :class="{ 'bom-stock': l.inStock, 'bom-missing': !l.inCatalogue }">
-                    <td style="text-align:center"><input type="checkbox" :checked="l.inStock" @change="toggleLineStock(l)" title="In stock - don't order"></td>
-                    <td><strong>{{ l.name }}</strong><span v-if="!l.inCatalogue" class="bom-warn"> not in catalogue</span><div class="bom-deriv">{{ l.derivation }}</div></td>
-                    <td>{{ l.qty }} {{ l.unit }}</td>
-                    <td><template v-if="l.stockPlan && l.stockPlan.text">{{ l.stockPlan.text }}<div class="bom-deriv" v-for="n in l.stockPlan.notes">{{ n }}</div></template><template v-else>{{ l.orderQty }}<span v-if="l.orderUnit && l.orderUnit !== l.unit"> × {{ l.orderUnit }}</span></template></td>
-                    <td>{{ l.unitCost ? fmt(l.unitCost) : '—' }}</td>
-                    <td>{{ l.lineCost ? fmt(l.lineCost) : '—' }}</td>
-                    <td>{{ l.supplier || '—' }}</td>
-                    <td>
-                      <select :value="l.destination" @change="setLineDestination(l, $event.target.value)">
-                        <option value="site">Site</option><option value="factory">Factory</option>
-                      </select>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <div class="bom-total">Material cost (excl. in-stock): <strong>{{ fmt(bomMaterialCost) }}</strong></div>
-
-              <!-- Purchase orders -->
-              <h3 style="margin-top:18px">Purchase orders ({{ orders.length }})</h3>
-              <div class="po-sendbar">
-                <template v-if="gmailReady">
-                  <button v-if="!sendReview" class="btn btn-primary" :disabled="sending || !orders.some(o => o.supplier && o.supplier.email && !o.sentAt)" @click="sendReview = true">Send all purchase orders from {{ senderEmail }}</button>
-                  <template v-else>
-                    <div class="po-review">
-                      <strong>Review before sending</strong> - {{ orders.filter(o => o.supplier && o.supplier.email && !o.sentAt).length }} email{{ orders.filter(o => o.supplier && o.supplier.email && !o.sentAt).length === 1 ? '' : 's' }} will go from <strong>{{ senderEmail }}</strong> (Google will ask you to sign in the first time):
-                      <ul>
-                        <li v-for="o in orders.filter(o => o.supplier && o.supplier.email && !o.sentAt)" :key="'rv'+o.supplierName+o.destination">{{ o.supplierName }} → {{ o.supplier.email }} · {{ o.items.length }} line{{ o.items.length === 1 ? '' : 's' }} · deliver to {{ o.destination === 'factory' ? 'FACTORY' : 'SITE' }}</li>
-                      </ul>
-                      <span v-if="orders.some(o => !o.supplier || !o.supplier.email)" class="bom-warn">Skipped (no email set): {{ orders.filter(o => !o.supplier || !o.supplier.email).map(o => o.supplierName).join(', ') }}</span>
-                      <div style="margin-top:8px;display:flex;gap:8px">
-                        <button class="btn btn-primary" :disabled="sending" @click="sendAllOrders()">{{ sending ? 'Sending…' : 'Yes, send them now' }}</button>
-                        <button class="btn btn-sm" :disabled="sending" @click="sendReview = false">Cancel</button>
-                      </div>
-                    </div>
-                  </template>
-                </template>
-                <span v-else class="bom-deriv">One-button sending from {{ senderEmail }} needs the Google client ID (see js/google-config.js). Until then use Copy email / Open in mail.</span>
-                <div v-if="sendLog.length" class="po-log"><div v-for="(l, i) in sendLog" :key="i">{{ l }}</div></div>
-              </div>
-              <div v-for="o in orders" :key="o.supplierName + o.destination" class="po-card">
-                <div class="po-head">
-                  <strong>{{ o.supplierName }}</strong>
-                  <span class="po-dest">→ {{ o.destination === 'factory' ? 'FACTORY (Biggin Hill)' : 'SITE' }}</span>
-                  <span v-if="!o.supplier || !o.supplier.email" class="bom-warn">no order email set</span>
-                  <span style="flex:1"></span>
-                  <span v-if="o.sentAt" class="po-sent">Sent {{ new Date(o.sentAt).toLocaleString('en-GB') }}</span>
-                  <button class="btn btn-sm" @click="copyOrderEmail(o)">{{ o.copied ? 'Copied ✓' : 'Copy email' }}</button>
-                  <a v-if="o.supplier && o.supplier.email" class="btn btn-sm" :href="mailtoOrder(o)">Open in mail</a>
-                  <button v-if="gmailReady && o.supplier && o.supplier.email" class="btn btn-sm" :disabled="sending" @click="sendOrder(o)">{{ o.sentAt ? 'Send again' : 'Send from Gmail' }}</button>
-                </div>
-                <pre class="po-body">{{ o.email.body }}</pre>
-              </div>
-            </div>
-            <div v-else-if="!bomLines.length && !catalogueOpen && !suppliersOpen" class="bom-empty">
-              Design the building above, then press <strong>Generate materials list</strong> for the full premium-system BOM, costs and one-click supplier purchase orders.
             </div>
           </div>
         </div>
@@ -1482,7 +1556,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=43"></script>
+<script type="module" src="js/app.js?v=44"></script>
 
 </body>
 </html>
