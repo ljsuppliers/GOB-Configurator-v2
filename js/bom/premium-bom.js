@@ -157,20 +157,40 @@ export function buildPremiumBom(state, componentDefs) {
     if (sw.insulation === '75mm PIR') pirWallM2 += Math.ceil(netM2); else rockwoolM2 += Math.ceil(netM2);
     soleLm += sw.run;
   }
-  // Closed corners: side wall carried +400mm forward, stick-framed, clad to
-  // match the side (assumption flagged to Liam 2026-09-05).
+  // Closed corners (Liam 2026-09-05): the +400mm forward section is built the
+  // SAME WAY as that side wall (panel if steel side, 4x2 stick if clad side),
+  // shares the side's external cladding, and its inside return is clad in the
+  // FRONT wall's cladding. The canopy comes from the roof joists oversailing
+  // the front by 400mm; the closed corner gives it a little support.
+  const closedCornerSides = ['cornerLeft', 'cornerRight']
+    .filter((k) => state[k] === 'closed')
+    .map((k) => (k === 'cornerLeft' ? 'left' : 'right'));
+  for (const side of closedCornerSides) {
+    const steelSide = isSteel(state.cladding[side]);
+    if (steelSide) {
+      panelCount += 1; // one extra 1.1m panel piece covers the 400mm extension
+      add('Kingspan 100mm insulated wall panel (1.1m wide)', 1,
+        `CLOSED ${side} corner: side wall carried ${(state.overhangDepth || 400)}mm forward in PANEL (matches the side wall) - cut from one extra panel @ ${wallH.toFixed(2)}m`);
+    } else {
+      stickLm += ((2 * wallH) + 3 * 0.4) * 1.10;
+      soleLm += 0.4;
+      plySheets += 1;
+      tyvekM2 += Math.ceil(0.4 * wallH * 1.2);
+    }
+    add('Front-cladding return (closed corner)', 1,
+      `Inside return of the CLOSED ${side} corner clad in the FRONT wall cladding (${state.cladding.front}) - boards from the front-wall cladding order`);
+  }
   if (closedCorners > 0) {
-    const extLm = closedCorners * (Math.ceil(0.4 / 0.4) + 1) * wallH + closedCorners * 3 * 0.4;
-    stickLm += extLm * 1.10;
-    soleLm += closedCorners * 0.4;
-    plySheets += closedCorners; // one sheet each covers 0.4m x wallH both faces + waste
-    tyvekM2 += closedCorners * Math.ceil(0.4 * wallH * 2.2);
-    add('Close corner trims', closedCorners, `1 set per CLOSED corner (side wall carried ${((state.overhangDepth || 400))}mm forward to the canopy line) - product TBC`);
+    add('Close corner trims', closedCorners, `1 set per CLOSED corner - product TBC with Liam`);
   }
-  add('Corner trims', 4 - closedCorners + openCorners * 0, `Standard corner trim sets on the remaining corners - product TBC`);
+  // Open corners: timber corner post built up from 4x2s (~200x200: 3-4
+  // back-to-back + 1 on the side - team practice varies, standard TBC),
+  // cloaked with the open corner trims. Doors/windows may meet glass-to-glass.
   if (openCorners > 0) {
-    add('Open-corner glazing junction kit', openCorners, `OPEN corner${openCorners === 1 ? '' : 's'}: frames can meet at the corner (glass-to-glass) - corner finish/trim + any post TBC with Liam`);
+    add('CLS 4x2 timber', Math.ceil(openCorners * 4 * wallH * 1.10),
+      `OPEN corner post${openCorners === 1 ? '' : 's'}: ~200x200 built-up 4x2 post (4 x ${wallH.toFixed(2)}m per corner), cloaked by the corner trims`);
   }
+  add('Corner trims', Math.max(0, 4 - closedCorners), `Corner trim sets (incl. cloaking any open-corner posts) - product TBC`);
   add('CLS 4x2 timber', Math.ceil(stickLm - soleLm), `Stick walls (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): studs @400mm + plates + noggins + opening framing, +10%`);
   add('Treated CLS 4x2 timber', Math.ceil(soleLm * 1.10), `Stick-wall sole plates at deck level (treated)`);
   add('12mm Plywood (1220×2440 sheet)', plySheets, `Stick wall external sheathing + 10% (openings cut out on site)`);
@@ -179,6 +199,36 @@ export function buildPremiumBom(state, componentDefs) {
   add('Staple box', 1, `Fix Tyvek before battens`);
   if (pirWallM2 > 0) add('75mm PIR insulation board', pirWallM2, `FRONT stick wall bays: 75mm PIR friction-fit between the 4x2 studs`);
   if (rockwoolM2 > 0) add('Rockwool insulation 100mm', rockwoolM2, `Clad side stick wall bays`);
+  // Cladding boards + double-batten sub-frame on every slat-clad wall
+  // (front always clad; sides when not steel). Closed-corner returns add
+  // ~0.4m to the front-cladding run.
+  const cladWalls = [];
+  if (!isSteel(state.cladding.front)) cladWalls.push({ wall: 'front', type: state.cladding.front, run: w, ops: front });
+  if (!isSteel(state.cladding.left)) cladWalls.push({ wall: 'left side', type: state.cladding.left, run: sideRun, ops: left });
+  if (!isSteel(state.cladding.right)) cladWalls.push({ wall: 'right side', type: state.cladding.right, run: sideRun, ops: right });
+  let cladBattenLm = 0;
+  const cladTotals = new Map();
+  for (const cw of cladWalls) {
+    const openW = fhOn(cw.ops).reduce((s2, o) => s2 + o.widthM, 0);
+    let run = Math.max(0, cw.run - openW);
+    if (cw.wall === 'front') run += closedCorners * 0.4; // inside returns clad in front cladding
+    const boardW = cw.type === 'western-red-cedar' || cw.type === 'larch' ? 0.14 : 0.2;
+    const name = cw.type === 'western-red-cedar' ? 'Western Red Cedar slatted cladding 140×2500mm'
+      : cw.type === 'larch' ? 'Larch slatted cladding 140×2500mm'
+      : cw.type === 'composite-latte' ? 'Composite slatted cladding (Latte) 200×2500mm'
+      : 'Composite slatted cladding (Coffee) 200×2500mm';
+    const runs = Math.ceil(run / boardW);
+    cladTotals.set(name, (cladTotals.get(name) || 0) + runs + 4);
+    cladBattenLm += Math.ceil(run / 0.4) * wallH + cw.run * Math.ceil(wallH / 0.4);
+  }
+  for (const [name, count] of cladTotals) {
+    add(name, count, `Vertical cladding runs across the clad walls (+4 spares per wall). Colour/type per wall spec`);
+  }
+  if (cladBattenLm > 0) {
+    add('18x38 treated batten', Math.ceil(cladBattenLm * 1.05), `Cladding double-batten sub-frame (vertical counter-battens + horizontal rows @400mm) on the clad walls`);
+    add('Stainless cladding screw', Math.ceil(cladBattenLm / 0.4) , `~1 per slat per batten crossing (approx by batten run)`);
+  }
+
   // Flitch over wide front openings
   const wideFront = fhOn(front).filter((o) => o.widthM >= 1.8);
   if (wideFront.length > 0) {
@@ -240,14 +290,15 @@ export function buildPremiumBom(state, componentDefs) {
 
   /* ---------- ELECTRICAL PACK (ALWAYS INCLUDED) + CANOPY LIGHTS ---------- */
   add('Consumer Unit', 1, `8-way with main switch + RCD - standard in every premium build`);
-  add('13A double socket', 6, `Standard pack`);
-  add('Double back box (47mm, plasterboard or surface)', 7, `6 sockets + 1 switch`);
+  add('13A double socket', 4, `Standard pack: 5 double sockets total, 1 of them USB`);
+  add('13A double socket with USB', 1, `Standard pack (the USB one)`);
+  add('Double back box (47mm, plasterboard or surface)', 6, `5 sockets + 1 switch`);
   add('Single back box (35mm, plasterboard or surface)', 1, `RJ45 internet point`);
   add('RJ45 internet socket (single)', 1, `Standard in every build`);
   add('Dimmable LED downlight (recessed)', Math.max(6, Math.ceil((w - 0.2) * (d - 0.2) / 2.5)), `Internal downlights sized to floor area`);
   add('Dimmable switch plate (multi-gang)', 1, `Internal dimmer + external/canopy switch gangs`);
   if (hasCanopy) {
-    add('Canopy light (recessed, IP65)', Math.max(2, Math.ceil(w / 1.2)), `STANDARD with the signature canopy: ~1 per 1.2m of width (rule TBC with Liam) - own switch gang`);
+    add('Canopy light (recessed, IP65)', Math.max(1, Math.floor(w)), `STANDARD with the signature canopy: 1 per metre of width, rounded down (Liam 2026-09-05) - own switch gang`);
   }
   add('1.5mm twin & earth cable', Math.ceil(2 * (w + d) * 1.5), `Lighting circuit ~1.5x perimeter`);
   add('2.5mm twin & earth cable', Math.ceil(2 * (w + d) * 2), `Socket radial ~2x perimeter`);

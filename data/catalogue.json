@@ -2593,6 +2593,58 @@
    "destination": "site",
    "inStock": false,
    "notes": "SET COST + SUPPLIER"
+  },
+  {
+   "name": "13A double socket with USB",
+   "category": "Electrical",
+   "sku": "",
+   "unit": "each",
+   "unitCost": 0,
+   "supplier": "",
+   "packSize": null,
+   "orderUnit": "",
+   "destination": "site",
+   "inStock": false,
+   "notes": "Standard pack includes 1 - SET COST"
+  },
+  {
+   "name": "Front-cladding return (closed corner)",
+   "category": "Cladding",
+   "sku": "",
+   "unit": "each",
+   "unitCost": 0,
+   "supplier": "",
+   "packSize": null,
+   "orderUnit": "",
+   "destination": "site",
+   "inStock": false,
+   "notes": "Labour/boards note line - boards come from the front cladding order"
+  },
+  {
+   "name": "Larch slatted cladding 140\u00d72500mm",
+   "category": "Cladding",
+   "sku": "",
+   "unit": "each",
+   "unitCost": 0,
+   "supplier": "",
+   "packSize": null,
+   "orderUnit": "",
+   "destination": "site",
+   "inStock": false,
+   "notes": "SET COST + SUPPLIER if offered"
+  },
+  {
+   "name": "Western Red Cedar slatted cladding 140\u00d72500mm",
+   "category": "Cladding",
+   "sku": "",
+   "unit": "length",
+   "unitCost": 0,
+   "supplier": "",
+   "packSize": null,
+   "orderUnit": "2.5m length",
+   "destination": "site",
+   "inStock": false,
+   "notes": "SET COST + SUPPLIER (missing from designer catalogue too)"
   }
  ]
 }
