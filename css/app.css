@@ -657,3 +657,6 @@ html, body {
   .pack-cat { break-inside: avoid; }
 }
 .lab-note td { background: #fffbeb; color: #92400e; font-size: 12px; font-weight: 600; }
+.mp-price-input { width: 120px; font-size: 22px; font-weight: 800; color: #0f172a; border: 1px dashed #94a3b8; border-radius: 6px; padding: 0 6px; background: #fff; }
+.mp-pound { font-size: 22px; font-weight: 800; margin-right: 2px; }
+.mp-card-edit { background: #fffbeb; border-color: #fcd34d; }

@@ -35,6 +35,7 @@ function ensureStateDefaults(state) {
   if (state.labour.extraDays === undefined) { state.labour.extraDays = 0; state.labour.extraDaysLabel = ''; }
   if (!state.installer) state.installer = { name: '', email: '', phone: '', agreedPrice: '', daysOverride: '', startDate: '', endDate: '', notes: '' };
   if (!state.bomOverrides) state.bomOverrides = {};
+  if (state.quotePriceOverride === undefined) state.quotePriceOverride = '';
   if (!state.orderNotes) state.orderNotes = {};
   if (!state.ordersSent) state.ordersSent = {};
   if (!state.acUnits) state.acUnits = [];
@@ -197,14 +198,16 @@ createApp({
     bomSummary() {
       const lines = this.bomLines || [];
       const materialCost = this.bomMaterialCost;
-      const quoteIncVat = this.price?.totalIncVat || 0;
+      const engineIncVat = this.price?.totalIncVat || 0;
+      const override = Number(this.state?.quotePriceOverride || 0);
+      const quoteIncVat = override > 0 ? override : engineIncVat;
       const quoteExVat = quoteIncVat / 1.2;
       const labourCost = this.installerDeal.fee + this.labour.electrician.total + this.labour.subcontract.total;
       const installPrice = this.price?.installation || 0;
       const margin = quoteExVat - materialCost - labourCost;
       const sups = new Set(lines.filter((l) => l.inCatalogue && !l.inStock).map((l) => l.supplier || 'NO SUPPLIER SET'));
       return {
-        materialCost, quoteIncVat, quoteExVat, margin, labourCost, installPrice,
+        materialCost, quoteIncVat, quoteExVat, margin, labourCost, installPrice, engineIncVat, overridden: override > 0,
         marginPct: quoteExVat > 0 ? (margin / quoteExVat) * 100 : 0,
         lines: lines.length,
         inStock: lines.filter((l) => l.inStock).length,

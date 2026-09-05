@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=5">
+  <link rel="stylesheet" href="css/app.css?v=6">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -1016,7 +1016,7 @@
         <!-- Summary cards -->
         <div class="mp-cards">
           <div class="mp-card"><div class="mp-card-label">Material cost</div><div class="mp-card-value">{{ fmt(bomSummary.materialCost) }}</div><div class="mp-card-sub">{{ bomSummary.lines }} lines · {{ bomSummary.inStock }} from stock</div></div>
-          <div class="mp-card"><div class="mp-card-label">Quote (ex VAT)</div><div class="mp-card-value">{{ bomSummary.quoteExVat ? fmt(bomSummary.quoteExVat) : '—' }}</div><div class="mp-card-sub">{{ bomSummary.quoteIncVat ? fmt(bomSummary.quoteIncVat) + ' inc VAT' : 'no price yet' }}</div></div>
+          <div class="mp-card" :class="{ 'mp-card-edit': bomSummary.overridden }"><div class="mp-card-label">Quote price (inc VAT) <span class="bom-deriv" style="display:inline">edit to test</span></div><div class="mp-card-value"><span class="mp-pound">£</span><input class="mp-price-input" type="number" step="50" :value="bomSummary.quoteIncVat ? Math.round(bomSummary.quoteIncVat) : ''" @change="state.quotePriceOverride = Number($event.target.value) || ''" title="Type a price to see the margin at that figure. Clear it to go back to the configurator's price."></div><div class="mp-card-sub">{{ fmt(bomSummary.quoteExVat) }} ex VAT<template v-if="bomSummary.overridden"> · configurator says {{ fmt(bomSummary.engineIncVat) }} <a href="#" @click.prevent="state.quotePriceOverride = ''">reset</a></template></div></div>
           <div class="mp-card"><div class="mp-card-label">Install fee (installer agreement)</div><div class="mp-card-value">{{ fmt(installerDeal.fee) }}</div><div class="mp-card-sub">{{ installerDeal.days }} days · team of 2 @ {{ fmt(labour.dayRate) }}/day</div></div>
           <div class="mp-card"><div class="mp-card-label">Electrician + other trades</div><div class="mp-card-value">{{ fmt(labour.electrician.total + labour.subcontract.total) }}</div><div class="mp-card-sub">paid direct by GOB, not in the agreement</div></div>
           <div class="mp-card" :class="{ 'mp-card-good': bomSummary.marginPct >= 40, 'mp-card-bad': bomSummary.quoteExVat && bomSummary.marginPct < 30 }"><div class="mp-card-label">Gross margin</div><div class="mp-card-value">{{ bomSummary.quoteExVat ? fmt(bomSummary.margin) : '—' }}</div><div class="mp-card-sub">{{ bomSummary.quoteExVat ? bomSummary.marginPct.toFixed(0) + '% of ex-VAT price, after materials + labour + subcontract' : '' }}</div></div>
@@ -1726,7 +1726,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=48"></script>
+<script type="module" src="js/app.js?v=49"></script>
 
 </body>
 </html>
