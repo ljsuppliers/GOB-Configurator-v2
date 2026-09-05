@@ -283,8 +283,38 @@ function calculatePartitionRoomPrice(partitionRoom) {
   };
 }
 
+/**
+ * PREMIUM PRICE MATRIX (Liam 2026-09-05) - the customer price for the building
+ * INCLUDING installation + groundworks, by external width x depth (excl. the
+ * canopy/decking). Extras (height, partition, cladding upgrades...) sit on top.
+ * Bilinear interpolation between grid points, linear extrapolation outside,
+ * rounded to the nearest £50.
+ */
+export function premiumMatrixPrice(widthM, depthM) {
+  const m = pricesData?.premiumMatrix;
+  if (!m) return null;
+  const ws = m.widths, ds = m.depths;
+  const at = (di, wi) => m.prices[String(ds[di].toFixed(1))][wi];
+  // index pair + fraction along an axis (clamped to the end segments for extrapolation)
+  const seg = (arr, v) => {
+    let i = 0;
+    while (i < arr.length - 2 && v > arr[i + 1]) i++;
+    return { i, t: (v - arr[i]) / (arr[i + 1] - arr[i]) };
+  };
+  const W = seg(ws, widthM), D = seg(ds, depthM);
+  const row = (di) => at(di, W.i) + W.t * (at(di, W.i + 1) - at(di, W.i));
+  const price = row(D.i) + D.t * (row(D.i + 1) - row(D.i));
+  return Math.round(price / 50) * 50;
+}
+
 function lookupBasePrice(state) {
   const tier = state.tier || 'signature';
+  // Premium-only since 2026-09-05: the matrix is the price for BOTH tiers
+  // (Classic simply loses the canopy/decking via the standard deductions).
+  // The matrix INCLUDES installation, which the quote shows as its own line,
+  // so the building line = matrix - installation.
+  const mp = premiumMatrixPrice(state.width / 1000, state.depth / 1000);
+  if (mp !== null) return Math.max(0, mp - calculateInstallation(state));
   const matrix = pricesData.basePrices[tier];
   if (!matrix) return 20000;
 

@@ -3,7 +3,7 @@
 // LIAM'S MODEL (2026-09-05 pm): team of 2 @ £200/day each = £400/day.
 //   BUILD DAYS by model size (everything standard is inside these days:
 //   floor, walls, roof, plaster + decoration, front cladding, standard
-//   canopy + decking, main door):
+//   canopy + decking, main door; plastering arranged + paid by the installer):
 //     Midi  4.0 x 3.0  = 15 days (£6,000)
 //     Maxi  5.0 x 3.5  = 15 days (£6,000)
 //     Multi 6.0 x 4.0  = 17 days (£6,800)
@@ -51,9 +51,9 @@ export function computeLabour(state, componentDefs) {
   const day = (id, label, days, est) => { if (days) lines.push({ id, label, days, amount: Math.round(days * dayRate), estimate: !!est }); };
 
   const base = buildDaysFor(externalArea);
-  day('build', `Build - ${base.model} band (${externalArea.toFixed(1)}m² external): floor, walls, roof, plaster & decorate, front cladding, canopy & decking, main door`, base.days, /ESTIMATE/.test(base.model));
+  day('build', `Build - ${base.model} band (${externalArea.toFixed(1)}m² external): floor, walls, roof, plaster & decorate (installer's plasterer), front cladding, canopy & decking, main door`, base.days, /ESTIMATE/.test(base.model));
   day('delivery', 'Delivery (1 day)', DELIVERY_DAYS);
-  day('groundworks', 'Groundworks (2 days)', GROUNDWORKS_DAYS);
+  day('groundworks', 'Groundworks - Ground Screw or Concrete Block System (2 days)', GROUNDWORKS_DAYS);
 
   // ---- EXTRAS (clear additions to the standard build) ----
   if (state.partitionRoom?.enabled) day('partition', `Partition room (${state.partitionRoom.label || state.partitionRoom.type}) incl. interior door`, 2.0);

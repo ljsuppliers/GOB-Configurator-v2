@@ -43,93 +43,318 @@
     "5950": "Multi",
     "7100": "Multi+"
   },
-  "standardWidths": [3650, 4800, 5950, 7100],
+  "standardWidths": [
+    3650,
+    4800,
+    5950,
+    7100
+  ],
   "standardDepths": {
-    "classic": [2875, 3450, 4025, 4600],
-    "signature": [2875, 3450, 4025, 4400]
+    "classic": [
+      2875,
+      3450,
+      4025,
+      4600
+    ],
+    "signature": [
+      2875,
+      3450,
+      4025,
+      4400
+    ]
   },
   "installation": {
     "ranges": [
-      { "maxArea": 11, "price": 5000 },
-      { "maxArea": 14, "price": 6400 },
-      { "maxArea": 17, "price": 7000 },
-      { "maxArea": 20, "price": 7500 },
-      { "maxArea": 24, "price": 8000 },
-      { "maxArea": 28, "price": 8500 },
-      { "maxArea": 32, "price": 9000 },
-      { "maxArea": 36, "price": 9500 },
-      { "maxArea": 40, "price": 10500 },
-      { "maxArea": 45, "price": 11800 },
-      { "maxArea": 50, "price": 13500 },
-      { "maxArea": 60, "price": 14000 },
-      { "maxArea": 80, "price": 16000 }
+      {
+        "maxArea": 11,
+        "price": 5000
+      },
+      {
+        "maxArea": 14,
+        "price": 6400
+      },
+      {
+        "maxArea": 17,
+        "price": 7000
+      },
+      {
+        "maxArea": 20,
+        "price": 7500
+      },
+      {
+        "maxArea": 24,
+        "price": 8000
+      },
+      {
+        "maxArea": 28,
+        "price": 8500
+      },
+      {
+        "maxArea": 32,
+        "price": 9000
+      },
+      {
+        "maxArea": 36,
+        "price": 9500
+      },
+      {
+        "maxArea": 40,
+        "price": 10500
+      },
+      {
+        "maxArea": 45,
+        "price": 11800
+      },
+      {
+        "maxArea": 50,
+        "price": 13500
+      },
+      {
+        "maxArea": 60,
+        "price": 14000
+      },
+      {
+        "maxArea": 80,
+        "price": 16000
+      }
     ]
   },
   "extras": {
     "electrical": {
-      "externalSocket": { "label": "External double plug socket", "price": 235 },
-      "upDownLight": { "label": "External up/down light", "price": 95 },
-      "heater": { "label": "Oil filled electric wall panel radiator", "price": 495 },
-      "additionalSocket": { "label": "Additional double plug socket", "price": 60 },
-      "additionalSocketUsb": { "label": "Additional double plug socket w/ USB", "price": 85 },
-      "additionalLightingZone": { "label": "Additional lighting zone on separate switch", "price": 125 },
-      "quineticSwitch": { "label": "Wireless quinetic switch system", "price": 265 },
-      "acUnitStandard": { "label": "Air conditioning unit (standard)", "price": 1750 },
-      "acUnitPremium": { "label": "Air conditioning unit (premium Mitsubishi MSZ-LN series)", "price": 2500 },
-      "cat6Point": { "label": "Additional CAT6 point", "price": 45 },
-      "hdmiCables": { "label": "HDMI cables + brush plates for TV", "price": 30 },
-      "floodlightCabling": { "label": "Cabling for external flood light", "price": 50 },
-      "tvMountingPrep": { "label": "TV mounting preparation (HDMI cables + brush plates)", "price": 95 }
+      "externalSocket": {
+        "label": "External double plug socket",
+        "price": 235
+      },
+      "upDownLight": {
+        "label": "External up/down light",
+        "price": 95
+      },
+      "heater": {
+        "label": "Oil filled electric wall panel radiator",
+        "price": 495
+      },
+      "additionalSocket": {
+        "label": "Additional double plug socket",
+        "price": 60
+      },
+      "additionalSocketUsb": {
+        "label": "Additional double plug socket w/ USB",
+        "price": 85
+      },
+      "additionalLightingZone": {
+        "label": "Additional lighting zone on separate switch",
+        "price": 125
+      },
+      "quineticSwitch": {
+        "label": "Wireless quinetic switch system",
+        "price": 265
+      },
+      "acUnitStandard": {
+        "label": "Air conditioning unit (standard)",
+        "price": 1750
+      },
+      "acUnitPremium": {
+        "label": "Air conditioning unit (premium Mitsubishi MSZ-LN series)",
+        "price": 2500
+      },
+      "cat6Point": {
+        "label": "Additional CAT6 point",
+        "price": 45
+      },
+      "hdmiCables": {
+        "label": "HDMI cables + brush plates for TV",
+        "price": 30
+      },
+      "floodlightCabling": {
+        "label": "Cabling for external flood light",
+        "price": 50
+      },
+      "tvMountingPrep": {
+        "label": "TV mounting preparation (HDMI cables + brush plates)",
+        "price": 95
+      }
     },
     "structural": {
-      "partition": { "label": "Internal partition wall with interior door", "price": 1150 },
-      "partitionStorage": { "label": "Basic storage room partition", "price": 650 },
-      "partitionToilet": { "label": "Partition for toilet/shower room", "price": 2350 },
-      "secretDoor": { "label": "Secret cladded door with storage", "price": 1750 },
-      "additionalDecking": { "label": "Additional decking (per sqm)", "price": 300 },
-      "waterButtConnection": { "label": "Connecting downpipe to water butt", "price": 50 },
-      "premiumFlooring": { "label": "Premium flooring upgrade", "price": 350 }
+      "partition": {
+        "label": "Internal partition wall with interior door",
+        "price": 1150
+      },
+      "partitionStorage": {
+        "label": "Basic storage room partition",
+        "price": 650
+      },
+      "partitionToilet": {
+        "label": "Partition for toilet/shower room",
+        "price": 2350
+      },
+      "secretDoor": {
+        "label": "Secret cladded door with storage",
+        "price": 1750
+      },
+      "additionalDecking": {
+        "label": "Additional decking (per sqm)",
+        "price": 300
+      },
+      "waterButtConnection": {
+        "label": "Connecting downpipe to water butt",
+        "price": 50
+      },
+      "premiumFlooring": {
+        "label": "Premium flooring upgrade",
+        "price": 350
+      }
     },
     "bathroom": {
-      "wcSuite": { 
-        "label": "WC Suite (toilet room)", 
+      "wcSuite": {
+        "label": "WC Suite (toilet room)",
         "price": 5000,
         "description": "Includes toilet, small vanity basin, extractor fan, tiling, and all internal plumbing. Utility connections (water supply, waste) arranged separately."
       },
-      "bathroomSuite": { 
-        "label": "Bathroom Suite (toilet + shower)", 
+      "bathroomSuite": {
+        "label": "Bathroom Suite (toilet + shower)",
         "price": 8500,
         "description": "Includes toilet, vanity basin, shower tray with glass screen, extractor fan, heated towel rail, tiling, and all internal plumbing. Utility connections (water supply, waste) arranged separately."
       }
     },
     "doors": {
-      "bifold3Leaf": { "label": "Aluminium bi-fold 3-leaf 2.8m", "price": 1850 },
-      "bifold4Leaf": { "label": "Aluminium bi-fold 4-leaf 3.5m", "price": 2450 },
-      "bifold5Leaf": { "label": "Aluminium bi-fold 5-leaf 4.5m", "price": 2700 },
-      "singleGlazedDoor": { "label": "Single opening glazed door", "price": 1450 },
-      "bifoldUpgrade": { "label": "Bi-fold door upgrade from sliding", "price": 850 }
+      "bifold3Leaf": {
+        "label": "Aluminium bi-fold 3-leaf 2.8m",
+        "price": 1850
+      },
+      "bifold4Leaf": {
+        "label": "Aluminium bi-fold 4-leaf 3.5m",
+        "price": 2450
+      },
+      "bifold5Leaf": {
+        "label": "Aluminium bi-fold 5-leaf 4.5m",
+        "price": 2700
+      },
+      "singleGlazedDoor": {
+        "label": "Single opening glazed door",
+        "price": 1450
+      },
+      "bifoldUpgrade": {
+        "label": "Bi-fold door upgrade from sliding",
+        "price": 850
+      }
     }
   },
   "deductions": {
-    "removeDecking": { "label": "Remove integrated decking", "price": -750 },
-    "removeCanopy": { "label": "Remove canopy", "price": -750 },
-    "useExistingFoundation": { "label": "Use existing foundation", "price": -500 }
+    "removeDecking": {
+      "label": "Remove integrated decking",
+      "price": -750
+    },
+    "removeCanopy": {
+      "label": "Remove canopy",
+      "price": -750
+    },
+    "useExistingFoundation": {
+      "label": "Use existing foundation",
+      "price": -500
+    }
   },
   "claddingUpgrade": {
-    "cedar": { "label": "Western red cedar", "perSqm": 115 },
-    "composite": { "label": "Composite slatted", "perSqm": 115 },
-    "larch": { "label": "Larch", "perSqm": 80 }
+    "cedar": {
+      "label": "Western red cedar",
+      "perSqm": 115
+    },
+    "composite": {
+      "label": "Composite slatted",
+      "perSqm": 115
+    },
+    "larch": {
+      "label": "Larch",
+      "perSqm": 80
+    }
   },
   "heightUpgrade": {
-    "250": { "small": 1000, "medium": 1500, "large": 2900 },
-    "450": { "small": 2750, "medium": 3500, "large": 4145 },
-    "500": { "small": 3000, "medium": 3500, "large": 4500 }
+    "250": {
+      "small": 1000,
+      "medium": 1500,
+      "large": 2900
+    },
+    "450": {
+      "small": 2750,
+      "medium": 3500,
+      "large": 4145
+    },
+    "500": {
+      "small": 3000,
+      "medium": 3500,
+      "large": 4500
+    }
   },
   "heightUpgradeSizeThresholds": {
     "small": 15,
     "medium": 25,
     "large": 999
   },
-  "vatRate": 0.20,
-  "holdingDeposit": 250
+  "vatRate": 0.2,
+  "holdingDeposit": 250,
+  "premiumMatrix": {
+    "note": "Liam 2026-09-05: customer price incl. installation + groundworks (ground screw / concrete block). Extras on top. Interpolated between points, extrapolated beyond; rounded to £50.",
+    "widths": [
+      4.0,
+      4.5,
+      5.0,
+      5.5,
+      6.0,
+      6.5,
+      7.0,
+      7.5,
+      8.0
+    ],
+    "depths": [
+      3.0,
+      3.5,
+      4.0,
+      4.5
+    ],
+    "prices": {
+      "3.0": [
+        30000,
+        31750,
+        33550,
+        35300,
+        36900,
+        38200,
+        39450,
+        40750,
+        42000
+      ],
+      "3.5": [
+        32350,
+        34450,
+        36500,
+        38000,
+        39450,
+        40950,
+        42500,
+        44250,
+        46000
+      ],
+      "4.0": [
+        34750,
+        36900,
+        38600,
+        40300,
+        42000,
+        44000,
+        46000,
+        48000,
+        50000
+      ],
+      "4.5": [
+        36900,
+        38850,
+        40750,
+        42750,
+        45000,
+        47250,
+        49500,
+        51750,
+        54000
+      ]
+    }
+  }
 }

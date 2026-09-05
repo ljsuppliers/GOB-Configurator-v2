@@ -1,7 +1,7 @@
 // GOB Configurator v2 — Vue 3 App
 // Reactive state, live pricing, drawing preview, email drafting
 
-import { initPricing, calculatePrice, formatPrice } from './pricing.js';
+import { initPricing, calculatePrice, formatPrice } from './pricing.js?v=2';
 import { generateDrawing } from './drawing-engine.js?v=42';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
@@ -11,7 +11,7 @@ import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom } from './bom/premium-bom.js?v=3';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=6';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
-import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=2';
+import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=3';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=1';
 

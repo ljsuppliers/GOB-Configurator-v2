@@ -1104,9 +1104,7 @@
               <tbody>
                 <tr v-for="l in labour.install.lines" :key="l.id"><td>{{ l.label }}<span v-if="l.estimate" class="bom-warn">estimate</span></td><td class="num">{{ l.days !== null ? l.days : '—' }}</td><td class="num">{{ fmt(l.amount) }}</td></tr>
                 <tr class="lab-sub"><td><strong>INSTALL FEE - the installer agreement figure</strong> <span class="bom-deriv" v-if="installerDeal.overridden">agreed fee overridden to {{ fmt(installerDeal.fee) }} on the installer page</span></td><td class="num"><strong>{{ labour.install.days }}</strong></td><td class="num"><strong>{{ fmt(labour.install.total) }}</strong></td></tr>
-                <tr class="lab-note"><td colspan="3">Below: NOT part of the installer agreement. The electrician (1st + 2nd fix) and any other trades are separate contractors GOB pays direct. They count in the job margin only.</td></tr>
-                <tr v-for="l in labour.electrician.lines" :key="l.id"><td>{{ l.label }}</td><td class="num">—</td><td class="num">{{ fmt(l.amount) }}</td></tr>
-                <tr class="lab-sub"><td><strong>Electrician total</strong></td><td></td><td class="num"><strong>{{ fmt(labour.electrician.total) }}</strong></td></tr>
+                <tr class="lab-note"><td colspan="3">The install fee covers the install team AND the plastering - the installer arranges and pays the plasterer. NOT in the agreement: the electrician (1st + 2nd fix) and any other trades are separate contractors GOB pays direct; they count in the job margin only (electrician {{ fmt(labour.electrician.total) }}, shown in the summary card above).</td></tr>
                 <tr v-for="l in labour.subcontract.lines" :key="l.id"><td>{{ l.label }}</td><td class="num">—</td><td class="num">{{ fmt(l.amount) }}</td></tr>
               </tbody>
             </table>
@@ -1325,7 +1323,7 @@
           <tr><td>50% halfway, once watertight</td><td></td><td class="num">{{ fmt(installerDeal.half) }}</td></tr>
           <tr><td>50% on completion</td><td></td><td class="num">{{ fmt(installerDeal.fee - installerDeal.half) }}</td></tr>
         </table>
-        <p class="pack-note">Electrical work is by the electrician and is not part of the install fee. Materials are supplied by the Company - check every delivery against the checklist below and report damage or shortages the same day.</p>
+        <p class="pack-note">The install fee includes the plastering and decoration: the Installer arranges and pays the plasterer. Electrical work is by the Company's electrician and is not part of the install fee. Materials are supplied by the Company - check every delivery against the checklist below and report damage or shortages the same day.</p>
 
         <h2 class="pack-h2">4. Materials checklist</h2>
         <div v-for="sec in categorySections" :key="'pk'+sec.name" class="pack-cat">
@@ -1347,6 +1345,7 @@
         </table>
         <h4>2. Scope of work</h4>
         <p class="pack-p">The Installer is contracted to fully install the building at the site address, as per the job specification (this job pack: build summary, drawings and materials checklist) and company standards.</p>
+        <p class="pack-p">The Installer is responsible for arranging and paying for the plastering and decoration of the interior by a plasterer; this is included in the agreed fee. Electrical work is carried out by the Company's electrician and is outside this agreement.</p>
         <p class="pack-p">The Company is responsible for supplying all materials and components. The Installer is responsible for checking the materials on delivery and reporting anything damaged or missing to the Company as soon as possible.</p>
         <h4>3. Agreed price &amp; schedule</h4>
         <table class="pack-table pack-kv">
@@ -1783,7 +1782,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=51"></script>
+<script type="module" src="js/app.js?v=52"></script>
 
 </body>
 </html>
