@@ -9,7 +9,7 @@ import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom } from './bom/premium-bom.js?v=3';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=6';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES } from './bom/orders.js?v=7';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=3';
 import { emptyInstaller } from './bom/installers.js?v=2';
@@ -38,6 +38,7 @@ function ensureStateDefaults(state) {
   if (state.quotePriceOverride === undefined) state.quotePriceOverride = '';
   if (!state.orderNotes) state.orderNotes = {};
   if (!state.ordersSent) state.ordersSent = {};
+  if (!state.orderStatus) state.orderStatus = {};
   if (!state.acUnits) state.acUnits = [];
   if (!state.drawingLabels) state.drawingLabels = [];
   if (!state.planning) state.planning = { required: false, reasons: [], customReason: '' };
@@ -99,6 +100,7 @@ createApp({
       catalogueFilter: '',
       catSaveStatus: '',
       // Full-page materials view
+      supplyModes: SUPPLY_MODES,
       materialsPage: false,
       installerPage: false,
       orderRefManual: false,
@@ -221,7 +223,7 @@ createApp({
     supplierSections() {
       const groups = new Map();
       for (const l of this.bomLines || []) {
-        const key = l.inStock ? 'IN STOCK' : (l.inCatalogue ? (l.supplier || 'NO SUPPLIER SET') : 'NOT IN CATALOGUE');
+        const key = l.inCatalogue ? (l.supplier || 'NO SUPPLIER SET') : 'NOT IN CATALOGUE';
         if (!groups.has(key)) groups.set(key, []);
         groups.get(key).push(l);
       }
@@ -236,9 +238,12 @@ createApp({
           destinations: [...new Set(lines.map((l) => l.destination))],
           orders,
           allSent: orders.length > 0 && orders.every((o) => o.sentAt),
+          stockCount: lines.filter((l) => l.inStock).length,
+          toOrder: lines.filter((l) => !l.inStock).length,
+          status: orders.length === 0 ? 'nothing-to-order' : orders.every((o) => o.status === 'delivered') ? 'delivered' : orders.every((o) => o.status) ? 'ordered' : 'not-ordered',
         };
       });
-      const rank = (n) => (n === 'NOT IN CATALOGUE' ? 2 : n === 'NO SUPPLIER SET' ? 1 : n === 'IN STOCK' ? 3 : 0);
+      const rank = (n) => (n === 'NOT IN CATALOGUE' ? 2 : n === 'NO SUPPLIER SET' ? 1 : 0);
       return secs.sort((a, b) => rank(a.name) - rank(b.name) || b.subtotal - a.subtotal || a.name.localeCompare(b.name));
     },
     /** Logistics split for the printed pack: straight-to-site deliveries by
@@ -377,9 +382,20 @@ createApp({
         supplierNotes: this.state.orderNotes || {},
       });
       for (const o of this.orders) o.showEmail = open.has(o.supplierName + o.destination);
-      // Mark orders already sent for this job (saved in the design state).
+      // Sent + ordered/delivered status for this job (saved in the design state).
       const sent = this.state.ordersSent || {};
-      for (const o of this.orders) o.sentAt = sent[this.orderKey(o)]?.at || '';
+      const st = this.state.orderStatus || {};
+      for (const o of this.orders) {
+        o.sentAt = sent[this.orderKey(o)]?.at || '';
+        o.status = st[this.orderKey(o)]?.status || (o.sentAt ? 'ordered' : '');
+        o.statusAt = st[this.orderKey(o)]?.at || o.sentAt || '';
+      }
+      // each line carries its order's status (for the table chips + logistics pack)
+      const byKey = new Map(this.orders.map((o) => [`${o.supplierName}||${o.destination}`, o]));
+      for (const l of this.bomLines) {
+        const o = l.inStock ? null : byKey.get(`${l.supplier || 'NO SUPPLIER SET'}||${l.destination}`);
+        l.orderStatus = o ? (o.status || 'not-ordered') : (l.inStock ? 'stock' : 'not-ordered');
+      }
     },
     orderKey(o) { return `${this.orderRef}||${o.supplierName}||${o.destination}`; },
     defaultOrderRef() {
@@ -481,6 +497,8 @@ createApp({
         if (!this.state.ordersSent) this.state.ordersSent = {};
         this.state.ordersSent[this.orderKey(order)] = { at: new Date().toISOString(), to: order.supplier.email, gmailId: id, lines: order.items.length };
         order.sentAt = this.state.ordersSent[this.orderKey(order)].at;
+        if (!this.state.orderStatus) this.state.orderStatus = {};
+        if (!this.state.orderStatus[this.orderKey(order)]) this.state.orderStatus[this.orderKey(order)] = { status: 'ordered', at: order.sentAt };
         this.sendLog.unshift(`Sent to ${order.supplierName} (${order.supplier.email}) from ${gmailSignedInAs() || this.senderEmail}`);
         return true;
       } catch (e) {
@@ -500,17 +518,26 @@ createApp({
     // Per-JOB overrides (saved with the quote state, NOT the catalogue):
     // everything is site delivery as standard; Liam allocates leftover factory
     // stock to particular jobs here.
-    setLineDestination(line, dest) {
-      line.destination = dest;
+    setLineSupply(line, supply) {
+      line.supply = supply;
+      line.destination = supply === 'factory' ? 'factory' : 'site';
+      line.inStock = supply === 'stock';
       if (!this.state.bomOverrides) this.state.bomOverrides = {};
-      this.state.bomOverrides[line.name] = { ...(this.state.bomOverrides[line.name] || {}), destination: dest };
+      this.state.bomOverrides[line.name] = { supply };
       this.rebuildOrders();
     },
-    toggleLineStock(line) {
-      line.inStock = !line.inStock;
-      if (!this.state.bomOverrides) this.state.bomOverrides = {};
-      this.state.bomOverrides[line.name] = { ...(this.state.bomOverrides[line.name] || {}), inStock: line.inStock };
+    // legacy names kept for any old template references
+    setLineDestination(line, dest) { this.setLineSupply(line, dest); },
+    toggleLineStock(line) { this.setLineSupply(line, line.inStock ? 'site' : 'stock'); },
+    setOrderStatus(order, status) {
+      if (!this.state.orderStatus) this.state.orderStatus = {};
+      if (!status) delete this.state.orderStatus[this.orderKey(order)];
+      else this.state.orderStatus[this.orderKey(order)] = { status, at: new Date().toISOString() };
       this.rebuildOrders();
+    },
+    statusLabel(o) {
+      const d = o.statusAt ? new Date(o.statusAt).toLocaleDateString('en-GB') : '';
+      return o.status === 'delivered' ? `Delivered ${d}` : o.status === 'ordered' ? `Ordered ${d}` : 'NOT ORDERED';
     },
     async saveCat() {
       this.catSaveStatus = 'Saving…';

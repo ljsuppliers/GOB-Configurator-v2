@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=7">
+  <link rel="stylesheet" href="css/app.css?v=8">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -970,7 +970,7 @@
         </div>
         <div class="cat-scroll">
           <table class="cat-table">
-            <thead><tr><th>Material</th><th>Category</th><th>Supplier</th><th>Unit</th><th>Unit cost £</th><th>Pack size</th><th>Ordered as</th><th>Default dest.</th><th>In stock</th><th></th></tr></thead>
+            <thead><tr><th>Material</th><th>Category</th><th>Supplier</th><th>Unit</th><th>Unit cost £</th><th>Pack size</th><th>Ordered as</th><th>Default supply</th><th></th></tr></thead>
             <tbody>
               <tr v-for="mt in filteredCatalogue" :key="mt.name + mt.category">
                 <td><input v-model="mt.name"></td>
@@ -982,8 +982,7 @@
                 <td><input v-model.number="mt.unitCost" type="number" step="0.01" style="width:70px"></td>
                 <td><input v-model.number="mt.packSize" type="number" step="0.01" style="width:60px"></td>
                 <td><input v-model="mt.orderUnit" style="width:100px"></td>
-                <td><select v-model="mt.destination"><option value="site">Site</option><option value="factory">Factory</option></select></td>
-                <td style="text-align:center"><input type="checkbox" v-model="mt.inStock"></td>
+                <td><select :value="mt.supply || (mt.inStock ? 'stock' : (mt.destination === 'factory' ? 'factory' : 'site'))" @change="mt.supply = $event.target.value; mt.inStock = mt.supply === 'stock'; mt.destination = mt.supply === 'factory' ? 'factory' : 'site'"><option v-for="m in supplyModes" :key="m.value" :value="m.value">{{ m.label }}</option></select></td>
                 <td><button class="btn btn-sm" @click="removeCatalogueRow(mt)">✕</button></td>
               </tr>
             </tbody>
@@ -1045,7 +1044,7 @@
         <div v-for="g in logistics.toSite" :key="'ts'+g.name" class="pack-cat">
           <h3>{{ g.name }}</h3>
           <table class="pack-table pack-check">
-            <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}</td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.material && l.material.category }}</td></tr>
+            <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}</td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.orderStatus === 'delivered' ? 'delivered' : l.orderStatus === 'ordered' ? 'ordered' : 'NOT YET ORDERED' }}</td></tr>
           </table>
         </div>
 
@@ -1056,7 +1055,7 @@
           <div v-for="g in logistics.factoryDelivered" :key="'fd'+g.name" class="pack-cat">
             <h3>{{ g.name }}</h3>
             <table class="pack-table pack-check">
-              <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}</td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.material && l.material.category }}</td></tr>
+              <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}</td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.orderStatus === 'delivered' ? 'at factory' : l.orderStatus === 'ordered' ? 'ordered, awaiting delivery to factory' : 'NOT YET ORDERED' }}</td></tr>
             </table>
           </div>
         </template>
@@ -1156,34 +1155,37 @@
               <span class="sup-meta" v-if="sec.email">{{ sec.email }}</span>
               <span class="bom-warn" v-else-if="sec.name !== 'IN STOCK' && sec.name !== 'NO SUPPLIER SET'">no order email — add under Suppliers</span>
               <span class="bom-warn" v-else-if="sec.name === 'NO SUPPLIER SET'">assign a supplier in the Catalogue</span>
-              <span class="sup-meta">{{ sec.lines.length }} line{{ sec.lines.length === 1 ? '' : 's' }}<template v-if="sec.destinations.length > 1"> · split {{ sec.destinations.join(' + ') }}</template></span>
+              <span class="sup-meta">{{ sec.toOrder }} to order<template v-if="sec.stockCount"> · {{ sec.stockCount }} from stock</template><template v-if="sec.destinations.length > 1"> · deliveries split site + factory</template></span>
               <span style="flex:1"></span>
-              <span v-if="sec.allSent" class="po-sent">Sent</span>
+              <span v-if="sec.toOrder" class="chip" :class="'chip-' + sec.status">{{ sec.status === 'delivered' ? 'Delivered' : sec.status === 'ordered' ? 'Ordered' : 'NOT ORDERED' }}</span>
               <span class="sup-total">{{ fmt(sec.subtotal) }}</span>
             </div>
             <div v-show="!collapsed[sec.name]" class="sup-body">
               <table class="cat-table bom-table">
-                <thead><tr><th title="Tick = supply from factory stock, don't order">Stock</th><th>Material</th><th>Needed</th><th>Order as</th><th>£/unit</th><th>Line £</th><th>Deliver to</th></tr></thead>
+                <thead><tr><th>Status</th><th>Material</th><th>Needed</th><th>Order as</th><th>£/unit</th><th>Line £</th><th>Supply</th></tr></thead>
                 <tbody>
                   <tr v-for="l in sec.lines" :key="l.name" :class="{ 'bom-stock': l.inStock, 'bom-missing': !l.inCatalogue }">
-                    <td style="text-align:center"><input type="checkbox" :checked="l.inStock" @change="toggleLineStock(l)"></td>
-                    <td><strong>{{ l.name }}</strong><span v-if="l.material && l.material.category" class="bom-cat">{{ l.material.category }}</span><div v-if="showDerivations" class="bom-deriv">{{ l.derivation }}</div></td>
+                    <td><span class="chip" :class="'chip-' + l.orderStatus">{{ l.orderStatus === 'stock' ? 'IN STOCK' : l.orderStatus === 'delivered' ? 'Delivered' : l.orderStatus === 'ordered' ? 'Ordered' : 'To order' }}</span></td>
+                    <td><strong>{{ l.name }}</strong><span v-if="l.material && l.material.category" class="bom-cat">{{ l.material.category }}</span><span v-if="l.inStock" class="bom-cat bom-cat-stock">from factory stock</span><div v-if="showDerivations" class="bom-deriv">{{ l.derivation }}</div></td>
                     <td class="num">{{ l.qty }} {{ l.unit }}</td>
                     <td><template v-if="l.stockPlan && l.stockPlan.text"><strong>{{ l.stockPlan.text }}</strong><div v-if="showDerivations" class="bom-deriv" v-for="n in l.stockPlan.notes">{{ n }}</div></template><template v-else>{{ l.orderQty }}<span v-if="l.orderUnit && l.orderUnit !== l.unit"> × {{ l.orderUnit }}</span></template></td>
                     <td class="num">{{ l.unitCost ? fmt(l.unitCost) : '—' }}</td>
                     <td class="num">{{ l.lineCost ? fmt(l.lineCost) : '—' }}</td>
-                    <td><select :value="l.destination" @change="setLineDestination(l, $event.target.value)"><option value="site">Site</option><option value="factory">Factory</option></select></td>
+                    <td><select class="supply-select" :class="'supply-' + l.supply" :value="l.supply" @change="setLineSupply(l, $event.target.value)"><option v-for="m in supplyModes" :key="m.value" :value="m.value">{{ m.label }}</option></select></td>
                   </tr>
                 </tbody>
               </table>
               <!-- Purchase order(s) for this supplier: one per destination -->
               <div v-for="o in sec.orders" :key="o.supplierName + o.destination" class="po-card">
                 <div class="po-head">
-                  <span class="po-dest">Purchase order → {{ o.destination === 'factory' ? 'FACTORY (Biggin Hill)' : 'SITE' }}</span>
+                  <span class="po-dest">Purchase order · {{ o.destination === 'factory' ? 'supplier delivers to FACTORY (Biggin Hill), we bring it to site' : 'supplier delivers straight to SITE' }}</span>
                   <input class="po-note" :value="orderNoteFor(sec.name).delivery" @change="setOrderNote(sec.name, 'delivery', $event.target.value)" placeholder="Requested delivery (e.g. w/c 15 Sept, AM)">
                   <input class="po-note po-note-wide" :value="orderNoteFor(sec.name).notes" @change="setOrderNote(sec.name, 'notes', $event.target.value)" placeholder="Notes to supplier (account no., call before delivery, offload…)">
                   <span style="flex:1"></span>
-                  <span v-if="o.sentAt" class="po-sent">Sent {{ new Date(o.sentAt).toLocaleString('en-GB') }}</span>
+                  <span class="chip" :class="'chip-' + (o.status || 'not-ordered')">{{ statusLabel(o) }}</span>
+                  <button v-if="!o.status" class="btn btn-sm" @click="setOrderStatus(o, 'ordered')" title="Ordered by phone / email / trade counter">Mark ordered</button>
+                  <button v-if="o.status === 'ordered'" class="btn btn-sm" @click="setOrderStatus(o, 'delivered')" :title="o.destination === 'factory' ? 'Arrived at the factory' : 'Arrived on site'">Mark delivered</button>
+                  <button v-if="o.status" class="btn btn-sm" @click="setOrderStatus(o, '')" title="Clear status">↺</button>
                   <button class="btn btn-sm" @click="copyOrderEmail(o)">{{ o.copied ? 'Copied ✓' : 'Copy email' }}</button>
                   <a v-if="o.supplier && o.supplier.email" class="btn btn-sm" :href="mailtoOrder(o)">Open in mail</a>
                   <button v-if="gmailReady && o.supplier && o.supplier.email" class="btn btn-sm btn-primary" :disabled="sending" @click="sendOrder(o)">{{ o.sentAt ? 'Send again' : 'Send from Gmail' }}</button>
@@ -1207,10 +1209,10 @@
             </div>
             <div v-show="!collapsed['cat:' + sec.name]" class="sup-body">
               <table class="cat-table bom-table">
-                <thead><tr><th>Stock</th><th>Material</th><th>Supplier</th><th>Needed</th><th>Order as</th><th>£/unit</th><th>Line £</th></tr></thead>
+                <thead><tr><th>Status</th><th>Material</th><th>Supplier</th><th>Needed</th><th>Order as</th><th>£/unit</th><th>Line £</th></tr></thead>
                 <tbody>
                   <tr v-for="l in sec.lines" :key="l.name" :class="{ 'bom-stock': l.inStock, 'bom-missing': !l.inCatalogue }">
-                    <td style="text-align:center"><input type="checkbox" :checked="l.inStock" @change="toggleLineStock(l)"></td>
+                    <td><span class="chip" :class="'chip-' + l.orderStatus">{{ l.orderStatus === 'stock' ? 'IN STOCK' : l.orderStatus === 'delivered' ? 'Delivered' : l.orderStatus === 'ordered' ? 'Ordered' : 'To order' }}</span></td>
                     <td><strong>{{ l.name }}</strong><div v-if="showDerivations" class="bom-deriv">{{ l.derivation }}</div></td>
                     <td>{{ l.supplier || '—' }}</td>
                     <td class="num">{{ l.qty }} {{ l.unit }}</td>
@@ -1782,7 +1784,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=53"></script>
+<script type="module" src="js/app.js?v=54"></script>
 
 </body>
 </html>

@@ -160,10 +160,32 @@ export function planStock(cuts, stockLengths, splittable = false) {
 }
 
 /**
+ * SUPPLY modes (Liam 2026-09-05 pm): one choice per line replaces the old
+ * stock tick + site/factory destination.
+ *   'site'    = supplier delivers straight to site (ORDER needed)
+ *   'factory' = supplier delivers to Biggin Hill, we load + bring it (ORDER needed)
+ *   'stock'   = from factory stock, we bring it (NO order)
+ */
+export const SUPPLY_MODES = [
+  { value: 'site', label: 'Supplier → site', long: 'Supplier delivers straight to site' },
+  { value: 'factory', label: 'Supplier → factory, we bring it', long: 'Supplier delivers to the factory (Biggin Hill); logistics load + deliver to site' },
+  { value: 'stock', label: 'Factory stock, we bring it', long: 'From factory stock - nothing to order; logistics load + deliver to site' },
+];
+export function supplyFor(mat, ov) {
+  if (ov && ov.supply) return ov.supply;
+  if (ov && ov.inStock === true) return 'stock';
+  if (ov && ov.destination) return ov.destination;
+  if (!mat) return 'site';
+  if (mat.supply) return mat.supply;
+  if (mat.inStock) return 'stock';
+  return mat.destination === 'factory' ? 'factory' : 'site';
+}
+
+/**
  * Join BOM rows to catalogue materials by name.
- * `overrides` = per-JOB { [name]: { destination?, inStock? } } - so factory
- * stock can be allocated to one job without changing the catalogue default
- * (everything is SITE delivery as standard - Liam 2026-09-05).
+ * `overrides` = per-JOB { [name]: { supply? } } - so factory stock can be
+ * allocated to one job without changing the catalogue default (everything
+ * is supplier-to-site as standard - Liam 2026-09-05).
  */
 export function mergeBomRows(bomRows) {
   const out = new Map();
@@ -206,8 +228,11 @@ export function joinBom(bomRows, catalogue, overrides = {}) {
       orderQty,
       orderUnit,
       stockPlan,
-      destination: ov.destination || (mat ? mat.destination || 'site' : 'site'),
-      inStock: ov.inStock !== undefined ? !!ov.inStock : (mat ? !!mat.inStock : false),
+      supply: supplyFor(mat, ov),
+      // derived (kept for the ordering code): stock lines are never ordered;
+      // 'factory' orders are addressed to Biggin Hill
+      destination: supplyFor(mat, ov) === 'factory' ? 'factory' : 'site',
+      inStock: supplyFor(mat, ov) === 'stock',
       inCatalogue: !!mat,
     };
   });
@@ -242,6 +267,7 @@ function orderEmailText(order, opts = {}) {
   const dest = order.destination === 'factory'
     ? FACTORY_ADDRESS
     : (siteAddress ? `Job site:\n${siteAddress}` : 'Job site: [SITE ADDRESS - fill in]');
+  // (factory-bound orders: our logistics team brings these to site later)
   const lines = order.items.map((l) => {
     const unitBit = l.orderUnit && l.orderUnit !== 'each' ? ` (${l.orderUnit})` : '';
     const sku = l.material && l.material.sku ? `  [${l.material.sku}]` : '';
@@ -280,5 +306,5 @@ function orderEmailText(order, opts = {}) {
 }
 
 export function catalogueEmptyMaterial() {
-  return { name: '', category: '', sku: '', unit: 'each', unitCost: 0, supplier: '', packSize: null, orderUnit: '', destination: 'site', inStock: false, notes: '' };
+  return { name: '', category: '', sku: '', unit: 'each', unitCost: 0, supplier: '', packSize: null, orderUnit: '', supply: 'site', destination: 'site', inStock: false, notes: '' };
 }

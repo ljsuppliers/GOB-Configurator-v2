@@ -668,3 +668,16 @@ html, body {
   .materials-page .print-only { display: block !important; }
   .logi-pack .pack-drawing svg { max-height: 600px; }
 }
+/* Supply + order status */
+.bom-stock td { opacity: .55; }
+.bom-stock td:first-child, .bom-stock td:last-child { opacity: 1; }
+.bom-cat-stock { color: #0369a1; font-weight: 700; }
+.chip { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .03em; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
+.chip-not-ordered { background: #fee2e2; color: #991b1b; }
+.chip-ordered { background: #fef3c7; color: #92400e; }
+.chip-delivered { background: #dcfce7; color: #166534; }
+.chip-stock { background: #e0f2fe; color: #075985; }
+.chip-nothing-to-order { background: #f1f5f9; color: #475569; }
+.supply-select { font-size: 12px; max-width: 210px; }
+.supply-factory { background: #fff7ed; }
+.supply-stock { background: #e0f2fe; }
