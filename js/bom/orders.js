@@ -26,7 +26,11 @@ export async function loadCatalogue() {
   try {
     const db = fs();
     if (db) {
-      const doc = await db.collection('settings').doc('catalogue').get();
+      // Never let a slow/offline Firestore hold the page up: 4s cap, then fall back.
+      const doc = await Promise.race([
+        db.collection('settings').doc('catalogue').get(),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('Firestore catalogue read timed out')), 4000)),
+      ]);
       if (doc.exists) {
         const saved = doc.data();
         if (saved && Array.isArray(saved.materials)) return mergeShipped(saved, base);

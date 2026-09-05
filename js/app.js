@@ -9,7 +9,7 @@ import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom } from './bom/premium-bom.js?v=3';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=4';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=5';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { SENDER_EMAIL } from './google-config.js?v=1';
 
@@ -1629,6 +1629,8 @@ createApp({
   },
 
   mounted() {
+    // Deep link: ?materials=1 opens the Materials & Orders page straight away
+    if (/[?&]materials=1/.test(window.location.search)) this.$nextTick(() => this.openMaterialsPage());
     // Close export menu on outside click
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.export-wrapper')) {
