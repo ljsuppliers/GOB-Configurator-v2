@@ -132,6 +132,7 @@
             </select>
           </label>
           <label>Quote Date <input type="date" v-model="state.customer.date"></label>
+          <label>Quote # <input type="text" inputmode="numeric" v-model="state.customer.number" placeholder="e.g. 4500" title="4-digit job/quote number - also used for the order reference (SURNAME-4500)"></label>
           <label>Building Type
             <select v-model="state.buildingType">
               <option v-for="bt in buildingTypes" :key="bt" :value="bt">{{ bt }}</option>
@@ -944,7 +945,7 @@
     <section v-if="materialsPage" class="materials-page">
       <div class="mp-top">
         <div class="mp-job">
-          <div class="mp-job-name">{{ state.customer && state.customer.name ? state.customer.name : 'Unnamed job' }} <span class="mp-ref">· ref <input v-model="orderRef" class="mat-ref" placeholder="Order ref" @change="rebuildOrders"></span></div>
+          <div class="mp-job-name">{{ state.customer && state.customer.name ? state.customer.name : 'Unnamed job' }} <span class="mp-ref">· ref <input v-model="orderRef" class="mat-ref" placeholder="SURNAME-QUOTENO" @change="onOrderRefEdit" title="Surname + quote number, e.g. SMITH-4500. Set the quote number in Customer details."></span><span v-if="orderRef.endsWith('-NOQUOTENO')" class="bom-warn">no quote number in Customer details</span></div>
           <div class="mp-job-sub">{{ jobSummary }}</div>
           <div class="mp-job-sub" v-if="state.customer && state.customer.address">Site: {{ state.customer.address }}</div>
         </div>
@@ -1556,7 +1557,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=44"></script>
+<script type="module" src="js/app.js?v=45"></script>
 
 </body>
 </html>

@@ -91,6 +91,7 @@ createApp({
       catSaveStatus: '',
       // Full-page materials view
       materialsPage: false,
+      orderRefManual: false,
       bomView: 'supplier',
       showDerivations: false,
       collapsed: {},
@@ -311,10 +312,9 @@ createApp({
       const raw = buildPremiumBom(this.state, defs);
       if (!this.state.bomOverrides) this.state.bomOverrides = {};
       this.bomLines = joinBom(raw, this.catalogue, this.state.bomOverrides);
-      if (!this.orderRef) {
-        const cust = (this.state.customer?.name || '').split(' ')[0] || 'JOB';
-        this.orderRef = `GOB-${cust.toUpperCase()}-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}`;
-      }
+      // Order ref = SURNAME-QUOTENUMBER (Liam 2026-09-05), e.g. SMITH-4500.
+      // Re-derived on every generate unless Liam has typed his own ref.
+      if (!this.orderRefManual) this.orderRef = this.defaultOrderRef();
       this.rebuildOrders();
       this.bomStatus = `${this.bomLines.length} lines - material cost ${formatPrice(this.bomMaterialCost)}`;
     },
@@ -331,6 +331,19 @@ createApp({
       for (const o of this.orders) o.sentAt = sent[this.orderKey(o)]?.at || '';
     },
     orderKey(o) { return `${this.orderRef}||${o.supplierName}||${o.destination}`; },
+    defaultOrderRef() {
+      const name = (this.state.customer?.name || '').trim();
+      const parts = name.split(/\s+/).filter(Boolean);
+      const surname = (parts.length > 1 ? parts[parts.length - 1] : parts[0] || 'JOB')
+        .replace(/[^A-Za-z0-9'-]/g, '').toUpperCase() || 'JOB';
+      const num = String(this.state.customer?.number || '').replace(/\D/g, '');
+      return num ? `${surname}-${num}` : `${surname}-NOQUOTENO`;
+    },
+    onOrderRefEdit() {
+      this.orderRefManual = this.orderRef.trim() !== '' && this.orderRef !== this.defaultOrderRef();
+      if (!this.orderRef.trim()) { this.orderRefManual = false; this.orderRef = this.defaultOrderRef(); }
+      this.rebuildOrders();
+    },
     async openMaterialsPage() {
       this.materialsPage = true;
       this.catalogueOpen = false; this.suppliersOpen = false;
