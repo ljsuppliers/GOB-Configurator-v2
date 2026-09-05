@@ -24,6 +24,15 @@
 //        firrings on top, plus ONE layer of 2x2 under the oversailed joists to
 //        make a bigger overhang box.
 //      * Classic (no canopy): 100mm overhang only (a token canopy).
+//      * EVERY job: roof joists AND firrings oversail the REAR by 100mm.
+//      * Ply on the front face + underside of the canopy frame on every
+//        canopied build (2x2 frame or oversailed joists) - fascia + soffit
+//        need something solid to fix to.
+//  - Insulation: 75mm PIR in ALL stick-wall bays (front + clad sides).
+//    Rockwool is partition walls only. No foam tape (no roof panels).
+//  - EXTERNAL DIMENSIONS EXCLUDE the 400mm canopy/decking (Liam 2026-09-05).
+//    Internal = external - 150mm per wall.
+//  - Timber rows carry `cuts` [{len, n}] so orders.js can plan stock lengths.
 //  - Plastered + decorated interior ONLY. Electrical pack ALWAYS included,
 //    canopy lights standard with the signature canopy.
 //  - Corners: open or closed (closed = side wall carried +400mm forward).
@@ -82,7 +91,11 @@ export function buildPremiumBom(state, componentDefs) {
   const tall = extHeightMm >= 2750;      // 2.75m / 3.0m builds: joists oversail
   const wallH = wallPanelHeightFor(h);
   const rows = [];
-  const add = (name, qty, derivation) => { if (qty > 0) rows.push({ name, qty, derivation }); };
+  // `cuts` = [{ len, n, what }] piece list for timber, so the ordering step
+  // can pick the cheapest common stock lengths (3.6 / 4.2 / 4.8 / 5.4 / 6.0m).
+  const add = (name, qty, derivation, cuts) => {
+    if (qty > 0) rows.push(cuts ? { name, qty, derivation, cuts } : { name, qty, derivation });
+  };
 
   const groundScrews = state.foundationType === 'ground-screw';
   const hasCanopy = !!state.hasCanopy && !state.deductions?.removeCanopy;
@@ -120,11 +133,13 @@ export function buildPremiumBom(state, componentDefs) {
   const fDoubledInternals = Math.max(0, Math.floor((fJoists - 2) / 3));
   const fDoubledLm = 2 * w + 2 * d + fDoubledInternals * d;
   add('5x2 tanalised C24 timber', Math.ceil((fJoists * d + 2 * w + fDoubledLm) * 1.10),
-    `Floor: ${fJoists} joists x ${d.toFixed(2)}m @400mm front-to-back + rim (2 x ${w.toFixed(2)}m) + DOUBLING (outer ring + every 3rd joist / 1.2m grid: ${fDoubledInternals} x ${d.toFixed(2)}m), +10%`);
+    `Floor: ${fJoists} joists x ${d.toFixed(2)}m @400mm front-to-back + rim (2 x ${w.toFixed(2)}m) + DOUBLING (outer ring + every 3rd joist / 1.2m grid: ${fDoubledInternals} x ${d.toFixed(2)}m), +10%`,
+    [{ len: d, n: fJoists + 2 + fDoubledInternals, what: 'floor joists incl. doubled sides + grid doubles' }, { len: w, n: 4, what: 'front + rear rim, doubled' }]);
   add('Structural timber screw (100mm)', Math.ceil(fDoubledLm / 0.4),
     `Laminating the doubled ring + grid pairs, 1 per 400mm staggered (${fDoubledLm.toFixed(1)}m of doubled run)`);
   add('Wood screw 40mm', pedestals * 4, `Joists/rim to pedestal head plates, 4 per pedestal`);
-  add('18x38 treated batten', Math.ceil(2 * (fJoists - 1) * d), `Floor PIR support battens, joist sides, tops 75mm down`);
+  add('18x38 treated batten', Math.ceil(2 * (fJoists - 1) * d), `Floor PIR support battens, joist sides, tops 75mm down`,
+    [{ len: d, n: 2 * (fJoists - 1), what: 'floor PIR battens' }]);
   add('75mm PIR insulation board', Math.ceil(w * d), `Floor: friction-fit between the 5x2 joists, ${(w * d).toFixed(1)}m2`);
   add('22mm P5 T&G chipboard (2400x600)', Math.ceil((w * d) * 1.05 / CHIPBOARD_M2), `Floor deck: ${(w * d).toFixed(1)}m2 + 5%, glued at every joint`);
   add('Wood screw 60mm', Math.ceil(w * d * 12), `Floor deck ~12 screws/m2`);
@@ -158,24 +173,32 @@ export function buildPremiumBom(state, componentDefs) {
     const liningRun = panelWalls.reduce((s, p) => s + Math.max(0, p.run - p.openings.reduce((x, o) => x + o.widthM, 0)), 0);
     const liningStuds = Math.ceil(liningRun / 0.6) + panelWalls.length;
     add('CLS 3x2 timber', Math.ceil((liningStuds * wallH + 2 * liningRun) * 1.10),
-      `Lining frame on panel walls: studs @600mm (${liningStuds} x ${wallH.toFixed(2)}m) + top & bottom plates, +10%. Bays empty (panels insulate)`);
+      `Lining frame on panel walls: studs @600mm (${liningStuds} x ${wallH.toFixed(2)}m) + top & bottom plates, +10%. Bays empty (panels insulate)`,
+      [{ len: wallH, n: liningStuds, what: 'lining studs' }, ...panelWalls.map((p) => ({ len: p.run, n: 2, what: `${p.label} lining plates` }))]);
   }
 
   // Stick walls: front always + any slat-clad side + closed-corner extensions.
-  const stickWalls = [{ label: 'front', run: w, openings: front, insulation: '75mm PIR' }];
-  if (!isSteel(state.cladding.left)) stickWalls.push({ label: 'left side', run: sideRun, openings: left, insulation: 'rockwool' });
-  if (!isSteel(state.cladding.right)) stickWalls.push({ label: 'right side', run: sideRun, openings: right, insulation: 'rockwool' });
-  let stickLm = 0, plySheets = 0, tyvekM2 = 0, pirWallM2 = 0, rockwoolM2 = 0, soleLm = 0;
+  // ALL stick-wall bays get 75mm PIR (Liam 2026-09-05: clad sides same as the
+  // front; Rockwool is for partition walls only).
+  const stickWalls = [{ label: 'front', run: w, openings: front }];
+  if (!isSteel(state.cladding.left)) stickWalls.push({ label: 'left side', run: sideRun, openings: left });
+  if (!isSteel(state.cladding.right)) stickWalls.push({ label: 'right side', run: sideRun, openings: right });
+  let stickLm = 0, plySheets = 0, tyvekM2 = 0, pirWallM2 = 0, soleLm = 0;
+  const stickCuts = [];
+  const soleCuts = [];
   for (const sw of stickWalls) {
     const studs = Math.ceil(sw.run / 0.4) + 1;
-    const openW = fhOn(sw.openings).reduce((s, o) => s + o.widthM, 0);
-    const kings = fhOn(sw.openings).length * (6 * wallH + 2);
+    const fhCount = fhOn(sw.openings).length;
+    const kings = fhCount * (6 * wallH + 2);
     stickLm += (studs * wallH + 2 * sw.run + sw.run /* noggins */ + 4 * wallH + kings) * 1.10;
+    stickCuts.push({ len: wallH, n: studs + 4 + fhCount * 6, what: `${sw.label} studs + corner/king studs` });
+    stickCuts.push({ len: sw.run, n: 3, what: `${sw.label} top plate x2 + noggin run` });
+    soleCuts.push({ len: sw.run, n: 1, what: `${sw.label} sole plate` });
     const areaM2 = sw.run * wallH;
     plySheets += Math.ceil(areaM2 * 1.10 / PLY_SHEET_M2);
     tyvekM2 += Math.ceil(areaM2 * 1.10);
     const netM2 = Math.max(0, areaM2 - fhOn(sw.openings).reduce((s, o) => s + o.widthM * o.heightM, 0)) * 1.10;
-    if (sw.insulation === '75mm PIR') pirWallM2 += Math.ceil(netM2); else rockwoolM2 += Math.ceil(netM2);
+    pirWallM2 += Math.ceil(netM2);
     soleLm += sw.run;
   }
   // Closed corners (Liam 2026-09-05): the +400mm forward section is built the
@@ -195,6 +218,7 @@ export function buildPremiumBom(state, componentDefs) {
         `CLOSED ${side} corner: side wall carried ${(state.overhangDepth || 400)}mm forward in PANEL (matches the side wall) - cut from one extra panel @ ${wallH.toFixed(2)}m`);
     } else {
       stickLm += ((2 * wallH) + 3 * 0.4) * 1.10;
+      stickCuts.push({ len: wallH, n: 2, what: `closed ${side} corner studs` });
       soleLm += 0.4;
       plySheets += 1;
       tyvekM2 += Math.ceil(0.4 * wallH * 1.2);
@@ -210,17 +234,17 @@ export function buildPremiumBom(state, componentDefs) {
   // cloaked with the open corner trims. Doors/windows may meet glass-to-glass.
   if (openCorners > 0) {
     add('CLS 4x2 timber', Math.ceil(openCorners * 4 * wallH * 1.10),
-      `OPEN corner post${openCorners === 1 ? '' : 's'}: ~200x200 built-up 4x2 post (4 x ${wallH.toFixed(2)}m per corner), cloaked by the corner trims`);
+      `OPEN corner post${openCorners === 1 ? '' : 's'}: ~200x200 built-up 4x2 post (4 x ${wallH.toFixed(2)}m per corner), cloaked by the corner trims`,
+      [{ len: wallH, n: openCorners * 4, what: 'open-corner post members' }]);
   }
   add('Corner trims', Math.max(0, 4 - closedCorners), `Corner trim sets (incl. cloaking any open-corner posts) - product TBC`);
-  add('CLS 4x2 timber', Math.ceil(stickLm - soleLm), `Stick walls (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): studs @400mm + plates + noggins + opening framing, +10%`);
-  add('Treated CLS 4x2 timber', Math.ceil(soleLm * 1.10), `Stick-wall sole plates at deck level (treated)`);
+  add('CLS 4x2 timber', Math.ceil(stickLm - soleLm), `Stick walls (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): studs @400mm + plates + noggins + opening framing, +10%`, stickCuts);
+  add('Treated CLS 4x2 timber', Math.ceil(soleLm * 1.10), `Stick-wall sole plates at deck level (treated)`, soleCuts);
   add('12mm Plywood (1220×2440 sheet)', plySheets, `Stick wall external sheathing + 10% (openings cut out on site)`);
   add('Tyvek breather membrane', tyvekM2, `Over the ply, under the battens (m2 + 10%)`);
   add('Tyvek/breather tape (roll)', 1, `Tape laps + around openings`);
   add('Staple box', 1, `Fix Tyvek before battens`);
-  if (pirWallM2 > 0) add('75mm PIR insulation board', pirWallM2, `FRONT stick wall bays: 75mm PIR friction-fit between the 4x2 studs`);
-  if (rockwoolM2 > 0) add('Rockwool insulation 100mm', rockwoolM2, `Clad side stick wall bays`);
+  if (pirWallM2 > 0) add('75mm PIR insulation board', pirWallM2, `ALL stick wall bays (${stickWalls.map((x) => x.label).join(' + ')}): 75mm PIR friction-fit between the 4x2 studs (no Rockwool - partitions only)`);
   // Cladding boards + double-batten sub-frame on every slat-clad wall
   // (front always clad; sides when not steel). Closed-corner returns add
   // ~0.4m to the front-cladding run.
@@ -247,7 +271,8 @@ export function buildPremiumBom(state, componentDefs) {
     add(name, count, `Vertical cladding runs across the clad walls (+4 spares per wall). Colour/type per wall spec`);
   }
   if (cladBattenLm > 0) {
-    add('18x38 treated batten', Math.ceil(cladBattenLm * 1.05), `Cladding double-batten sub-frame (vertical counter-battens + horizontal rows @400mm) on the clad walls`);
+    add('18x38 treated batten', Math.ceil(cladBattenLm * 1.05), `Cladding double-batten sub-frame (vertical counter-battens + horizontal rows @400mm) on the clad walls`,
+      cladWalls.flatMap((cw) => [{ len: wallH, n: Math.ceil(cw.run / 0.4) + 1, what: `${cw.wall} vertical counter-battens` }, { len: cw.run, n: Math.ceil(wallH / 0.4) + 1, what: `${cw.wall} horizontal batten rows` }]));
     add('Stainless cladding screw', Math.ceil(cladBattenLm / 0.4) , `~1 per slat per batten crossing (approx by batten run)`);
   }
 
@@ -255,69 +280,82 @@ export function buildPremiumBom(state, componentDefs) {
   const wideFront = fhOn(front).filter((o) => o.widthM >= 1.8);
   if (wideFront.length > 0) {
     const flitchLm = wideFront.reduce((s, o) => s + 2 * (o.widthM + 0.3), 0);
-    add('6x2 tanalised C24 timber', Math.ceil(flitchLm * 1.05), `Flitch pairs over ${wideFront.length} wide front opening${wideFront.length === 1 ? '' : 's'} (opening + 150mm bearing each side, x2 timbers)`);
+    add('6x2 tanalised C24 timber', Math.ceil(flitchLm * 1.05), `Flitch pairs over ${wideFront.length} wide front opening${wideFront.length === 1 ? '' : 's'} (opening + 150mm bearing each side, x2 timbers)`,
+      wideFront.map((o) => ({ len: o.widthM + 0.3, n: 2, what: `flitch pair over ${(o.widthM * 1000).toFixed(0)}mm opening` })));
     add('Flitch beam bolts', wideFront.reduce((s, o) => s + Math.ceil((o.widthM + 0.3) / 0.6), 0), `~600mm centres`);
   }
 
   /* ---------- ROOF ---------- */
   const span = d - 0.2;
   const ladder = premiumRoofLadder(span);
-  // Joists: rear wall plate to front top plate = external depth. They only run
-  // on past the front wall on TALL builds (joists-oversail method).
+  const REAR_OVERSAIL = 0.10; // joists AND firrings oversail the rear 100mm on every job
+  // Joists: rear plate to front top plate = external depth, + 100mm rear
+  // oversail. They only run on past the FRONT wall on TALL builds.
   const joistOversailM = canopyMethod === 'joists-oversail' ? canopyM : 0;
-  const joistLen = d + joistOversailM + 0.05;
-  // Firrings + deck + EPDM always run the full depth PLUS the canopy/overhang.
-  const roofLen = d + canopyM + 0.05;
+  const joistLen = d + joistOversailM + REAR_OVERSAIL;
+  // Firrings + deck + EPDM run the full depth + canopy/overhang + rear oversail.
+  const roofLen = d + canopyM + REAR_OVERSAIL;
   const rJoists = Math.ceil(w / ladder.spacing) + 1;
   const canopyMm = (canopyM * 1000).toFixed(0);
   add(ladder.sku, Math.ceil((rJoists * ladder.ply * joistLen + 2 * w) * 1.10),
-    `Roof: ${ladder.label} - ${rJoists} x ${joistLen.toFixed(2)}m @${(ladder.spacing * 1000).toFixed(0)}mm + rim, +10%. Bears on front top plate/flitch + rear wall plate. ${
+    `Roof: ${ladder.label} - ${rJoists}${ladder.ply === 2 ? ' pairs' : ''} x ${joistLen.toFixed(2)}m @${(ladder.spacing * 1000).toFixed(0)}mm + rim, +10%. Bears on front top plate/flitch + rear wall plate, OVERSAILS THE REAR BY 100mm. ${
       canopyMethod === 'joists-oversail'
-        ? `${(h).toFixed(2)}m BUILD: joists OVERSAIL the front by ${canopyMm}mm to form the canopy`
+        ? `${(h).toFixed(2)}m BUILD: joists also OVERSAIL the front by ${canopyMm}mm to form the canopy`
         : canopyMethod === 'firrings-overhang'
           ? `2.5m BUILD: joists STOP at the front wall (no height to oversail) - the canopy is formed by the firring overhang + 2x2 frame below`
           : `CLASSIC: joists stop at the front wall, ${canopyMm}mm token overhang in the firrings/deck only`
-    }`);
-  add('4x2 tanalised C24 timber', Math.ceil((2 * sideRun + w) * 1.05), `Flat 4x2 wall plate on the panel wall tops (sides + rear)`);
+    }`,
+    [{ len: joistLen, n: rJoists * ladder.ply, what: 'roof joists' }, { len: w, n: 2, what: 'front + rear rim' }]);
+  add('4x2 tanalised C24 timber', Math.ceil((2 * sideRun + w) * 1.05), `Flat 4x2 wall plate on the panel wall tops (sides + rear)`,
+    [{ len: sideRun, n: 2, what: 'side wall plates' }, { len: w, n: 1, what: 'rear wall plate' }]);
   if (ladder.web) add('18mm OSB3 board (2440x1220)', Math.ceil((rJoists * joistLen * ladder.depthM * 1.10) / PLY_SHEET_M2), `OSB webs glued+screwed between the doubled joist pairs, ripped from full sheets`);
-  const firrFront = roofLen <= 3.0 ? 75 : 100;
-  add('Tapered firring (47mm, 1:40)', Math.ceil((rJoists + 4) * roofLen), `Stock ${firrFront}mm->0 tapers x ${roofLen.toFixed(2)}m: 1 per joist + 4 REVERSE firrings squaring the side edges (fall to the REAR). ${
+  // Firrings are CUSTOM MADE per job (Liam 2026-09-05): give the exact spec.
+  const firrFrontMm = Math.round((roofLen / 40) * 1000);
+  add('Tapered firring (47mm, 1:40)', Math.ceil((rJoists + 4) * roofLen),
+    `CUSTOM MADE FOR THIS JOB: ${rJoists} firrings x ${roofLen.toFixed(2)}m long, 47mm wide, tapering from ${firrFrontMm}mm at the FRONT to 0 at the REAR (1:40 fall), one per joist; PLUS 4 REVERSE firrings x ${roofLen.toFixed(2)}m (0 at the front rising to ${firrFrontMm}mm at the rear) laid along the side edges, 2 per side, so the sides read level. Length = ${d.toFixed(2)}m building + ${canopyMm}mm front + 100mm rear oversail. ${
       canopyMethod === 'firrings-overhang'
-        ? `TALL (${firrFront}mm) END OVERHANGS THE FRONT BY ${canopyMm}mm ON TOP OF THE JOISTS - this overhang IS the canopy (2.5m method)`
+        ? `THE TALL END OVERHANGS THE FRONT BY ${canopyMm}mm ON TOP OF THE JOISTS - this overhang IS the canopy (2.5m method)`
         : canopyMethod === 'joists-oversail'
-          ? `sit on top of the oversailed joists right out to the canopy edge`
-          : `run ${canopyMm}mm past the front wall (classic token overhang)`
-    }`);
-  add('18mm T&G OSB3 roof board (2400x590)', Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2), `Roof deck ${(w + 0.2).toFixed(2)} x ${roofLen.toFixed(2)}m incl. 100mm side overhangs + ${canopyMm}mm front, +5%`);
+          ? `They sit on top of the oversailed joists right out to the canopy edge`
+          : `They run ${canopyMm}mm past the front wall (classic token overhang)`
+    }`,
+    [{ len: roofLen, n: rJoists + 4, what: 'firrings (custom tapers)' }]);
+  add('18mm T&G OSB3 roof board (2400x590)', Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2), `Roof deck ${(w + 0.2).toFixed(2)} x ${roofLen.toFixed(2)}m incl. 100mm side overhangs + ${canopyMm}mm front + 100mm rear, +5%`);
   add('EPDM roof kit (membrane, adhesive, edge trims)', Math.ceil((w + 0.2) * roofLen * 1.15), `One-piece EPDM, deck m2 + 15% wraps/upstands, up-and-over the squared side edges`);
   add('100mm PIR insulation board', Math.ceil(w * d), `VENTED COLD ROOF: between joists over the room only (${w.toFixed(2)} x ${d.toFixed(2)}m), set 30mm BELOW joist tops (50mm air path)`);
   // Canopy 2x2 frame - one layer either way, method decides where it sits.
+  // Ply on the front face + underside on EVERY canopied build (fascia + soffit
+  // need a solid fixing) - Liam 2026-09-05.
   if (hasCanopy) {
     const crossPieces = Math.ceil(w / 0.4) + 1;
     const canopy2x2Lm = Math.ceil((2 * w + crossPieces * canopyM) * 1.10);
+    const canopyCuts = [{ len: w, n: 2, what: 'canopy 2x2 front + back rails' }, { len: canopyM, n: crossPieces, what: 'canopy 2x2 cross pieces' }];
     if (canopyMethod === 'firrings-overhang') {
       add('2x2 tanalised C16 timber', canopy2x2Lm,
-        `CANOPY FRAME (2.5m method): 2x2 frame on the TOP-FRONT of the front wall, UNDER the ${canopyMm}mm firring overhang - 2 runs x ${w.toFixed(2)}m + ${crossPieces} cross pieces @400mm x ${canopyMm}mm, +10%. Fixed to the front top plate AND to the flitch beam over the door opening`);
+        `CANOPY FRAME (2.5m method): 2x2 frame on the TOP-FRONT of the front wall, UNDER the ${canopyMm}mm firring overhang - 2 runs x ${w.toFixed(2)}m + ${crossPieces} cross pieces @400mm x ${canopyMm}mm, +10%. Fixed to the front top plate AND to the flitch beam over the door opening`, canopyCuts);
       add('Structural timber screw (100mm)', Math.ceil(w / 0.4) * 2 + 8,
         `Canopy frame: into the front top plate / flitch @400mm + frame assembly`);
     } else {
       add('2x2 tanalised C16 timber', canopy2x2Lm,
-        `CANOPY BOX (${h.toFixed(2)}m method): ONE layer of 2x2 fixed UNDER the oversailed roof joists to deepen the overhang box - 2 runs x ${w.toFixed(2)}m + ${crossPieces} cross pieces @400mm x ${canopyMm}mm, +10%`);
+        `CANOPY BOX (${h.toFixed(2)}m method): ONE layer of 2x2 fixed UNDER the oversailed roof joists to deepen the overhang box - 2 runs x ${w.toFixed(2)}m + ${crossPieces} cross pieces @400mm x ${canopyMm}mm, +10%`, canopyCuts);
       add('Structural timber screw (100mm)', Math.ceil(w / 0.4) * 2 + 8,
         `Canopy box: 2x2 up into the oversailed joists @400mm + frame assembly`);
     }
+    add('12mm Plywood (1220×2440 sheet)', Math.ceil((w * 0.3 + w * canopyM) * 1.10 / PLY_SHEET_M2),
+      `CANOPY BOX PLY: front face (${w.toFixed(2)} x 0.30m) + underside (${w.toFixed(2)} x ${canopyM.toFixed(2)}m) + 10% - solid fixing for the fascia + soffit (needed on the 2x2 frame AND the oversailed-joist box)`);
+  } else {
+    add('12mm Plywood (1220×2440 sheet)', Math.ceil((w * 0.3) * 1.10 / PLY_SHEET_M2), `Front fascia backing strip (classic, no canopy): ${w.toFixed(2)} x 0.30m + 10%`);
   }
   add('Soffit vent strip (2.5m)', Math.ceil((2 * w) / 2.5), `Front soffit vent + rear rim mesh vents (cross-flow)`);
   add('Vapour control layer (roll)', 2, `Warm-side VCL under the roof joists + continuous VCL to all walls behind the lining`);
-  add('Foam tape', Math.ceil(2 * (w + d)), `Wall tops, full perimeter (draft-proof seal under the roof structure) - no roof laps on EPDM`);
-  add('Grab adhesive (tube)', Math.ceil((ladder.web ? rJoists * roofLen / 6 : 0) + 2), `OSB webs into joist pairs (~6m/tube) + skirting`);
+  add('Grab adhesive (tube)', Math.ceil((ladder.web ? rJoists * joistLen / 6 : 0) + 2), `OSB webs into joist pairs (~6m/tube) + skirting`);
 
   /* ---------- EXTERNAL TRIMS / RAINWATER ---------- */
-  add('300mm plastic fascia (5m length, GAP)', Math.ceil((w + 2 * (d + canopyM)) / 5), `Front + both sides`);
+  add('300mm plastic fascia (5m length, GAP)', Math.ceil((w + 2 * roofLen) / 5), `Front (${w.toFixed(2)}m) + both sides (2 x ${roofLen.toFixed(2)}m incl. canopy + rear oversail)`);
   add('200mm plastic fascia (5m length, GAP)', Math.ceil(w / 5), `Rear`);
   if (hasCanopy) add('400mm plastic soffit (5m length, GAP)', Math.ceil(w / 5), `Front canopy soffit (closes the 2x2 frame underside)`);
   add('Fascia corner (500mm plastic)', 4, `4 corners`);
-  add('Steel top cap', Math.ceil((w + 2 * (d + canopyM)) / 3), `Over the EPDM edge, front + sides / 3m lengths`);
+  add('Steel top cap', Math.ceil((w + 2 * roofLen) / 3), `Over the EPDM edge, front + sides / 3m lengths`);
   add('Half-Round Gutter 4 Mtr (Black)', Math.ceil(w / 4), `Rear gutter`);
   add('Half-Round Gutter Fascia Bracket (Black)', Math.ceil(w / 0.5), `1 per 500mm`);
   add('Half-Round Stop End Outlet (Black)', 1, `Downpipe corner`);

@@ -78,7 +78,7 @@
    "name": "Montravia",
    "email": "",
    "phone": "",
-   "notes": "Fixings supplier \u2014 screws, bolts, brackets, fasteners"
+   "notes": "Fixings supplier — screws, bolts, brackets, fasteners"
   },
   {
    "name": "Morland",
@@ -125,7 +125,7 @@
  ],
  "materials": [
   {
-   "name": "Composite slatted cladding (Coffee) 200\u00d72500mm",
+   "name": "Composite slatted cladding (Coffee) 200×2500mm",
    "category": "Cladding",
    "sku": "",
    "unit": "length",
@@ -135,10 +135,10 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "200mm wide \u00d7 2500mm length, sold per length"
+   "notes": "200mm wide × 2500mm length, sold per length"
   },
   {
-   "name": "Composite slatted cladding (Latte) 200\u00d72500mm",
+   "name": "Composite slatted cladding (Latte) 200×2500mm",
    "category": "Cladding",
    "sku": "",
    "unit": "length",
@@ -148,10 +148,10 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "200mm wide \u00d7 2500mm length, sold per length"
+   "notes": "200mm wide × 2500mm length, sold per length"
   },
   {
-   "name": "Composite decking board (140\u00d74880mm)",
+   "name": "Composite decking board (140×4880mm)",
    "category": "Decking",
    "sku": "",
    "unit": "length",
@@ -161,7 +161,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "140mm wide \u00d7 4880mm length, sold per length. Used for both deck surface and front + side upstand."
+   "notes": "140mm wide × 4880mm length, sold per length. Used for both deck surface and front + side upstand."
   },
   {
    "name": "Privacy screen (vertical slats on frame)",
@@ -178,7 +178,7 @@
   },
   {
    "name": "Desk window 1000x1000 (uPVC, anthracite/white)",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 156.0,
@@ -191,7 +191,7 @@
   },
   {
    "name": "Door/window seal",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 0,
@@ -200,11 +200,11 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "1 per opening. Cost included in the Spectral frame price \u2014 listed here so installers see it on the materials list."
+   "notes": "1 per opening. Cost included in the Spectral frame price — listed here so installers see it on the materials list."
   },
   {
    "name": "Full-height window 600x2050 fixed",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 106.73,
@@ -217,7 +217,7 @@
   },
   {
    "name": "Full-height window 600x2050 with top opener",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 176.79,
@@ -230,7 +230,7 @@
   },
   {
    "name": "Full-height window 900x2050 fixed (wide)",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 126.73,
@@ -243,7 +243,7 @@
   },
   {
    "name": "Full-height window 900x2050 with top opener (wide)",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 195.84,
@@ -256,7 +256,7 @@
   },
   {
    "name": "Glass for desk window 1000x1000",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 75.0,
@@ -269,7 +269,7 @@
   },
   {
    "name": "Glass for full-height window 600x2050 fixed",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 60.0,
@@ -282,7 +282,7 @@
   },
   {
    "name": "Glass for full-height window 600x2050 opener main",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 48.0,
@@ -295,7 +295,7 @@
   },
   {
    "name": "Glass for full-height window 900x2050 fixed",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 75.0,
@@ -308,7 +308,7 @@
   },
   {
    "name": "Glass for full-height window 900x2050 opener main",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 30.0,
@@ -321,7 +321,7 @@
   },
   {
    "name": "Glass for full-height window opener top",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 13.0,
@@ -334,7 +334,7 @@
   },
   {
    "name": "Glass for single door (clear)",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 90.0,
@@ -347,7 +347,7 @@
   },
   {
    "name": "Glass for single door (frosted)",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 110.0,
@@ -360,7 +360,7 @@
   },
   {
    "name": "Glass for sliding door",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 80.0,
@@ -373,7 +373,7 @@
   },
   {
    "name": "Glass for slot window 900x450",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 50.0,
@@ -386,7 +386,7 @@
   },
   {
    "name": "Interior door 826x2040",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 75.0,
@@ -399,7 +399,7 @@
   },
   {
    "name": "Interior door ironmongery set",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 18.0,
@@ -412,7 +412,7 @@
   },
   {
    "name": "Interior door lining & frame",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 35.0,
@@ -425,7 +425,7 @@
   },
   {
    "name": "Single door 900x2050 (uPVC, anthracite/white)",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 220.0,
@@ -438,7 +438,7 @@
   },
   {
    "name": "Sliding door 2200x2050 (uPVC, anthracite/white)",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 540.0,
@@ -451,7 +451,7 @@
   },
   {
    "name": "Slot window 900x450 (uPVC, anthracite/white)",
-   "category": "Doors & windows",
+   "category": "Doors & Windows",
    "sku": "",
    "unit": "each",
    "unitCost": 113.0,
@@ -464,7 +464,7 @@
   },
   {
    "name": "1.5mm twin & earth cable",
-   "category": "Electrics \u2014 1st fix",
+   "category": "Electrics — 1st fix",
    "sku": "",
    "unit": "linear m",
    "unitCost": 0.45,
@@ -473,11 +473,11 @@
    "orderUnit": "50m drum",
    "destination": "site",
    "inStock": false,
-   "notes": "Lighting circuit. Estimated at ~1.5\u00d7 perimeter per build."
+   "notes": "Lighting circuit. Estimated at ~1.5× perimeter per build."
   },
   {
    "name": "2.5mm twin & earth cable",
-   "category": "Electrics \u2014 1st fix",
+   "category": "Electrics — 1st fix",
    "sku": "",
    "unit": "linear m",
    "unitCost": 0.8,
@@ -486,11 +486,11 @@
    "orderUnit": "50m drum",
    "destination": "site",
    "inStock": false,
-   "notes": "Sockets + heater radial. Estimated at ~2\u00d7 perimeter per build."
+   "notes": "Sockets + heater radial. Estimated at ~2× perimeter per build."
   },
   {
    "name": "Armoured cable (electrical connection)",
-   "category": "Electrics \u2014 1st fix",
+   "category": "Electrics — 1st fix",
    "sku": "",
    "unit": "each",
    "unitCost": 1250.0,
@@ -503,7 +503,7 @@
   },
   {
    "name": "Cable clip",
-   "category": "Electrics \u2014 1st fix",
+   "category": "Electrics — 1st fix",
    "sku": "",
    "unit": "each",
    "unitCost": 0.03,
@@ -516,7 +516,7 @@
   },
   {
    "name": "CAT6A data cable",
-   "category": "Electrics \u2014 1st fix",
+   "category": "Electrics — 1st fix",
    "sku": "",
    "unit": "each",
    "unitCost": 550.0,
@@ -529,7 +529,7 @@
   },
   {
    "name": "Consumer Unit",
-   "category": "Electrics \u2014 1st fix",
+   "category": "Electrics — 1st fix",
    "sku": "",
    "unit": "each",
    "unitCost": 55.0,
@@ -542,7 +542,7 @@
   },
   {
    "name": "Double back box (47mm, plasterboard or surface)",
-   "category": "Electrics \u2014 1st fix",
+   "category": "Electrics — 1st fix",
    "sku": "",
    "unit": "each",
    "unitCost": 2.5,
@@ -555,7 +555,7 @@
   },
   {
    "name": "Grommet pack",
-   "category": "Electrics \u2014 1st fix",
+   "category": "Electrics — 1st fix",
    "sku": "",
    "unit": "pack",
    "unitCost": 3.0,
@@ -564,11 +564,11 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a33. Open/closed grommets for cable entries. The ONLY electrical consumable GOB supplies - everything else (connectors, sleeving, tape, ties, glands, earth rod) is the electrician's own."
+   "notes": "CLAUDE ESTIMATE £3. Open/closed grommets for cable entries. The ONLY electrical consumable GOB supplies - everything else (connectors, sleeving, tape, ties, glands, earth rod) is the electrician's own."
   },
   {
    "name": "LED panel light mounting bracket",
-   "category": "Electrics \u2014 1st fix",
+   "category": "Electrics — 1st fix",
    "sku": "",
    "unit": "each",
    "unitCost": 18.0,
@@ -581,7 +581,7 @@
   },
   {
    "name": "Single back box (35mm, plasterboard or surface)",
-   "category": "Electrics \u2014 1st fix",
+   "category": "Electrics — 1st fix",
    "sku": "",
    "unit": "each",
    "unitCost": 1.5,
@@ -594,7 +594,7 @@
   },
   {
    "name": "White trunking",
-   "category": "Electrics \u2014 1st fix",
+   "category": "Electrics — 1st fix",
    "sku": "",
    "unit": "linear m",
    "unitCost": 1.5,
@@ -607,7 +607,7 @@
   },
   {
    "name": "1.5kW electric radiator",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 85.0,
@@ -620,7 +620,7 @@
   },
   {
    "name": "13A double socket",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 18.0,
@@ -633,7 +633,7 @@
   },
   {
    "name": "Air Conditioning",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 850.0,
@@ -646,7 +646,7 @@
   },
   {
    "name": "Air conditioning isolator switch",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 14.0,
@@ -659,7 +659,7 @@
   },
   {
    "name": "Canopy downlight (warm-white LED, recessed)",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 12.0,
@@ -668,11 +668,11 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "ESTIMATE (Claude, IP65 recessed LED ~\u00a310-15) - replace with real invoice price"
+   "notes": "ESTIMATE (Claude, IP65 recessed LED ~£10-15) - replace with real invoice price"
   },
   {
    "name": "Dimmable LED downlight (recessed)",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 8.0,
@@ -685,7 +685,7 @@
   },
   {
    "name": "Dimmable switch plate (multi-gang)",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 15.0,
@@ -698,7 +698,7 @@
   },
   {
    "name": "Double light switch",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 8.0,
@@ -711,7 +711,7 @@
   },
   {
    "name": "External up/down wall light",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 65.0,
@@ -724,7 +724,7 @@
   },
   {
    "name": "Fuse spur",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 3.0,
@@ -737,7 +737,7 @@
   },
   {
    "name": "Internal double plug socket (extra)",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 10.0,
@@ -750,7 +750,7 @@
   },
   {
    "name": "IP65 LED canopy spotlight",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 20.0,
@@ -759,11 +759,11 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Install labour included with electrical package \u2014 no extra labour line"
+   "notes": "Install labour included with electrical package — no extra labour line"
   },
   {
    "name": "IP65 weatherproof double socket",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 30.0,
@@ -776,7 +776,7 @@
   },
   {
    "name": "LED panel light (ceiling)",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 35.0,
@@ -789,7 +789,7 @@
   },
   {
    "name": "RJ45 internet socket (single)",
-   "category": "Electrics \u2014 2nd fix",
+   "category": "Electrics — 2nd fix",
    "sku": "",
    "unit": "each",
    "unitCost": 6.0,
@@ -798,7 +798,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a36 - single-gang RJ45/CAT6 faceplate + module. Included in EVERY electrical package (customer broadband hookup now or later), even without the data-connection option."
+   "notes": "CLAUDE ESTIMATE £6 - single-gang RJ45/CAT6 faceplate + module. Included in EVERY electrical package (customer broadband hookup now or later), even without the data-connection option."
   },
   {
    "name": "Z-trim (roof side closer)",
@@ -824,7 +824,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a30.06. Anthracite plastic-headed pins fixing the GAP plastic fascias and soffits @300mm."
+   "notes": "CLAUDE ESTIMATE £0.06. Anthracite plastic-headed pins fixing the GAP plastic fascias and soffits @300mm."
   },
   {
    "name": "Anthracite touch-up pen",
@@ -837,7 +837,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a39. RAL 7016 scratch repair for panels and trims - 1 per job."
+   "notes": "CLAUDE ESTIMATE £9. RAL 7016 scratch repair for panels and trims - 1 per job."
   },
   {
    "name": "Composite cladding screws",
@@ -941,7 +941,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a36/roll. HYBRID floor: tape the 75mm PIR board joints + perimeter after foaming the gaps."
+   "notes": "CLAUDE ESTIMATE £6/roll. HYBRID floor: tape the 75mm PIR board joints + perimeter after foaming the gaps."
   },
   {
    "name": "Grab adhesive (tube)",
@@ -967,7 +967,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Stainless steel composite decking screw with grey-painted head, colour-matched to grey/anthracite composite deck boards. ~\u00a314/100 pack (Assured Composite)."
+   "notes": "Stainless steel composite decking screw with grey-painted head, colour-matched to grey/anthracite composite deck boards. ~£14/100 pack (Assured Composite)."
   },
   {
    "name": "Mitre bond kit (adhesive + activator)",
@@ -980,7 +980,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a36. Superglue + activator for skirting and trim mitres - 1 per job."
+   "notes": "CLAUDE ESTIMATE £6. Superglue + activator for skirting and trim mitres - 1 per job."
   },
   {
    "name": "Packer shim assortment (box)",
@@ -993,7 +993,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a38. Mixed plastic packers for levelling/plumbing door + window frames (~10mm opening tolerance, ~5mm per side). 1 box per build."
+   "notes": "CLAUDE ESTIMATE £8. Mixed plastic packers for levelling/plumbing door + window frames (~10mm opening tolerance, ~5mm per side). 1 box per build."
   },
   {
    "name": "Panel pin box",
@@ -1019,7 +1019,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a30.10. HYBRID wall: 60mm panel skin into the 4x2 studs (60 panel + 38 bite = 98mm), anthracite head, every stud line + bottom row into the rim. Replaces the wrong 150mm spec."
+   "notes": "CLAUDE ESTIMATE £0.10. HYBRID wall: 60mm panel skin into the 4x2 studs (60 panel + 38 bite = 98mm), anthracite head, every stud line + bottom row into the rim. Replaces the wrong 150mm spec."
   },
   {
    "name": "Self-drilling screw 150mm (wood to metal)",
@@ -1045,7 +1045,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a30.08. Self-drilling screw for fixing timber to the Kingspan panel steel skins: first-layer battens (walls, ceiling, cladding verticals) and the floor ply sub-deck. Anything into metal is self-drilling per Liam 2026-07-25."
+   "notes": "CLAUDE ESTIMATE £0.08. Self-drilling screw for fixing timber to the Kingspan panel steel skins: first-layer battens (walls, ceiling, cladding verticals) and the floor ply sub-deck. Anything into metal is self-drilling per Liam 2026-07-25."
   },
   {
    "name": "Self-drilling screw 80mm (wood to metal)",
@@ -1058,7 +1058,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a30.12. Long self-driller for fixing 47mm flat timber (side overhang 4x2, canopy ladder 2x2) through into the roof panel steel skin."
+   "notes": "CLAUDE ESTIMATE £0.12. Long self-driller for fixing 47mm flat timber (side overhang 4x2, canopy ladder 2x2) through into the roof panel steel skin."
   },
   {
    "name": "Stainless cladding screw",
@@ -1110,7 +1110,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a30.20. Fixes uPVC door/window frames: into the stick-frame studs on the front, into the panel edge/U-channel on the sides (self-drilling tip). ~8 per door/full-height window, ~6 per small window."
+   "notes": "CLAUDE ESTIMATE £0.20. Fixes uPVC door/window frames: into the stick-frame studs on the front, into the panel edge/U-channel on the sides (self-drilling tip). ~8 per door/full-height window, ~6 per small window."
   },
   {
    "name": "White-headed wood screw (40mm)",
@@ -1123,7 +1123,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "4\u00d740mm wood screw with painted white head \u2014 used for fixing white melamine MDF panels to the internal batten frame so the screw head blends with the panel. ~\u00a36/100 typical pack price."
+   "notes": "4×40mm wood screw with painted white head — used for fixing white melamine MDF panels to the internal batten frame so the screw head blends with the panel. ~£6/100 typical pack price."
   },
   {
    "name": "Wood screw 40mm",
@@ -1149,7 +1149,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a30.07. HYBRID decks: 22mm floor chipboard + 18mm roof OSB into joists."
+   "notes": "CLAUDE ESTIMATE £0.07. HYBRID decks: 22mm floor chipboard + 18mm roof OSB into joists."
   },
   {
    "name": "22mm P5 T&G chipboard (2400x600)",
@@ -1162,33 +1162,33 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a315. HYBRID floor deck (1.44m\u00b2/board)."
+   "notes": "CLAUDE ESTIMATE £15. HYBRID floor deck (1.44m²/board)."
   },
   {
    "name": "Light Grey vinyl",
    "category": "Flooring",
    "sku": "",
-   "unit": "m\u00b2",
+   "unit": "m²",
    "unitCost": 8.99,
    "supplier": "Factory Direct Flooring",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Ecostep Vinyl Flooring Storm Grey 991M from factory-direct-flooring.co.uk, \u00a38.99/m\u00b2. Available in 2m/3m/4m widths."
+   "notes": "Ecostep Vinyl Flooring Storm Grey 991M from factory-direct-flooring.co.uk, £8.99/m². Available in 2m/3m/4m widths."
   },
   {
    "name": "Medium Oak vinyl",
    "category": "Flooring",
    "sku": "",
-   "unit": "m\u00b2",
+   "unit": "m²",
    "unitCost": 8.99,
    "supplier": "Factory Direct Flooring",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Ecostep Vinyl Flooring Golden Oak 006M from factory-direct-flooring.co.uk, \u00a38.99/m\u00b2. Available in 2m/3m/4m widths."
+   "notes": "Ecostep Vinyl Flooring Golden Oak 006M from factory-direct-flooring.co.uk, £8.99/m². Available in 2m/3m/4m widths."
   },
   {
    "name": "Vinyl spray adhesive (500ml can)",
@@ -1214,7 +1214,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a33.50. Adjustable-height plastic pedestal, loose-laid on the concrete base under the 4x2 bearers (NOT fixed - building weight holds it). 1.1m grid, same layout as ground screws."
+   "notes": "CLAUDE ESTIMATE £3.50. Adjustable-height plastic pedestal, loose-laid on the concrete base under the 4x2 bearers (NOT fixed - building weight holds it). 1.1m grid, same layout as ground screws."
   },
   {
    "name": "DPM jointing tape (roll)",
@@ -1227,7 +1227,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a36. Tapes the DPM sheet overlaps. 1 roll per build (2 on floors over 20m\u00b2)."
+   "notes": "CLAUDE ESTIMATE £6. Tapes the DPM sheet overlaps. 1 roll per build (2 on floors over 20m²)."
   },
   {
    "name": "Radix ground screw",
@@ -1279,7 +1279,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP. Joins adjacent 4m gutter sections. Only needed on builds wider than 4m: 4.4\u20138m wide = 1 joiner, 8.05\u20138.8m wide = 2 joiners."
+   "notes": "GAP. Joins adjacent 4m gutter sections. Only needed on builds wider than 4m: 4.4–8m wide = 1 joiner, 8.05–8.8m wide = 2 joiners."
   },
   {
    "name": "Half-Round Gutter Stop End Ext (Black)",
@@ -1318,7 +1318,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP. 2 per build \u2014 used as an S-curve to offset the downpipe from the fascia outlet to vertical drop."
+   "notes": "GAP. 2 per build — used as an S-curve to offset the downpipe from the fascia outlet to vertical drop."
   },
   {
    "name": "Round 68mm Downpipe 2.5 Mtr (Black)",
@@ -1363,27 +1363,27 @@
    "name": "100mm PIR insulation board",
    "category": "Insulated panels",
    "sku": "",
-   "unit": "m\u00b2",
+   "unit": "m²",
    "unitCost": 12.0,
    "supplier": "Montravia",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a312/m\u00b2. HYBRID roof - between the joists."
+   "notes": "CLAUDE ESTIMATE £12/m². HYBRID roof - between the joists."
   },
   {
    "name": "50mm PIR insulation board",
    "category": "Insulated panels",
    "sku": "",
-   "unit": "m\u00b2",
+   "unit": "m²",
    "unitCost": 7.5,
    "supplier": "Montravia",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a37.50/m\u00b2. HYBRID floor - between the joists."
+   "notes": "CLAUDE ESTIMATE £7.50/m². HYBRID floor - between the joists."
   },
   {
    "name": "75mm PIR insulation board",
@@ -1396,62 +1396,62 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a39.50/m2. HYBRID floor: between the 4x2 joists on 18x38 battens laid flat (18+75=93 vs 95 joist = flush under deck). Replaces the 50mm floor PIR per Liam 2026-08-04."
+   "notes": "CLAUDE ESTIMATE £9.50/m2. HYBRID floor: between the 4x2 joists on 18x38 battens laid flat (18+75=93 vs 95 joist = flush under deck). Replaces the 50mm floor PIR per Liam 2026-08-04."
   },
   {
    "name": "Kingspan 100mm insulated floor panel (1.1m wide)",
    "category": "Insulated panels",
    "sku": "",
-   "unit": "m\u00b2",
+   "unit": "m²",
    "unitCost": 60.0,
    "supplier": "Kingspan",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "\u00a360/m\u00b2 ex VAT from Kingspan. Same product as wall panel."
+   "notes": "£60/m² ex VAT from Kingspan. Same product as wall panel."
   },
   {
    "name": "Kingspan 100mm insulated wall panel (1.1m wide)",
    "category": "Insulated panels",
    "sku": "",
-   "unit": "m\u00b2",
+   "unit": "m²",
    "unitCost": 60.0,
    "supplier": "Kingspan",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "\u00a360/m\u00b2 ex VAT from Kingspan. Steel + 100mm PIR + steel."
+   "notes": "£60/m² ex VAT from Kingspan. Steel + 100mm PIR + steel."
   },
   {
    "name": "Kingspan 60mm insulated wall panel (1.0m wide)",
    "category": "Insulated panels",
    "sku": "",
-   "unit": "m\u00b2",
+   "unit": "m²",
    "unitCost": 40.0,
    "supplier": "Kingspan",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a340/m\u00b2. HYBRID build wall skin - weather + anthracite finish layer over the CLS studwork."
+   "notes": "CLAUDE ESTIMATE £40/m². HYBRID build wall skin - weather + anthracite finish layer over the CLS studwork."
   },
   {
    "name": "Kingspan 80mm (115mm ridge) trapezoid roof panel (1.0m wide)",
    "category": "Insulated panels",
    "sku": "",
-   "unit": "m\u00b2",
+   "unit": "m²",
    "unitCost": 40.0,
    "supplier": "Kingspan",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "\u00a340/m\u00b2 ex VAT from Kingspan. Trapezoid outer profile."
+   "notes": "£40/m² ex VAT from Kingspan. Trapezoid outer profile."
   },
   {
-   "name": "12mm Plywood (1220\u00d72440 sheet)",
+   "name": "12mm Plywood (1220×2440 sheet)",
    "category": "Internal lining",
    "sku": "",
    "unit": "sheet",
@@ -1487,13 +1487,13 @@
    "orderUnit": "4.8m length",
    "destination": "site",
    "inStock": false,
-   "notes": "Selhurst 19x38 4.8m treated roofing batten (1B01903848), \u00a32.16/length"
+   "notes": "Selhurst 19x38 4.8m treated roofing batten (1B01903848), £2.16/length"
   },
   {
    "name": "Acoustic insulation roll (100mm)",
    "category": "Internal lining",
    "sku": "",
-   "unit": "m\u00b2",
+   "unit": "m²",
    "unitCost": 4.8,
    "supplier": "Montravia",
    "packSize": null,
@@ -1503,7 +1503,7 @@
    "notes": ""
   },
   {
-   "name": "Acoustic slat wall panel (2400\u00d7600)",
+   "name": "Acoustic slat wall panel (2400×600)",
    "category": "Internal lining",
    "sku": "",
    "unit": "each",
@@ -1513,7 +1513,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "ESTIMATE (trade ~\u00a340: Alsford 3-for-\u00a3120; Panel Hub cheaper, Travis Perkins dearer) - replace with real supplier price. Oak/grey finishes. Run vertically, no stagger, pinned to plasterboard"
+   "notes": "ESTIMATE (trade ~£40: Alsford 3-for-£120; Panel Hub cheaper, Travis Perkins dearer) - replace with real supplier price. Oak/grey finishes. Run vertically, no stagger, pinned to plasterboard"
   },
   {
    "name": "Decorators caulk (tube)",
@@ -1526,7 +1526,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a31.50. Internal junction/gap filling before finishing - used on plastered AND pre-finished builds (Liam 2026-07-26)."
+   "notes": "CLAUDE ESTIMATE £1.50. Internal junction/gap filling before finishing - used on plastered AND pre-finished builds (Liam 2026-07-26)."
   },
   {
    "name": "Multi-finish plaster (25kg bag)",
@@ -1565,7 +1565,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a32. Thin-coat angle bead for external corners and door/window reveals - plastered builds only."
+   "notes": "CLAUDE ESTIMATE £2. Thin-coat angle bead for external corners and door/window reveals - plastered builds only."
   },
   {
    "name": "Plasterboard scrim/jointing tape (90m roll)",
@@ -1630,7 +1630,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a33. Internal seals: thresholds, junctions, trim edges."
+   "notes": "CLAUDE ESTIMATE £3. Internal seals: thresholds, junctions, trim edges."
   },
   {
    "name": "White trade emulsion paint (10L)",
@@ -1701,7 +1701,7 @@
    "name": "DPM sheet",
    "category": "Membranes",
    "sku": "",
-   "unit": "m\u00b2",
+   "unit": "m²",
    "unitCost": 1.5,
    "supplier": "Montravia",
    "packSize": 100,
@@ -1714,14 +1714,14 @@
    "name": "Tyvek breather membrane",
    "category": "Membranes",
    "sku": "",
-   "unit": "m\u00b2",
+   "unit": "m²",
    "unitCost": 1.2,
    "supplier": "Montravia",
    "packSize": 70,
    "orderUnit": "roll (1.4m x 50m)",
    "destination": "site",
    "inStock": false,
-   "notes": "ESTIMATE (Claude, ~\u00a375 per 1.4x50m roll) - replace with real invoice price. Front wall: over the ply, under the battens"
+   "notes": "ESTIMATE (Claude, ~£75 per 1.4x50m roll) - replace with real invoice price. Front wall: over the ply, under the battens"
   },
   {
    "name": "Tyvek/breather tape (roll)",
@@ -1747,20 +1747,20 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a315. Complimentary with every job - 1 per build."
+   "notes": "CLAUDE ESTIMATE £15. Complimentary with every job - 1 per build."
   },
   {
    "name": "Rockwool insulation 100mm",
    "category": "Other",
    "sku": "",
-   "unit": "m\u00b2",
+   "unit": "m²",
    "unitCost": 5.0,
    "supplier": "Builders merchant",
    "packSize": 5.76,
    "orderUnit": "pack (8 slabs)",
    "destination": "site",
    "inStock": false,
-   "notes": "ESTIMATE (Claude, ~\u00a34-6/m2 trade for 100mm slab) - replace with real invoice price. Between the 4x2 studs of the stick-built front wall"
+   "notes": "ESTIMATE (Claude, ~£4-6/m2 trade for 100mm slab) - replace with real invoice price. Between the 4x2 studs of the stick-built front wall"
   },
   {
    "name": "Rockwool insulation 50mm (acoustic)",
@@ -1773,7 +1773,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a33.00/m2, get quote. THE single wall wool SKU building-wide (Liam 2026-08-04): panel walls 50mm MAX (condensation one-third rule behind the 60mm panel, fitted against the panel, 45mm services gap in front) and clad walls same 50mm."
+   "notes": "CLAUDE ESTIMATE £3.00/m2, get quote. THE single wall wool SKU building-wide (Liam 2026-08-04): panel walls 50mm MAX (condensation one-third rule behind the 60mm panel, fitted against the panel, 45mm services gap in front) and clad walls same 50mm."
   },
   {
    "name": "15x15mm anthracite square trim (GAP)",
@@ -1786,7 +1786,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Confirmed by Liam 2026-07-23. \u00a31 per metre"
+   "notes": "Confirmed by Liam 2026-07-23. £1 per metre"
   },
   {
    "name": "200mm plastic fascia (5m length, GAP)",
@@ -1812,7 +1812,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a34/length. White PVC L-shape 25x25mm, 2.5m lengths - trims the door/window reveals. Computed per job + 2 spare lengths."
+   "notes": "CLAUDE ESTIMATE £4/length. White PVC L-shape 25x25mm, 2.5m lengths - trims the door/window reveals. Computed per job + 2 spare lengths."
   },
   {
    "name": "300mm plastic fascia (5m length, GAP)",
@@ -1903,7 +1903,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a34.50 per 2.5m length, confirm product/supplier. PREMIUM vented cold roof: continuous front soffit vent + rear rim vent slots (mesh) behind the fascia."
+   "notes": "CLAUDE ESTIMATE £4.50 per 2.5m length, confirm product/supplier. PREMIUM vented cold roof: continuous front soffit vent + rear rim vent slots (mesh) behind the fascia."
   },
   {
    "name": "Anthracite stitching screw (self-drilling, box of 50)",
@@ -1929,7 +1929,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a34. Continuous butyl bead INSIDE each roof panel side lap - required at our ~2\u00b0 pitch per Kingspan low-pitch guidance. ~6m bead per cartridge."
+   "notes": "CLAUDE ESTIMATE £4. Continuous butyl bead INSIDE each roof panel side lap - required at our ~2° pitch per Kingspan low-pitch guidance. ~6m bead per cartridge."
   },
   {
    "name": "Clear silicone",
@@ -1942,20 +1942,20 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a33. Bead in the wall/floor panel tongue-and-groove joints during assembly (airtightness) + general use."
+   "notes": "CLAUDE ESTIMATE £3. Bead in the wall/floor panel tongue-and-groove joints during assembly (airtightness) + general use."
   },
   {
    "name": "EPDM roof kit (membrane, adhesive, edge trims)",
    "category": "Roof panel sealants, tapes and fixings",
    "sku": "",
-   "unit": "m\u00b2",
+   "unit": "m²",
    "unitCost": 16.0,
    "supplier": "Rubber Roofing Direct",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a316/m\u00b2 supplied as a kit (one-piece membrane, water-based + contact adhesive, drip/gutter edge trims). HYBRID roof."
+   "notes": "CLAUDE ESTIMATE £16/m² supplied as a kit (one-piece membrane, water-based + contact adhesive, drip/gutter edge trims). HYBRID roof."
   },
   {
    "name": "Foam tape",
@@ -1981,7 +1981,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Main roof fixings through the panel crowns into the wall tops, 3 per panel per support (2 supports). Supplied by Kingspan with the panel order - priced so main + lap stitchers together come to ~\u00a350/job (Liam 2026-07-26)."
+   "notes": "Main roof fixings through the panel crowns into the wall tops, 3 per panel per support (2 supports). Supplied by Kingspan with the panel order - priced so main + lap stitchers together come to ~£50/job (Liam 2026-07-26)."
   },
   {
    "name": "Roof lap stitcher screw (Kingspan)",
@@ -1994,7 +1994,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Side-lap stitchers @500mm centres. Supplied by Kingspan with the panel order - priced so main + stitchers together come to ~\u00a350/job (Liam 2026-07-26)."
+   "notes": "Side-lap stitchers @500mm centres. Supplied by Kingspan with the panel order - priced so main + stitchers together come to ~£50/job (Liam 2026-07-26)."
   },
   {
    "name": "Roof Panel Ridge Filler",
@@ -2033,7 +2033,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a325. HYBRID roof - warm-side VCL under the joists."
+   "notes": "CLAUDE ESTIMATE £25. HYBRID roof - warm-side VCL under the joists."
   },
   {
    "name": "Corner Trim (40x180 anthracite L)",
@@ -2137,7 +2137,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a326. HYBRID roof deck."
+   "notes": "CLAUDE ESTIMATE £26. HYBRID roof deck."
   },
   {
    "name": "18mm T&G OSB3 roof board (2400x590)",
@@ -2150,7 +2150,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a313. ACTIVE for PREMIUM builds (2026-08-24): T&G OSB roof deck over the firrings, under the EPDM. (Was shelved 2026-08-05 with the hybrid timber roof.)"
+   "notes": "CLAUDE ESTIMATE £13. ACTIVE for PREMIUM builds (2026-08-24): T&G OSB roof deck over the firrings, under the EPDM. (Was shelved 2026-08-05 with the hybrid timber roof.)"
   },
   {
    "name": "2x2 tanalised C16 timber",
@@ -2189,7 +2189,7 @@
    "orderUnit": "4.2m length",
    "destination": "site",
    "inStock": false,
-   "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 5x2 spec used on builds with width up to 4.05m (i.e. 3.3m, 3.85m). Source: Selhurst C24 47x125 4.8m treated regularised (1BC2404712548) at \u00a311.59/length = \u00a32.41/m."
+   "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 5x2 spec used on builds with width up to 4.05m (i.e. 3.3m, 3.85m). Source: Selhurst C24 47x125 4.8m treated regularised (1BC2404712548) at £11.59/length = £2.41/m."
   },
   {
    "name": "6x2 tanalised C24 timber",
@@ -2202,7 +2202,7 @@
    "orderUnit": "4.2m length",
    "destination": "site",
    "inStock": false,
-   "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 6x2 spec required on builds with width >4.05m (i.e. 4.4m and above) to handle the extra span. Not in current Selhurst invoices \u2014 interpolated price between 47x125 (\u00a32.41/m) and 47x175 (\u00a33.28/m). Confirm with a Selhurst quote when you next order."
+   "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 6x2 spec required on builds with width >4.05m (i.e. 4.4m and above) to handle the extra span. Not in current Selhurst invoices — interpolated price between 47x125 (£2.41/m) and 47x175 (£3.28/m). Confirm with a Selhurst quote when you next order."
   },
   {
    "name": "7x2 tanalised C24 timber",
@@ -2215,7 +2215,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a33.90/m (47x170 C24). HYBRID build roof joists @400mm."
+   "notes": "CLAUDE ESTIMATE £3.90/m (47x170 C24). HYBRID build roof joists @400mm."
   },
   {
    "name": "9x2 tanalised C24 timber",
@@ -2241,7 +2241,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a31.40/m (38x63 kiln-dried CLS). PREMIUM system 2026-08-24: lining frame inside the panel walls (studs @600 + plates), replaces the wall double battens. Bays left empty - panels insulate."
+   "notes": "CLAUDE ESTIMATE £1.40/m (38x63 kiln-dried CLS). PREMIUM system 2026-08-24: lining frame inside the panel walls (studs @600 + plates), replaces the wall double battens. Bays left empty - panels insulate."
   },
   {
    "name": "CLS 4x2 timber",
@@ -2267,7 +2267,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a33/m. ACTIVE for PREMIUM builds (2026-08-24): 1:40 tapered firrings over the flat roof joists, tallest at front running to 0 at rear + 4 reverse firrings squaring the side edges. (Was shelved 2026-08-05 with the hybrid timber roof.)"
+   "notes": "CLAUDE ESTIMATE £3/m. ACTIVE for PREMIUM builds (2026-08-24): 1:40 tapered firrings over the flat roof joists, tallest at front running to 0 at rear + 4 reverse firrings squaring the side edges. (Was shelved 2026-08-05 with the hybrid timber roof.)"
   },
   {
    "name": "Treated CLS 4x2 timber",
@@ -2280,7 +2280,7 @@
    "orderUnit": "2.4m length",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE \u00a32.20/m (typically 10-20% over untreated CLS \u00a31.90) - replace with merchant quote. Internal-frame BOTTOM plates only (sole-plate rule): same 38x89 section as untreated CLS studs, avoids the 6mm step a 45x95 tanalised plate would create under the hung lining."
+   "notes": "CLAUDE ESTIMATE £2.20/m (typically 10-20% over untreated CLS £1.90) - replace with merchant quote. Internal-frame BOTTOM plates only (sole-plate rule): same 38x89 section as untreated CLS studs, avoids the 6mm step a 45x95 tanalised plate would create under the hung lining."
   },
   {
    "name": "Corner trims",
@@ -2292,7 +2292,7 @@
    "sku": "",
    "packSize": null,
    "orderUnit": "",
-   "destination": "factory",
+   "destination": "site",
    "inStock": false
   },
   {
@@ -2305,7 +2305,7 @@
    "sku": "",
    "packSize": null,
    "orderUnit": "",
-   "destination": "factory",
+   "destination": "site",
    "inStock": false
   },
   {
@@ -2318,7 +2318,7 @@
    "sku": "",
    "packSize": null,
    "orderUnit": "",
-   "destination": "factory",
+   "destination": "site",
    "inStock": false
   },
   {
@@ -2621,7 +2621,7 @@
    "notes": "Labour/boards note line - boards come from the front cladding order"
   },
   {
-   "name": "Larch slatted cladding 140\u00d72500mm",
+   "name": "Larch slatted cladding 140×2500mm",
    "category": "Cladding",
    "sku": "",
    "unit": "each",
@@ -2634,7 +2634,7 @@
    "notes": "SET COST + SUPPLIER if offered"
   },
   {
-   "name": "Western Red Cedar slatted cladding 140\u00d72500mm",
+   "name": "Western Red Cedar slatted cladding 140×2500mm",
    "category": "Cladding",
    "sku": "",
    "unit": "length",

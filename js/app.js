@@ -8,8 +8,8 @@ import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom } from './bom/premium-bom.js?v=2';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=1';
+import { buildPremiumBom } from './bom/premium-bom.js?v=3';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=2';
 
 const { createApp } = Vue;
 
@@ -233,7 +233,8 @@ createApp({
       await this.ensureCatalogue();
       const defs = { ...(this.appData.components?.doors || {}), ...(this.appData.components?.windows || {}) };
       const raw = buildPremiumBom(this.state, defs);
-      this.bomLines = joinBom(raw, this.catalogue);
+      if (!this.state.bomOverrides) this.state.bomOverrides = {};
+      this.bomLines = joinBom(raw, this.catalogue, this.state.bomOverrides);
       if (!this.orderRef) {
         const cust = (this.state.customer?.name || '').split(' ')[0] || 'JOB';
         this.orderRef = `GOB-${cust.toUpperCase()}-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}`;
@@ -247,15 +248,19 @@ createApp({
         siteAddress: [this.state.customer?.name, this.state.customer?.address].filter(Boolean).join('\n'),
       });
     },
+    // Per-JOB overrides (saved with the quote state, NOT the catalogue):
+    // everything is site delivery as standard; Liam allocates leftover factory
+    // stock to particular jobs here.
     setLineDestination(line, dest) {
       line.destination = dest;
-      const mat = line.material;
-      if (mat) mat.destination = dest; // remember as the material default
+      if (!this.state.bomOverrides) this.state.bomOverrides = {};
+      this.state.bomOverrides[line.name] = { ...(this.state.bomOverrides[line.name] || {}), destination: dest };
       this.rebuildOrders();
     },
     toggleLineStock(line) {
       line.inStock = !line.inStock;
-      if (line.material) line.material.inStock = line.inStock;
+      if (!this.state.bomOverrides) this.state.bomOverrides = {};
+      this.state.bomOverrides[line.name] = { ...(this.state.bomOverrides[line.name] || {}), inStock: line.inStock };
       this.rebuildOrders();
     },
     async saveCat() {
@@ -448,7 +453,11 @@ createApp({
       const price = this.price;
       const isSig = s.tier === 'signature';
       const firstName = (s.customer?.name || 'Customer').split(' ')[0];
-      const dims = `${(s.width/1000).toFixed(1)}m x ${(s.depth/1000).toFixed(1)}m x ${(s.height/1000).toFixed(2).replace(/0$/, '')}m`;
+      // External sizes EXCLUDE the canopy/decking (Liam 2026-09-05); say so on
+      // Signature builds so the customer reads the footprint correctly.
+      const hasCanopyOrDeck = isSig && (s.hasCanopy !== false || s.hasDecking !== false);
+      const dims = `${(s.width/1000).toFixed(1)}m x ${(s.depth/1000).toFixed(1)}m x ${(s.height/1000).toFixed(2).replace(/0$/, '')}m`
+        + (hasCanopyOrDeck ? ` (external building size, plus the ${((s.overhangDepth || 400)/1000).toFixed(1)}m canopy and decking to the front)` : ' (external)');
       const buildingTypeLower = (s.buildingType || 'garden office building').toLowerCase();
 
       // Handle custom paragraph

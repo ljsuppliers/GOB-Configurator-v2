@@ -12,9 +12,10 @@ export function initPricing(prices, components) {
 // ─── Derived calculations (used by pricing + quote generation) ───
 
 export function getInternalDimensions(state) {
-  const isSig = state.tier === 'signature';
+  // EXTERNAL sizes exclude the canopy/decking (Liam 2026-09-05), so internal
+  // is simply 150mm off each wall on every tier.
   const intWidth = state.width - 300;   // 150mm each side wall
-  const intDepth = state.depth - (isSig ? 700 : 300); // Signature: 400mm canopy + 150mm front + 150mm back
+  const intDepth = state.depth - 300;   // 150mm front + 150mm back
   // Height reduction depends on external height (bigger joists for taller roofs)
   let heightReduction;
   if (state.height <= 2500) heightReduction = 350;

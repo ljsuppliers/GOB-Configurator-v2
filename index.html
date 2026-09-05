@@ -220,11 +220,11 @@
           <h4>Building Design</h4>
           <div class="dim-row">
             <div>
-              <label>Width (mm)</label>
+              <label>External width (mm)</label>
               <input type="number" v-model.number="state.width" min="2000" max="12000" step="50">
             </div>
             <div>
-              <label>Depth (mm)</label>
+              <label>External depth (mm) <span style="color:#888;font-weight:normal">excl. canopy/decking</span></label>
               <input type="number" v-model.number="state.depth" min="2000" max="8000" step="50">
             </div>
             <div>
@@ -1048,7 +1048,7 @@
                     <td style="text-align:center"><input type="checkbox" :checked="l.inStock" @change="toggleLineStock(l)" title="In stock - don't order"></td>
                     <td><strong>{{ l.name }}</strong><span v-if="!l.inCatalogue" class="bom-warn"> not in catalogue</span><div class="bom-deriv">{{ l.derivation }}</div></td>
                     <td>{{ l.qty }} {{ l.unit }}</td>
-                    <td>{{ l.orderQty }}<span v-if="l.orderUnit && l.orderUnit !== l.unit"> × {{ l.orderUnit }}</span></td>
+                    <td><template v-if="l.stockPlan && l.stockPlan.text">{{ l.stockPlan.text }}<div class="bom-deriv" v-for="n in l.stockPlan.notes">{{ n }}</div></template><template v-else>{{ l.orderQty }}<span v-if="l.orderUnit && l.orderUnit !== l.unit"> × {{ l.orderUnit }}</span></template></td>
                     <td>{{ l.unitCost ? fmt(l.unitCost) : '—' }}</td>
                     <td>{{ l.lineCost ? fmt(l.lineCost) : '—' }}</td>
                     <td>{{ l.supplier || '—' }}</td>
@@ -1453,7 +1453,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=41"></script>
+<script type="module" src="js/app.js?v=42"></script>
 
 </body>
 </html>

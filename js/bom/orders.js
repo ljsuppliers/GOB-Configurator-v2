@@ -54,24 +54,132 @@ export async function saveCatalogue(cat) {
   return 'local';
 }
 
-/** Join BOM rows to catalogue materials by name. */
-export function joinBom(bomRows, catalogue) {
+// ---------------------------------------------------------------------------
+// STOCK-LENGTH PLANNING (Liam 2026-09-05: "suggest the optimal size... use
+// common sizes as they are most affordable and available").
+// Sawn/treated carcassing (C16/C24) is stocked in 3.6 / 4.2 / 4.8 / 5.4 / 6.0m
+// (2.4 + 3.0 also common). CLS is 2.4 / 3.0 / 3.6 / 4.2 / 4.8m. Battens
+// 2.4 / 3.0 / 3.6 / 4.8m. Firrings are custom made - no stock plan, we just
+// state the exact pieces.
+// ---------------------------------------------------------------------------
+// `splittable`: plates, rails and battens are routinely made of two pieces
+// joined over a stud/joist, so an over-length run is planned as joined pieces.
+// Structural joists are NOT split - anything over 6.0m is flagged.
+const STOCK_LENGTHS = [
+  { test: /firring/i, lengths: null },
+  { test: /\bCLS\b/i, lengths: [2.4, 3.0, 3.6, 4.2, 4.8], splittable: true },
+  { test: /batten/i, lengths: [2.4, 3.0, 3.6, 4.8], splittable: true },
+  { test: /2x2/i, lengths: [2.4, 3.0, 3.6, 4.8], splittable: true },
+  { test: /C(16|24)|tanalised|treated|timber|joist/i, lengths: [2.4, 3.0, 3.6, 4.2, 4.8, 5.4, 6.0], splittable: false },
+];
+const SPARE_FACTOR = 1.10; // Liam: "rather over order than under order"
+
+export function stockRuleFor(name) {
+  for (const r of STOCK_LENGTHS) if (r.test.test(name)) return r.lengths ? r : null;
+  return null;
+}
+export function stockLengthsFor(name) { const r = stockRuleFor(name); return r ? r.lengths : null; }
+
+/**
+ * Plan stock lengths for a list of cuts [{ len, n, what }].
+ * Greedy per cut group: pick the stock length with the least waste PER PIECE
+ * (ties -> shorter stock, easier to handle/deliver). Pieces longer than the
+ * longest stock are flagged (need a joined/special length).
+ * Returns { lengths: {stockLen: count}, totalM, notes[], text }.
+ */
+export function planStock(cuts, stockLengths, splittable = false) {
+  const lengths = {};
+  const notes = [];
+  let totalM = 0;
+  const maxL = stockLengths[stockLengths.length - 1];
+  // Expand over-length runs into joined pieces where that is normal practice.
+  const work = [];
+  for (const c of cuts) {
+    if (!c || !(c.len > 0) || !(c.n > 0)) continue;
+    if (c.len > maxL + 1e-6 && splittable) {
+      const k = Math.ceil(c.len / maxL);
+      work.push({ len: c.len / k, n: c.n * k, what: `${c.what || 'pieces'} - each ${c.len.toFixed(2)}m run made of ${k} joined pieces` });
+    } else work.push(c);
+  }
+  for (const c of work) {
+    const n = Math.ceil(c.n * SPARE_FACTOR);
+    const fits = stockLengths.filter((L) => L + 1e-6 >= c.len);
+    if (fits.length === 0) {
+      const L = stockLengths[stockLengths.length - 1];
+      notes.push(`${n} x ${c.len.toFixed(2)}m (${c.what || 'pieces'}) LONGER THAN ${L}m STOCK - order ${n} special lengths or join over a bearing`);
+      lengths[`${c.len.toFixed(2)}*`] = (lengths[`${c.len.toFixed(2)}*`] || 0) + n;
+      totalM += n * c.len;
+      continue;
+    }
+    let best = null;
+    for (const L of fits) {
+      const per = Math.floor(L / c.len + 1e-6);
+      const wastePerPiece = (L - per * c.len) / per;
+      if (!best || wastePerPiece < best.wastePerPiece - 1e-6 || (Math.abs(wastePerPiece - best.wastePerPiece) < 1e-6 && L < best.L)) {
+        best = { L, per, wastePerPiece };
+      }
+    }
+    const count = Math.ceil(n / best.per);
+    lengths[best.L] = (lengths[best.L] || 0) + count;
+    totalM += count * best.L;
+    notes.push(`${n} x ${c.len.toFixed(2)}m (${c.what || 'pieces'}) -> ${count} x ${best.L}m (${best.per} per length)`);
+  }
+  const text = Object.entries(lengths)
+    .sort((a, b) => parseFloat(b[0]) - parseFloat(a[0]))
+    .map(([L, k]) => `${k} x ${L}m`)
+    .join(' + ');
+  return { lengths, totalM: Math.round(totalM * 10) / 10, notes, text };
+}
+
+/**
+ * Join BOM rows to catalogue materials by name.
+ * `overrides` = per-JOB { [name]: { destination?, inStock? } } - so factory
+ * stock can be allocated to one job without changing the catalogue default
+ * (everything is SITE delivery as standard - Liam 2026-09-05).
+ */
+export function mergeBomRows(bomRows) {
+  const out = new Map();
+  for (const r of bomRows) {
+    const key = r.name.toLowerCase();
+    if (!out.has(key)) { out.set(key, { ...r, cuts: r.cuts ? [...r.cuts] : undefined }); continue; }
+    const m = out.get(key);
+    m.qty = Math.round((m.qty + r.qty) * 100) / 100;
+    m.derivation = `${m.derivation}\n+ ${r.derivation}`;
+    if (r.cuts) m.cuts = [...(m.cuts || []), ...r.cuts];
+  }
+  return [...out.values()];
+}
+
+export function joinBom(bomRows, catalogue, overrides = {}) {
   const byName = new Map(catalogue.materials.map((m) => [m.name.toLowerCase(), m]));
-  return bomRows.map((r) => {
+  return mergeBomRows(bomRows).map((r) => {
     const mat = byName.get(r.name.toLowerCase()) || null;
+    const ov = overrides[r.name] || {};
     const packSize = mat && mat.packSize > 0 ? mat.packSize : 1;
-    const orderQty = Math.max(0, Math.ceil(r.qty / packSize - 1e-9));
+    let orderQty = Math.max(0, Math.ceil(r.qty / packSize - 1e-9));
+    let orderUnit = mat && mat.orderUnit ? mat.orderUnit : (mat ? mat.unit : '');
+    let lineCost = mat ? (mat.unitCost || 0) * r.qty : 0;
+    let stockPlan = null;
+    const stockRule = r.cuts ? stockRuleFor(r.name) : null;
+    if (r.cuts && stockRule) {
+      stockPlan = planStock(r.cuts, stockRule.lengths, !!stockRule.splittable);
+      orderQty = Object.values(stockPlan.lengths).reduce((a, b) => a + b, 0);
+      orderUnit = stockPlan.text ? `lengths: ${stockPlan.text}` : orderUnit;
+      // cost on the metres actually bought (catalogue cost is per linear m)
+      if (mat && /m\b/i.test(mat.unit || '')) lineCost = (mat.unitCost || 0) * stockPlan.totalM;
+    }
     return {
       ...r,
       material: mat,
       supplier: mat ? mat.supplier || '' : '',
       unit: mat ? mat.unit : '',
       unitCost: mat ? mat.unitCost || 0 : 0,
-      lineCost: mat ? (mat.unitCost || 0) * r.qty : 0,
+      lineCost,
       orderQty,
-      orderUnit: mat && mat.orderUnit ? mat.orderUnit : (mat ? mat.unit : ''),
-      destination: mat ? mat.destination || 'site' : 'site',
-      inStock: mat ? !!mat.inStock : false,
+      orderUnit,
+      stockPlan,
+      destination: ov.destination || (mat ? mat.destination || 'site' : 'site'),
+      inStock: ov.inStock !== undefined ? !!ov.inStock : (mat ? !!mat.inStock : false),
       inCatalogue: !!mat,
     };
   });
@@ -109,9 +217,15 @@ function orderEmailText(order, opts = {}) {
   const lines = order.items.map((l) => {
     const unitBit = l.orderUnit && l.orderUnit !== 'each' ? ` (${l.orderUnit})` : '';
     const sku = l.material && l.material.sku ? `  [${l.material.sku}]` : '';
-    let s = `- ${l.orderQty} x ${l.name}${unitBit}${sku}`;
-    // Panel schedules and cut instructions travel with the order line.
-    if (/insulated wall panel/i.test(l.name) && l.derivation) s += `\n    ${l.derivation}`;
+    let s;
+    if (l.stockPlan && l.stockPlan.text) {
+      s = `- ${l.name}: ${l.stockPlan.text}${sku}`;
+      for (const n of l.stockPlan.notes) s += `\n    ${n}`;
+    } else {
+      s = `- ${l.orderQty} x ${l.name}${unitBit}${sku}`;
+    }
+    // Panel schedules, firring specs and cut instructions travel with the order line.
+    if (/insulated wall panel|firring/i.test(l.name) && l.derivation) s += `\n    ${l.derivation}`;
     return s;
   });
   const subject = `Purchase order ${ref} - Garden Office Buildings`;
