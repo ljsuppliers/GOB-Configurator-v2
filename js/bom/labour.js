@@ -1,42 +1,43 @@
 // LABOUR + SUBCONTRACT COST for the Materials & Orders costing page.
-// Ported from the designer's labourPricing.ts (Liam's Jul-2026 figures:
-// £400/day, base days by internal area, £400 delivery, per-item extras,
-// electrician fixed rates). That model was written for the PANEL system; the
-// premium timber floor/roof/EPDM build gets an EDITABLE extra-days line
-// (default is a flagged ESTIMATE) until Liam sets real day counts.
 //
-// NOTE: the quote's "Installation & Groundworks" figure (pricing.js, by
-// external area band £5,000-£16,000) is what the CUSTOMER PAYS - revenue. The
-// numbers here are what the job COSTS GOB in labour + subcontract.
+// LIAM'S MODEL (2026-09-05 pm): team of 2 @ £200/day each = £400/day.
+//   BUILD DAYS by model size (everything standard is inside these days:
+//   floor, walls, roof, plaster + decoration, front cladding, standard
+//   canopy + decking, main door):
+//     Midi  4.0 x 3.0  = 15 days (£6,000)
+//     Maxi  5.0 x 3.5  = 15 days (£6,000)
+//     Multi 6.0 x 4.0  = 17 days (£6,800)
+//     Multi+ 7.0 x 4.5 = 19 days (£7,600)
+//   PLUS on EVERY job: 1 day delivery + 2 days groundworks = 3 days (£1,200).
+//   So a Maxi = 18 days = £7,200.
+//   EXTRAS add days on top (partition, extra height, side cladding, etc.).
+//   Electrics are the ELECTRICIAN's (fixed rates) - never in the team days.
+//
+// The quote's "Installation & Groundworks" (pricing.js, £5,000-£16,000 by
+// area band) is what the CUSTOMER pays - revenue. This file is the COST.
 
-export const DEFAULT_DAY_RATE = 400;
-export const DELIVERY_AMOUNT = 400;
-export const DEFAULT_PREMIUM_EXTRA_DAYS = 2; // ESTIMATE - Liam to set
+export const DEFAULT_DAY_RATE = 400;      // 2 x £200
+export const DELIVERY_DAYS = 1;
+export const GROUNDWORKS_DAYS = 2;
 
-export function baseInstallDaysFor(internalAreaM2) {
-  if (internalAreaM2 <= 12) return 8;
-  if (internalAreaM2 <= 16) return 9;
-  if (internalAreaM2 <= 20) return 10;
-  if (internalAreaM2 <= 24) return 11;
-  return 12;
+/** Build days by EXTERNAL footprint (m²), bands set around the 4 models.
+ *  Beyond Multi+ (31.5m²): +2 days per extra 7m² (ESTIMATE). */
+export function buildDaysFor(externalAreaM2) {
+  if (externalAreaM2 <= 14.75) return { days: 15, model: 'Midi' };     // 4.0x3.0 = 12.0
+  if (externalAreaM2 <= 20.75) return { days: 15, model: 'Maxi' };     // 5.0x3.5 = 17.5
+  if (externalAreaM2 <= 27.75) return { days: 17, model: 'Multi' };    // 6.0x4.0 = 24.0
+  if (externalAreaM2 <= 35) return { days: 19, model: 'Multi+' };      // 7.0x4.5 = 31.5
+  return { days: 19 + 2 * Math.ceil((externalAreaM2 - 35) / 7), model: 'larger than Multi+ (ESTIMATE +2 days per 7m²)' };
 }
 
 const DOOR_CATS = new Set(['sliding', 'bifold', 'french', 'door', 'single']);
 
-/**
- * @param state 2D configurator state (mm, external excl. canopy)
- * @param componentDefs merged doors+windows map
- * @returns { dayRate, install: {lines,total,days}, electrician: {lines,total}, subcontract: {lines,total}, total, settings }
- */
 export function computeLabour(state, componentDefs) {
   const lab = state.labour || {};
   const dayRate = lab.dayRate > 0 ? lab.dayRate : DEFAULT_DAY_RATE;
-  const premiumExtraDays = lab.premiumExtraDays !== undefined && lab.premiumExtraDays !== null && lab.premiumExtraDays !== ''
-    ? Number(lab.premiumExtraDays) : DEFAULT_PREMIUM_EXTRA_DAYS;
   const w = state.width / 1000, d = state.depth / 1000;
-  const internalArea = Math.max(0, (w - 0.3) * (d - 0.3));
-  const hasCanopy = state.tier === 'signature' && state.hasCanopy !== false && !state.deductions?.removeCanopy;
-  const hasDecking = state.tier === 'signature' && state.hasDecking !== false && !state.deductions?.removeDecking;
+  const externalArea = w * d;
+  const extH = Math.max(state.height || 2500, 2500 + (state.structuralExtras?.heightUpgrade || 0));
   const comps = state.components || [];
   const cat = (c) => (componentDefs[c.type] || {}).category || 'standard';
   const doors = comps.filter((c) => DOOR_CATS.has(cat(c)));
@@ -44,34 +45,37 @@ export function computeLabour(state, componentDefs) {
   const isSteel = (c) => c === 'anthracite-steel' || c === 'grey-steel';
   const slattedSides = ['left', 'right'].filter((s) => !isSteel(state.cladding?.[s])).length;
   const screens = (state.externalFeatures || []).filter((f) => /privacy/i.test(f.type || '')).length;
+  const hasCanopy = state.tier === 'signature' && state.hasCanopy !== false && !state.deductions?.removeCanopy;
 
   const lines = [];
   const day = (id, label, days, est) => { if (days) lines.push({ id, label, days, amount: Math.round(days * dayRate), estimate: !!est }); };
-  const fixed = (id, label, amount, est) => { if (amount) lines.push({ id, label, days: null, amount: Math.round(amount), estimate: !!est }); };
 
-  const baseDays = baseInstallDaysFor(internalArea);
-  day('base', `Base install - ${internalArea.toFixed(1)}m² internal (shell, roof, front cladding, interior, floor, main door)`, baseDays);
-  day('plastered', 'Plastered & decorated interior (premium standard)', 2.5);
-  day('premium_system', 'Premium timber floor + timber roof/EPDM vs panels - EXTRA DAYS (ESTIMATE, set your figure)', premiumExtraDays, true);
-  fixed('delivery', 'Delivery (standard)', DELIVERY_AMOUNT);
-  if (nonFrontWindows.length) day('windows', `Windows on side/rear walls ×${nonFrontWindows.length} (0.5 day each)`, nonFrontWindows.length * 0.5);
-  const extraDoors = Math.max(0, doors.length - 1);
-  if (extraDoors) day('extra_doors', `Additional doors ×${extraDoors} (0.5 day each)`, extraDoors * 0.5);
+  const base = buildDaysFor(externalArea);
+  day('build', `Build - ${base.model} band (${externalArea.toFixed(1)}m² external): floor, walls, roof, plaster & decorate, front cladding, canopy & decking, main door`, base.days, /ESTIMATE/.test(base.model));
+  day('delivery', 'Delivery (1 day)', DELIVERY_DAYS);
+  day('groundworks', 'Groundworks (2 days)', GROUNDWORKS_DAYS);
+
+  // ---- EXTRAS (clear additions to the standard build) ----
   if (state.partitionRoom?.enabled) day('partition', `Partition room (${state.partitionRoom.label || state.partitionRoom.type}) incl. interior door`, 2.0);
-  if (slattedSides) day('side_cladding', `Slatted cladding on ${slattedSides} side wall${slattedSides === 1 ? '' : 's'} (0.5 day each)`, slattedSides * 0.5);
-  if (hasCanopy) day('canopy', 'Canopy (structure + soffit + fascia + lights wiring route)', 1.0);
-  if (hasDecking) {
-    const deckDepth = ((state.deckingDepth || 400) + (state.structuralExtras?.additionalDecking || 0) * 140) / 1000;
-    day('decking', `Decking ${w.toFixed(1)}m × ${deckDepth.toFixed(2)}m`, Math.min(2, 1 + (w * deckDepth) / 10));
-  }
-  if (screens) day('privacy', `Privacy screens ×${screens} (0.5 day each)`, screens * 0.5);
+  if (extH >= 2750) day('height', `Extra height (${(extH / 1000).toFixed(2)}m external): taller walls, joist oversail canopy box, more board`, 1.0, true);
+  if (state.bathroom?.enabled) day('bathroom', `${state.bathroom.type === 'wc' ? 'WC' : 'Shower room'} carpentry/tiling fit-out (plumber separate, see subcontract)`, 1.0, true);
+  if (slattedSides) day('side_cladding', `Slatted cladding on ${slattedSides} side wall${slattedSides === 1 ? '' : 's'}: stick wall + cladding (0.5 day each)`, slattedSides * 0.5, true);
+  if (nonFrontWindows.length) day('windows', `Windows on side/rear walls ×${nonFrontWindows.length} (0.5 day each)`, nonFrontWindows.length * 0.5, true);
+  const extraDoors = Math.max(0, doors.length - 1);
+  if (extraDoors) day('extra_doors', `Additional doors ×${extraDoors} (0.5 day each)`, extraDoors * 0.5, true);
   if (state.structuralExtras?.secretDoor) day('secret_door', 'Secret cladded door (clad + hang on site)', 0.5, true);
-  const installDays = lines.reduce((s, l) => s + (l.days || 0), 0);
+  if ((state.structuralExtras?.additionalDecking || 0) > 0) day('extra_decking', `Extra decking rows ×${state.structuralExtras.additionalDecking}`, 0.5, true);
+  if (screens) day('privacy', `Privacy screens ×${screens} (0.5 day each)`, screens * 0.5, true);
+  // Manual adjustment (± days) for anything else on this job
+  const adj = Number(lab.extraDays || 0);
+  if (adj) day('adjust', lab.extraDaysLabel || 'Job-specific adjustment', adj);
+
+  const installDays = Math.round(lines.reduce((s, l) => s + (l.days || 0), 0) * 2) / 2;
   const installTotal = lines.reduce((s, l) => s + l.amount, 0);
 
-  // Electrician (subcontracted, fixed rates)
+  // ---- ELECTRICIAN (subcontracted, fixed rates) ----
   const elec = [];
-  const efixed = (id, label, amount, est) => { if (amount) elec.push({ id, label, days: null, amount: Math.round(amount), estimate: !!est }); };
+  const efixed = (id, label, amount) => { if (amount) elec.push({ id, label, days: null, amount: Math.round(amount) }); };
   efixed('electrical_package', 'Electrician - standard package, 1st + 2nd fix', 600);
   if (hasCanopy) efixed('canopy_lights', `Canopy lights ×${Math.max(1, Math.floor(w))} (£25 each)`, Math.max(1, Math.floor(w)) * 25);
   if ((state.acUnits || []).length) efixed('ac', `Air conditioning install ×${state.acUnits.length} (£400 each)`, state.acUnits.length * 400);
@@ -79,15 +83,15 @@ export function computeLabour(state, componentDefs) {
   if (upDown) efixed('updown', `Up/down lights ×${upDown} (£30 each)`, upDown * 30);
   const elecTotal = elec.reduce((s, l) => s + l.amount, 0);
 
-  // Other subcontract (editable): plumber for bathroom/WC, groundworks etc.
+  // ---- OTHER SUBCONTRACT (editable: plumber etc.) ----
   const sub = [];
   const other = Number(lab.otherSubcontract || 0);
-  if (other) sub.push({ id: 'other', label: lab.otherSubcontractLabel || 'Other subcontract (plumber / groundworks)', days: null, amount: Math.round(other) });
+  if (other) sub.push({ id: 'other', label: lab.otherSubcontractLabel || 'Other subcontract (plumber etc.)', days: null, amount: Math.round(other) });
   const subTotal = sub.reduce((s, l) => s + l.amount, 0);
   const needsPlumber = !!state.bathroom?.enabled && !other;
 
   return {
-    dayRate, premiumExtraDays, internalArea,
+    dayRate, externalArea, model: base.model, buildDays: base.days,
     install: { lines, total: installTotal, days: installDays },
     electrician: { lines: elec, total: elecTotal },
     subcontract: { lines: sub, total: subTotal, needsPlumber },

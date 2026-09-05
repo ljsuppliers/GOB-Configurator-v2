@@ -1028,14 +1028,15 @@
           <div class="sup-head" @click="labourOpen = !labourOpen">
             <span class="sup-caret">{{ labourOpen ? '▾' : '▸' }}</span>
             <strong class="sup-name">Labour &amp; subcontract</strong>
-            <span class="sup-meta">install team {{ labour.install.days }} days @ {{ fmt(labour.dayRate) }}/day · quote charges the customer {{ fmt(bomSummary.installPrice) }} for installation</span>
+            <span class="sup-meta">{{ labour.model }} band: {{ labour.buildDays }} build days + 1 delivery + 2 groundworks{{ labour.install.days > labour.buildDays + 3 ? ' + ' + (labour.install.days - labour.buildDays - 3) + ' extras' : '' }} = {{ labour.install.days }} days @ {{ fmt(labour.dayRate) }}/day (team of 2) · quote charges the customer {{ fmt(bomSummary.installPrice) }} for installation</span>
             <span style="flex:1"></span>
             <span class="sup-total">{{ fmt(bomSummary.labourCost) }}</span>
           </div>
           <div v-show="labourOpen" class="sup-body">
             <div class="lab-settings" v-if="state.labour">
               <label>Day rate £ <input type="number" v-model.number="state.labour.dayRate" min="0" step="10"></label>
-              <label>Premium build extra days <input type="number" v-model.number="state.labour.premiumExtraDays" min="0" step="0.5" title="Extra install days for the timber floor + timber roof/EPDM vs the panel system. Default is an ESTIMATE."> <span class="bom-warn" v-if="state.labour.premiumExtraDays === defaultPremiumExtraDays">estimate</span></label>
+              <label>Adjust days ± <input type="number" v-model.number="state.labour.extraDays" step="0.5" title="Add or remove days for anything specific to this job"></label>
+              <label>for <input type="text" v-model="state.labour.extraDaysLabel" placeholder="e.g. difficult access, crane day"></label>
               <label>Other subcontract £ <input type="number" v-model.number="state.labour.otherSubcontract" min="0" step="50"></label>
               <label>for <input type="text" v-model="state.labour.otherSubcontractLabel" placeholder="e.g. plumber (WC), groundworks"></label>
               <span v-if="labour.subcontract.needsPlumber" class="bom-warn">bathroom/WC on this job - add the plumber cost</span>
@@ -1260,7 +1261,7 @@
 
         <h2 class="pack-h2">3. Installation payment</h2>
         <table class="pack-table pack-pay">
-          <tr v-for="l in labour.install.lines" :key="l.id"><td>{{ l.label.replace(/ - EXTRA DAYS.*$/, '') }}</td><td class="num">{{ l.days !== null ? l.days + ' d' : '' }}</td><td class="num">{{ fmt(l.amount) }}</td></tr>
+          <tr v-for="l in labour.install.lines" :key="l.id"><td>{{ l.label }}</td><td class="num">{{ l.days !== null ? l.days + ' d' : '' }}</td><td class="num">{{ fmt(l.amount) }}</td></tr>
           <tr class="pack-total"><td>Agreed install fee{{ installerDeal.overridden ? ' (agreed figure)' : '' }}</td><td class="num">{{ installerDeal.days }} d</td><td class="num">{{ fmt(installerDeal.fee) }}</td></tr>
           <tr><td>50% halfway, once watertight</td><td></td><td class="num">{{ fmt(installerDeal.half) }}</td></tr>
           <tr><td>50% on completion</td><td></td><td class="num">{{ fmt(installerDeal.fee - installerDeal.half) }}</td></tr>
@@ -1723,7 +1724,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=46"></script>
+<script type="module" src="js/app.js?v=47"></script>
 
 </body>
 </html>

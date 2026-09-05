@@ -11,7 +11,7 @@ import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom } from './bom/premium-bom.js?v=3';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial } from './bom/orders.js?v=6';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
-import { computeLabour, DEFAULT_DAY_RATE, DEFAULT_PREMIUM_EXTRA_DAYS } from './bom/labour.js?v=1';
+import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=2';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=1';
 
@@ -31,7 +31,8 @@ function formatDateUK(dateStr) {
 // Ensure loaded state has all required nested objects (backwards compat with older saves)
 function ensureStateDefaults(state) {
   if (!state.externalFeatures) state.externalFeatures = [];
-  if (!state.labour) state.labour = { dayRate: DEFAULT_DAY_RATE, premiumExtraDays: DEFAULT_PREMIUM_EXTRA_DAYS, otherSubcontract: 0, otherSubcontractLabel: '' };
+  if (!state.labour) state.labour = { dayRate: DEFAULT_DAY_RATE, extraDays: 0, extraDaysLabel: '', otherSubcontract: 0, otherSubcontractLabel: '' };
+  if (state.labour.extraDays === undefined) { state.labour.extraDays = 0; state.labour.extraDaysLabel = ''; }
   if (!state.installer) state.installer = { name: '', email: '', phone: '', agreedPrice: '', daysOverride: '', startDate: '', endDate: '', notes: '' };
   if (!state.bomOverrides) state.bomOverrides = {};
   if (!state.orderNotes) state.orderNotes = {};
@@ -105,7 +106,6 @@ createApp({
       installersOpen: false,
       installersSaveStatus: '',
       defaultDayRate: DEFAULT_DAY_RATE,
-      defaultPremiumExtraDays: DEFAULT_PREMIUM_EXTRA_DAYS,
       bomView: 'supplier',
       showDerivations: false,
       collapsed: {},
@@ -386,7 +386,7 @@ createApp({
     toggleCollapse(key) { this.collapsed[key] = !this.collapsed[key]; },
     ensureLabourState() {
       if (!this.state) return;
-      if (!this.state.labour) this.state.labour = { dayRate: DEFAULT_DAY_RATE, premiumExtraDays: DEFAULT_PREMIUM_EXTRA_DAYS, otherSubcontract: 0, otherSubcontractLabel: '' };
+      if (!this.state.labour) this.state.labour = { dayRate: DEFAULT_DAY_RATE, extraDays: 0, extraDaysLabel: '', otherSubcontract: 0, otherSubcontractLabel: '' };
       if (!this.state.installer) this.state.installer = { name: '', email: '', phone: '', agreedPrice: '', daysOverride: '', startDate: '', endDate: '', notes: '' };
     },
     // Installer register lives INSIDE the catalogue document (settings/catalogue),
