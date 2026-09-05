@@ -259,10 +259,6 @@ createApp({
         counts: { toSite: toSite.length, factory: factory.length },
       };
     },
-    orderAs(l) {
-      if (l.stockPlan && l.stockPlan.text) return l.stockPlan.text;
-      return `${l.orderQty}${l.orderUnit && l.orderUnit !== l.unit ? ' × ' + l.orderUnit : ' ' + (l.unit || '')}`;
-    },
     categorySections() {
       const groups = new Map();
       for (const l of this.bomLines || []) {
@@ -473,6 +469,10 @@ createApp({
       this.rebuildOrders();
     },
     printMaterials() { this.$nextTick(() => window.print()); },
+    orderAs(l) {
+      if (l.stockPlan && l.stockPlan.text) return l.stockPlan.text;
+      return `${l.orderQty}${l.orderUnit && l.orderUnit !== l.unit ? ' × ' + l.orderUnit : ' ' + (l.unit || '')}`;
+    },
     async sendOrder(order) {
       if (!order.supplier?.email) { this.bomStatus = `${order.supplierName}: no order email set (Suppliers editor)`; return false; }
       try {
