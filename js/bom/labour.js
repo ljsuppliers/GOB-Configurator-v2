@@ -76,7 +76,11 @@ export function computeLabour(state, componentDefs) {
   // ---- ELECTRICIAN (subcontracted, fixed rates) ----
   const elec = [];
   const efixed = (id, label, amount) => { if (amount) elec.push({ id, label, days: null, amount: Math.round(amount) }); };
-  efixed('electrical_package', 'Electrician - standard package, 1st + 2nd fix', 600);
+  // Electrician labour only (GOB supplies all electrical materials): £500 small
+  // (4 downlights) / £600 medium (6-8) / £700 large (10-12) - Liam 2026-09-05.
+  const intM2 = (w - 0.3) * (d - 0.3);
+  const elecFee = intM2 <= 12 ? 500 : intM2 <= 24 ? 600 : 700;
+  efixed('electrical_package', `Electrician - standard pack 1st + 2nd fix (${intM2 <= 12 ? 'small' : intM2 <= 24 ? 'medium' : 'large'} building), labour only`, elecFee);
   if (hasCanopy) efixed('canopy_lights', `Canopy lights ×${Math.max(1, Math.floor(w))} (£25 each)`, Math.max(1, Math.floor(w)) * 25);
   if ((state.acUnits || []).length) efixed('ac', `Air conditioning install ×${state.acUnits.length} (£400 each)`, state.acUnits.length * 400);
   const upDown = (state.externalFeatures || []).filter((f) => f.type === 'upDownLight').length;

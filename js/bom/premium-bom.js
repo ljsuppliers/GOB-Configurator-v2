@@ -369,22 +369,50 @@ export function buildPremiumBom(state, componentDefs) {
   add('Medium Oak vinyl', Math.ceil((w - 0.2) * (d - 0.2)), `Internal floor area (colour per customer choice)`);
   add('Vinyl spray adhesive (500ml can)', Math.ceil((w - 0.2) * (d - 0.2) / 4), `~4m2 per can`);
 
-  /* ---------- ELECTRICAL PACK (ALWAYS INCLUDED) + CANOPY LIGHTS ---------- */
-  add('Consumer Unit', 1, `8-way with main switch + RCD - standard in every premium build`);
-  add('13A double socket', 4, `Standard pack: 5 double sockets total, 1 of them USB`);
-  add('13A double socket with USB', 1, `Standard pack (the USB one)`);
-  add('Double back box (47mm, plasterboard or surface)', 6, `5 sockets + 1 switch`);
-  add('Single back box (35mm, plasterboard or surface)', 1, `RJ45 internet point`);
-  add('RJ45 internet socket (single)', 1, `Standard in every build`);
-  add('Dimmable LED downlight (recessed)', Math.max(6, Math.ceil((w - 0.2) * (d - 0.2) / 2.5)), `Internal downlights sized to floor area`);
-  add('Dimmable switch plate (multi-gang)', 1, `Internal dimmer + external/canopy switch gangs`);
-  if (hasCanopy) {
-    add('Canopy light (recessed, IP65)', Math.max(1, Math.floor(w)), `STANDARD with the signature canopy: 1 per metre of width, rounded down (Liam 2026-09-05) - own switch gang`);
-  }
-  add('1.5mm twin & earth cable', Math.ceil(2 * (w + d) * 1.5), `Lighting circuit ~1.5x perimeter`);
-  add('2.5mm twin & earth cable', Math.ceil(2 * (w + d) * 2), `Socket radial ~2x perimeter`);
-  add('Cable clip', Math.ceil((2 * (w + d) * 3.5) / 0.3), `~1 per 300mm of run`);
-  add('Grommet pack', 1, `Cable entries`);
+  /* ======================================================================
+     ELECTRICAL KIT (GOB buys + supplies all components from stock; the
+     electrician charges labour only - £500/£600/£700 for 1st + 2nd fix by
+     building size - and brings his own consumables: connectors, sleeving,
+     glands, earth rod). Electrical + internet CONNECTION to the house is the
+     electrician's own job direct with the customer (his materials).
+     STANDARD PACK (Liam 2026-09-05 = designer "medium" + 5th socket):
+       5 double sockets (1 USB), dimmable LED downlights by size (4-12),
+       1 external up/down light, consumer unit, RJ45 point, dimmer/switch
+       plate per lighting zone, canopy lights 1/m on the signature canopy.
+     ====================================================================== */
+  const internalM2 = (w - 0.3) * (d - 0.3);
+  const downlights = internalM2 <= 12 ? 4 : internalM2 <= 18 ? 6 : internalM2 <= 24 ? 8 : internalM2 <= 30 ? 10 : 12;
+  const ex = state.extras || {};
+  const zones = 1 + (state.partitionRoom?.enabled ? 1 : 0) + (state.straightPartition?.enabled ? 1 : 0) + (ex.additionalLightingZone || 0);
+  const extSockets = ex.externalSocket || 0;
+  const upDownLights = 1 + (ex.upDownLight || 0); // 1 included in the standard pack
+  const extraSockets = (ex.additionalSocket || 0) + (ex.additionalSocketUsb || 0);
+  const acCount = (state.acUnits || []).length || (ex.acUnit && ex.acUnit !== 'none' ? 1 : 0);
+  const cat6 = ex.cat6Point || 0;
+  const extLightRun = upDownLights * 8 + extSockets * 8;
+  const perimE = 2 * (w + d);
+  const run15 = perimE * 1.5 + downlights * 1.5 + extLightRun + (hasCanopy ? w + 6 : 0);
+  const run25 = perimE * 2 + extraSockets * 4 + extSockets * 6 + acCount * 15 + (ex.heater ? 10 : 0);
+
+  add('Consumer unit (garden room, 4-6 way, RCBO/dual RCD)', 1, `1 per build - main switch + RCD protection, fed from the electrician's supply cable`);
+  add('13A double socket (screwless white)', 4 + (ex.additionalSocket || 0), `Standard pack 4 (5th is the USB one)${ex.additionalSocket ? ` + ${ex.additionalSocket} extra` : ''}`);
+  add('13A double socket with USB', 1 + (ex.additionalSocketUsb || 0), `Standard pack 1${ex.additionalSocketUsb ? ` + ${ex.additionalSocketUsb} extra` : ''}`);
+  add('Double back box (47mm, plasterboard or surface)', 5 + extraSockets + zones + (ex.heater ? 1 : 0), `Sockets (${5 + extraSockets}) + ${zones} switch/dimmer plate${zones === 1 ? '' : 's'}${ex.heater ? ' + radiator spur' : ''}`);
+  add('Single back box (35mm, plasterboard or surface)', 1 + cat6 + acCount, `RJ45 point (1)${cat6 ? ` + ${cat6} extra CAT6` : ''}${acCount ? ` + ${acCount} AC isolator` : ''}`);
+  add('RJ45 internet socket (single)', 1 + cat6, `Standard pack 1 (customer's broadband hook-up point)${cat6 ? ` + ${cat6} extra CAT6 point${cat6 === 1 ? '' : 's'}` : ''}`);
+  if (cat6) add('CAT6 data cable (m)', cat6 * 15, `~15m per extra data point`);
+  add('Dimmable LED downlight (fire-rated, recessed)', downlights, `Standard pack: ${downlights} downlights for ${internalM2.toFixed(1)}m² internal (4/6/8/10/12 by size), 2 rows`);
+  add('LED dimmer switch (trailing-edge, multi-gang plate)', zones, `1 per lighting zone: dimmer gang for the downlights + switch gang for the external/canopy lights`);
+  add('External up/down wall light (anthracite/black, IP44)', upDownLights, `Standard pack 1${ex.upDownLight ? ` + ${ex.upDownLight} extra` : ''}`);
+  if (hasCanopy) add('Canopy light (recessed, IP65)', Math.max(1, Math.floor(w)), `STANDARD with the signature canopy: 1 per metre of width, rounded down - own switch gang`);
+  if (extSockets) add('IP65 weatherproof double socket', extSockets, `External socket extra x${extSockets}`);
+  if (acCount) add('Air conditioning isolator switch', acCount, `1 per AC unit (unit itself is supplied/fitted by the AC installer)`);
+  if (ex.heater) add('1.5kW electric radiator', ex.heater, `Oil-filled panel radiator extra`);
+  if (ex.heater) add('Fuse spur', ex.heater, `Fused spur per radiator`);
+  add('1.5mm twin & earth cable', Math.ceil(run15 * 1.15), `LIGHTING: ~1.5x perimeter (${perimE.toFixed(1)}m) + 1.5m per downlight + external/canopy lights, +15%`);
+  add('2.5mm twin & earth cable', Math.ceil(run25 * 1.15), `SOCKET RADIAL: ~2x perimeter${acCount ? ' + 15m per AC radial' : ''}${extSockets ? ' + external sockets' : ''}, +15%`);
+  add('Cable clip', Math.ceil(((run15 + run25) * 1.15) / 0.3), `~1 per 300mm of cable run`);
+  add('Grommet pack', 1, `Cable entries through back boxes/joists`);
   add('Foil insulation tape (roll)', 2, `VCL laps + back-box patches`);
 
   /* ---------- OPENINGS (products) ---------- */
