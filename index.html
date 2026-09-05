@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=6">
+  <link rel="stylesheet" href="css/app.css?v=7">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -954,7 +954,7 @@
           <button class="btn" :class="{ active: catalogueOpen }" @click="catalogueOpen = !catalogueOpen; suppliersOpen = false">Catalogue</button>
           <button class="btn" :class="{ active: suppliersOpen }" @click="suppliersOpen = !suppliersOpen; catalogueOpen = false">Suppliers</button>
           <button class="btn" v-if="bomLines.length" @click="copyAllOrders">Copy all orders</button>
-          <button class="btn" v-if="bomLines.length" @click="printMaterials">Print / PDF</button>
+          <button class="btn" v-if="bomLines.length" @click="printMaterials" title="Logistics & site pack: drawing, installer, materials split site vs factory. No prices.">Print logistics pack</button>
           <button class="btn btn-installer" @click="openInstallerPage">Installer pack &amp; agreement</button>
         </div>
       </div>
@@ -1011,6 +1011,63 @@
         </table>
       </div>
 
+
+
+      <!-- ===== PRINT-ONLY: LOGISTICS & SITE PACK (no prices) ===== -->
+      <div class="print-only logi-pack" v-if="bomLines.length">
+        <div class="pack-cover">
+          <div class="pack-brand">Garden Office Buildings</div>
+          <h1>Materials &amp; logistics pack</h1>
+          <div class="pack-ref">Ref {{ orderRef }} · printed {{ new Date().toLocaleDateString('en-GB') }}</div>
+          <div class="pack-cover-grid">
+            <div class="pack-box"><div class="pack-box-t">Customer</div><div>{{ state.customer && state.customer.name }}</div><div class="pack-small">{{ state.customer && state.customer.phone }}</div></div>
+            <div class="pack-box"><div class="pack-box-t">Site address</div><div>{{ state.customer && state.customer.address || '________________' }}</div></div>
+            <div class="pack-box"><div class="pack-box-t">Installer</div><div>{{ state.installer && state.installer.name || '________________' }}</div><div class="pack-small">{{ state.installer && state.installer.phone }} {{ state.installer && state.installer.email }}</div></div>
+            <div class="pack-box"><div class="pack-box-t">Install start</div><div>{{ fmtDateLong(state.installer && state.installer.startDate) }}</div></div>
+            <div class="pack-box"><div class="pack-box-t">Install end</div><div>{{ fmtDateLong(state.installer && state.installer.endDate) }}</div></div>
+            <div class="pack-box"><div class="pack-box-t">Building</div><div>{{ (state.width/1000).toFixed(1) }}m × {{ (state.depth/1000).toFixed(1) }}m × {{ (state.height/1000).toFixed(2) }}m{{ state.tier === 'signature' && state.hasCanopy !== false ? ' + ' + ((state.overhangDepth||400)/1000).toFixed(1) + 'm canopy/decking' : '' }}</div><div class="pack-small">{{ jobSummary }}</div></div>
+          </div>
+        </div>
+
+        <h2 class="pack-h2">The building</h2>
+        <div class="pack-drawing" v-html="drawingSvg"></div>
+        <table class="pack-table">
+          <tr><th>Cladding</th><td>Front {{ (state.cladding.front||'').replace(/-/g,' ') }} · Left {{ (state.cladding.left||'').replace(/-/g,' ') }} · Right {{ (state.cladding.right||'').replace(/-/g,' ') }} · Rear {{ (state.cladding.rear||'').replace(/-/g,' ') }}</td></tr>
+          <tr v-if="state.tier === 'signature'"><th>Canopy / corners</th><td>{{ state.hasCanopy !== false ? ((state.overhangDepth||400)) + 'mm canopy - ' + (state.height >= 2750 ? 'joists oversail 400mm + 2x2 layer under' : 'firrings overhang 400mm, 2x2 frame on the front wall top') : 'no canopy' }} · corners left {{ state.cornerLeft || 'open' }}, right {{ state.cornerRight || 'open' }}</td></tr>
+          <tr><th>Foundation</th><td>{{ state.foundationType === 'ground-screw' ? 'Radix ground screws' : 'Adjustable pedestals on customer slab' }}</td></tr>
+          <tr v-for="elev in ['front','left','right','rear']" :key="'lg'+elev" v-if="openingsOn(elev).length"><th style="text-transform:capitalize">{{ elev }} openings</th><td><span v-for="c in openingsOn(elev)" :key="c.id" class="pack-chip">{{ c.def.label || c.type }}<template v-if="c.def.width"> · {{ c.def.width }}mm</template> @ {{ c.positionX }}mm</span></td></tr>
+          <tr v-if="state.partitionRoom && state.partitionRoom.enabled"><th>Partition</th><td>{{ state.partitionRoom.label || state.partitionRoom.type }} {{ state.partitionRoom.width }}×{{ state.partitionRoom.depth }}mm, {{ state.partitionRoom.corner }} corner</td></tr>
+          <tr v-if="state.customer && state.customer.notes"><th>Notes</th><td>{{ state.customer.notes }}</td></tr>
+        </table>
+
+        <h2 class="pack-h2 pack-break">A. Delivered straight to site by the supplier ({{ logistics.counts.toSite }} lines)</h2>
+        <p class="pack-note">Check each delivery against this list on arrival. Report damage or shortages to the office the same day.</p>
+        <div v-for="g in logistics.toSite" :key="'ts'+g.name" class="pack-cat">
+          <h3>{{ g.name }}</h3>
+          <table class="pack-table pack-check">
+            <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}</td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.material && l.material.category }}</td></tr>
+          </table>
+        </div>
+
+        <h2 class="pack-h2 pack-break">B. Factory to load and deliver to site ({{ logistics.counts.factory }} lines)</h2>
+        <p class="pack-note">Items delivered to Biggin Hill by the supplier, plus items taken from factory stock. Load, tick, deliver.</p>
+        <template v-if="logistics.factoryDelivered.length">
+          <h3 class="pack-sub">Supplier deliveries arriving at the factory</h3>
+          <div v-for="g in logistics.factoryDelivered" :key="'fd'+g.name" class="pack-cat">
+            <h3>{{ g.name }}</h3>
+            <table class="pack-table pack-check">
+              <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}</td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.material && l.material.category }}</td></tr>
+            </table>
+          </div>
+        </template>
+        <template v-if="logistics.fromStock.length">
+          <h3 class="pack-sub">From factory stock</h3>
+          <table class="pack-table pack-check">
+            <tr v-for="l in logistics.fromStock" :key="'st'+l.name"><td class="pack-tick">☐</td><td>{{ l.name }}</td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.material && l.material.category }}</td></tr>
+          </table>
+        </template>
+        <p v-if="!logistics.counts.factory" class="pack-note">Nothing to load - every line on this job is delivered straight to site.</p>
+      </div>
 
       <template v-if="bomLines.length && !catalogueOpen && !suppliersOpen">
         <!-- Summary cards -->
@@ -1726,7 +1783,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=49"></script>
+<script type="module" src="js/app.js?v=50"></script>
 
 </body>
 </html>

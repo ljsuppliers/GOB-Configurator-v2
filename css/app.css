@@ -660,3 +660,11 @@ html, body {
 .mp-price-input { width: 120px; font-size: 22px; font-weight: 800; color: #0f172a; border: 1px dashed #94a3b8; border-radius: 6px; padding: 0 6px; background: #fff; }
 .mp-pound { font-size: 22px; font-weight: 800; margin-right: 2px; }
 .mp-card-edit { background: #fffbeb; border-color: #fcd34d; }
+.print-only { display: none; }
+.pack-sub { font-size: 13px; color: #334155; margin: 14px 0 2px; }
+@media print {
+  /* Materials page prints ONLY the logistics pack (no prices); screen content hidden */
+  .materials-page:not(.installer-page) > :not(.print-only) { display: none !important; }
+  .materials-page .print-only { display: block !important; }
+  .logi-pack .pack-drawing svg { max-height: 600px; }
+}

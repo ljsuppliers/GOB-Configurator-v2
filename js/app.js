@@ -241,6 +241,28 @@ createApp({
       const rank = (n) => (n === 'NOT IN CATALOGUE' ? 2 : n === 'NO SUPPLIER SET' ? 1 : n === 'IN STOCK' ? 3 : 0);
       return secs.sort((a, b) => rank(a.name) - rank(b.name) || b.subtotal - a.subtotal || a.name.localeCompare(b.name));
     },
+    /** Logistics split for the printed pack: straight-to-site deliveries by
+     *  supplier vs what the factory must load (factory deliveries + stock). */
+    logistics() {
+      const lines = this.bomLines || [];
+      const bySup = (arr) => {
+        const m = new Map();
+        for (const l of arr) { const k = l.inCatalogue ? (l.supplier || 'No supplier set') : 'Not in catalogue'; if (!m.has(k)) m.set(k, []); m.get(k).push(l); }
+        return [...m.entries()].map(([name, ls]) => ({ name, lines: ls.sort((a, b) => (a.material?.category || '').localeCompare(b.material?.category || '')) })).sort((a, b) => a.name.localeCompare(b.name));
+      };
+      const toSite = lines.filter((l) => !l.inStock && l.destination !== 'factory');
+      const factory = lines.filter((l) => l.inStock || l.destination === 'factory');
+      return {
+        toSite: bySup(toSite),
+        factoryDelivered: bySup(factory.filter((l) => !l.inStock)),
+        fromStock: factory.filter((l) => l.inStock).sort((a, b) => (a.material?.category || '').localeCompare(b.material?.category || '')),
+        counts: { toSite: toSite.length, factory: factory.length },
+      };
+    },
+    orderAs(l) {
+      if (l.stockPlan && l.stockPlan.text) return l.stockPlan.text;
+      return `${l.orderQty}${l.orderUnit && l.orderUnit !== l.unit ? ' × ' + l.orderUnit : ' ' + (l.unit || '')}`;
+    },
     categorySections() {
       const groups = new Map();
       for (const l of this.bomLines || []) {
@@ -450,11 +472,7 @@ createApp({
       this.state.orderNotes[supplierName] = { ...this.orderNoteFor(supplierName), [field]: value };
       this.rebuildOrders();
     },
-    printMaterials() {
-      this.showDerivations = true;
-      this.collapseAll(false);
-      this.$nextTick(() => window.print());
-    },
+    printMaterials() { this.$nextTick(() => window.print()); },
     async sendOrder(order) {
       if (!order.supplier?.email) { this.bomStatus = `${order.supplierName}: no order email set (Suppliers editor)`; return false; }
       try {
