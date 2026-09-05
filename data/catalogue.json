@@ -2912,6 +2912,20 @@
    "destination": "site",
    "inStock": true,
    "notes": "SITE EQUIPMENT - loaded from the factory and comes back; no cost line."
+  },
+  {
+   "name": "Self-drilling screw 25mm plain (hidden trims / U-channel)",
+   "category": "Installation kit",
+   "sku": "",
+   "unit": "each",
+   "unitCost": 0.03,
+   "supplier": "Montravia",
+   "packSize": 200,
+   "orderUnit": "box of 200",
+   "supply": "stock",
+   "destination": "site",
+   "inStock": true,
+   "notes": "CLAUDE ESTIMATE (ex VAT): plain zinc 4.2x25 wafer/flange self-drilling screws, box 200 ~£6. U-channel + hidden trims where colour does not matter (Liam 2026-09-05)."
   }
  ]
 }

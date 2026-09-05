@@ -426,8 +426,9 @@ export function buildPremiumBom(state, componentDefs) {
 
   // -- TimberLok structural screws (Liam's confirmed uses) --
   add('TimberLok 150mm', up(fDoubledLm / 0.4 + rJoists * ladder.ply * 0), `FLOOR DOUBLING: laminating the doubled ring + 1.2m-grid joist pairs, 1 per 400mm staggered (${fDoubledLm.toFixed(1)}m of doubled run) +25%`);
-  add('TimberLok 100mm', up(rJoists * 4 + (2 * sideRun + w) / 0.6 + 8), `ROOF: joists to wall plates/flitch (~4 skew per joist position, ${rJoists} joists) + flat 4x2 wall plate down into panel tops @600mm + rim, +25%`);
-  add('TimberLok 89mm', up(liningStudsTotal * 3 + liningRunTotal / 0.6), `CLS 3x2 LINING FRAME into the panels: 3 per stud (${liningStudsTotal} studs) + top/bottom plates @600mm, +25%. (89mm not a FastenMaster size - Timberfix/Spax 6x90 equivalent)`);
+  const canopyFixings = hasCanopy ? Math.ceil(w / 0.4) * 2 + 8 : 0;
+  add('TimberLok 100mm', up(rJoists * 4 + (2 * sideRun + w) / 0.6 + 8 + totalStuds * 2 + canopyFixings + closedCorners * 10), `ROOF joists to wall plates/flitch (~4 skew per joist, ${rJoists} joists) + flat 4x2 wall plate into panel tops @600mm + STUDS to sole plate (2 per stud, ${totalStuds} studs) + CANOPY 2x2 frame/box to the front wall/joists (${canopyFixings}) + closed-corner extensions, +25% (Liam: used for all of these)`);
+  add('TimberLok 89mm', up(liningStudsTotal * 3 + liningRunTotal / 0.6 + closedCorners * 12 + (hasCanopy ? Math.ceil(w / 0.4) + 1 : 0) + totalStuds), `CLS 3x2 LINING FRAME into the panels: 3 per stud (${liningStudsTotal} studs) + plates @600mm + closed-corner extension framing + canopy 2x2 cross pieces + stud-to-plate where 100mm is too long, +25%. (89mm not a FastenMaster size - Timberfix/Spax 6x90 equivalent)`);
   add('TimberLok 225mm', up(fJoists * 2 * 2 + 8), `FLOOR RIM through into the joist ends: 2 per joist end, both rims (${fJoists} joists) + 8 spare, +25%. (nearest stock size 200/250mm TimberLok)`);
   // -- Wood screws --
   add('Wood screw 5.0 x 100mm', up(totalStuds * 6 + (hasCanopy ? Math.ceil(w / 0.4) * 2 + 8 : 0) + wideFront.length * 12), `STICK FRAMING: ~6 per stud (studs to plates, noggins, kings; ${totalStuds} studs) + canopy 2x2 frame/box fixings + flitch packing, +25%`);
@@ -435,11 +436,14 @@ export function buildPremiumBom(state, componentDefs) {
   add('Wood screw 5.0 x 50mm', up(plySheets * 30 + floorM2 * 12 + roofDeckM2 * 10 + pedestals * 4), `SHEET FIXING: ply sheathing ~30/sheet (${plySheets} sheets) + 22mm floor deck ~12/m² (${floorM2.toFixed(1)}m²) + 18mm roof deck ~10/m² (${roofDeckM2.toFixed(1)}m²) + 4 per pedestal head, +25%`);
   add('Drywall screw 3.5 x 38mm black (coarse)', up(boardM2 * 12), `PLASTERBOARD: ~12/m² over ${boardM2.toFixed(0)}m² of board, +25%`);
   // -- Steel / trim fixings --
-  const trimRunM = (panelWalls.reduce((t, p) => t + p.run, 0)) /* base trims */ + 4 * wallH /* corners */ + (w + 2 * roofLen) /* top cap */ + (panelWalls.reduce((t, p) => t + p.run, 0) + 8 * wallH) /* U-channel */;
-  add('Grey RAL 7016 self-drilling trim screw 25mm', up(trimRunM / 0.3), `ANTHRACITE STEEL TRIMS onto the building @300mm: base trims + corner trims + top cap + U-channel (~${trimRunM.toFixed(0)}m of trim), +25%`);
+  const visibleTrimM = (panelWalls.reduce((t, p) => t + p.run, 0)) /* base trims */ + 4 * wallH /* corners */ + (w + 2 * roofLen) /* top cap */;
+  const uChannelM = panelWalls.reduce((t, p) => t + p.run, 0) + 8 * wallH;
+  const trimRunM = visibleTrimM + uChannelM;
+  add('Grey RAL 7016 self-drilling trim screw 25mm', up(visibleTrimM / 0.3), `VISIBLE ANTHRACITE STEEL TRIMS @300mm: base trims + corner trims + top cap (~${visibleTrimM.toFixed(0)}m), +25%`);
+  add('Self-drilling screw 25mm plain (hidden trims / U-channel)', up(uChannelM / 0.3), `U-CHANNEL + hidden trims @300mm (~${uChannelM.toFixed(0)}m) - cheaper plain self-drillers, not visible (Liam), +25%`);
   add('Bay pole self-drilling screw 70mm (timber to panel)', up(((2 * sideRun + w) / 0.4) + liningRunTotal / 0.6), `4x2 WALL PLATE + lining plates into the panel steel @400-600mm, +25%`);
   if (!groundScrews) add('Concrete screw 100mm (Ammo)', up(pedestals * 2), `PEDESTALS anchored to the slab: 2 per pedestal (${pedestals}), +25%`);
-  add('Stainless self-drilling screw 40mm (gutters/fascia)', up(Math.ceil(w / 0.5) * 2 + 3 * 2 + 12), `GUTTER brackets 2 each (${Math.ceil(w / 0.5)}) + downpipe clips + fascia corners, +25%`);
+  add('Stainless self-drilling screw 40mm (gutters/fascia)', up(Math.ceil(w / 0.5) * 2 + 3 * 2 + 12), `GUTTER brackets 2 each (${Math.ceil(w / 0.5)}) + downpipe clips + fascia corners, +25%. (Whether these also fix the fascia boards is UNCONFIRMED - fascia is on polytop pins here; ask the fitters)`);
   add('Polytop pins 40mm anthracite', up(((w + 2 * roofLen) + w) / 0.4 * 2), `FASCIA (front + sides + rear, both edges @400mm), +25%`);
   if (hasCanopy) add('Polytop pins 65mm anthracite', up((w / 0.4) * 2 + 12), `SOFFIT boards into the 2x2 canopy frame @400mm both edges, +25%`);
   // -- Cladding fixings --
