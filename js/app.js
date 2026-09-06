@@ -685,10 +685,20 @@ createApp({
       if (m) return `${m[1].charAt(0).toUpperCase() + m[1].slice(1)} wall opening`;
       return l.material?.category || '';
     },
+    /** "2 each" -> "2"; "2 roll" -> "2 rolls"; "1 box of 50" stays. */
+    fmtQty(qty, unit) {
+      const u = (unit || '').trim();
+      if (!u || /^(each|no\.|nr|unit)$/i.test(u)) return `${qty}`;
+      if (/^(m²|m2|linear m|m|kg|l)$/i.test(u)) return `${qty} ${u}`;
+      if (/\bof\b|\d/.test(u)) return `${qty} × ${u}`;
+      const plural = Number(qty) === 1 ? u : (u.endsWith('x') || u.endsWith('s') || u.endsWith('ch') ? u + 'es' : u + 's');
+      return `${qty} ${plural}`;
+    },
     orderAs(l) {
       if (l.stockPlan && l.stockPlan.text) return l.stockPlan.text;
       if (l.orderText) return l.orderText;
-      return `${l.orderQty}${l.orderUnit && l.orderUnit !== l.unit ? ' × ' + l.orderUnit : ' ' + (l.unit || '')}`;
+      if (l.orderUnit && l.orderUnit !== l.unit) return `${l.orderQty} × ${l.orderUnit}`;
+      return this.fmtQty(l.orderQty, l.unit);
     },
     async sendOrder(order) {
       if (!order.supplier?.email) { this.bomStatus = `${order.supplierName}: no order email set (Suppliers editor)`; return false; }
