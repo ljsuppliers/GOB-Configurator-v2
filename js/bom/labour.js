@@ -4,12 +4,12 @@
 //   BUILD DAYS by model size (everything standard is inside these days:
 //   floor, walls, roof, plaster + decoration, front cladding, standard
 //   canopy + decking, main door; plastering arranged + paid by the installer):
-//     Midi  4.0 x 3.0  = 15 days (£6,000)
-//     Maxi  5.0 x 3.5  = 15 days (£6,000)
-//     Multi 6.0 x 4.0  = 17 days (£6,800)
-//     Multi+ 7.0 x 4.5 = 19 days (£7,600)
+//     Midi  4.0 x 3.0  = 14 days (£5,600)   [15 -> 14, Liam 2026-09-06]
+//     Maxi  5.0 x 3.5  = 14 days (£5,600)
+//     Multi 6.0 x 4.0  = 16 days (£6,400)
+//     Multi+ 7.0 x 4.5 = 18 days (£7,200)
 //   PLUS on EVERY job: 1 day delivery + 2 days groundworks = 3 days (£1,200).
-//   So a Maxi = 18 days = £7,200.
+//   So a Maxi = 17 days = £6,800.
 //   EXTRAS add days on top (partition, extra height, side cladding, etc.).
 //   Electrics are the ELECTRICIAN's (fixed rates) - never in the team days.
 //
@@ -23,11 +23,13 @@ export const GROUNDWORKS_DAYS = 2;
 /** Build days by EXTERNAL footprint (m²), bands set around the 4 models.
  *  Beyond Multi+ (31.5m²): +2 days per extra 7m² (ESTIMATE). */
 export function buildDaysFor(externalAreaM2) {
-  if (externalAreaM2 <= 14.75) return { days: 15, model: 'Midi' };     // 4.0x3.0 = 12.0
-  if (externalAreaM2 <= 20.75) return { days: 15, model: 'Maxi' };     // 5.0x3.5 = 17.5
-  if (externalAreaM2 <= 27.75) return { days: 17, model: 'Multi' };    // 6.0x4.0 = 24.0
-  if (externalAreaM2 <= 35) return { days: 19, model: 'Multi+' };      // 7.0x4.5 = 31.5
-  return { days: 19 + 2 * Math.ceil((externalAreaM2 - 35) / 7), model: 'larger than Multi+ (ESTIMATE +2 days per 7m²)' };
+  // Liam 2026-09-06: build labour down £400 (1 day) across the board:
+  // Midi 14 / Maxi 14 (£5,600) / Multi 16 / Multi+ 18.
+  if (externalAreaM2 <= 14.75) return { days: 14, model: 'Midi' };     // 4.0x3.0 = 12.0
+  if (externalAreaM2 <= 20.75) return { days: 14, model: 'Maxi' };     // 5.0x3.5 = 17.5
+  if (externalAreaM2 <= 27.75) return { days: 16, model: 'Multi' };    // 6.0x4.0 = 24.0
+  if (externalAreaM2 <= 35) return { days: 18, model: 'Multi+' };      // 7.0x4.5 = 31.5
+  return { days: 18 + 2 * Math.ceil((externalAreaM2 - 35) / 7), model: 'larger than Multi+ (ESTIMATE +2 days per 7m²)' };
 }
 
 const DOOR_CATS = new Set(['sliding', 'bifold', 'french', 'door', 'single']);
