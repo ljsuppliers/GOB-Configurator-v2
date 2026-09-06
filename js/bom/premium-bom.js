@@ -426,9 +426,12 @@ export function buildPremiumBom(state, componentDefs) {
     [{ len: sideRun, n: 2, what: 'side wall plates' }, { len: w, n: 1, what: 'rear wall plate' }]);
   if (ladder.web) add('18mm OSB3 board (2440x1220)', Math.ceil((rJoists * joistLen * ladder.depthM * 1.10) / PLY_SHEET_M2), `OSB webs glued+screwed between the doubled joist pairs, ripped from full sheets`);
   // Firrings are CUSTOM MADE per job (Liam 2026-09-05): give the exact spec.
-  const firrFrontMm = Math.round((roofLen / 40) * 1000);
+  // Liam 2026-09-06: assume a 70mm front height on EVERY building (the fall is
+  // whatever 70mm gives over the run - shown alongside).
+  const firrFrontMm = 70;
+  const firrFallText = `1:${Math.round(roofLen / 0.07)}`;
   add('Tapered firring 47mm (custom cut)', rJoists + 4,
-    `CUSTOM MADE FOR THIS JOB: ${rJoists} firrings x ${roofLen.toFixed(2)}m long, 47mm wide, tapering from ${firrFrontMm}mm at the FRONT to 0 at the REAR (1:40 fall), one per joist; PLUS 4 REVERSE firrings x ${roofLen.toFixed(2)}m (0 at the front rising to ${firrFrontMm}mm at the rear) laid along the side edges, 2 per side, so the sides read level. Length = ${d.toFixed(2)}m building + ${canopyMm}mm front + 100mm rear oversail. ${
+    `CUSTOM MADE FOR THIS JOB: ${rJoists} firrings x ${roofLen.toFixed(2)}m long, 47mm wide, tapering from ${firrFrontMm}mm at the FRONT to 0 at the REAR (${firrFallText} fall over ${roofLen.toFixed(2)}m), one per joist; PLUS 4 REVERSE firrings x ${roofLen.toFixed(2)}m (0 at the front rising to ${firrFrontMm}mm at the rear) laid along the side edges, 2 per side, so the sides read level. Length = ${d.toFixed(2)}m building + ${canopyMm}mm front + 100mm rear oversail. ${
       canopyMethod === 'firrings-overhang'
         ? `THE TALL END OVERHANGS THE FRONT BY ${canopyMm}mm ON TOP OF THE JOISTS - this overhang IS the canopy (2.5m method)`
         : canopyMethod === 'joists-oversail'

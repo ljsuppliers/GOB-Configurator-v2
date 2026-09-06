@@ -1102,13 +1102,13 @@
    "category": "Insulated panels",
    "sku": "",
    "unit": "panel",
-   "unitCost": 60.0,
+   "unitCost": 56,
    "supplier": "Kingspan",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Priced per m² (£60); the line shows PANEL COUNT and length, cost = panels × 1.1m × length."
+   "notes": "£56 per m² (Liam 2026-09-06); line shows PANEL COUNT and length, cost = panels × 1.1m × length."
   },
   {
    "name": "Kingspan 60mm insulated wall panel (1.0m wide)",
@@ -1836,7 +1836,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CUSTOM CUT per job by the timber merchant: 47mm wide tapers, length + front height per the order text; priced ~£3 per linear metre (line cost uses total metres)."
+   "notes": "CUSTOM CUT per job by the timber merchant: 47mm wide tapers, 70mm at the front to 0 at the rear on EVERY building (Liam 2026-09-06), length per the order text; priced ~£3 per linear metre."
   },
   {
    "name": "Treated CLS 4x2 timber",
