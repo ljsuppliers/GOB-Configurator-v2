@@ -417,12 +417,15 @@ export function buildPremiumBom(state, componentDefs) {
       : cw.type === 'composite-latte' ? 'Composite slatted cladding (Latte) 200×2500mm'
       : 'Composite slatted cladding (Coffee) 200×2500mm';
     const runs = Math.ceil(run / boardW);
-    cladTotals.set(name, (cladTotals.get(name) || 0) + runs + 4);
+    cladTotals.set(name, (cladTotals.get(name) || 0) + runs);
     cladBattenLm += Math.ceil(run / 0.4) * wallH + cw.run * Math.ceil(wallH / 0.4);
   }
-  for (const [name, count] of cladTotals) {
+  for (const [calcCount, name] of [...cladTotals].map(([n, c]) => [c, n])) {
     const boardW = /cedar|larch/i.test(name) ? '140mm' : '200mm';
-    add(name, count, `Vertical cladding runs across the clad walls (+4 spares per wall). Colour/type per wall spec`,
+    // Spares: composite +2 lengths on the job (Liam 2026-09-06); timber +4.
+    const spare = /composite/i.test(name) ? 2 : 4;
+    const count = calcCount + spare;
+    add(name, count, `${calcCount} vertical runs calculated across the clad walls + ${spare} spare lengths. Colour/type per wall spec`,
       { orderText: `${count} boards × 2.5m long, ${boardW} wide - ${name.replace(/ \d+×\d+mm$/, '')} (walls: ${cladWalls.filter((cw) => (cw.type === 'western-red-cedar' ? 'Western Red Cedar' : cw.type === 'larch' ? 'Larch' : cw.type === 'composite-latte' ? 'Latte' : 'Coffee') === (name.includes('Cedar') ? 'Western Red Cedar' : name.includes('Larch') ? 'Larch' : name.includes('Latte') ? 'Latte' : 'Coffee')).map((cw) => cw.wall).join(' + ')})` });
   }
   if (cladBattenLm > 0) {
