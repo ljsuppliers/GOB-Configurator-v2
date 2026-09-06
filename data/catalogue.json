@@ -1392,7 +1392,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "3m length supplied, cut to size on site."
+   "notes": "3m length supplied, cut to size on site. Rear corners, plain front corners, and (with the 200x40x40 U) glazed open corners."
   },
   {
    "name": "Corner Trim (50x50 anthracite L)",
@@ -1405,7 +1405,7 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "3m length supplied, cut to size on site."
+   "notes": "3m length supplied, cut to size on site. Open corner where cladding meets cladding (covers front + side cladding)."
   },
   {
    "name": "Door base trim",
@@ -1627,32 +1627,6 @@
    "destination": "site",
    "inStock": false,
    "notes": "CLAUDE ESTIMATE £2.20/m (typically 10-20% over untreated CLS £1.90) - replace with merchant quote. Internal-frame BOTTOM plates only (sole-plate rule): same 38x89 section as untreated CLS studs, avoids the 6mm step a 45x95 tanalised plate would create under the hung lining."
-  },
-  {
-   "name": "Corner trims",
-   "category": "Trims",
-   "unit": "each",
-   "unitCost": 30,
-   "supplier": "Mighty Structural",
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Per corner SET = 1 x 3m anthracite aluminium external corner trim (Hardie/Cladco-type ~£25-35 ex). Standard corners; consider mapping to the existing Mighty Structural \"Corner Trim (50x50 anthracite L)\" line",
-   "sku": "",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false
-  },
-  {
-   "name": "Close corner trims",
-   "category": "Trims",
-   "unit": "each",
-   "unitCost": 45,
-   "supplier": "Mighty Structural",
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Per CLOSED corner SET: external corner + return closer trim, anthracite aluminium",
-   "sku": "",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false
   },
   {
    "name": "Canopy light (recessed, IP65)",
@@ -1914,19 +1888,6 @@
    "destination": "site",
    "inStock": false,
    "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC opening slot ~1200x400 | From 2D configurator components - SET COST + SUPPLIER"
-  },
-  {
-   "name": "Open-corner glazing junction kit",
-   "category": "Trims",
-   "sku": "",
-   "unit": "each",
-   "unitCost": 250,
-   "supplier": "",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Aluminium 90-degree fixed corner post for glass-to-glass door/window meeting (Duration/Continental-type); allowance, quote per job"
   },
   {
    "name": "Composite decking board (3.6m)",
@@ -2637,6 +2598,20 @@
    "orderUnit": "100m box",
    "supply": "stock",
    "inStock": true
+  },
+  {
+   "name": "Corner Trim (200x40x40 anthracite U)",
+   "category": "Steel trims",
+   "sku": "",
+   "unit": "each",
+   "unitCost": 18,
+   "supplier": "Mighty Structural",
+   "packSize": null,
+   "orderUnit": "",
+   "supply": "site",
+   "destination": "site",
+   "inStock": false,
+   "notes": "CLAUDE ESTIMATE £18 (ex VAT) - confirm. 3m U-shape 200x40x40, cut on site. Closed corner (covers the protruding side wall) and, with the 180x40 L, forms a glazed open corner."
   }
  ]
 }

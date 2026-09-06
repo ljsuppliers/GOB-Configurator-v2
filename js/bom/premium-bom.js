@@ -68,8 +68,9 @@ export const USE_TAGS = {
   'Composite slatted cladding (Latte) 200×2500mm': 'External cladding',
   'Composite slatted cladding (Coffee) 200×2500mm': 'External cladding',
   'Front-cladding return (closed corner)': 'Closed-corner inside return',
-  'Corner trims': 'Building corners',
-  'Close corner trims': 'Closed corners',
+  'Corner Trim (40x180 anthracite L)': 'Rear + plain corners',
+  'Corner Trim (50x50 anthracite L)': 'Open corner, clad both faces',
+  'Corner Trim (200x40x40 anthracite U)': 'Closed corner / glazed open corner',
   '6x2 tanalised C24 timber': 'Roof joists + flitch over openings',
   '7x2 tanalised C24 timber': 'Roof joists',
   'Flitch beam bolts': 'Flitch over front openings',
@@ -86,7 +87,7 @@ export const USE_TAGS = {
   '200mm plastic fascia (5m length, GAP)': 'Fascia: rear',
   '400mm plastic soffit (5m length, GAP)': 'Canopy soffit',
   'Fascia corner (500mm plastic)': 'Fascia corners',
-  'Steel top cap': 'Over the EPDM edge',
+  'Steel top cap': 'Fascia + roof edge, front + sides',
   'Half-Round Gutter 4 Mtr (Black)': 'Rear gutter',
   'Half-Round Gutter Fascia Bracket (Black)': 'Rear gutter',
   'Half-Round Stop End Outlet (Black)': 'Rear gutter',
@@ -179,6 +180,8 @@ function openingsOn(state, componentDefs, elevation) {
       const def = componentDefs[c.type] || {};
       return {
         type: c.type,
+        posM: (c.positionX || 0) / 1000,
+        wallM: (elevation === 'front' || elevation === 'rear' ? state.width : state.depth) / 1000,
         widthM: (def.width || 900) / 1000,
         heightM: (def.height || 2100) / 1000,
         category: def.category || 'standard',
@@ -344,9 +347,6 @@ export function buildPremiumBom(state, componentDefs) {
     add('Front-cladding return (closed corner)', 1,
       `Inside return of the CLOSED ${side} corner clad in the FRONT wall cladding (${state.cladding.front}) - boards from the front-wall cladding order`);
   }
-  if (closedCorners > 0) {
-    add('Close corner trims', closedCorners, `1 set per CLOSED corner - product TBC with Liam`);
-  }
   // Open corners: timber corner post built up from 4x2s (~200x200: 3-4
   // back-to-back + 1 on the side - team practice varies, standard TBC),
   // cloaked with the open corner trims. Doors/windows may meet glass-to-glass.
@@ -355,7 +355,36 @@ export function buildPremiumBom(state, componentDefs) {
       `OPEN corner post${openCorners === 1 ? '' : 's'}: ~200x200 built-up 4x2 post (4 x ${wallH.toFixed(2)}m per corner), cloaked by the corner trims`,
       [{ len: wallH, n: openCorners * 4, what: 'open-corner post members' }]);
   }
-  add('Corner trims', Math.max(0, 4 - closedCorners), `Corner trim sets (incl. cloaking any open-corner posts) - product TBC`);
+  // ---- CORNER TRIMS (Liam 2026-09-06) ----
+  //  Rear corners: 180x40 L trim.
+  //  Closed front corner: 200x40x40 U trim over the side wall that protrudes forward.
+  //  Open front corner where glazing meets glazing (door/window on the front AND on
+  //    that side, both at the corner): 180x40 L + 200x40x40 U together form the corner.
+  //  Open front corner with cladding on both faces: a 50x50 L covers front + side cladding.
+  //  Plain front corner (no canopy/decking): 180x40 L like the rear.
+  const nearCorner = (ops, atStart) => ops.some((o) => o.fullHeight && (atStart ? o.posM <= 0.3 : o.posM + o.widthM >= o.wallM - 0.3));
+  // front wall: positionX from the LEFT; left elevation: positionX from the REAR (front is at the drawing's right);
+  // right elevation: positionX from the FRONT.
+  const glassAtCorner = {
+    left: nearCorner(front, true) && nearCorner(left, false),
+    right: nearCorner(front, false) && nearCorner(right, true),
+  };
+  add('Corner Trim (40x180 anthracite L)', 2, `REAR corners: 1 per corner`);
+  for (const side of ['left', 'right']) {
+    const corner = state[side === 'left' ? 'cornerLeft' : 'cornerRight'];
+    if (hasCanopy && hasDecking && corner === 'closed') {
+      add('Corner Trim (200x40x40 anthracite U)', 1, `CLOSED ${side} corner: U trim over the side wall protruding forward`);
+    } else if (hasCanopy && hasDecking) {
+      if (glassAtCorner[side]) {
+        add('Corner Trim (40x180 anthracite L)', 1, `OPEN ${side} corner, glazing meets glazing: 180x40 L +`);
+        add('Corner Trim (200x40x40 anthracite U)', 1, `OPEN ${side} corner, glazing meets glazing: 200x40x40 U (with the 180x40 L forms the corner)`);
+      } else {
+        add('Corner Trim (50x50 anthracite L)', 1, `OPEN ${side} corner, cladding on both faces: 50x50 L covers front + side cladding`);
+      }
+    } else {
+      add('Corner Trim (40x180 anthracite L)', 1, `FRONT ${side} corner (no canopy/decking): plain corner`);
+    }
+  }
   add('CLS 4x2 timber', Math.ceil(stickLm - soleLm), `Stick walls (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): studs @400mm + plates + noggins + opening framing, +10%`, stickCuts);
   add('Treated CLS 4x2 timber', Math.ceil(soleLm * 1.10), `Stick-wall sole plates at deck level (treated)`, soleCuts);
   add('12mm Plywood (1220×2440 sheet)', plySheets, `Stick wall external sheathing + 10% (openings cut out on site)`);
@@ -469,7 +498,7 @@ export function buildPremiumBom(state, componentDefs) {
   add('200mm plastic fascia (5m length, GAP)', Math.ceil(w / 5), `Rear`);
   if (hasCanopy) add('400mm plastic soffit (5m length, GAP)', Math.ceil(w / 5), `Front canopy soffit (closes the 2x2 frame underside)`);
   add('Fascia corner (500mm plastic)', 4, `4 corners`);
-  add('Steel top cap', Math.ceil((w + 2 * roofLen) / 3), `Over the EPDM edge, front + sides / 3m lengths`);
+  add('Steel top cap', Math.ceil((w + 2 * roofLen) / 3), `Over the top of the fascia + roof edge, EPDM underneath - FRONT + SIDES only (not the rear) / 3m lengths`);
   add('Half-Round Gutter 4 Mtr (Black)', Math.ceil(w / 4), `Rear gutter`);
   add('Half-Round Gutter Fascia Bracket (Black)', Math.ceil(w / 0.5), `1 per 500mm`);
   add('Half-Round Stop End Outlet (Black)', 1, `Downpipe corner`);
