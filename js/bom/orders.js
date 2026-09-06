@@ -141,7 +141,7 @@ export async function saveCatalogue(cat) {
 // Structural joists are NOT split - anything over 6.0m is flagged.
 const STOCK_LENGTHS = [
   { test: /firring/i, lengths: null },
-  { test: /\bCLS\b/i, lengths: [2.4, 3.0, 3.6, 4.2, 4.8], splittable: true },
+  { test: /\bCLS\b/i, lengths: [2.4], splittable: true }, // Liam 2026-09-06: CLS = 2.4m lengths only, plates joined
   { test: /batten/i, lengths: [2.4, 3.0, 3.6, 4.8], splittable: true },
   { test: /2x2/i, lengths: [2.4, 3.0, 3.6, 4.8], splittable: true },
   { test: /C(16|24)|tanalised|treated|timber|joist/i, lengths: [2.4, 3.0, 3.6, 4.2, 4.8, 5.4, 6.0], splittable: false },
@@ -178,7 +178,8 @@ export function planStock(cuts, stockLengths, splittable = false) {
   const work = [];
   for (const c of cuts) {
     if (!c || !(c.len > 0) || !(c.n > 0)) continue;
-    const cap = (splittable || c.join) ? PREFER_MAX : stockLengths[stockLengths.length - 1];
+    const maxStock = stockLengths[stockLengths.length - 1];
+    const cap = (splittable || c.join) ? Math.min(PREFER_MAX, maxStock) : maxStock;
     if (c.len > cap + 1e-6 && (splittable || c.join)) {
       const k = Math.ceil(c.len / cap);
       work.push({ len: c.len / k, n: c.n * k, what: `${c.what || 'pieces'} - each ${c.len.toFixed(2)}m run made of ${k} joined pieces` });
