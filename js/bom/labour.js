@@ -4,7 +4,7 @@
 //   BUILD DAYS by model size (everything standard is inside these days:
 //   floor, walls, roof, plaster + decoration, front cladding, standard
 //   canopy + decking, main door; plastering arranged + paid by the installer):
-//     Midi  4.0 x 3.0  = 14 days (£5,600)   [15 -> 14, Liam 2026-09-06]
+//     Midi  4.0 x 3.0  = 12 days (£4,800)   [Liam 2026-09-06]
 //     Maxi  5.0 x 3.5  = 14 days (£5,600)
 //     Multi 6.0 x 4.0  = 16 days (£6,400)
 //     Multi+ 7.0 x 4.5 = 18 days (£7,200)
@@ -24,8 +24,8 @@ export const GROUNDWORKS_DAYS = 2;
  *  Beyond Multi+ (31.5m²): +2 days per extra 7m² (ESTIMATE). */
 export function buildDaysFor(externalAreaM2) {
   // Liam 2026-09-06: build labour down £400 (1 day) across the board:
-  // Midi 14 / Maxi 14 (£5,600) / Multi 16 / Multi+ 18.
-  if (externalAreaM2 <= 14.75) return { days: 14, model: 'Midi' };     // 4.0x3.0 = 12.0
+  // Midi 12 / Maxi 14 (£5,600) / Multi 16 / Multi+ 18.
+  if (externalAreaM2 <= 14.75) return { days: 12, model: 'Midi' };     // 4.0x3.0 = 12.0  (Liam 2026-09-06: Midi is 12)
   if (externalAreaM2 <= 20.75) return { days: 14, model: 'Maxi' };     // 5.0x3.5 = 17.5
   if (externalAreaM2 <= 27.75) return { days: 16, model: 'Multi' };    // 6.0x4.0 = 24.0
   if (externalAreaM2 <= 35) return { days: 18, model: 'Multi+' };      // 7.0x4.5 = 31.5
