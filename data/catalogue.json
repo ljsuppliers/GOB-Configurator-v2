@@ -1057,19 +1057,6 @@
    "notes": "CLAUDE ESTIMATE £9.50/m2. HYBRID floor: between the 4x2 joists on 18x38 battens laid flat (18+75=93 vs 95 joist = flush under deck). Replaces the 50mm floor PIR per Liam 2026-08-04."
   },
   {
-   "name": "Kingspan 100mm insulated floor panel (1.1m wide)",
-   "category": "Insulated panels",
-   "sku": "",
-   "unit": "m²",
-   "unitCost": 60.0,
-   "supplier": "Kingspan",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "£60/m² ex VAT from Kingspan. Same product as wall panel."
-  },
-  {
    "name": "Kingspan 100mm insulated wall panel (1.1m wide)",
    "category": "Insulated panels",
    "sku": "",
@@ -1096,19 +1083,6 @@
    "notes": "CLAUDE ESTIMATE £40/m². HYBRID build wall skin - weather + anthracite finish layer over the CLS studwork."
   },
   {
-   "name": "Kingspan 80mm (115mm ridge) trapezoid roof panel (1.0m wide)",
-   "category": "Insulated panels",
-   "sku": "",
-   "unit": "m²",
-   "unitCost": 40.0,
-   "supplier": "Kingspan",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "£40/m² ex VAT from Kingspan. Trapezoid outer profile."
-  },
-  {
    "name": "12mm Plywood (1220×2440 sheet)",
    "category": "Sheet materials",
    "sku": "",
@@ -1120,19 +1094,6 @@
    "destination": "site",
    "inStock": false,
    "notes": "Selhurst 12mm Structural Ply H/F 1220x2440 EN314-2 CE2+ (2DWBP8412)"
-  },
-  {
-   "name": "12mm white melamine MDF",
-   "category": "Internal lining",
-   "sku": "",
-   "unit": "sheet",
-   "unitCost": 30.0,
-   "supplier": "Sheet Materials Wholesale",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "1200mm wide x wall height. White melamine finish. Supplier TBD."
   },
   {
    "name": "18x38 treated batten",
@@ -1265,19 +1226,6 @@
    "notes": "RETIRED 2026-08-05 - DO NOT ORDER (quality, per Liam). Prefinished ceilings now use 12.5mm Linen White plasterboard, same sheet as walls."
   },
   {
-   "name": "White melamine tape",
-   "category": "Internal lining",
-   "sku": "",
-   "unit": "roll",
-   "unitCost": 14.0,
-   "supplier": "Amazon",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "Covers cut edges and joints where the brown MDF core would otherwise show."
-  },
-  {
    "name": "White trade emulsion paint (10L)",
    "category": "Internal lining",
    "sku": "",
@@ -1289,45 +1237,6 @@
    "destination": "site",
    "inStock": false,
    "notes": ""
-  },
-  {
-   "name": "2-part joint trim - 12.5mm board (white)",
-   "category": "Internal trims",
-   "sku": "",
-   "unit": "linear m",
-   "unitCost": 2.0,
-   "supplier": "Morland",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "Confirmed by Liam 2026-07-23. Covers joints between 12.5mm pre-finished plasterboard sheets - walls AND ceiling (ceiling switched from 3mm ply to 12.5mm board 2026-08-05). Renamed from: 2-part joint trim - wall board (white)"
-  },
-  {
-   "name": "2-part joint trim - ceiling ply (white)",
-   "category": "Internal trims",
-   "sku": "",
-   "unit": "linear m",
-   "unitCost": 2.0,
-   "supplier": "Morland",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "RETIRED 2026-08-05 - DO NOT ORDER. Ceiling now uses 12.5mm Linen White plasterboard + its 2-part trim (3mm ply dropped per Liam, quality)."
-  },
-  {
-   "name": "28mm white fillet trim",
-   "category": "Internal trims",
-   "sku": "",
-   "unit": "linear m",
-   "unitCost": 1.0,
-   "supplier": "GAP",
-   "packSize": 5,
-   "orderUnit": "5m length",
-   "destination": "site",
-   "inStock": false,
-   "notes": "Confirmed by Liam 2026-07-23. Inside bottom of each external door"
   },
   {
    "name": "Skirting board",
@@ -1421,19 +1330,6 @@
    "notes": "CLAUDE ESTIMATE £3.00/m2, get quote. THE single wall wool SKU building-wide (Liam 2026-08-04): panel walls 50mm MAX (condensation one-third rule behind the 60mm panel, fitted against the panel, 45mm services gap in front) and clad walls same 50mm."
   },
   {
-   "name": "15x15mm anthracite square trim (GAP)",
-   "category": "Plastic trims",
-   "sku": "",
-   "unit": "linear m",
-   "unitCost": 1.0,
-   "supplier": "GAP",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "Confirmed by Liam 2026-07-23. £1 per metre"
-  },
-  {
    "name": "200mm plastic fascia (5m length, GAP)",
    "category": "Plastic trims",
    "sku": "",
@@ -1445,19 +1341,6 @@
    "destination": "site",
    "inStock": false,
    "notes": "GAP supplier, 5m lengths, 200mm height. Used on rear of the building only."
-  },
-  {
-   "name": "25x25mm white PVC reveal trim (2.5m length)",
-   "category": "Plastic trims",
-   "sku": "",
-   "unit": "length",
-   "unitCost": 4.0,
-   "supplier": "Morland",
-   "packSize": 1,
-   "orderUnit": "2.5m length",
-   "destination": "site",
-   "inStock": false,
-   "notes": "CLAUDE ESTIMATE £4/length. White PVC L-shape 25x25mm, 2.5m lengths - trims the door/window reveals. Computed per job + 2 spare lengths."
   },
   {
    "name": "300mm plastic fascia (5m length, GAP)",
@@ -1486,32 +1369,6 @@
    "notes": "GAP supplier, 5m lengths, 400mm wide. Fitted to the underside of the front canopy (Signature builds only). One length covers buildings up to 5m wide; wider builds need 2 lengths."
   },
   {
-   "name": "Fascia connector (200mm plastic)",
-   "category": "Plastic trims",
-   "sku": "",
-   "unit": "each",
-   "unitCost": 10.0,
-   "supplier": "GAP",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "Confirmed by Liam 2026-07-23. GAP. Joins 200mm rear fascia lengths when the run exceeds 5m"
-  },
-  {
-   "name": "Fascia connector (500mm plastic, 300mm)",
-   "category": "Plastic trims",
-   "sku": "",
-   "unit": "each",
-   "unitCost": 8.8,
-   "supplier": "GAP",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "GAP, 500mm plastic connector for joining 300mm fascia lengths. Used on the front fascia only when the build is wider than ~5m (front fascia > 5m). Sides use a single 5m length for a cleaner look."
-  },
-  {
    "name": "Fascia corner (500mm plastic)",
    "category": "Plastic trims",
    "sku": "",
@@ -1523,19 +1380,6 @@
    "destination": "site",
    "inStock": false,
    "notes": "500mm plastic fascia corner. 4 per build (2 front + 2 rear)."
-  },
-  {
-   "name": "Side soffit 150mm flat anthracite trim (5m length, GAP)",
-   "category": "Plastic trims",
-   "sku": "",
-   "unit": "each",
-   "unitCost": 15.0,
-   "supplier": "GAP",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "Sits on the underside of the side roof panels, both sides"
   },
   {
    "name": "Soffit vent strip (2.5m)",

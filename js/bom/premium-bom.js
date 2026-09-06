@@ -550,7 +550,6 @@ export function buildPremiumBom(state, componentDefs) {
   const opCount = [...front, ...rear, ...left, ...right].length;
   if (opCount > 0) {
     add('Door/window seal', opCount, `1 per opening`);
-    add('25x25mm white PVC reveal trim (2.5m length)', Math.ceil(opCount * 5.5 / 2.5) + 2, `Reveals + 2 spare`);
   }
 
   /* ---------- DECKING ---------- */
