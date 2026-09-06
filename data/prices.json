@@ -292,7 +292,7 @@
   "vatRate": 0.2,
   "holdingDeposit": 250,
   "premiumMatrix": {
-    "note": "Liam 2026-09-05: customer price incl. installation + groundworks (ground screw / concrete block). Extras on top. Interpolated between points, extrapolated beyond; rounded to £50.",
+    "note": "Liam 2026-09-05 matrix, reduced £400 per cell on 2026-09-06: customer price incl. installation + groundworks. Extras on top. Interpolated between points, extrapolated beyond; rounded to £50.",
     "widths": [
       4.0,
       4.5,
@@ -312,48 +312,48 @@
     ],
     "prices": {
       "3.0": [
-        30000,
-        31750,
-        33550,
-        35300,
-        36900,
-        38200,
-        39450,
-        40750,
-        42000
+        29600,
+        31350,
+        33150,
+        34900,
+        36500,
+        37800,
+        39050,
+        40350,
+        41600
       ],
       "3.5": [
-        32350,
-        34450,
-        36500,
-        38000,
-        39450,
-        40950,
-        42500,
-        44250,
-        46000
+        31950,
+        34050,
+        36100,
+        37600,
+        39050,
+        40550,
+        42100,
+        43850,
+        45600
       ],
       "4.0": [
-        34750,
-        36900,
-        38600,
-        40300,
-        42000,
-        44000,
-        46000,
-        48000,
-        50000
+        34350,
+        36500,
+        38200,
+        39900,
+        41600,
+        43600,
+        45600,
+        47600,
+        49600
       ],
       "4.5": [
-        36900,
-        38850,
-        40750,
-        42750,
-        45000,
-        47250,
-        49500,
-        51750,
-        54000
+        36500,
+        38450,
+        40350,
+        42350,
+        44600,
+        46850,
+        49100,
+        51350,
+        53600
       ]
     }
   }

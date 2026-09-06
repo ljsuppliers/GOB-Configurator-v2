@@ -688,7 +688,8 @@ createApp({
     /** "2 each" -> "2"; "2 roll" -> "2 rolls"; "1 box of 50" stays. */
     fmtQty(qty, unit) {
       const u = (unit || '').trim();
-      if (!u || /^(each|no\.|nr|unit)$/i.test(u)) return `${qty}`;
+      if (!u) return `${qty}`;
+      if (/^(each|no\.|nr|unit)$/i.test(u)) return `${qty} each`; // Liam prefers "1 each
       if (/^(m²|m2|linear m|m|kg|l)$/i.test(u)) return `${qty} ${u}`;
       if (/\bof\b|\d/.test(u)) return `${qty} × ${u}`;
       const plural = Number(qty) === 1 ? u : (u.endsWith('x') || u.endsWith('s') || u.endsWith('ch') ? u + 'es' : u + 's');
