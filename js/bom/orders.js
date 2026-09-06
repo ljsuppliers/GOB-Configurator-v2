@@ -70,6 +70,7 @@ export function mergeShipped(saved, base) {
     if (newer) {
       for (const k of ['unit', 'packSize', 'orderUnit', 'category', 'supply', 'destination', 'inStock', 'notes', 'sku']) sm[k] = bm[k];
       if (sm.supplier === 'Local timber merchant') sm.supplier = 'Builders merchant'; // merged 2026-09-06
+      if (['100mm PIR insulation board', '50mm PIR insulation board', '18mm T&G OSB3 roof board (2400x590)'].includes(sm.name)) sm.supplier = 'Builders merchant'; // moved 2026-09-06
       if (!(sm.unitCost > 0) && bm.unitCost > 0) sm.unitCost = bm.unitCost;
       if (!sm.supplier && bm.supplier) sm.supplier = bm.supplier;
     } else if (!(sm.unitCost > 0) && bm.unitCost > 0) {
@@ -83,7 +84,7 @@ export function mergeShipped(saved, base) {
     const tm = out.suppliers.find((s) => s.name === 'Local timber merchant');
     const bmS = out.suppliers.find((s) => s.name === 'Builders merchant');
     if (tm && bmS && !bmS.email && tm.email) bmS.email = tm.email;
-    out.suppliers = out.suppliers.filter((s) => s.name !== 'Local timber merchant' && s.name !== 'Factory Direct Flooring');
+    out.suppliers = out.suppliers.filter((s) => s.name !== 'Local timber merchant' && s.name !== 'Factory Direct Flooring' && s.name !== 'Sheet Materials Wholesale');
     for (const bs of base.suppliers || []) if (!out.suppliers.some((s) => s.name.toLowerCase() === bs.name.toLowerCase())) out.suppliers.push({ ...bs });
     out.version = base.version;
   }

@@ -1,5 +1,5 @@
 {
- "version": 7,
+ "version": 8,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -88,12 +88,6 @@
   },
   {
    "name": "Rubber Roofing Direct",
-   "email": "",
-   "phone": "",
-   "notes": ""
-  },
-  {
-   "name": "Sheet Materials Wholesale",
    "email": "",
    "phone": "",
    "notes": ""
@@ -978,7 +972,7 @@
    "sku": "",
    "unit": "m²",
    "unitCost": 12.0,
-   "supplier": "Montravia",
+   "supplier": "Builders merchant",
    "packSize": 2.88,
    "orderUnit": "board 2400x1200",
    "destination": "site",
@@ -991,7 +985,7 @@
    "sku": "",
    "unit": "m²",
    "unitCost": 7.5,
-   "supplier": "Montravia",
+   "supplier": "Builders merchant",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
@@ -1446,7 +1440,7 @@
    "sku": "",
    "unit": "sheet",
    "unitCost": 13.0,
-   "supplier": "Sheet Materials Wholesale",
+   "supplier": "Builders merchant",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
