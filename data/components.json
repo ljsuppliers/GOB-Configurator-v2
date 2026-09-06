@@ -3,7 +3,7 @@
     "sliding-door-2000": {
       "label": "2.0m UPVC Sliding Door",
       "width": 2000,
-      "height": 2110,
+      "height": 2050,
       "category": "sliding",
       "code": "SL2",
       "included": true,
@@ -12,7 +12,7 @@
     "sliding-door-2500": {
       "label": "2.5m UPVC Sliding Door",
       "width": 2500,
-      "height": 2110,
+      "height": 2050,
       "category": "sliding",
       "code": "SL25",
       "included": true,
@@ -21,7 +21,7 @@
     "sliding-door-3200": {
       "label": "3.2m UPVC Sliding Door (4-pane)",
       "width": 3200,
-      "height": 2110,
+      "height": 2050,
       "category": "sliding",
       "code": "SL32",
       "included": false,
@@ -30,7 +30,7 @@
     "bifold-2700": {
       "label": "2.7m Aluminium Bi-fold (3-leaf)",
       "width": 2700,
-      "height": 2110,
+      "height": 2050,
       "category": "bifold",
       "code": "BF27",
       "included": false,
@@ -39,7 +39,7 @@
     "bifold-3500": {
       "label": "3.5m Aluminium Bi-fold (4-leaf)",
       "width": 3500,
-      "height": 2110,
+      "height": 2050,
       "category": "bifold",
       "code": "BF35",
       "included": false,
@@ -48,7 +48,7 @@
     "bifold-4500": {
       "label": "4.5m Aluminium Bi-fold (5-leaf)",
       "width": 4500,
-      "height": 2110,
+      "height": 2050,
       "category": "bifold",
       "code": "BF45",
       "included": false,
@@ -57,7 +57,7 @@
     "single-glazed-door": {
       "label": "Single Opening Glazed Door",
       "width": 900,
-      "height": 2110,
+      "height": 2050,
       "category": "single",
       "code": "SD",
       "included": false,
@@ -66,7 +66,7 @@
     "single-cladded-door": {
       "label": "Secret Cladded Door",
       "width": 900,
-      "height": 2110,
+      "height": 2050,
       "category": "single",
       "code": "SCD",
       "included": false,
@@ -77,7 +77,7 @@
     "window-0.4m-fixed": {
       "label": "0.4m Full Height Fixed Window",
       "width": 400,
-      "height": 2110,
+      "height": 2050,
       "category": "fullHeight",
       "hasOpener": false,
       "code": "VF4",
@@ -87,7 +87,7 @@
     "window-0.6m-fixed": {
       "label": "0.6m Full Height Fixed Window",
       "width": 600,
-      "height": 2110,
+      "height": 2050,
       "category": "fullHeight",
       "hasOpener": false,
       "code": "VF6",
@@ -97,7 +97,7 @@
     "window-0.6m-opener": {
       "label": "0.6m Full Height Window w/ Opener",
       "width": 600,
-      "height": 2110,
+      "height": 2050,
       "category": "fullHeight",
       "hasOpener": true,
       "code": "VS6",
@@ -107,7 +107,7 @@
     "window-0.9m-fixed": {
       "label": "0.9m Full Height Fixed Window",
       "width": 900,
-      "height": 2110,
+      "height": 2050,
       "category": "fullHeight",
       "hasOpener": false,
       "code": "VF9",
@@ -117,7 +117,7 @@
     "window-0.9m-opener": {
       "label": "0.9m Full Height Window w/ Opener",
       "width": 900,
-      "height": 2110,
+      "height": 2050,
       "category": "fullHeight",
       "hasOpener": true,
       "code": "VS9",
@@ -185,5 +185,10 @@
       "upgradePrice": 0
     }
   },
-  "elevations": ["front", "left", "right", "rear"]
+  "elevations": [
+    "front",
+    "left",
+    "right",
+    "rear"
+  ]
 }

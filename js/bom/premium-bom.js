@@ -183,7 +183,7 @@ function openingsOn(state, componentDefs, elevation) {
         posM: (c.positionX || 0) / 1000,
         wallM: (elevation === 'front' || elevation === 'rear' ? state.width : state.depth) / 1000,
         widthM: (def.width || 900) / 1000,
-        heightM: (def.height || 2100) / 1000,
+        heightM: (def.height || 2050) / 1000,
         category: def.category || 'standard',
         fullHeight: def.category === 'sliding' || def.category === 'bifold' || def.category === 'french'
           || def.category === 'door' || def.category === 'fullHeight',

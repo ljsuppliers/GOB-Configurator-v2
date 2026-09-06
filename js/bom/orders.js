@@ -289,14 +289,17 @@ function orderEmailText(order, opts = {}) {
     const unitBit = unitWord && !new RegExp(`\\b${unitWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(l.name) ? ` (${unitWord})` : '';
     const sku = l.material && l.material.sku ? `  [${l.material.sku}]` : '';
     let s;
+    const unitLabel = /^(each|panel|board|sheet)$/i.test(l.unit || '') ? '' : ` ${l.unit || ''}`;
+    const needed = `  (${l.qty}${unitLabel} needed)`;
     if (l.stockPlan && l.stockPlan.text) {
-      s = `- ${l.name}: ${l.stockPlan.text}${sku}`;
+      s = `- ${l.name}: ${l.stockPlan.text}${sku}${needed}`;
       for (const n of l.stockPlan.notes) s += `\n    ${n}`;
     } else if (l.orderText) {
-      s = `- ${l.name}: ${l.orderText}${sku}`;
+      const showNeeded = /m²|m2|linear|^m$/i.test(l.unit || '') && !/needed/i.test(l.orderText);
+      s = `- ${l.name}: ${l.orderText}${sku}${showNeeded ? needed : ''}`;
     } else if (l.orderUnit && l.orderUnit !== l.unit) {
       const sameCount = Number(l.orderQty) === Number(l.qty);
-      s = `- ${l.orderQty} × ${l.orderUnit} - ${l.name}${sku}${sameCount ? '' : `  (${l.qty} ${l.unit} needed)`}`;
+      s = `- ${l.orderQty} × ${l.orderUnit} - ${l.name}${sku}${sameCount ? '' : needed}`;
     } else if (/m²|m2|linear m|^m$/i.test(l.unit || '')) {
       s = `- ${l.name}: ${l.qty} ${l.unit}${sku}  (please supply in your standard sheet/roll/length size to cover this)`;
     } else {
