@@ -743,3 +743,7 @@ html, body {
   .pack-drawing-page .pack-drawing-title { display: block; font-size: 11px; color: #64748b; margin: 0 0 4px; }
   .pack-drawing-page svg { width: 100% !important; height: auto !important; max-height: 185mm; }
 }
+@media print {
+  .installer-page .pack, .logi-pack, .materials-page > *, .mp-main > * { max-width: none !important; width: auto !important; }
+  .pack-drawing-page svg { max-height: 188mm; }
+}
