@@ -47,7 +47,6 @@ export function computeLabour(state, componentDefs) {
   const nonFrontWindows = comps.filter((c) => !DOOR_CATS.has(cat(c)) && c.elevation !== 'front');
   const isSteel = (c) => c === 'anthracite-steel' || c === 'grey-steel';
   const slattedSides = ['left', 'right'].filter((s) => !isSteel(state.cladding?.[s])).length;
-  const screens = (state.externalFeatures || []).filter((f) => /privacy/i.test(f.type || '')).length;
   const hasCanopy = state.tier === 'signature' && state.hasCanopy !== false && !state.deductions?.removeCanopy;
 
   const lines = [];
@@ -68,7 +67,6 @@ export function computeLabour(state, componentDefs) {
   if (extraDoors) day('extra_doors', `Additional doors ×${extraDoors} (0.5 day each)`, extraDoors * 0.5, true);
   if (state.structuralExtras?.secretDoor) day('secret_door', 'Secret cladded door (clad + hang on site)', 0.5, true);
   if ((state.structuralExtras?.additionalDecking || 0) > 0) day('extra_decking', `Extra decking rows ×${state.structuralExtras.additionalDecking}`, 0.5, true);
-  if (screens) day('privacy', `Privacy screens ×${screens} (0.5 day each)`, screens * 0.5, true);
   // Manual adjustment (± days) for anything else on this job
   const adj = Number(lab.extraDays || 0);
   if (adj) day('adjust', lab.extraDaysLabel || 'Job-specific adjustment', adj);
