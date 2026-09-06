@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=8">
+  <link rel="stylesheet" href="css/app.css?v=9">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -943,14 +943,44 @@
 
     <!-- ─── MATERIALS & ORDERS: FULL PAGE ─── -->
     <section v-if="materialsPage" class="materials-page">
+     <div class="mp-layout">
+      <!-- ===== JOB BOARD (saved jobs) ===== -->
+      <aside class="jobs-side no-print" :class="{ collapsed: !jobsOpen }">
+        <div class="jobs-head" @click="jobsOpen = !jobsOpen"><span class="sup-caret">{{ jobsOpen ? '▾' : '▸' }}</span><strong>Jobs</strong><span class="sup-meta" v-if="jobsOpen">{{ jobBoard.length }}</span><span style="flex:1"></span><button v-if="jobsOpen" class="btn btn-sm" @click.stop="refreshCloudDesigns" :disabled="cloudLoading">{{ cloudLoading ? '…' : '↻' }}</button></div>
+        <template v-if="jobsOpen">
+          <input class="jobs-search" v-model="jobSearch" placeholder="Search ref, customer, address…">
+          <div class="jobs-filter">
+            <button :class="{ active: jobFilter === 'active' }" @click="jobFilter = 'active'">Active</button>
+            <button v-for="st in jobStatuses" :key="st.value" :class="{ active: jobFilter === st.value }" @click="jobFilter = st.value">{{ st.label }}</button>
+            <button :class="{ active: jobFilter === 'all' }" @click="jobFilter = 'all'">All</button>
+          </div>
+          <div v-if="!cloudReady" class="bom-deriv" style="padding:8px">Cloud not connected - saved jobs unavailable.</div>
+          <div v-else-if="!jobBoard.length" class="bom-deriv" style="padding:8px">No jobs match.</div>
+          <div v-for="j in jobBoard" :key="j.id" class="job-card" :class="{ current: j.id === currentCloudId }" @click="openJob(j)">
+            <div class="job-ref">{{ j.ref || j.name }}<span class="chip" :class="'chip-job-' + j.jobStatus">{{ statusMeta(j.jobStatus).label }}</span></div>
+            <div class="job-sub">{{ j.customer || j.name }} · {{ j.dimensions }}</div>
+            <div class="job-sub" v-if="j.installStart">Install {{ new Date(j.installStart).toLocaleDateString('en-GB') }}{{ j.installerName ? ' · ' + j.installerName : '' }}</div>
+            <div class="job-sub" v-if="j.ordersOrdered">{{ j.ordersDelivered }}/{{ j.ordersOrdered }} orders delivered</div>
+          </div>
+        </template>
+      </aside>
+      <div class="mp-main">
       <div class="mp-top">
         <div class="mp-job">
           <div class="mp-job-name">{{ state.customer && state.customer.name ? state.customer.name : 'Unnamed job' }} <span class="mp-ref">· ref <input v-model="orderRef" class="mat-ref" placeholder="SURNAME-QUOTENO" @change="onOrderRefEdit" title="Surname + quote number, e.g. SMITH-4500. Set the quote number in Customer details."></span><span v-if="orderRef.endsWith('-NOQUOTENO')" class="bom-warn">no quote number in Customer details</span></div>
           <div class="mp-job-sub">{{ jobSummary }}</div>
           <div class="mp-job-sub" v-if="state.customer && state.customer.address">Site: {{ state.customer.address }}</div>
+          <div class="mp-jobstatus">
+            <label>Job status
+              <select :value="state.jobStatus || 'quote'" @change="setJobStatus($event.target.value)"><option v-for="st in jobStatuses" :key="st.value" :value="st.value">{{ st.label }}</option></select>
+            </label>
+            <button class="btn btn-sm" @click="saveJob" :disabled="cloudLoading">{{ currentCloudId ? 'Save job' : 'Save as new job' }}</button>
+            <span class="bom-deriv" v-if="currentCloudName">saved as "{{ currentCloudName }}"</span>
+          </div>
         </div>
         <div class="mp-actions">
           <button class="btn btn-primary" @click="generateBom">{{ bomLines.length ? 'Refresh materials list' : 'Generate materials list' }}</button>
+          <button class="btn" :class="{ active: stockOpen }" @click="stockOpen = !stockOpen; catalogueOpen = false; suppliersOpen = false">Stock</button>
           <button class="btn" :class="{ active: catalogueOpen }" @click="catalogueOpen = !catalogueOpen; suppliersOpen = false">Catalogue</button>
           <button class="btn" :class="{ active: suppliersOpen }" @click="suppliersOpen = !suppliersOpen; catalogueOpen = false">Suppliers</button>
           <button class="btn" v-if="bomLines.length" @click="copyAllOrders">Copy all orders</button>
@@ -959,6 +989,42 @@
         </div>
       </div>
       <div class="mp-status" v-if="bomStatus">{{ bomStatus }}</div>
+      <div class="cal-strip no-print" v-if="calendar.length">
+        <div class="cal-title">Next 3 weeks</div>
+        <div class="cal-item" v-for="(c, i) in calendar" :key="i" :class="['cal-' + c.kind, { overdue: c.overdue, done: c.status === 'delivered', current: c.job.current }]" @click="!c.job.current && c.job.id && openJob(c.job)">
+          <div class="cal-date">{{ fmtShortDate(c.date) }}</div>
+          <div class="cal-what">{{ c.label }}</div>
+          <div class="cal-job">{{ c.job.ref || c.job.name }}{{ c.job.customer ? ' · ' + c.job.customer : '' }}</div>
+          <div class="cal-st" v-if="c.kind === 'delivery'">{{ c.status === 'delivered' ? 'delivered' : c.status === 'ordered' ? 'ordered' : 'NOT ORDERED' }}</div>
+        </div>
+      </div>
+
+      <!-- ===== STOCK LEDGER (kit items kept at the factory) ===== -->
+      <div v-if="stockOpen && catalogue" class="cat-editor no-print">
+        <div class="mat-toolbar">
+          <strong>Factory stock</strong>
+          <span class="bom-deriv">Enter what you HAVE (boxes/tubes/rolls) and the MINIMUM to keep. Items go amber below minimum and red if this job's kit would run them out.</span>
+          <span style="flex:1"></span>
+          <button class="btn btn-sm" @click="issueKitToJob" :disabled="!bomLines.length" title="Deduct this job's kit boxes from stock (once per job)">Issue kit to this job</button>
+          <button class="btn btn-sm" @click="copyReplenishment">Copy replenishment list</button>
+          <button class="btn btn-sm btn-primary" @click="saveCat">Save stock</button>
+          <span class="mat-status">{{ catSaveStatus }}</span>
+        </div>
+        <div class="cat-scroll">
+          <table class="cat-table">
+            <thead><tr><th>Item</th><th>Category</th><th>Unit</th><th>Have</th><th>Min</th><th>This job needs</th><th>After job</th></tr></thead>
+            <tbody>
+              <tr v-for="r in stockLedger" :key="r.name" :class="{ 'stock-short': r.short, 'stock-low': r.low && !r.short }">
+                <td>{{ r.name }}</td><td class="bom-deriv">{{ r.category }}</td><td class="bom-deriv">{{ r.unit }}</td>
+                <td><input type="number" style="width:70px" :value="r.have" @change="setStock(r.m, 'have', $event.target.value)"></td>
+                <td><input type="number" style="width:70px" :value="r.min" @change="setStock(r.m, 'min', $event.target.value)"></td>
+                <td>{{ r.needBoxes ? r.needBoxes + ' × ' + r.unit + ' (' + r.needQty + ' ' + r.needUnit + ')' : '—' }}</td>
+                <td>{{ r.have !== '' && r.have !== null ? Math.round((Number(r.have) - r.needBoxes) * 10) / 10 : '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <!-- Catalogue editor -->
       <div v-if="catalogueOpen && catalogue" class="cat-editor">
@@ -1068,7 +1134,7 @@
         <p v-if="!logistics.counts.factory" class="pack-note">Nothing to load - every line on this job is delivered straight to site.</p>
       </div>
 
-      <template v-if="bomLines.length && !catalogueOpen && !suppliersOpen">
+      <template v-if="bomLines.length && !catalogueOpen && !suppliersOpen && !stockOpen">
         <!-- Summary cards -->
         <div class="mp-cards">
           <div class="mp-card"><div class="mp-card-label">Material cost</div><div class="mp-card-value">{{ fmt(bomSummary.materialCost) }}</div><div class="mp-card-sub">{{ bomSummary.lines }} lines · {{ bomSummary.inStock }} from stock</div></div>
@@ -1179,7 +1245,7 @@
               <div v-for="o in sec.orders" :key="o.supplierName + o.destination" class="po-card">
                 <div class="po-head">
                   <span class="po-dest">Purchase order · {{ o.destination === 'factory' ? 'supplier delivers to FACTORY (Biggin Hill), we bring it to site' : 'supplier delivers straight to SITE' }}</span>
-                  <input class="po-note" :value="orderNoteFor(sec.name).delivery" @change="setOrderNote(sec.name, 'delivery', $event.target.value)" placeholder="Requested delivery (e.g. w/c 15 Sept, AM)">
+                  <label class="po-datelabel">Delivery <input class="po-note po-date" type="date" :value="orderNoteFor(sec.name).delivery" @change="setOrderNote(sec.name, 'delivery', $event.target.value)"></label>
                   <input class="po-note po-note-wide" :value="orderNoteFor(sec.name).notes" @change="setOrderNote(sec.name, 'notes', $event.target.value)" placeholder="Notes to supplier (account no., call before delivery, offload…)">
                   <span style="flex:1"></span>
                   <span class="chip" :class="'chip-' + (o.status || 'not-ordered')">{{ statusLabel(o) }}</span>
@@ -1231,6 +1297,8 @@
       <div v-else-if="!bomLines.length && !catalogueOpen && !suppliersOpen" class="bom-empty">
         Press <strong>Generate materials list</strong> for the full premium-system BOM for this design: quantities, stock lengths, costs, margin, and one purchase order per supplier.
       </div>
+      </div><!-- /mp-main -->
+     </div><!-- /mp-layout -->
     </section>
 
 
@@ -1784,7 +1852,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=58"></script>
+<script type="module" src="js/app.js?v=59"></script>
 
 </body>
 </html>

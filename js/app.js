@@ -39,6 +39,7 @@ function ensureStateDefaults(state) {
   if (!state.orderNotes) state.orderNotes = {};
   if (!state.ordersSent) state.ordersSent = {};
   if (!state.orderStatus) state.orderStatus = {};
+  if (!state.jobStatus) state.jobStatus = 'quote';
   if (!state.acUnits) state.acUnits = [];
   if (!state.drawingLabels) state.drawingLabels = [];
   if (!state.planning) state.planning = { required: false, reasons: [], customReason: '' };
@@ -101,6 +102,14 @@ createApp({
       catSaveStatus: '',
       // Full-page materials view
       supplyModes: SUPPLY_MODES,
+      jobStatuses: [
+        { value: 'quote', label: 'Quote' }, { value: 'deposit', label: 'Deposit paid' }, { value: 'ordered', label: 'Materials ordered' },
+        { value: 'delivered', label: 'Delivered' }, { value: 'installing', label: 'Installing' }, { value: 'complete', label: 'Complete' },
+      ],
+      jobsOpen: true,
+      jobSearch: '',
+      jobFilter: 'active',
+      stockOpen: false,
       materialsPage: false,
       installerPage: false,
       orderRefManual: false,
@@ -248,6 +257,57 @@ createApp({
     },
     /** Logistics split for the printed pack: straight-to-site deliveries by
      *  supplier vs what the factory must load (factory deliveries + stock). */
+    /** Saved jobs for the board (metadata only, from Firestore). */
+    jobBoard() {
+      const q = this.jobSearch.trim().toLowerCase();
+      const done = new Set(['complete']);
+      return (this.cloudDesigns || [])
+        .filter((j) => this.jobFilter === 'all' || (this.jobFilter === 'active' ? !done.has(j.jobStatus) : j.jobStatus === this.jobFilter))
+        .filter((j) => !q || [j.ref, j.name, j.customer, j.address, j.quoteNumber, j.installerName].join(' ').toLowerCase().includes(q));
+    },
+    /** Upcoming deliveries + installs across ALL saved jobs, next 21 days + overdue. */
+    calendar() {
+      const items = [];
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const horizon = new Date(today); horizon.setDate(horizon.getDate() + 21);
+      const push = (job, date, label, kind, status) => {
+        const d = date ? new Date(date) : null;
+        if (!d || isNaN(d)) return;
+        if (d > horizon) return;
+        items.push({ job, date: d, label, kind, status, overdue: d < today && status !== 'delivered' });
+      };
+      for (const j of this.cloudDesigns || []) {
+        if (j.jobStatus === 'complete') continue;
+        for (const dl of j.deliveries || []) push(j, dl.date, `${dl.supplier}`, 'delivery', dl.status);
+        if (j.installStart) push(j, j.installStart, `Install starts${j.installerName ? ' - ' + j.installerName : ''}`, 'install', '');
+      }
+      // current unsaved job too
+      if (this.state) {
+        const cur = { ref: this.orderRef, customer: this.state.customer?.name || '', id: this.currentCloudId, current: true };
+        for (const o of this.orders || []) { const n = this.orderNoteFor(o.supplierName); if (n.delivery) push(cur, n.delivery, o.supplierName, 'delivery', o.status); }
+      }
+      const seen = new Set();
+      return items.filter((i) => { const k = `${i.job.id || 'cur'}|${i.kind}|${i.label}|${i.date.toDateString()}`; if (seen.has(k)) return false; seen.add(k); return true; })
+        .sort((a, b) => a.date - b.date);
+    },
+    /** Stock ledger for kit items: have / min from the catalogue, needed by this job. */
+    stockLedger() {
+      const cat = this.catalogue;
+      if (!cat) return [];
+      const need = new Map((this.bomLines || []).filter((l) => l.inStock).map((l) => [l.name, l]));
+      return cat.materials
+        .filter((m) => (m.supply || (m.inStock ? 'stock' : '')) === 'stock' && !/Site equipment/.test(m.category || ''))
+        .map((m) => {
+          const line = need.get(m.name);
+          const st = m.stock || { have: null, min: null };
+          const needBoxes = line ? line.orderQty : 0;
+          const unit = m.orderUnit || m.unit;
+          const shortAfter = st.have !== null && st.have !== undefined && st.have !== '' ? Number(st.have) - needBoxes : null;
+          return { m, name: m.name, category: m.category, unit, have: st.have ?? '', min: st.min ?? '', needBoxes, needQty: line ? line.qty : 0, needUnit: line ? line.unit : '',
+            low: shortAfter !== null && st.min !== null && st.min !== '' && shortAfter < Number(st.min), short: shortAfter !== null && shortAfter < 0 };
+        })
+        .sort((a, b) => (b.short - a.short) || (b.low - a.low) || a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+    },
     logistics() {
       const lines = this.bomLines || [];
       const bySup = (arr) => {
@@ -411,10 +471,50 @@ createApp({
       if (!this.orderRef.trim()) { this.orderRefManual = false; this.orderRef = this.defaultOrderRef(); }
       this.rebuildOrders();
     },
+    async openJob(job) {
+      await this.loadFromCloud(job);
+      this.ensureLabourState();
+      this.orderRefManual = false;
+      await this.generateBom();
+      this.materialsPage = true; this.installerPage = false;
+      window.scrollTo(0, 0);
+    },
+    async saveJob() {
+      if (!this.cloudReady) { this.bomStatus = 'Cloud not ready - use Save in the header'; return; }
+      if (this.currentCloudId) { await this.updateCloudSave(); }
+      else { this.cloudSaveName = this.orderRef || (this.state.customer?.name || 'Job'); await this.saveToCloud(); }
+      this.bomStatus = `Job saved (${this.currentCloudName})`;
+    },
+    setJobStatus(v) { this.state.jobStatus = v; if (this.currentCloudId) this.updateCloudSave(); },
+    statusMeta(v) { return this.jobStatuses.find((x) => x.value === v) || { label: v }; },
+    fmtShortDate(d) { return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); },
+    setStock(m, field, value) {
+      if (!m.stock) m.stock = { have: null, min: null };
+      m.stock[field] = value === '' ? null : Number(value);
+    },
+    issueKitToJob() {
+      // Decrement factory stock by the boxes this job takes, once.
+      if (this.state.kitIssuedAt) { this.bomStatus = `Kit already issued to this job on ${new Date(this.state.kitIssuedAt).toLocaleDateString('en-GB')}`; return; }
+      let n = 0;
+      for (const row of this.stockLedger) {
+        if (row.needBoxes > 0 && row.m.stock && row.m.stock.have !== null && row.m.stock.have !== undefined) { row.m.stock.have = Math.max(0, Number(row.m.stock.have) - row.needBoxes); n += 1; }
+      }
+      this.state.kitIssuedAt = new Date().toISOString();
+      this.saveCat();
+      this.bomStatus = `Kit issued: stock reduced on ${n} items, catalogue saved`;
+    },
+    async copyReplenishment() {
+      const low = this.stockLedger.filter((r) => r.low || r.short);
+      const lines = low.map((r) => `- ${r.name}: have ${r.have || 0}, min ${r.min || 0}${r.needBoxes ? `, this job needs ${r.needBoxes}` : ''} -> order ${Math.max(1, Math.ceil((Number(r.min || 0) * 2) - Number(r.have || 0) + r.needBoxes))} x ${r.unit}${r.m.notes && /LINK: (\S+)/.test(r.m.notes) ? `  ${r.m.notes.match(/LINK: (\S+)/)[1]}` : ''}`);
+      const txt = `Stock replenishment - ${new Date().toLocaleDateString('en-GB')}\n\n${lines.join('\n')}`;
+      await navigator.clipboard.writeText(txt);
+      this.bomStatus = `Replenishment list copied (${low.length} items)`;
+    },
     async openMaterialsPage() {
       this.ensureLabourState();
       this.installerPage = false;
       this.materialsPage = true;
+      if (this.cloudReady && !this.cloudDesigns.length) this.refreshCloudDesigns();
       this.catalogueOpen = false; this.suppliersOpen = false;
       await this.ensureCatalogue();
       if (!this.bomLines.length) await this.generateBom();
