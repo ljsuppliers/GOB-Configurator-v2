@@ -588,7 +588,7 @@ export function buildPremiumBom(state, componentDefs) {
     for (const o of ops) {
       const def = componentDefs[o.type] || {};
       add(def.label || o.type, 1, `On the ${wallName}${def.width ? ` - ${def.width}mm wide` : ''}`,
-        { orderText: `1 × ${def.label || o.type}${def.width ? `, ${def.width}mm wide` : ''}${def.height ? ` × ${def.height}mm high` : ''}, anthracite grey RAL 7016 outside / white inside - FRAME ONLY, unglazed (glass ordered separately) - for the ${wallName} wall` });
+        { orderText: `1 × ${def.label || o.type}${def.width ? `, ${def.width}mm wide` : ''}${def.height ? ` × ${def.height}mm high` : ''}, ${/aluminium|bi-fold|bifold/i.test(def.label || o.type) ? 'anthracite grey RAL 7016 both sides (aluminium)' : 'anthracite grey RAL 7016 outside / white inside (uPVC)'} - FRAME ONLY, unglazed (glass ordered separately) - for the ${wallName} wall` });
       // GLAZING comes from a separate supplier (Liam 2026-09-06): frames are
       // supplied unglazed. One line per opening with approximate pane sizes
       // (frame size less ~60mm per edge; confirm from the frame maker's

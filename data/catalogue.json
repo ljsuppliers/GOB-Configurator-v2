@@ -1,5 +1,5 @@
 {
- "version": 4,
+ "version": 5,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -1687,7 +1687,7 @@
    "sku": "BF27",
    "unit": "each",
    "unitCost": 1800,
-   "supplier": "",
+   "supplier": "Spectral",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
@@ -1700,7 +1700,7 @@
    "sku": "BF35",
    "unit": "each",
    "unitCost": 2150,
-   "supplier": "",
+   "supplier": "Spectral",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
@@ -1713,7 +1713,7 @@
    "sku": "BF45",
    "unit": "each",
    "unitCost": 2750,
-   "supplier": "",
+   "supplier": "Spectral",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
