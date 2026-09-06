@@ -488,7 +488,6 @@ export function buildPremiumBom(state, componentDefs) {
   add('Plasterboard scrim/jointing tape (90m roll)', Math.ceil(boardM2 / 45), `Board joints`);
   add('Plasterboard corner bead (2.4m)', 4 + [...front, ...rear, ...left, ...right].length, `Corners + reveals`);
   add('Multi-finish plaster (25kg bag)', Math.ceil(boardM2 / 10), `Skim ~10m2/bag`);
-  add('White trade emulsion paint (10L)', Math.ceil(boardM2 / 50), `2 coats (3 on fresh skim where needed)`);
   add('Skirting board', Math.ceil(Math.max(0, 2 * (w + d) - fhWidth(front) - fhWidth(rear) - fhWidth(left) - fhWidth(right))), `Perimeter minus full-height openings, linear m`);
   add('Medium Oak vinyl', Math.ceil((w - 0.2) * (d - 0.2)), `Internal floor area (colour per customer choice)`,
     { orderText: `${Math.ceil((w - 0.3) * (d - 0.3))}m²: internal floor ${(w - 0.3).toFixed(2)} × ${(d - 0.3).toFixed(2)}m (e.g. ${Math.ceil(((d - 0.3) + 0.2) * 10) / 10}m off a 4m-wide roll, or ${Math.ceil(((w - 0.3) + 0.2) * 10) / 10}m off a 4m roll run the other way)` });

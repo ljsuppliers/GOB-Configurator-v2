@@ -1019,7 +1019,7 @@
   },
   {
    "name": "100mm PIR insulation board",
-   "category": "Insulated panels",
+   "category": "Insulation",
    "sku": "",
    "unit": "m²",
    "unitCost": 12.0,
@@ -1032,7 +1032,7 @@
   },
   {
    "name": "50mm PIR insulation board",
-   "category": "Insulated panels",
+   "category": "Insulation",
    "sku": "",
    "unit": "m²",
    "unitCost": 7.5,
@@ -1045,7 +1045,7 @@
   },
   {
    "name": "75mm PIR insulation board",
-   "category": "Insulated panels",
+   "category": "Insulation",
    "sku": "",
    "unit": "m2",
    "unitCost": 9.5,
@@ -1068,19 +1068,6 @@
    "destination": "site",
    "inStock": false,
    "notes": "£56 per m² (Liam 2026-09-06); line shows PANEL COUNT and length, cost = panels × 1.1m × length."
-  },
-  {
-   "name": "Kingspan 60mm insulated wall panel (1.0m wide)",
-   "category": "Insulated panels",
-   "sku": "",
-   "unit": "m²",
-   "unitCost": 40.0,
-   "supplier": "Kingspan",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "CLAUDE ESTIMATE £40/m². HYBRID build wall skin - weather + anthracite finish layer over the CLS studwork."
   },
   {
    "name": "12mm Plywood (1220×2440 sheet)",
@@ -1198,32 +1185,6 @@
    "destination": "site",
    "inStock": false,
    "notes": ""
-  },
-  {
-   "name": "Pre-finished plasterboard 12.5mm - Linen White (2440x1220 sheet)",
-   "category": "Internal lining",
-   "sku": "",
-   "unit": "sheet",
-   "unitCost": 20.0,
-   "supplier": "Morland",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "Confirmed by Liam 2026-07-23"
-  },
-  {
-   "name": "Pre-finished plywood 3mm - White Wilkins (2440x1220 sheet)",
-   "category": "Internal lining",
-   "sku": "",
-   "unit": "sheet",
-   "unitCost": 20.0,
-   "supplier": "Morland",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "RETIRED 2026-08-05 - DO NOT ORDER (quality, per Liam). Prefinished ceilings now use 12.5mm Linen White plasterboard, same sheet as walls."
   },
   {
    "name": "White trade emulsion paint (10L)",
@@ -1396,7 +1357,7 @@
   },
   {
    "name": "EPDM roof kit (membrane, adhesive, edge trims)",
-   "category": "Roof panel sealants, tapes and fixings",
+   "category": "Roofing",
    "sku": "",
    "unit": "m²",
    "unitCost": 16.0,
@@ -1409,7 +1370,7 @@
   },
   {
    "name": "Vapour control layer (roll)",
-   "category": "Roof panel sealants, tapes and fixings",
+   "category": "Roofing",
    "sku": "",
    "unit": "roll",
    "unitCost": 25.0,
