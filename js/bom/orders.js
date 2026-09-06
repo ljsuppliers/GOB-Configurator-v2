@@ -253,7 +253,15 @@ export function mergeBomRows(bomRows) {
     const m = out.get(key);
     m.qty = Math.round((m.qty + r.qty) * 100) / 100;
     if (r.costQty || m.costQty) m.costQty = (m.costQty || 0) + (r.costQty || 0);
-    if (r.orderText) m.orderText = m.orderText ? `${m.orderText} + ${r.orderText}` : r.orderText;
+    if (r.orderText) {
+      // merged order wording: TOTAL first, then the breakdown (Liam 2026-09-06)
+      m.orderParts = [...(m.orderParts || (m.orderText ? [m.orderText] : [])), r.orderText];
+      const nums = m.orderParts.map((p) => parseInt(p, 10));
+      const unitWord = (m.orderParts[0].match(/^\d+\s+([a-z]+)/i) || [])[1] || '';
+      m.orderText = nums.every((n) => Number.isFinite(n))
+        ? `TOTAL ${nums.reduce((a, b) => a + b, 0)} ${unitWord}: ${m.orderParts.join('  +  ')}`
+        : m.orderParts.join('  +  ');
+    }
     m.derivation = `${m.derivation}\n+ ${r.derivation}`;
     if (r.cuts) m.cuts = [...(m.cuts || []), ...r.cuts];
   }
