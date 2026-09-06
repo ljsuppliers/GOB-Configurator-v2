@@ -53,9 +53,31 @@ export async function loadCatalogue() {
  * added, and a saved cost of £0 is filled from the shipped cost (with its
  * notes). Non-zero saved costs, suppliers and routing are left alone.
  */
+// Items retired from the system: always removed from a saved catalogue, whatever
+// its version, so they can never reappear on a job or in the stock ledger.
+export const RETIRED_MATERIALS = new Set([
+  'CLS 4x2 timber', 'Treated CLS 4x2 timber', 'Composite decking board (3.6m)', 'Composite decking board (140×4880mm)',
+  'Medium Oak vinyl', 'Light Grey vinyl', 'Vinyl spray adhesive (500ml can)', 'Privacy screen (vertical slats on frame)',
+  'Corner trims', 'Close corner trims', 'Open-corner glazing junction kit', 'Flitch beam bolts', 'uPVC frame fixing screw',
+  'Twisted restraint strap 30x2.5x600mm', '25x25mm white PVC reveal trim (2.5m length)', 'Tapered firring (47mm, 1:40)',
+  'Structural timber screw (100mm)', 'Wood screw 40mm', 'Wood screw 60mm', 'Drywall screw (35mm)', 'Concrete frame anchor', 'Staple box',
+  'Expanding foam can', 'External silicone (anthracite)', 'Anthracite stitching screw (self-drilling, box of 50)',
+  'Self-drilling screw 50mm (wood to metal)', 'Self-drilling screw 80mm (wood to metal)', 'Self-drilling screw 100mm (wood to metal)',
+  'Self-drilling screw 150mm (wood to metal)', 'Stainless cladding screw', 'Anthracite polytop pin', 'Panel pin box',
+  'White-headed wood screw (40mm)', 'Decking fixings (hidden clip or face screw)', 'Clear silicone', 'White silicone', 'Grab adhesive (tube)',
+  'Foam tape', 'Butyl sealant cartridge', 'Long roof screw (Kingspan)', 'Roof lap stitcher screw (Kingspan)', 'Roof Panel Ridge Filler',
+  'Roof panel Z-trim (2.5m length, Kingspan)', 'Z-trim (roof side closer)', '12mm white melamine MDF', '15x15mm anthracite square trim (GAP)',
+  '2-part joint trim - 12.5mm board (white)', '2-part joint trim - ceiling ply (white)', '28mm white fillet trim', 'White melamine tape',
+  'Kingspan 60mm insulated wall panel (1.0m wide)', 'Kingspan 60mm insulated wall panel (1.1m wide)', 'Kingspan 100mm insulated floor panel (1.1m wide)',
+  'Kingspan 80mm (115mm ridge) trapezoid roof panel (1.0m wide)', 'Side soffit 150mm flat anthracite trim (5m length, GAP)',
+  'Pre-finished plasterboard 12.5mm - Linen White (2440x1220 sheet)', 'Pre-finished plywood 3mm - White Wilkins (2440x1220 sheet)',
+  'Internal double plug socket (extra)', 'Double light switch', 'LED panel light (ceiling)', 'LED panel light mounting bracket', 'White trunking',
+  'IP65 LED canopy spotlight', 'Canopy downlight (warm-white LED, recessed)',
+]);
+
 export function mergeShipped(saved, base) {
   if (!base || !Array.isArray(base.materials)) return saved;
-  const out = { ...saved, materials: [...saved.materials], suppliers: [...(saved.suppliers || [])], installers: [...(saved.installers || [])] };
+  const out = { ...saved, materials: saved.materials.filter((m) => !RETIRED_MATERIALS.has(m.name)), suppliers: [...(saved.suppliers || [])], installers: [...(saved.installers || [])] };
   const have = new Map(out.materials.map((m) => [m.name.toLowerCase(), m]));
   // Structure sync: when the shipped catalogue is NEWER than the saved copy,
   // the shipped units / pack sizes / order units / categories / supply modes /
