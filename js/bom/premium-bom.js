@@ -206,8 +206,14 @@ export function buildPremiumBom(state, componentDefs) {
   const rows = [];
   // `cuts` = [{ len, n, what }] piece list for timber, so the ordering step
   // can pick the cheapest common stock lengths (3.6 / 4.2 / 4.8 / 5.4 / 6.0m).
-  const add = (name, qty, derivation, cuts) => {
-    if (qty > 0) rows.push(cuts ? { name, qty, derivation, cuts } : { name, qty, derivation });
+  // extra = { cuts, costQty, orderText }: costQty prices the line by metres/m²
+  // when qty is a piece count; orderText is the exact order wording.
+  const add = (name, qty, derivation, extra) => {
+    if (!(qty > 0)) return;
+    const row = { name, qty, derivation };
+    if (Array.isArray(extra)) row.cuts = extra;
+    else if (extra) Object.assign(row, extra);
+    rows.push(row);
   };
 
   const groundScrews = state.foundationType === 'ground-screw';
@@ -273,7 +279,8 @@ export function buildPremiumBom(state, componentDefs) {
   let liningStudsTotal = 0, liningRunTotal = 0;
   if (panelCount > 0) {
     add('Kingspan 100mm insulated wall panel (1.1m wide)', panelCount,
-      `TOTAL: ${panelCount} panels, ALL @ ${wallH.toFixed(2)}m length (square building, no angle cuts). ${panelBits.join(', ')}. Anthracite. Headers above openings cut from the opening cut-outs`);
+      `TOTAL: ${panelCount} panels, ALL @ ${wallH.toFixed(2)}m length (square building, no angle cuts). ${panelBits.join(', ')}. Anthracite. Headers above openings cut from the opening cut-outs`,
+      { costQty: panelCount * PANEL_W * wallH, orderText: `${panelCount} panels × ${(wallH * 1000).toFixed(0)}mm long, 1.1m wide, 100mm, anthracite` });
     add('U-channel (40x102x40mm)', Math.ceil((panelWalls.reduce((s, p) => s + p.run, 0) + 8 * wallH) / 3),
       `Panel wall tops + corners + opening edges / 3m lengths`);
     add('Standard base trim (steel)', Math.ceil(panelWalls.reduce((s, p) => s + Math.max(0, p.run - p.openings.reduce((x, o) => x + o.widthM, 0)), 0) / 3),
@@ -325,7 +332,8 @@ export function buildPremiumBom(state, componentDefs) {
     if (steelSide) {
       panelCount += 1; // one extra 1.1m panel piece covers the 400mm extension
       add('Kingspan 100mm insulated wall panel (1.1m wide)', 1,
-        `CLOSED ${side} corner: side wall carried ${(state.overhangDepth || 400)}mm forward in PANEL (matches the side wall) - cut from one extra panel @ ${wallH.toFixed(2)}m`);
+        `CLOSED ${side} corner: side wall carried ${(state.overhangDepth || 400)}mm forward in PANEL (matches the side wall) - cut from one extra panel @ ${wallH.toFixed(2)}m`,
+        { costQty: PANEL_W * wallH, orderText: `1 panel × ${(wallH * 1000).toFixed(0)}mm (closed ${side} corner)` });
     } else {
       stickLm += ((2 * wallH) + 3 * 0.4) * 1.10;
       stickCuts.push({ len: wallH, n: 2, what: `closed ${side} corner studs` });
@@ -419,7 +427,7 @@ export function buildPremiumBom(state, componentDefs) {
   if (ladder.web) add('18mm OSB3 board (2440x1220)', Math.ceil((rJoists * joistLen * ladder.depthM * 1.10) / PLY_SHEET_M2), `OSB webs glued+screwed between the doubled joist pairs, ripped from full sheets`);
   // Firrings are CUSTOM MADE per job (Liam 2026-09-05): give the exact spec.
   const firrFrontMm = Math.round((roofLen / 40) * 1000);
-  add('Tapered firring (47mm, 1:40)', Math.ceil((rJoists + 4) * roofLen),
+  add('Tapered firring 47mm (custom cut)', rJoists + 4,
     `CUSTOM MADE FOR THIS JOB: ${rJoists} firrings x ${roofLen.toFixed(2)}m long, 47mm wide, tapering from ${firrFrontMm}mm at the FRONT to 0 at the REAR (1:40 fall), one per joist; PLUS 4 REVERSE firrings x ${roofLen.toFixed(2)}m (0 at the front rising to ${firrFrontMm}mm at the rear) laid along the side edges, 2 per side, so the sides read level. Length = ${d.toFixed(2)}m building + ${canopyMm}mm front + 100mm rear oversail. ${
       canopyMethod === 'firrings-overhang'
         ? `THE TALL END OVERHANGS THE FRONT BY ${canopyMm}mm ON TOP OF THE JOISTS - this overhang IS the canopy (2.5m method)`
@@ -427,9 +435,10 @@ export function buildPremiumBom(state, componentDefs) {
           ? `They sit on top of the oversailed joists right out to the canopy edge`
           : `They run ${canopyMm}mm past the front wall (classic token overhang)`
     }`,
-    [{ len: roofLen, n: rJoists + 4, what: 'firrings (custom tapers)' }]);
+    { costQty: (rJoists + 4) * roofLen, orderText: `${rJoists} × ${roofLen.toFixed(2)}m tapered ${firrFrontMm}→0mm  +  4 × ${roofLen.toFixed(2)}m REVERSE (0→${firrFrontMm}mm) for the side edges  · 47mm wide` });
   add('18mm T&G OSB3 roof board (2400x590)', Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2), `Roof deck ${(w + 0.2).toFixed(2)} x ${roofLen.toFixed(2)}m incl. 100mm side overhangs + ${canopyMm}mm front + 100mm rear, +5%`);
-  add('EPDM roof kit (membrane, adhesive, edge trims)', Math.ceil((w + 0.2) * roofLen * 1.15), `One-piece EPDM, deck m2 + 15% wraps/upstands, up-and-over the squared side edges`);
+  add('EPDM roof kit (membrane, adhesive, edge trims)', Math.ceil((w + 0.2) * roofLen * 1.15), `One-piece EPDM, deck m2 + 15% wraps/upstands, up-and-over the squared side edges`,
+    { orderText: `ONE PIECE ${(w + 0.2 + 0.6).toFixed(1)}m × ${(roofLen + 0.6).toFixed(1)}m (deck ${(w + 0.2).toFixed(2)} × ${roofLen.toFixed(2)}m + 300mm each edge) + adhesive + edge trims` });
   add('100mm PIR insulation board', Math.ceil(w * d), `VENTED COLD ROOF: between joists over the room only (${w.toFixed(2)} x ${d.toFixed(2)}m), set 30mm BELOW joist tops (50mm air path)`);
   // Canopy 2x2 frame - one layer either way, method decides where it sits.
   // Ply on the front face + underside on EVERY canopied build (fascia + soffit
@@ -479,7 +488,8 @@ export function buildPremiumBom(state, componentDefs) {
   add('Multi-finish plaster (25kg bag)', Math.ceil(boardM2 / 10), `Skim ~10m2/bag`);
   add('White trade emulsion paint (10L)', Math.ceil(boardM2 / 50), `2 coats (3 on fresh skim where needed)`);
   add('Skirting board', Math.ceil(Math.max(0, 2 * (w + d) - fhWidth(front) - fhWidth(rear) - fhWidth(left) - fhWidth(right))), `Perimeter minus full-height openings, linear m`);
-  add('Medium Oak vinyl', Math.ceil((w - 0.2) * (d - 0.2)), `Internal floor area (colour per customer choice)`);
+  add('Medium Oak vinyl', Math.ceil((w - 0.2) * (d - 0.2)), `Internal floor area (colour per customer choice)`,
+    { orderText: `${Math.ceil((w - 0.3) * (d - 0.3))}m²: internal floor ${(w - 0.3).toFixed(2)} × ${(d - 0.3).toFixed(2)}m (e.g. ${Math.ceil(((d - 0.3) + 0.2) * 10) / 10}m off a 4m-wide roll, or ${Math.ceil(((w - 0.3) + 0.2) * 10) / 10}m off a 4m roll run the other way)` });
   add('Vinyl spray adhesive (500ml can)', Math.ceil((w - 0.2) * (d - 0.2) / 4), `~4m2 per can`);
 
   /* ======================================================================

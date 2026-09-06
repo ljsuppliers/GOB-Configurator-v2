@@ -194,6 +194,8 @@ export function mergeBomRows(bomRows) {
     if (!out.has(key)) { out.set(key, { ...r, cuts: r.cuts ? [...r.cuts] : undefined }); continue; }
     const m = out.get(key);
     m.qty = Math.round((m.qty + r.qty) * 100) / 100;
+    if (r.costQty || m.costQty) m.costQty = (m.costQty || 0) + (r.costQty || 0);
+    if (r.orderText) m.orderText = m.orderText ? `${m.orderText} + ${r.orderText}` : r.orderText;
     m.derivation = `${m.derivation}\n+ ${r.derivation}`;
     if (r.cuts) m.cuts = [...(m.cuts || []), ...r.cuts];
   }
@@ -208,8 +210,9 @@ export function joinBom(bomRows, catalogue, overrides = {}) {
     const packSize = mat && mat.packSize > 0 ? mat.packSize : 1;
     let orderQty = Math.max(0, Math.ceil(r.qty / packSize - 1e-9));
     let orderUnit = mat && mat.orderUnit ? mat.orderUnit : (mat ? mat.unit : '');
-    let lineCost = mat ? (mat.unitCost || 0) * r.qty : 0;
+    let lineCost = mat ? (mat.unitCost || 0) * (r.costQty > 0 ? r.costQty : r.qty) : 0;
     let stockPlan = null;
+    const orderText = r.orderText || '';
     const stockRule = r.cuts ? stockRuleFor(r.name) : null;
     if (r.cuts && stockRule) {
       stockPlan = planStock(r.cuts, stockRule.lengths, !!stockRule.splittable);
@@ -228,6 +231,7 @@ export function joinBom(bomRows, catalogue, overrides = {}) {
       orderQty,
       orderUnit,
       stockPlan,
+      orderText,
       supply: supplyFor(mat, ov),
       // derived (kept for the ordering code): stock lines are never ordered;
       // 'factory' orders are addressed to Biggin Hill
@@ -275,11 +279,13 @@ function orderEmailText(order, opts = {}) {
     if (l.stockPlan && l.stockPlan.text) {
       s = `- ${l.name}: ${l.stockPlan.text}${sku}`;
       for (const n of l.stockPlan.notes) s += `\n    ${n}`;
+    } else if (l.orderText) {
+      s = `- ${l.name}: ${l.orderText}${sku}`;
     } else {
       s = `- ${l.orderQty} x ${l.name}${unitBit}${sku}`;
     }
     // Panel schedules, firring specs and cut instructions travel with the order line.
-    if (/insulated wall panel|firring/i.test(l.name) && l.derivation) s += `\n    ${l.derivation}`;
+    if (/insulated wall panel|firring/i.test(l.name) && l.derivation) s += `\n    ${l.derivation.split('\n')[0]}`;
     return s;
   });
   const subject = `Purchase order ${ref} - Garden Office Buildings`;

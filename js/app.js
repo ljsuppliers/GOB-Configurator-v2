@@ -8,8 +8,8 @@ import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=7';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES } from './bom/orders.js?v=7';
+import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=8';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES } from './bom/orders.js?v=8';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=6';
 import { emptyInstaller } from './bom/installers.js?v=2';
@@ -593,6 +593,7 @@ createApp({
     },
     orderAs(l) {
       if (l.stockPlan && l.stockPlan.text) return l.stockPlan.text;
+      if (l.orderText) return l.orderText;
       return `${l.orderQty}${l.orderUnit && l.orderUnit !== l.unit ? ' × ' + l.orderUnit : ' ' + (l.unit || '')}`;
     },
     async sendOrder(order) {
