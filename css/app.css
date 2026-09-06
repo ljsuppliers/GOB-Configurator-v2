@@ -721,8 +721,12 @@ html, body {
 @media print { .jobs-side, .cal-strip { display: none !important; } .mp-layout { display: block; } }
 
 @media print {
-  .print-agreement-only .pack > :not(.agreement-part) { display: none !important; }
-  .print-agreement-only .agreement-part .pack-break { break-before: auto; }
+  /* Job pack print: drawing + cover + build summary + checklist (NO money) */
+  .print-pack-only .payment-part, .print-pack-only .agreement-part { display: none !important; }
+  /* Agreement print: cover + installation payment + agreement (NO drawing/checklist) */
+  .print-agreement-only .pack > :not(.agreement-part):not(.payment-part):not(.pack-cover) { display: none !important; }
+  .print-agreement-only .pack-cover { break-after: avoid; }
+  .print-agreement-only .agreement-part { break-before: page; }
 }
 
 @media print {

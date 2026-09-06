@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=18">
+  <link rel="stylesheet" href="css/app.css?v=19">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -1308,7 +1308,7 @@
 
 
     <!-- ─── INSTALLER PACK & AGREEMENT: FULL PAGE ─── -->
-    <section v-if="installerPage" class="materials-page installer-page" :class="{ 'print-agreement-only': printMode === 'agreement' }">
+    <section v-if="installerPage" class="materials-page installer-page" :class="{ 'print-agreement-only': printMode === 'agreement', 'print-pack-only': printMode !== 'agreement' }">
       <div class="mp-top no-print">
         <div class="mp-job">
           <div class="mp-job-name">Installer pack · {{ state.customer && state.customer.name ? state.customer.name : 'Unnamed job' }} <span class="mp-ref">· ref {{ orderRef }}</span></div>
@@ -1317,8 +1317,8 @@
         <div class="mp-actions">
           <button class="btn" @click="installerPage = false; openMaterialsPage()">← Materials &amp; Orders</button>
           <button class="btn" :class="{ active: installersOpen }" @click="installersOpen = !installersOpen">Installer register</button>
-          <button class="btn btn-primary" @click="printMode = 'pack'; printInstallerPack()">Print / PDF full pack</button>
-          <button class="btn" @click="printMode = 'agreement'; printInstallerPack()">Print agreement only</button>
+          <button class="btn btn-primary" @click="printMode = 'pack'; printInstallerPack()">Print / PDF job pack</button>
+          <button class="btn" @click="printMode = 'agreement'; printInstallerPack()">Print installer agreement (with payment)</button>
         </div>
       </div>
 
@@ -1370,7 +1370,7 @@
             <div class="pack-box"><div class="pack-box-t">Installer</div><div>{{ state.installer && state.installer.name || '________________' }}</div><div class="pack-small">{{ state.installer && state.installer.phone }} {{ state.installer && state.installer.email }}</div></div>
             <div class="pack-box"><div class="pack-box-t">Install start</div><div>{{ fmtDateLong(state.installer && state.installer.startDate) }}</div></div>
             <div class="pack-box"><div class="pack-box-t">Install end</div><div>{{ fmtDateLong(state.installer && state.installer.endDate) }}</div></div>
-            <div class="pack-box"><div class="pack-box-t">Agreed install fee</div><div><strong>{{ fmt(installerDeal.fee) }}</strong> · {{ installerDeal.days }} working days</div></div>
+            <div class="pack-box payment-part"><div class="pack-box-t">Agreed install fee</div><div><strong>{{ fmt(installerDeal.fee) }}</strong> · {{ installerDeal.days }} working days</div></div>
           </div>
         </div>
 
@@ -1391,16 +1391,18 @@
         </table>
 
 
-        <h2 class="pack-h2">2. Installation payment</h2>
+        <div class="payment-part">
+        <h2 class="pack-h2">Installation payment</h2>
         <table class="pack-table pack-pay">
           <tr v-for="l in labour.install.lines" :key="l.id"><td>{{ l.label }}</td><td class="num">{{ l.days !== null ? l.days + ' d' : '' }}</td><td class="num">{{ fmt(l.amount) }}</td></tr>
           <tr class="pack-total"><td>Agreed install fee{{ installerDeal.overridden ? ' (agreed figure)' : '' }}</td><td class="num">{{ installerDeal.days }} d</td><td class="num">{{ fmt(installerDeal.fee) }}</td></tr>
           <tr><td>50% halfway, once watertight</td><td></td><td class="num">{{ fmt(installerDeal.half) }}</td></tr>
           <tr><td>50% on completion</td><td></td><td class="num">{{ fmt(installerDeal.fee - installerDeal.half) }}</td></tr>
         </table>
-        <p class="pack-note">The install fee includes the plastering and decoration: the Installer arranges and pays the plasterer. Electrical work is by the Company's electrician and is not part of the install fee. Materials are supplied by the Company - check every delivery against the checklist below and report damage or shortages the same day.</p>
+        <p class="pack-note">The install fee includes the plastering and decoration: the Installer arranges and pays the plasterer. Electrical work is by the Company's electrician and is not part of the install fee. Materials are supplied by the Company - check every delivery against the job pack checklist and report damage or shortages the same day.</p>
+        </div><!-- /payment-part -->
 
-        <h2 class="pack-h2">3. Materials checklist (by supplier)</h2>
+        <h2 class="pack-h2">2. Materials checklist (by supplier)</h2>
         <div v-for="sec in supplierSections" :key="'pk'+sec.name" class="pack-cat">
           <h3>{{ sec.name }}<span class="pack-small" v-if="sec.stockCount"> · {{ sec.stockCount }} from GOB stock</span></h3>
           <table class="pack-table pack-check">
@@ -1409,7 +1411,7 @@
         </div>
 
         <div class="agreement-part">
-        <h2 class="pack-h2 pack-break">4. Installer agreement</h2>
+        <h2 class="pack-h2">Installer agreement</h2>
         <p class="pack-p">This agreement is made between <strong>Garden Office Buildings</strong> ("the Company") and <strong>{{ state.installer && state.installer.name || '________________' }}</strong> ("the Installer") for the installation of one garden room at the site detailed below.</p>
         <h4>1. Parties &amp; site</h4>
         <table class="pack-table pack-kv">
