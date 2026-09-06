@@ -491,6 +491,7 @@ function buildLineItems(result, state) {
 
 // Format currency
 export function formatPrice(amount) {
-  if (amount < 0) return `-£${Math.abs(amount).toLocaleString('en-GB')}`;
-  return `£${amount.toLocaleString('en-GB')}`;
+  const n = Math.round(Math.abs(Number(amount) || 0) * 100) / 100;
+  const txt = Number.isInteger(n) ? n.toLocaleString('en-GB') : n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${amount < 0 ? '-' : ''}£${txt}`;
 }

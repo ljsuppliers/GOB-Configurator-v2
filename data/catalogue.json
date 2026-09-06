@@ -727,7 +727,7 @@
   },
   {
    "name": "Anthracite touch-up pen",
-   "category": "Fixings",
+   "category": "Installation kit",
    "sku": "",
    "unit": "each",
    "unitCost": 9.0,
@@ -735,12 +735,13 @@
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
-   "notes": "CLAUDE ESTIMATE £9. RAL 7016 scratch repair for panels and trims - 1 per job."
+   "inStock": true,
+   "notes": "CLAUDE ESTIMATE £9. RAL 7016 scratch repair for panels and trims - 1 per job.",
+   "supply": "stock"
   },
   {
    "name": "Composite cladding screws",
-   "category": "Fixings",
+   "category": "Installation kit",
    "sku": "",
    "unit": "each",
    "unitCost": 0.1,
@@ -748,12 +749,13 @@
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
-   "notes": "Self-drilling, into batten. TBD spec/spacing."
+   "inStock": true,
+   "notes": "Self-drilling, into batten. TBD spec/spacing.",
+   "supply": "stock"
   },
   {
    "name": "Flitch beam bolts",
-   "category": "Fixings",
+   "category": "Installation kit",
    "sku": "",
    "unit": "each",
    "unitCost": 0.4,
@@ -761,8 +763,9 @@
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
-   "notes": "Through-bolts joining the 5x2 pair. ~600mm centres."
+   "inStock": true,
+   "notes": "Through-bolts joining the 5x2 pair. ~600mm centres.",
+   "supply": "stock"
   },
   {
    "name": "Foil insulation tape (roll)",
@@ -794,7 +797,7 @@
   },
   {
    "name": "Mitre bond kit (adhesive + activator)",
-   "category": "Fixings",
+   "category": "Installation kit",
    "sku": "",
    "unit": "kit",
    "unitCost": 6.0,
@@ -802,12 +805,13 @@
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
-   "notes": "CLAUDE ESTIMATE £6. Superglue + activator for skirting and trim mitres - 1 per job."
+   "inStock": true,
+   "notes": "CLAUDE ESTIMATE £6. Superglue + activator for skirting and trim mitres - 1 per job.",
+   "supply": "stock"
   },
   {
    "name": "Packer shim assortment (box)",
-   "category": "Fixings",
+   "category": "Installation kit",
    "sku": "",
    "unit": "box",
    "unitCost": 8.0,
@@ -815,12 +819,13 @@
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
-   "notes": "CLAUDE ESTIMATE £8. Mixed plastic packers for levelling/plumbing door + window frames (~10mm opening tolerance, ~5mm per side). 1 box per build."
+   "inStock": true,
+   "notes": "CLAUDE ESTIMATE £8. Mixed plastic packers for levelling/plumbing door + window frames (~10mm opening tolerance, ~5mm per side). 1 box per build.",
+   "supply": "stock"
   },
   {
    "name": "uPVC frame fixing screw",
-   "category": "Fixings",
+   "category": "Installation kit",
    "sku": "",
    "unit": "each",
    "unitCost": 0.2,
@@ -828,8 +833,9 @@
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
-   "notes": "CLAUDE ESTIMATE £0.20. Fixes uPVC door/window frames: into the stick-frame studs on the front, into the panel edge/U-channel on the sides (self-drilling tip). ~8 per door/full-height window, ~6 per small window."
+   "inStock": true,
+   "notes": "CLAUDE ESTIMATE £0.20. Fixes uPVC door/window frames: into the stick-frame studs on the front, into the panel edge/U-channel on the sides (self-drilling tip). ~8 per door/full-height window, ~6 per small window.",
+   "supply": "stock"
   },
   {
    "name": "22mm P5 T&G chipboard (2400x600)",
