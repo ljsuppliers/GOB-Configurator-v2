@@ -264,8 +264,12 @@ createApp({
           status: orders.length === 0 ? 'nothing-to-order' : orders.every((o) => o.status === 'delivered') ? 'delivered' : orders.every((o) => o.status) ? 'ordered' : 'not-ordered',
         };
       });
-      const rank = (n) => (n === 'NOT IN CATALOGUE' ? 2 : n === 'NO SUPPLIER SET' ? 1 : 0);
-      return secs.sort((a, b) => rank(a.name) - rank(b.name) || b.subtotal - a.subtotal || a.name.localeCompare(b.name));
+      // Same order as the designer's job pack: Kingspan, builders merchant, GAP,
+      // Montravia, Spectral, Advanced Sealed Units, then the rest alphabetically;
+      // no-supplier / not-in-catalogue buckets last.
+      const PRIORITY = ['Kingspan', 'Builders merchant', 'Local timber merchant', 'GAP', 'Montravia', 'Spectral', 'Advanced Sealed Units'];
+      const rank = (n) => (n === 'NOT IN CATALOGUE' ? 200 : n === 'NO SUPPLIER SET' ? 100 : PRIORITY.indexOf(n) >= 0 ? PRIORITY.indexOf(n) : 50);
+      return secs.sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name));
     },
     /** Logistics split for the printed pack: straight-to-site deliveries by
      *  supplier vs what the factory must load (factory deliveries + stock). */
@@ -325,9 +329,11 @@ createApp({
       const bySup = (arr) => {
         const m = new Map();
         for (const l of arr) { const k = l.inCatalogue ? (l.supplier || 'No supplier set') : 'Not in catalogue'; if (!m.has(k)) m.set(k, []); m.get(k).push(l); }
-        // biggest supplier first (by spend, then line count) - Liam 2026-09-06
-        return [...m.entries()].map(([name, ls]) => ({ name, lines: ls.sort((a, b) => (a.material?.category || '').localeCompare(b.material?.category || '')), spend: ls.reduce((t, l) => t + (l.lineCost || 0), 0) }))
-          .sort((a, b) => b.spend - a.spend || b.lines.length - a.lines.length || a.name.localeCompare(b.name));
+        // Designer job-pack order: Kingspan, builders merchant, GAP, Montravia, Spectral, ASU, then alphabetical
+        const PRIORITY = ['Kingspan', 'Builders merchant', 'Local timber merchant', 'GAP', 'Montravia', 'Spectral', 'Advanced Sealed Units'];
+        const rank = (n) => (PRIORITY.indexOf(n) >= 0 ? PRIORITY.indexOf(n) : 50);
+        return [...m.entries()].map(([name, ls]) => ({ name, lines: ls.sort((a, b) => (a.material?.category || '').localeCompare(b.material?.category || '')) }))
+          .sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name));
       };
       const toSite = lines.filter((l) => !l.inStock && l.destination !== 'factory');
       const factory = lines.filter((l) => l.inStock || l.destination === 'factory');

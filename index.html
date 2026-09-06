@@ -1398,7 +1398,7 @@
         </table>
         <p class="pack-note">The install fee includes the plastering and decoration: the Installer arranges and pays the plasterer. Electrical work is by the Company's electrician and is not part of the install fee. Materials are supplied by the Company - check every delivery against the checklist below and report damage or shortages the same day.</p>
 
-        <h2 class="pack-h2">4. Materials checklist (by supplier, biggest order first)</h2>
+        <h2 class="pack-h2">4. Materials checklist (by supplier)</h2>
         <div v-for="sec in supplierSections" :key="'pk'+sec.name" class="pack-cat">
           <h3>{{ sec.name }}<span class="pack-small" v-if="sec.stockCount"> · {{ sec.stockCount }} from GOB stock</span></h3>
           <table class="pack-table pack-check">
@@ -1857,7 +1857,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=76"></script>
+<script type="module" src="js/app.js?v=77"></script>
 
 </body>
 </html>
