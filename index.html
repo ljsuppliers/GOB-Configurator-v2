@@ -1377,7 +1377,7 @@
         <table class="pack-table">
           <tr><th>External size</th><td>{{ (state.width/1000).toFixed(2) }}m wide × {{ (state.depth/1000).toFixed(2) }}m deep × {{ (state.height/1000).toFixed(2) }}m high (excludes canopy/decking)</td></tr>
           <tr><th>Internal size</th><td>{{ ((state.width-300)/1000).toFixed(2) }}m × {{ ((state.depth-300)/1000).toFixed(2) }}m (150mm per wall)</td></tr>
-          <tr><th>Build system</th><td>PREMIUM: 5x2 C24 floor on pedestals/screws + 75mm PIR + 22mm chipboard · 100mm Kingspan panels on unclad walls with 3x2 CLS lining · 4x2 CLS stick walls where clad (75mm PIR) · flat timber roof, firrings 1:40 to the rear, 18mm T&G OSB, EPDM · plastered &amp; decorated</td></tr>
+          <tr><th>Build system</th><td>PREMIUM: 5x2 C24 floor on pedestals/screws + 75mm PIR + 22mm chipboard · 100mm Kingspan panels on unclad walls with 3x2 CLS lining · 4x2 tanalised stick walls (front + clad sides, 75mm PIR) · flat timber roof, 70mm firrings to the rear, 18mm T&G OSB, EPDM · plastered &amp; decorated</td></tr>
           <tr><th>Foundation</th><td>{{ state.foundationType === 'ground-screw' ? 'Radix ground screws' : 'Adjustable pedestals on customer slab' }}</td></tr>
           <tr><th>Cladding</th><td>Front {{ (state.cladding.front||'').replace(/-/g,' ') }} · Left {{ (state.cladding.left||'').replace(/-/g,' ') }} · Right {{ (state.cladding.right||'').replace(/-/g,' ') }} · Rear {{ (state.cladding.rear||'').replace(/-/g,' ') }}</td></tr>
           <tr v-if="state.tier === 'signature'"><th>Canopy / decking</th><td>{{ state.hasCanopy !== false ? ((state.overhangDepth||400)) + 'mm canopy' : 'no canopy' }}{{ state.hasDecking !== false ? ' · decking ' + (((state.deckingDepth||400) + (state.structuralExtras && state.structuralExtras.additionalDecking||0)*140)) + 'mm deep' : '' }} · corners left {{ state.cornerLeft || 'open' }}, right {{ state.cornerRight || 'open' }}<template v-if="state.hasCanopy !== false"> · canopy method: {{ state.height >= 2750 ? 'joists oversail 400mm + 2x2 layer under' : 'firrings overhang 400mm, 2x2 frame on the front wall top' }}</template></td></tr>
@@ -1860,7 +1860,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=82"></script>
+<script type="module" src="js/app.js?v=83"></script>
 
 </body>
 </html>

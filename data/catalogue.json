@@ -1,5 +1,5 @@
 {
- "version": 8,
+ "version": 9,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -1471,7 +1471,7 @@
    "orderUnit": "4.8m length",
    "destination": "site",
    "inStock": false,
-   "notes": "Laid flat, spans width-ways across screws/pedestals at 1.1m centres. Local timber merchant."
+   "notes": "Tanalised C24 4x2 (47x95): stick-wall studs/plates/noggins, sole plates, open-corner posts, flat wall plates on panel tops. Liam 2026-09-06: NO CLS 4x2 anywhere."
   },
   {
    "name": "5x2 tanalised C24 timber",
@@ -1539,19 +1539,6 @@
    "notes": "CLAUDE ESTIMATE £1.40/m (38x63 kiln-dried CLS). PREMIUM system 2026-08-24: lining frame inside the panel walls (studs @600 + plates), replaces the wall double battens. Bays left empty - panels insulate."
   },
   {
-   "name": "CLS 4x2 timber",
-   "category": "Structural timber",
-   "sku": "",
-   "unit": "linear m",
-   "unitCost": 1.9,
-   "supplier": "Builders merchant",
-   "packSize": 2.4,
-   "orderUnit": "2.4m length",
-   "destination": "site",
-   "inStock": false,
-   "notes": ""
-  },
-  {
    "name": "Tapered firring 47mm (custom cut)",
    "category": "Structural timber",
    "sku": "",
@@ -1563,19 +1550,6 @@
    "destination": "site",
    "inStock": false,
    "notes": "CUSTOM CUT per job by the timber merchant: 47mm wide tapers, 70mm at the front to 0 at the rear on EVERY building (Liam 2026-09-06), length per the order text; priced ~£3 per linear metre."
-  },
-  {
-   "name": "Treated CLS 4x2 timber",
-   "category": "Timber",
-   "sku": "",
-   "unit": "linear m",
-   "unitCost": 2.2,
-   "supplier": "",
-   "packSize": 2.4,
-   "orderUnit": "2.4m length",
-   "destination": "site",
-   "inStock": false,
-   "notes": "CLAUDE ESTIMATE £2.20/m (typically 10-20% over untreated CLS £1.90) - replace with merchant quote. Internal-frame BOTTOM plates only (sole-plate rule): same 38x89 section as untreated CLS studs, avoids the 6mm step a 45x95 tanalised plate would create under the hung lining."
   },
   {
    "name": "Canopy light (recessed, IP65)",

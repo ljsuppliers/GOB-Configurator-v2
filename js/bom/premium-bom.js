@@ -8,10 +8,10 @@
 //    joist doubled (1.2m grid). 75mm PIR on 18x38 side battens, 22mm P5 T&G.
 //  - 100mm Kingspan panels on the rear + any steel-clad side, ALL ONE LENGTH
 //    (square building, no raked sides). 3x2 CLS lining frame inside them.
-//  - Front always stick: 4x2 CLS @400, treated sole plate, 12mm ply, Tyvek,
+//  - Front always stick: 4x2 TANALISED C24 @400 (Liam 2026-09-06: no CLS 4x2 anywhere), tanalised sole plate, 12mm ply, Tyvek,
 //    75mm PIR in the bays. Slat-clad sides also stick (rockwool in bays).
 //  - Flat timber roof: joist ladder by span, stock firrings 75/100mm -> 0
-//    at the rear + 4 reverse firrings squaring the sides, 18mm T&G OSB,
+//    at the rear + 2 reverse firrings (one per side edge) squaring the sides, 18mm T&G OSB,
 //    one-piece EPDM. Vented cold roof: 100mm PIR set 30mm below joist tops.
 //  - CANOPY METHOD (Liam 2026-09-05, corrects the earlier "joists always
 //    oversail" rule):
@@ -58,9 +58,7 @@ export const USE_TAGS = {
   'U-channel (40x102x40mm)': 'Panel tops, corners, opening edges',
   'Standard base trim (steel)': 'Panel bottoms',
   'CLS 3x2 timber': 'Lining frame inside the panels',
-  'CLS 4x2 timber': 'Stick walls: front, clad sides, corners',
-  'Treated CLS 4x2 timber': 'Stick-wall sole plates',
-  '12mm Plywood (1220×2440 sheet)': 'Stick-wall sheathing + canopy box',
+    '12mm Plywood (1220×2440 sheet)': 'Stick-wall sheathing + canopy box',
   'Tyvek breather membrane': 'Over the ply, stick walls',
   'Tyvek/breather tape (roll)': 'Tyvek laps + openings',
   'Western Red Cedar slatted cladding 140×2500mm': 'External cladding',
@@ -74,7 +72,7 @@ export const USE_TAGS = {
   '6x2 tanalised C24 timber': 'Roof joists + flitch over openings',
   '7x2 tanalised C24 timber': 'Roof joists',
   'Flitch beam bolts': 'Flitch over front openings',
-  '4x2 tanalised C24 timber': 'Wall plate on panel tops',
+  '4x2 tanalised C24 timber': 'Stick walls, sole plates, corner posts, wall plates',
   '18mm OSB3 board (2440x1220)': 'Webs between doubled roof joists',
   'Tapered firring (47mm, 1:40)': 'Roof fall + canopy overhang',
   '18mm T&G OSB3 roof board (2400x590)': 'Roof deck',
@@ -353,8 +351,8 @@ export function buildPremiumBom(state, componentDefs) {
   // back-to-back + 1 on the side - team practice varies, standard TBC),
   // cloaked with the open corner trims. Doors/windows may meet glass-to-glass.
   if (openCorners > 0) {
-    add('CLS 4x2 timber', Math.ceil(openCorners * 4 * wallH * 1.10),
-      `OPEN corner post${openCorners === 1 ? '' : 's'}: ~200x200 built-up 4x2 post (4 x ${wallH.toFixed(2)}m per corner), cloaked by the corner trims`,
+    add('4x2 tanalised C24 timber', Math.ceil(openCorners * 4 * wallH * 1.10),
+      `OPEN corner post${openCorners === 1 ? '' : 's'}: ~200x200 built-up tanalised 4x2 post (4 x ${wallH.toFixed(2)}m per corner), cloaked by the corner trims`,
       [{ len: wallH, n: openCorners * 4, what: 'open-corner post members' }]);
   }
   // ---- CORNER TRIMS (Liam 2026-09-06) ----
@@ -389,14 +387,14 @@ export function buildPremiumBom(state, componentDefs) {
       add('Corner Trim (40x180 anthracite L)', 1, `FRONT ${side} corner (no canopy/decking): plain corner`);
     }
   }
-  add('CLS 4x2 timber', Math.ceil(stickLm - soleLm), `Stick walls (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): studs @400mm + plates + noggins + opening framing, +10%`, stickCuts);
-  add('Treated CLS 4x2 timber', Math.ceil(soleLm * 1.10), `Stick-wall sole plates at deck level (treated)`, soleCuts);
+  add('4x2 tanalised C24 timber', Math.ceil(stickLm - soleLm), `Stick walls (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): studs @400mm + plates + noggins + opening framing, +10%`, stickCuts);
+  add('4x2 tanalised C24 timber', Math.ceil(soleLm * 1.10), `Stick-wall sole plates at deck level (tanalised)`, soleCuts);
   add('12mm Plywood (1220×2440 sheet)', plySheets, `Stick wall external sheathing + 10% (openings cut out on site)`,
     { orderText: `${plySheets} sheets 2440 × 1220 × 12mm structural ply (WBP/exterior grade)` });
   add('Tyvek breather membrane', tyvekM2, `Over the ply, under the battens (m2 + 10%)`,
     { orderText: `${Math.ceil(tyvekM2 / 70)} roll${Math.ceil(tyvekM2 / 70) === 1 ? '' : 's'} Tyvek Housewrap 1.4m × 50m (${tyvekM2}m² needed)` });
   add('Tyvek/breather tape (roll)', 1, `Tape laps + around openings`);
-  if (pirWallM2 > 0) add('75mm PIR insulation board', pirWallM2, `ALL stick wall bays (${stickWalls.map((x) => x.label).join(' + ')}): 75mm PIR friction-fit between the 4x2 studs (no Rockwool - partitions only)`,
+  if (pirWallM2 > 0) add('75mm PIR insulation board', pirWallM2, `ALL stick wall bays (${stickWalls.map((x) => x.label).join(' + ')}): 75mm PIR friction-fit between the tanalised 4x2 studs (no Rockwool - partitions only)`,
     { orderText: `${Math.ceil(pirWallM2 / 2.88)} boards 2400 × 1200 × 75mm PIR (stick walls, ${pirWallM2}m²)` });
   // Cladding boards + double-batten sub-frame on every slat-clad wall
   // (front always clad; sides when not steel). Closed-corner returns add
@@ -468,15 +466,15 @@ export function buildPremiumBom(state, componentDefs) {
   // whatever 70mm gives over the run - shown alongside).
   const firrFrontMm = 70;
   const firrFallText = `1:${Math.round(roofLen / 0.07)}`;
-  add('Tapered firring 47mm (custom cut)', rJoists + 4,
-    `CUSTOM MADE FOR THIS JOB: ${rJoists} firrings x ${roofLen.toFixed(2)}m long, 47mm wide, tapering from ${firrFrontMm}mm at the FRONT to 0 at the REAR (${firrFallText} fall over ${roofLen.toFixed(2)}m), one per joist; PLUS 4 REVERSE firrings x ${roofLen.toFixed(2)}m (0 at the front rising to ${firrFrontMm}mm at the rear) laid along the side edges, 2 per side, so the sides read level. Length = ${d.toFixed(2)}m building + ${canopyMm}mm front + 100mm rear oversail. ${
+  add('Tapered firring 47mm (custom cut)', rJoists + 2,
+    `CUSTOM MADE FOR THIS JOB: ${rJoists} firrings x ${roofLen.toFixed(2)}m long, 47mm wide, tapering from ${firrFrontMm}mm at the FRONT to 0 at the REAR (${firrFallText} fall over ${roofLen.toFixed(2)}m), one per joist; PLUS 2 REVERSE firrings x ${roofLen.toFixed(2)}m (0 at the front rising to ${firrFrontMm}mm at the rear), one along each side edge, so the sides read level. Length = ${d.toFixed(2)}m building + ${canopyMm}mm front + 100mm rear oversail. ${
       canopyMethod === 'firrings-overhang'
         ? `THE TALL END OVERHANGS THE FRONT BY ${canopyMm}mm ON TOP OF THE JOISTS - this overhang IS the canopy (2.5m method)`
         : canopyMethod === 'joists-oversail'
           ? `They sit on top of the oversailed joists right out to the canopy edge`
           : `They run ${canopyMm}mm past the front wall (classic token overhang)`
     }`,
-    { costQty: (rJoists + 4) * roofLen, orderText: `${rJoists} × ${roofLen.toFixed(2)}m tapered ${firrFrontMm}→0mm  +  4 × ${roofLen.toFixed(2)}m REVERSE (0→${firrFrontMm}mm) for the side edges  · 47mm wide` });
+    { costQty: (rJoists + 2) * roofLen, orderText: `${rJoists} × ${roofLen.toFixed(2)}m tapered ${firrFrontMm}→0mm  +  2 × ${roofLen.toFixed(2)}m REVERSE (0→${firrFrontMm}mm), one per side edge  · 47mm wide` });
   add('18mm T&G OSB3 roof board (2400x590)', Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2), `Roof deck ${(w + 0.2).toFixed(2)} x ${roofLen.toFixed(2)}m incl. 100mm side overhangs + ${canopyMm}mm front + 100mm rear, +5%`,
     { orderText: `${Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2)} boards 2400 × 590 × 18mm OSB3 T&G (roof deck ${(w + 0.2).toFixed(2)} × ${roofLen.toFixed(2)}m)` });
   add('EPDM roof kit (membrane, adhesive, edge trims)', Math.ceil((w + 0.2) * roofLen * 1.15), `One-piece EPDM, deck m2 + 15% wraps/upstands, up-and-over the squared side edges`,
@@ -667,7 +665,7 @@ export function buildPremiumBom(state, componentDefs) {
   add('TimberLok 225mm', up(fJoists * 2 * 2 + 8), `FLOOR RIM through into the joist ends: 2 per joist end, both rims (${fJoists} joists) + 8 spare, +25%. (nearest stock size 200/250mm TimberLok)`);
   // -- Wood screws --
   add('Wood screw 5.0 x 100mm', up(totalStuds * 6 + (hasCanopy ? Math.ceil(w / 0.4) * 2 + 8 : 0) + wideFront.length * 12), `STICK FRAMING: ~6 per stud (studs to plates, noggins, kings; ${totalStuds} studs) + canopy 2x2 frame/box fixings + flitch packing, +25%`);
-  add('Wood screw 5.0 x 70mm', up(cladBattenLm / 0.4 + 2 * (fJoists - 1) * d / 0.6 + (rJoists + 4) * roofLen / 0.4), `BATTENS + FIRRINGS: cladding sub-frame battens @400mm crossings (${cladBattenLm.toFixed(0)}m) + floor PIR battens @600mm + firrings down into joists @400mm, +25%`);
+  add('Wood screw 5.0 x 70mm', up(cladBattenLm / 0.4 + 2 * (fJoists - 1) * d / 0.6 + (rJoists + 2) * roofLen / 0.4), `BATTENS + FIRRINGS: cladding sub-frame battens @400mm crossings (${cladBattenLm.toFixed(0)}m) + floor PIR battens @600mm + firrings down into joists @400mm, +25%`);
   add('Wood screw 5.0 x 50mm', up(plySheets * 30 + floorM2 * 12 + roofDeckM2 * 10 + pedestals * 4), `SHEET FIXING: ply sheathing ~30/sheet (${plySheets} sheets) + 22mm floor deck ~12/m² (${floorM2.toFixed(1)}m²) + 18mm roof deck ~10/m² (${roofDeckM2.toFixed(1)}m²) + 4 per pedestal head, +25%`);
   add('Drywall screw 3.5 x 38mm black (coarse)', up(boardM2 * 12), `PLASTERBOARD: ~12/m² over ${boardM2.toFixed(0)}m² of board, +25%`);
   // -- Steel / trim fixings --
