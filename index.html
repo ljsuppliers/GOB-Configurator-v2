@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=19">
+  <link rel="stylesheet" href="css/app.css?v=20">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -1392,6 +1392,12 @@
 
 
         <div class="payment-part">
+        <div class="agreement-head">
+          <div class="pack-brand">Garden Office Buildings</div>
+          <h1>Installer agreement</h1>
+          <div class="pack-ref">Ref {{ orderRef }} · {{ state.customer && state.customer.name }} · {{ state.customer && state.customer.address }}</div>
+          <div class="pack-small">Installer: {{ state.installer && state.installer.name || '________________' }} · Start {{ fmtDateLong(state.installer && state.installer.startDate) }} · End {{ fmtDateLong(state.installer && state.installer.endDate) }}</div>
+        </div>
         <h2 class="pack-h2">Installation payment</h2>
         <table class="pack-table pack-pay">
           <tr v-for="l in labour.install.lines" :key="l.id"><td>{{ l.label }}</td><td class="num">{{ l.days !== null ? l.days + ' d' : '' }}</td><td class="num">{{ fmt(l.amount) }}</td></tr>
@@ -1861,7 +1867,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=90"></script>
+<script type="module" src="js/app.js?v=91"></script>
 
 </body>
 </html>

@@ -549,6 +549,7 @@ createApp({
         }
       } catch (e) { console.warn('restore failed', e); }
       finally { this._restoring = false; }
+      if (p.get('print') === 'agreement') this.printMode = 'agreement';
       this.applyView(view);
       window.addEventListener('popstate', (ev) => {
         const q = new URLSearchParams(window.location.search);

@@ -724,9 +724,15 @@ html, body {
   /* Job pack print: drawing + cover + build summary + checklist (NO money) */
   .print-pack-only .payment-part, .print-pack-only .agreement-part { display: none !important; }
   /* Agreement print: cover + installation payment + agreement (NO drawing/checklist) */
-  .print-agreement-only .pack > :not(.agreement-part):not(.payment-part):not(.pack-cover) { display: none !important; }
-  .print-agreement-only .pack-cover { break-after: avoid; }
-  .print-agreement-only .agreement-part { break-before: page; }
+  .print-agreement-only .pack > :not(.agreement-part):not(.payment-part) { display: none !important; }
+  .print-agreement-only .agreement-head { display: block; margin-bottom: 8mm; }
+  .print-agreement-only .agreement-head h1 { font-size: 30px; margin: 2px 0; }
+  .print-agreement-only .agreement-part { break-before: auto; }
+  /* one A3 page: tighter type for the agreement print */
+  .print-agreement-only .pack-table, .print-agreement-only .pack-p, .print-agreement-only .pack-ul, .print-agreement-only .pack-note { font-size: 13.5px; }
+  .print-agreement-only .pack-h2 { font-size: 19px; margin: 14px 0 6px; }
+  .print-agreement-only .installer-page h4, .print-agreement-only h4 { font-size: 14px; margin: 8px 0 2px; }
+  .print-agreement-only .pack-p { margin: 2px 0; line-height: 1.35; }
 }
 
 @media print {
@@ -741,6 +747,7 @@ html, body {
 
 /* Drawings on their own LANDSCAPE page in both packs (Liam 2026-09-06) */
 .pack-drawing-title { display: none; }
+.agreement-head { display: none; }
 @media print {
   @page { size: A3 portrait; margin: 12mm; }
   @page drawing { size: A3 landscape; margin: 10mm; }
