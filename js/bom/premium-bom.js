@@ -106,7 +106,7 @@ export const USE_TAGS = {
   'Skirting board': 'Internal perimeter',
   'Decorators caulk (tube)': 'Internal junctions',
   'Wickes laminate flooring - Natural Oak (1.48m² pack)': 'Internal floor', 'Wickes laminate flooring - Light Grey (1.48m² pack)': 'Internal floor', 'Wickes laminate underlay (10.03m² pack)': 'Under the laminate',
-  'Composite decking board (3.6m)': 'Front decking',
+  'Trex Clam Shell composite decking board (140 × 4880mm)': 'Front decking',
   'Decking screws - colour-headed (Winchester grey)': 'Decking boards',
   'Bitumen paint (1L)': 'Decking sub-frame',
   'Door mat': 'Handover',
@@ -648,8 +648,14 @@ export function buildPremiumBom(state, componentDefs) {
   /* ---------- DECKING ---------- */
   if (hasDecking) {
     const deckDepthM = ((state.deckingDepth || 400) + (state.structuralExtras?.additionalDecking || 0) * 140) / 1000;
-    add('Composite decking board (3.6m)', Math.ceil((w * deckDepthM) / (3.6 * 0.14) * 1.1), `Front decking ${w.toFixed(2)}m x ${deckDepthM.toFixed(2)}m + 10%`,
-      { orderText: `${Math.ceil((w * deckDepthM) / (3.6 * 0.14) * 1.1)} composite decking boards 3.6m × 140mm (front deck ${w.toFixed(2)} × ${deckDepthM.toFixed(2)}m)` });
+    // Trex Clam Shell, 140mm × 4.88m boards (Liam 2026-09-06). Rows across the
+    // deck depth at 146mm pitch (140 board + 6 gap), boards per row along the
+    // width, + 1 spare board.
+    const deckRows = Math.max(1, Math.round(deckDepthM / 0.146));
+    const perRow = Math.ceil(w / 4.88);
+    const deckBoards = deckRows * perRow + 1;
+    add('Trex Clam Shell composite decking board (140 × 4880mm)', deckBoards, `Front decking ${w.toFixed(2)}m x ${deckDepthM.toFixed(2)}m: ${deckRows} row${deckRows === 1 ? '' : 's'} × ${perRow} board${perRow === 1 ? '' : 's'} per row + 1 spare`,
+      { orderText: `${deckBoards} × Trex Clam Shell 140mm × 4.88m (deck ${w.toFixed(2)} × ${deckDepthM.toFixed(2)}m, ${deckRows} rows)` });
     add('Decking screws - colour-headed (Winchester grey)', Math.ceil(w * deckDepthM * 25 * 1.25), `~25/m2 + 25% over-estimate (Liam: over on fixings)`);
   }
 

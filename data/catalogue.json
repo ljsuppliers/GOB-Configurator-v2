@@ -1,5 +1,5 @@
 {
- "version": 11,
+ "version": 12,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -137,19 +137,6 @@
    "destination": "site",
    "inStock": false,
    "notes": "200mm wide × 2500mm length, sold per length"
-  },
-  {
-   "name": "Composite decking board (140×4880mm)",
-   "category": "Decking",
-   "sku": "",
-   "unit": "length",
-   "unitCost": 32.0,
-   "supplier": "Southern Sheeting",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "140mm wide × 4880mm length, sold per length. Used for both deck surface and front + side upstand."
   },
   {
    "name": "Desk window 1000x1000 (uPVC, anthracite/white)",
@@ -1800,19 +1787,6 @@
    "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC opening slot ~1200x400 | From 2D configurator components - SET COST + SUPPLIER"
   },
   {
-   "name": "Composite decking board (3.6m)",
-   "category": "Decking",
-   "sku": "",
-   "unit": "each",
-   "unitCost": 18.72,
-   "supplier": "Southern Sheeting",
-   "packSize": 1,
-   "orderUnit": "3.6m board",
-   "destination": "site",
-   "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Hollow/reversible 3.6m composite board £18.72 ex (£22.47 inc, Omega); Cladco trade 3.6m comparable | SET COST + SUPPLIER"
-  },
-  {
    "name": "13A double socket with USB",
    "category": "Electrical kit",
    "sku": "",
@@ -2606,6 +2580,20 @@
    "destination": "site",
    "inStock": false,
    "notes": "CLAUDE ESTIMATE ex VAT - GAP fascia joint trim; 1 per join + 1 spare per job (Liam 2026-09-06)."
+  },
+  {
+   "name": "Trex Clam Shell composite decking board (140 × 4880mm)",
+   "category": "Decking",
+   "sku": "",
+   "unit": "each",
+   "unitCost": 32,
+   "supplier": "Southern Sheeting",
+   "packSize": null,
+   "orderUnit": "4.88m board",
+   "supply": "site",
+   "destination": "site",
+   "inStock": false,
+   "notes": "Trex Enhance Clam Shell, 140mm × 25mm × 4.88m (Liam 2026-09-06). £32 per board carried over from the old 4880mm line - confirm."
   }
  ]
 }
