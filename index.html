@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=20">
+  <link rel="stylesheet" href="css/app.css?v=21">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -1085,31 +1085,10 @@
       <!-- ===== PRINT-ONLY: LOGISTICS & SITE PACK (no prices) ===== -->
       <div class="print-only logi-pack" v-if="bomLines.length">
         <div class="pack-drawing pack-drawing-page"><div class="pack-drawing-title">Drawing · {{ orderRef }} · {{ state.customer && state.customer.name }}</div><div v-html="packDrawingSvg"></div></div>
-        <div class="pack-cover">
-          <div class="pack-brand">Garden Office Buildings</div>
-          <h1>Materials &amp; logistics pack</h1>
-          <div class="pack-ref">Ref {{ orderRef }} · printed {{ new Date().toLocaleDateString('en-GB') }}</div>
-          <div class="pack-cover-grid">
-            <div class="pack-box"><div class="pack-box-t">Customer</div><div>{{ state.customer && state.customer.name }}</div><div class="pack-small">{{ state.customer && state.customer.phone }}</div></div>
-            <div class="pack-box"><div class="pack-box-t">Site address</div><div>{{ state.customer && state.customer.address || '________________' }}</div></div>
-            <div class="pack-box"><div class="pack-box-t">Installer</div><div>{{ state.installer && state.installer.name || '________________' }}</div><div class="pack-small">{{ state.installer && state.installer.phone }} {{ state.installer && state.installer.email }}</div></div>
-            <div class="pack-box"><div class="pack-box-t">Install start</div><div>{{ fmtDateLong(state.installer && state.installer.startDate) }}</div></div>
-            <div class="pack-box"><div class="pack-box-t">Install end</div><div>{{ fmtDateLong(state.installer && state.installer.endDate) }}</div></div>
-            <div class="pack-box"><div class="pack-box-t">Building</div><div>{{ (state.width/1000).toFixed(1) }}m × {{ (state.depth/1000).toFixed(1) }}m × {{ (state.height/1000).toFixed(2) }}m{{ state.tier === 'signature' && state.hasCanopy !== false ? ' + ' + ((state.overhangDepth||400)/1000).toFixed(1) + 'm canopy/decking' : '' }}</div><div class="pack-small">{{ jobSummary }}</div></div>
-          </div>
+        <div class="logi-head">
+          <strong>Materials &amp; logistics · {{ orderRef }}</strong> · {{ state.customer && state.customer.name }} · {{ state.customer && state.customer.address }} · installer {{ state.installer && state.installer.name || '—' }} · start {{ state.installer && state.installer.startDate ? new Date(state.installer.startDate).toLocaleDateString('en-GB') : '—' }} · printed {{ new Date().toLocaleDateString('en-GB') }}
         </div>
-
-        <h2 class="pack-h2">The building</h2>
-        <table class="pack-table">
-          <tr><th>Cladding</th><td>Front {{ (state.cladding.front||'').replace(/-/g,' ') }} · Left {{ (state.cladding.left||'').replace(/-/g,' ') }} · Right {{ (state.cladding.right||'').replace(/-/g,' ') }} · Rear {{ (state.cladding.rear||'').replace(/-/g,' ') }}</td></tr>
-          <tr v-if="state.tier === 'signature'"><th>Canopy / corners</th><td>{{ state.hasCanopy !== false ? ((state.overhangDepth||400)) + 'mm canopy - ' + (state.height >= 2750 ? 'joists oversail 400mm + 2x2 layer under' : 'firrings overhang 400mm, 2x2 frame on the front wall top') : 'no canopy' }} · corners left {{ state.cornerLeft || 'open' }}, right {{ state.cornerRight || 'open' }}</td></tr>
-          <tr><th>Foundation</th><td>{{ state.foundationType === 'ground-screw' ? 'Radix ground screws' : 'Adjustable pedestals on customer slab' }}</td></tr>
-          <tr v-for="elev in ['front','left','right','rear']" :key="'lg'+elev" v-if="openingsOn(elev).length"><th style="text-transform:capitalize">{{ elev }} openings</th><td><span v-for="c in openingsOn(elev)" :key="c.id" class="pack-chip">{{ c.def.label || c.type }}<template v-if="c.def.width"> · {{ c.def.width }}mm</template> @ {{ c.positionX }}mm</span></td></tr>
-          <tr v-if="state.partitionRoom && state.partitionRoom.enabled"><th>Partition</th><td>{{ state.partitionRoom.label || state.partitionRoom.type }} {{ state.partitionRoom.width }}×{{ state.partitionRoom.depth }}mm, {{ state.partitionRoom.corner }} corner</td></tr>
-          <tr v-if="state.customer && state.customer.notes"><th>Notes</th><td>{{ state.customer.notes }}</td></tr>
-        </table>
-
-        <h2 class="pack-h2 pack-break">A. Delivered straight to site by the supplier ({{ logistics.counts.toSite }} lines)</h2>
+        <h2 class="pack-h2">A. Delivered straight to site by the supplier ({{ logistics.counts.toSite }} lines)</h2>
         <p class="pack-note">Check each delivery against this list on arrival. Report damage or shortages to the office the same day.</p>
         <div v-for="g in logistics.toSite" :key="'ts'+g.name" class="pack-cat">
           <h3>{{ g.name }}</h3>

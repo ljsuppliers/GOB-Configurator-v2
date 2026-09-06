@@ -776,3 +776,5 @@ html, body {
   .pack-cat h3 { break-after: avoid; page-break-after: avoid; }
   .pack-check tr { break-inside: avoid; page-break-inside: avoid; }
 }
+
+.logi-head { font-size: 13px; color: #334155; border-bottom: 2px solid #0f766e; padding: 4px 0 6px; margin-bottom: 10px; }
