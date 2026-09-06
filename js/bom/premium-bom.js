@@ -396,9 +396,8 @@ export function buildPremiumBom(state, componentDefs) {
   const wideFront = fhOn(front).filter((o) => o.widthM >= 1.8);
   if (wideFront.length > 0) {
     const flitchLm = wideFront.reduce((s, o) => s + 2 * (o.widthM + 0.3), 0);
-    add('6x2 tanalised C24 timber', Math.ceil(flitchLm * 1.05), `Flitch pairs over ${wideFront.length} wide front opening${wideFront.length === 1 ? '' : 's'} (opening + 150mm bearing each side, x2 timbers)`,
+    add('6x2 tanalised C24 timber', Math.ceil(flitchLm * 1.05), `Flitch pairs over ${wideFront.length} wide front opening${wideFront.length === 1 ? '' : 's'} (opening + 150mm bearing each side, x2 timbers, laminated with TimberLok 100s - no bolts)`,
       wideFront.map((o) => ({ len: o.widthM + 0.3, n: 2, what: `flitch pair over ${(o.widthM * 1000).toFixed(0)}mm opening` })));
-    add('Flitch beam bolts', wideFront.reduce((s, o) => s + Math.ceil((o.widthM + 0.3) / 0.6), 0), `~600mm centres`);
   }
 
   /* ---------- ROOF ---------- */
@@ -550,7 +549,6 @@ export function buildPremiumBom(state, componentDefs) {
   }
   const opCount = [...front, ...rear, ...left, ...right].length;
   if (opCount > 0) {
-    add('uPVC frame fixing screw', opCount * 8, `~8 per opening`);
     add('Door/window seal', opCount, `1 per opening`);
     add('25x25mm white PVC reveal trim (2.5m length)', Math.ceil(opCount * 5.5 / 2.5) + 2, `Reveals + 2 spare`);
   }
@@ -606,7 +604,6 @@ export function buildPremiumBom(state, componentDefs) {
   // -- Roof joist hangers + ties --
   add('Jiffy hanger 47mm (mini joist hanger)', up(rJoists * 2), `ROOF JOISTS: 1 hanger per joist end on the front + rear plates (${rJoists} joists x 2), +25%`);
   add('Square twist nails 30mm (1kg bag)', Math.ceil(up(rJoists * 2) * 8 / 350), `~8 nails per jiffy hanger, ~350 nails per 1kg bag`);
-  add('Twisted restraint strap 30x2.5x600mm', Math.ceil(w / 1.2) * 2, `ROOF TIE-DOWN: straps over the joists down the face of the front + rear plates/panels @1.2m centres - resists wind uplift on a lightweight flat roof (${Math.ceil(w / 1.2)} per side)`);
   // -- Sealants + adhesives (Liam: we use a LOT of silicone; 14.5 tubes on a 17m-perimeter Maxi) --
   add('Silicone - anthracite grey RAL 7016 (310ml)', Math.ceil(perim * 0.85), `EXTERNAL: trims, panel joints, openings - ~0.85 tubes per metre of external perimeter (${perim.toFixed(1)}m)`);
   add('Silicone - clear (310ml)', Math.ceil(perim * 0.85), `Panel T&G joints, flashings, glazing - ~0.85 tubes per metre of perimeter`);

@@ -754,20 +754,6 @@
    "supply": "stock"
   },
   {
-   "name": "Flitch beam bolts",
-   "category": "Installation kit",
-   "sku": "",
-   "unit": "each",
-   "unitCost": 0.4,
-   "supplier": "Montravia",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": true,
-   "notes": "Through-bolts joining the 5x2 pair. ~600mm centres.",
-   "supply": "stock"
-  },
-  {
    "name": "Foil insulation tape (roll)",
    "category": "Electrical kit",
    "sku": "",
@@ -821,20 +807,6 @@
    "destination": "site",
    "inStock": true,
    "notes": "CLAUDE ESTIMATE £8. Mixed plastic packers for levelling/plumbing door + window frames (~10mm opening tolerance, ~5mm per side). 1 box per build.",
-   "supply": "stock"
-  },
-  {
-   "name": "uPVC frame fixing screw",
-   "category": "Installation kit",
-   "sku": "",
-   "unit": "each",
-   "unitCost": 0.2,
-   "supplier": "Montravia",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": true,
-   "notes": "CLAUDE ESTIMATE £0.20. Fixes uPVC door/window frames: into the stick-frame studs on the front, into the panel edge/U-channel on the sides (self-drilling tip). ~8 per door/full-height window, ~6 per small window.",
    "supply": "stock"
   },
   {
@@ -2454,20 +2426,6 @@
    "destination": "site",
    "inStock": true,
    "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. 30x3.75 galvanised square twist nails 1kg ~£4.50 ex (Builders Metalwork). Jiffy hangers. LINK: https://www.buildersmetalwork.com/30x3.75mm_galvanised_square_twist_nails.html"
-  },
-  {
-   "name": "Twisted restraint strap 30x2.5x600mm",
-   "category": "Installation kit",
-   "sku": "",
-   "unit": "each",
-   "unitCost": 1.5,
-   "supplier": "Montravia",
-   "packSize": 1,
-   "orderUnit": "each",
-   "supply": "stock",
-   "destination": "site",
-   "inStock": true,
-   "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Light-duty twisted (100mm) restraint strap 600mm ~£1.50 ex (TC Fixings Simpson L06T10 £1.77). Roof tie-down to plates. LINK: https://www.tcfixings.co.uk/product/simpson-600-x-30-x-2mm-light-restraint-strap-twist-100/16819"
   },
   {
    "name": "Silicone - anthracite grey RAL 7016 (310ml)",
