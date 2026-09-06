@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=16">
+  <link rel="stylesheet" href="css/app.css?v=18">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -1084,6 +1084,7 @@
 
       <!-- ===== PRINT-ONLY: LOGISTICS & SITE PACK (no prices) ===== -->
       <div class="print-only logi-pack" v-if="bomLines.length">
+        <div class="pack-drawing pack-drawing-page"><div class="pack-drawing-title">Drawing · {{ orderRef }} · {{ state.customer && state.customer.name }}</div><div v-html="packDrawingSvg"></div></div>
         <div class="pack-cover">
           <div class="pack-brand">Garden Office Buildings</div>
           <h1>Materials &amp; logistics pack</h1>
@@ -1099,7 +1100,6 @@
         </div>
 
         <h2 class="pack-h2">The building</h2>
-        <div class="pack-drawing pack-drawing-page"><div class="pack-drawing-title">Drawing · {{ orderRef }} · {{ state.customer && state.customer.name }}</div><div v-html="packDrawingSvg"></div></div>
         <table class="pack-table">
           <tr><th>Cladding</th><td>Front {{ (state.cladding.front||'').replace(/-/g,' ') }} · Left {{ (state.cladding.left||'').replace(/-/g,' ') }} · Right {{ (state.cladding.right||'').replace(/-/g,' ') }} · Rear {{ (state.cladding.rear||'').replace(/-/g,' ') }}</td></tr>
           <tr v-if="state.tier === 'signature'"><th>Canopy / corners</th><td>{{ state.hasCanopy !== false ? ((state.overhangDepth||400)) + 'mm canopy - ' + (state.height >= 2750 ? 'joists oversail 400mm + 2x2 layer under' : 'firrings overhang 400mm, 2x2 frame on the front wall top') : 'no canopy' }} · corners left {{ state.cornerLeft || 'open' }}, right {{ state.cornerRight || 'open' }}</td></tr>
@@ -1359,6 +1359,7 @@
 
       <!-- ===== PRINTABLE PACK ===== -->
       <div class="pack">
+        <div class="pack-drawing pack-drawing-page"><div class="pack-drawing-title">Drawing · {{ orderRef }} · {{ state.customer && state.customer.name }}</div><div v-html="packDrawingSvg"></div></div>
         <div class="pack-cover">
           <div class="pack-brand">Garden Office Buildings</div>
           <h1>Job pack</h1>
@@ -1389,10 +1390,8 @@
           <tr v-if="state.customer && state.customer.notes"><th>Notes</th><td>{{ state.customer.notes }}</td></tr>
         </table>
 
-        <h2 class="pack-h2">2. Drawings</h2>
-        <div class="pack-drawing pack-drawing-page"><div class="pack-drawing-title">Drawing · {{ orderRef }} · {{ state.customer && state.customer.name }}</div><div v-html="packDrawingSvg"></div></div>
 
-        <h2 class="pack-h2">3. Installation payment</h2>
+        <h2 class="pack-h2">2. Installation payment</h2>
         <table class="pack-table pack-pay">
           <tr v-for="l in labour.install.lines" :key="l.id"><td>{{ l.label }}</td><td class="num">{{ l.days !== null ? l.days + ' d' : '' }}</td><td class="num">{{ fmt(l.amount) }}</td></tr>
           <tr class="pack-total"><td>Agreed install fee{{ installerDeal.overridden ? ' (agreed figure)' : '' }}</td><td class="num">{{ installerDeal.days }} d</td><td class="num">{{ fmt(installerDeal.fee) }}</td></tr>
@@ -1401,7 +1400,7 @@
         </table>
         <p class="pack-note">The install fee includes the plastering and decoration: the Installer arranges and pays the plasterer. Electrical work is by the Company's electrician and is not part of the install fee. Materials are supplied by the Company - check every delivery against the checklist below and report damage or shortages the same day.</p>
 
-        <h2 class="pack-h2">4. Materials checklist (by supplier)</h2>
+        <h2 class="pack-h2">3. Materials checklist (by supplier)</h2>
         <div v-for="sec in supplierSections" :key="'pk'+sec.name" class="pack-cat">
           <h3>{{ sec.name }}<span class="pack-small" v-if="sec.stockCount"> · {{ sec.stockCount }} from GOB stock</span></h3>
           <table class="pack-table pack-check">
@@ -1410,7 +1409,7 @@
         </div>
 
         <div class="agreement-part">
-        <h2 class="pack-h2 pack-break">5. Installer agreement</h2>
+        <h2 class="pack-h2 pack-break">4. Installer agreement</h2>
         <p class="pack-p">This agreement is made between <strong>Garden Office Buildings</strong> ("the Company") and <strong>{{ state.installer && state.installer.name || '________________' }}</strong> ("the Installer") for the installation of one garden room at the site detailed below.</p>
         <h4>1. Parties &amp; site</h4>
         <table class="pack-table pack-kv">
@@ -1421,7 +1420,7 @@
           <tr><th>Job reference</th><td>{{ orderRef }}</td></tr>
         </table>
         <h4>2. Scope of work</h4>
-        <p class="pack-p">The Installer is contracted to fully install the building at the site address, as per the job specification (this job pack: build summary, drawings and materials checklist) and company standards.</p>
+        <p class="pack-p">The Installer is contracted to fully install the building at the site address, as per the job specification (this job pack: drawing, build summary and materials checklist) and company standards.</p>
         <p class="pack-p">The Installer is responsible for arranging and paying for the plastering and decoration of the interior by a plasterer; this is included in the agreed fee. Electrical work is carried out by the Company's electrician and is outside this agreement.</p>
         <p class="pack-p">The Company is responsible for supplying all materials and components. The Installer is responsible for checking the materials on delivery and reporting anything damaged or missing to the Company as soon as possible.</p>
         <h4>3. Agreed price &amp; schedule</h4>

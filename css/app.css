@@ -738,7 +738,8 @@ html, body {
 /* Drawings on their own LANDSCAPE page in both packs (Liam 2026-09-06) */
 .pack-drawing-title { display: none; }
 @media print {
-  @page drawing { size: A4 landscape; margin: 8mm; }
+  @page { size: A3 portrait; margin: 12mm; }
+  @page drawing { size: A3 landscape; margin: 10mm; }
   .pack-drawing-page { page: drawing; break-before: page; break-after: page; page-break-before: always; page-break-after: always; margin: 0; }
   .pack-drawing-page .pack-drawing-title { display: block; font-size: 11px; color: #64748b; margin: 0 0 4px; }
   .pack-drawing-page svg { width: 100% !important; height: auto !important; max-height: 185mm; }
@@ -749,7 +750,18 @@ html, body {
 }
 @media print {
   /* deterministic drawing size on the landscape page: A4 landscape usable ~281 x 194mm */
-  .pack-drawing-page { width: 277mm; overflow: hidden; }
-  .pack-drawing-page > div:last-child { width: 266mm; height: 180mm; }
-  .pack-drawing-page svg { width: 266mm !important; height: 180mm !important; max-height: none; }
+  /* A3 landscape usable ~400 x 277mm; SVG aspect 1.478 -> 400 x 271mm */
+  .pack-drawing-page { width: 396mm; height: 272mm; overflow: hidden; break-before: auto; page-break-before: auto; break-inside: avoid; }
+  .pack-drawing-page .pack-drawing-title { height: 6mm; line-height: 6mm; margin: 0; }
+  .pack-drawing-page > div:last-child { width: 385mm; height: 260mm; }
+  .pack-drawing-page svg { width: 385mm !important; height: 260mm !important; max-height: none; }
+  /* A3 portrait: scale the text up so it reads at arm's length */
+  .installer-page .pack, .logi-pack { font-size: 15px; }
+  .pack-table, .pack-check td, .pack-p, .pack-ul, .pack-note { font-size: 14.5px; }
+  .pack-h2 { font-size: 22px; } .pack-cover h1 { font-size: 34px; } .pack-box { font-size: 15px; } .pack-cat h3 { font-size: 14px; } .installer-page h4 { font-size: 15px; }
+}
+@media print {
+  .pack-cat { break-inside: auto; page-break-inside: auto; }
+  .pack-cat h3 { break-after: avoid; page-break-after: avoid; }
+  .pack-check tr { break-inside: avoid; page-break-inside: avoid; }
 }
