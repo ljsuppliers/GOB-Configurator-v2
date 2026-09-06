@@ -56,7 +56,8 @@ export const USE_TAGS = {
   '22mm P5 T&G chipboard (2400x600)': 'Floor deck',
   'Kingspan 100mm insulated wall panel (1.1m wide)': 'Rear + unclad side walls',
   'U-channel (40x102x40mm)': 'Panel tops, corners, opening edges',
-  'Standard base trim (steel)': 'Panel bottoms',
+  'Standard panel base trim (steel)': 'Panel bottoms + front FH windows',
+  'Door base trim': 'Under every door',
   'CLS 3x2 timber': 'Lining frame inside the panels',
     '12mm Plywood (1220×2440 sheet)': 'Stick-wall sheathing + canopy box',
   'Tyvek breather membrane': 'Over the ply, stick walls',
@@ -288,8 +289,10 @@ export function buildPremiumBom(state, componentDefs) {
       { costQty: panelCount * PANEL_W * wallH, orderText: `${panelCount} panels × ${(wallH * 1000).toFixed(0)}mm long, 1.1m wide, 100mm, anthracite` });
     add('U-channel (40x102x40mm)', Math.ceil((panelWalls.reduce((s, p) => s + p.run, 0) + 8 * wallH) / 3),
       `Panel wall tops + corners + opening edges / 3m lengths`);
-    add('Standard base trim (steel)', Math.ceil(panelWalls.reduce((s, p) => s + Math.max(0, p.run - p.openings.reduce((x, o) => x + o.widthM, 0)), 0) / 3),
-      `Base trim capping the panel bottoms / 3m lengths`);
+    const panelBaseM = panelWalls.reduce((s, p) => s + Math.max(0, p.run - p.openings.reduce((x, o) => x + o.widthM, 0)), 0);
+    const frontFhWinM = fhOn(front).filter((o) => !/sliding|bifold|french|door|single/.test(o.category)).reduce((x, o) => x + o.widthM, 0);
+    add('Standard panel base trim (steel)', Math.ceil((panelBaseM + frontFhWinM) / 3),
+      `Capping the panel bottoms (${panelBaseM.toFixed(1)}m)${frontFhWinM ? ` + across the front full-height windows (${frontFhWinM.toFixed(1)}m)` : ''} / 3m lengths`);
     // 3x2 CLS lining frame inside panel walls
     const liningRun = panelWalls.reduce((s, p) => s + Math.max(0, p.run - p.openings.reduce((x, o) => x + o.widthM, 0)), 0);
     const liningStuds = Math.ceil(liningRun / 0.6) + panelWalls.length;
@@ -374,19 +377,17 @@ export function buildPremiumBom(state, componentDefs) {
     right: nearCorner(front, false) && nearCorner(right, true),
   };
   add('Corner Trim (40x180 anthracite L)', 2, `REAR corners: 1 per corner`);
+  // Front corners are open corners on every build (Liam 2026-09-06): 50x50 L
+  // unless closed (U) or the glazing meets at the corner (180 L + U).
   for (const side of ['left', 'right']) {
     const corner = state[side === 'left' ? 'cornerLeft' : 'cornerRight'];
-    if (hasCanopy && hasDecking && corner === 'closed') {
+    if (corner === 'closed' && hasCanopy) {
       add('Corner Trim (200x40x40 anthracite U)', 1, `CLOSED ${side} corner: U trim over the side wall protruding forward`);
-    } else if (hasCanopy && hasDecking) {
-      if (glassAtCorner[side]) {
-        add('Corner Trim (40x180 anthracite L)', 1, `OPEN ${side} corner, glazing meets glazing: 180x40 L +`);
-        add('Corner Trim (200x40x40 anthracite U)', 1, `OPEN ${side} corner, glazing meets glazing: 200x40x40 U (with the 180x40 L forms the corner)`);
-      } else {
-        add('Corner Trim (50x50 anthracite L)', 1, `OPEN ${side} corner, cladding on both faces: 50x50 L covers front + side cladding`);
-      }
+    } else if (glassAtCorner[side]) {
+      add('Corner Trim (40x180 anthracite L)', 1, `FRONT ${side} corner, glazing meets glazing: 180x40 L +`);
+      add('Corner Trim (200x40x40 anthracite U)', 1, `FRONT ${side} corner, glazing meets glazing: 200x40x40 U (with the 180x40 L forms the corner)`);
     } else {
-      add('Corner Trim (40x180 anthracite L)', 1, `FRONT ${side} corner (no canopy/decking): plain corner`);
+      add('Corner Trim (50x50 anthracite L)', 1, `FRONT ${side} corner (open corner, cladding meets cladding): 50x50 L`);
     }
   }
   add('4x2 tanalised C24 timber', Math.ceil(stickLm - soleLm), `Stick walls (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): studs @400mm + plates + noggins + opening framing, +10%`, stickCuts);
@@ -432,6 +433,10 @@ export function buildPremiumBom(state, componentDefs) {
     add('18x38 treated batten', Math.ceil(cladBattenLm * 1.05), `Cladding double-batten sub-frame (vertical counter-battens + horizontal rows @400mm) on the clad walls`,
       cladWalls.flatMap((cw) => [{ len: wallH, n: Math.ceil(cw.run / 0.4) + 1, what: `${cw.wall} vertical counter-battens` }, { len: cw.run, n: Math.ceil(wallH / 0.4) + 1, what: `${cw.wall} horizontal batten rows` }]));
   }
+
+  // Door base trim: across the base of every door (FH windows take the panel base trim)
+  const doorBaseM = [...front, ...rear, ...left, ...right].filter((o) => /sliding|bifold|french|door|single/.test(o.category)).reduce((x, o) => x + o.widthM, 0);
+  if (doorBaseM > 0) add('Door base trim', Math.ceil(doorBaseM / 3), `Across the base of every door: ${doorBaseM.toFixed(2)}m ÷ 3m lengths`);
 
   // Flitch over wide front openings
   const wideFront = fhOn(front).filter((o) => o.widthM >= 1.8);
@@ -659,6 +664,25 @@ export function buildPremiumBom(state, componentDefs) {
     add('Trex Clam Shell composite decking board (140 × 4880mm)', deckBoards, `Front decking ${w.toFixed(2)}m x ${deckDepthM.toFixed(2)}m: ${deckRows} row${deckRows === 1 ? '' : 's'} × ${perRow} board${perRow === 1 ? '' : 's'} per row + 1 spare`,
       { orderText: `${deckBoards} × Trex Clam Shell 140mm × 4.88m (deck ${w.toFixed(2)} × ${deckDepthM.toFixed(2)}m, ${deckRows} rows)` });
     add('Decking screws - colour-headed (Winchester grey)', Math.ceil(w * deckDepthM * 25 * 1.25), `~25/m2 + 25% over-estimate (Liam: over on fixings)`);
+    // EXTRA DECKING (rows beyond the standard 400mm): its own sub-frame on its
+    // own screws/pedestals - shown as SEPARATE lines in the same supplier
+    // sections (Liam 2026-09-06). 4x2 tanalised joists @400mm running front to
+    // back over the extension depth + front/back rims, ground screws (or
+    // pedestals) on a 1.3m grid, TimberLok 100s for the frame.
+    const extraRows = state.structuralExtras?.additionalDecking || 0;
+    if (extraRows > 0) {
+      const extDepth = extraRows * 0.146;
+      const extJoists = Math.ceil(w / 0.4) + 1;
+      const extLm = Math.ceil((extJoists * extDepth + 2 * w) * 1.10);
+      const extCols = Math.ceil(w / 1.3) + 1, extRowsN = Math.ceil(extDepth / 1.3) + 1;
+      const extSupports = extCols * extRowsN;
+      add('4x2 tanalised C24 timber', extLm, `EXTRA DECKING FRAME (${extraRows} extra rows = ${extDepth.toFixed(2)}m deeper): ${extJoists} joists × ${extDepth.toFixed(2)}m @400mm + 2 rims × ${w.toFixed(2)}m, +10%`,
+        { cuts: [{ len: extDepth, n: extJoists, what: 'extra decking joists' }, { len: w, n: 2, what: 'extra decking rims' }], separate: 'EXTRA DECKING frame' });
+      if (groundScrews) add('Radix ground screw', extSupports, `EXTRA DECKING: ${extCols} × ${extRowsN} grid under the extension frame (max 1.3m spacing)`, { separate: 'EXTRA DECKING supports' });
+      else add('Adjustable plastic pedestal', extSupports, `EXTRA DECKING: ${extCols} × ${extRowsN} grid under the extension frame (max 1.3m spacing)`, { separate: 'EXTRA DECKING supports' });
+      add('TimberLok 100mm', Math.ceil((extJoists * 4 + extSupports * 2) * 1.25), `EXTRA DECKING frame: joists to rims (4 per joist) + frame to supports, +25%`, { separate: 'EXTRA DECKING fixings' });
+      add('Bitumen paint (1L)', extraRows > 4 ? 1 : 0, `EXTRA DECKING sub-frame protection (2nd tin on deep extensions)`, { separate: 'EXTRA DECKING' });
+    }
   }
 
   add('Door mat', 1, `Complimentary with every job`);

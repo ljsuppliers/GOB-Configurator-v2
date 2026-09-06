@@ -1,5 +1,5 @@
 {
- "version": 13,
+ "version": 14,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -1331,7 +1331,7 @@
    "notes": "Same profile as the standard base trim but different dimensions: covers the front face the same, SHORTER internal return (door is thinner than the 100mm panel) and 15mm upstand instead of 60mm. Front wall: fitted ONLY across door openings (no base trim along the rest of the stick-built front)."
   },
   {
-   "name": "Standard base trim (steel)",
+   "name": "Standard panel base trim (steel)",
    "category": "Steel trims",
    "sku": "",
    "unit": "length",

@@ -56,7 +56,7 @@ export async function loadCatalogue() {
 // Items retired from the system: always removed from a saved catalogue, whatever
 // its version, so they can never reappear on a job or in the stock ledger.
 export const RETIRED_MATERIALS = new Set([
-  'CLS 4x2 timber', 'Treated CLS 4x2 timber', '100mm PIR insulation board', 'Composite decking board (3.6m)', 'Composite decking board (140×4880mm)',
+  'CLS 4x2 timber', 'Treated CLS 4x2 timber', '100mm PIR insulation board', 'Standard base trim (steel)', 'Composite decking board (3.6m)', 'Composite decking board (140×4880mm)',
   'Medium Oak vinyl', 'Light Grey vinyl', 'Vinyl spray adhesive (500ml can)', 'Privacy screen (vertical slats on frame)',
   'Corner trims', 'Close corner trims', 'Open-corner glazing junction kit', 'Flitch beam bolts', 'uPVC frame fixing screw',
   'Twisted restraint strap 30x2.5x600mm', '25x25mm white PVC reveal trim (2.5m length)', 'Tapered firring (47mm, 1:40)',
@@ -236,7 +236,8 @@ export function supplyFor(mat, ov) {
 export function mergeBomRows(bomRows) {
   const out = new Map();
   for (const r of bomRows) {
-    const key = r.name.toLowerCase();
+    // rows flagged `separate` (e.g. EXTRA DECKING) keep their own line
+    const key = r.separate ? `${r.name.toLowerCase()}#${r.separate}` : r.name.toLowerCase();
     if (!out.has(key)) { out.set(key, { ...r, cuts: r.cuts ? [...r.cuts] : undefined }); continue; }
     const m = out.get(key);
     m.qty = Math.round((m.qty + r.qty) * 100) / 100;
@@ -252,6 +253,7 @@ export function joinBom(bomRows, catalogue, overrides = {}) {
   const byName = new Map(catalogue.materials.map((m) => [m.name.toLowerCase(), m]));
   return mergeBomRows(bomRows).map((r) => {
     const mat = byName.get(r.name.toLowerCase()) || null;
+    if (r.separate) r = { ...r, catalogueName: r.name, name: `${r.name} — ${r.separate}` };
     const ov = overrides[r.name] || {};
     const packSize = mat && mat.packSize > 0 ? mat.packSize : 1;
     let orderQty = Math.max(0, Math.ceil(r.qty / packSize - 1e-9));
@@ -259,7 +261,7 @@ export function joinBom(bomRows, catalogue, overrides = {}) {
     let lineCost = mat ? (mat.unitCost || 0) * (r.costQty > 0 ? r.costQty : r.qty) : 0;
     let stockPlan = null;
     const orderText = r.orderText || '';
-    const stockRule = r.cuts ? stockRuleFor(r.name) : null;
+    const stockRule = r.cuts ? stockRuleFor(r.catalogueName || r.name) : null;
     if (r.cuts && stockRule) {
       stockPlan = planStock(r.cuts, stockRule.lengths, !!stockRule.splittable);
       orderQty = Object.values(stockPlan.lengths).reduce((a, b) => a + b, 0);
