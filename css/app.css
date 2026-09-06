@@ -747,3 +747,9 @@ html, body {
   .installer-page .pack, .logi-pack, .materials-page > *, .mp-main > * { max-width: none !important; width: auto !important; }
   .pack-drawing-page svg { max-height: 188mm; }
 }
+@media print {
+  /* deterministic drawing size on the landscape page: A4 landscape usable ~281 x 194mm */
+  .pack-drawing-page { width: 277mm; overflow: hidden; }
+  .pack-drawing-page > div:last-child { width: 266mm; height: 180mm; }
+  .pack-drawing-page svg { width: 266mm !important; height: 180mm !important; max-height: none; }
+}
