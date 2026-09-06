@@ -724,3 +724,9 @@ html, body {
   .print-agreement-only .pack > :not(.agreement-part) { display: none !important; }
   .print-agreement-only .agreement-part .pack-break { break-before: auto; }
 }
+
+@media print {
+  #notification, .notification, .toast { display: none !important; }
+  .pack-drawing { break-inside: avoid; page-break-inside: avoid; margin: 6px 0 10px; }
+  .pack-drawing svg { width: 100% !important; height: auto !important; max-height: none !important; display: block; }
+}

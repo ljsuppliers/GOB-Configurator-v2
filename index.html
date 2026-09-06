@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=11">
+  <link rel="stylesheet" href="css/app.css?v=12">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -1398,11 +1398,11 @@
         </table>
         <p class="pack-note">The install fee includes the plastering and decoration: the Installer arranges and pays the plasterer. Electrical work is by the Company's electrician and is not part of the install fee. Materials are supplied by the Company - check every delivery against the checklist below and report damage or shortages the same day.</p>
 
-        <h2 class="pack-h2">4. Materials checklist</h2>
-        <div v-for="sec in categorySections" :key="'pk'+sec.name" class="pack-cat">
-          <h3>{{ sec.name }}</h3>
+        <h2 class="pack-h2">4. Materials checklist (by supplier, biggest order first)</h2>
+        <div v-for="sec in supplierSections" :key="'pk'+sec.name" class="pack-cat">
+          <h3>{{ sec.name }}<span class="pack-small" v-if="sec.stockCount"> · {{ sec.stockCount }} from GOB stock</span></h3>
           <table class="pack-table pack-check">
-            <tr v-for="l in sec.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}<span v-if="l.inStock" class="pack-small"> · from GOB stock</span></td><td class="num">{{ l.stockPlan && l.stockPlan.text ? l.stockPlan.text : (l.orderQty + (l.orderUnit && l.orderUnit !== l.unit ? ' × ' + l.orderUnit : ' ' + (l.unit||''))) }}</td><td class="pack-small">{{ l.supplier }}</td></tr>
+            <tr v-for="l in sec.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}<span class="pack-small"> · {{ useTag(l) }}</span><span v-if="l.inStock" class="pack-small"> · GOB stock</span></td><td class="num">{{ orderAs(l) }}</td></tr>
           </table>
         </div>
 
@@ -1857,7 +1857,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=74"></script>
+<script type="module" src="js/app.js?v=75"></script>
 
 </body>
 </html>

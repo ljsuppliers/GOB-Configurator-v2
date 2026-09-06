@@ -69,6 +69,7 @@ export function mergeShipped(saved, base) {
     if (!sm) { out.materials.push({ ...bm }); continue; }
     if (newer) {
       for (const k of ['unit', 'packSize', 'orderUnit', 'category', 'supply', 'destination', 'inStock', 'notes', 'sku']) sm[k] = bm[k];
+      if (sm.supplier === 'Local timber merchant') sm.supplier = 'Builders merchant'; // merged 2026-09-06
       if (!(sm.unitCost > 0) && bm.unitCost > 0) sm.unitCost = bm.unitCost;
       if (!sm.supplier && bm.supplier) sm.supplier = bm.supplier;
     } else if (!(sm.unitCost > 0) && bm.unitCost > 0) {
@@ -77,7 +78,14 @@ export function mergeShipped(saved, base) {
       if (!sm.supplier && bm.supplier) sm.supplier = bm.supplier;
     }
   }
-  if (newer) { out.materials = out.materials.filter((m) => shippedNames.has(m.name.toLowerCase())); out.version = base.version; }
+  if (newer) {
+    out.materials = out.materials.filter((m) => shippedNames.has(m.name.toLowerCase()));
+    const tm = out.suppliers.find((s) => s.name === 'Local timber merchant');
+    const bmS = out.suppliers.find((s) => s.name === 'Builders merchant');
+    if (tm && bmS && !bmS.email && tm.email) bmS.email = tm.email;
+    out.suppliers = out.suppliers.filter((s) => s.name !== 'Local timber merchant');
+    out.version = base.version;
+  }
   const haveSup = new Set(out.suppliers.map((s) => s.name.toLowerCase()));
   for (const bs of base.suppliers || []) if (!haveSup.has(bs.name.toLowerCase())) out.suppliers.push({ ...bs });
   return out;

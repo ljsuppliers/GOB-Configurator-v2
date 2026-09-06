@@ -9,7 +9,7 @@ import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=17';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES } from './bom/orders.js?v=10';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES } from './bom/orders.js?v=11';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=6';
 import { emptyInstaller } from './bom/installers.js?v=2';
@@ -314,7 +314,9 @@ createApp({
       const bySup = (arr) => {
         const m = new Map();
         for (const l of arr) { const k = l.inCatalogue ? (l.supplier || 'No supplier set') : 'Not in catalogue'; if (!m.has(k)) m.set(k, []); m.get(k).push(l); }
-        return [...m.entries()].map(([name, ls]) => ({ name, lines: ls.sort((a, b) => (a.material?.category || '').localeCompare(b.material?.category || '')) })).sort((a, b) => a.name.localeCompare(b.name));
+        // biggest supplier first (by spend, then line count) - Liam 2026-09-06
+        return [...m.entries()].map(([name, ls]) => ({ name, lines: ls.sort((a, b) => (a.material?.category || '').localeCompare(b.material?.category || '')), spend: ls.reduce((t, l) => t + (l.lineCost || 0), 0) }))
+          .sort((a, b) => b.spend - a.spend || b.lines.length - a.lines.length || a.name.localeCompare(b.name));
       };
       const toSite = lines.filter((l) => !l.inStock && l.destination !== 'factory');
       const factory = lines.filter((l) => l.inStock || l.destination === 'factory');
