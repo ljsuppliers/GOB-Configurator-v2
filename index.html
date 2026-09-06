@@ -738,6 +738,9 @@
             <label for="chk-secret-door">Secret cladded door</label>
             <span class="extra-price">&pound;1,750</span>
           </div>
+          <label style="display:block;margin:6px 0 4px">Laminate flooring colour (Wickes)
+            <select v-model="state.flooring" style="width:100%;margin-top:3px"><option value="natural-oak">Natural Oak</option><option value="light-grey">Light Grey</option></select>
+          </label>
           <div class="checkbox-row">
             <input type="checkbox" v-model="state.structuralExtras.premiumFlooring" id="chk-premium-flooring">
             <label for="chk-premium-flooring">Premium flooring upgrade</label>
@@ -1857,7 +1860,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=80"></script>
+<script type="module" src="js/app.js?v=81"></script>
 
 </body>
 </html>

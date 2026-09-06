@@ -1,5 +1,5 @@
 {
- "version": 6,
+ "version": 7,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -34,12 +34,6 @@
   },
   {
    "name": "CompDeckUK",
-   "email": "",
-   "phone": "",
-   "notes": ""
-  },
-  {
-   "name": "Factory Direct Flooring",
    "email": "",
    "phone": "",
    "notes": ""
@@ -115,6 +109,12 @@
    "email": "",
    "phone": "",
    "notes": ""
+  },
+  {
+   "name": "Wickes",
+   "email": "",
+   "phone": "",
+   "notes": "Laminate flooring (Natural Oak / Light Grey, 1.48m² packs) + underlay (10.03m² packs). Trade counter / online."
   }
  ],
  "materials": [
@@ -815,45 +815,6 @@
    "destination": "site",
    "inStock": false,
    "notes": "CLAUDE ESTIMATE £15. HYBRID floor deck (1.44m²/board)."
-  },
-  {
-   "name": "Light Grey vinyl",
-   "category": "Flooring",
-   "sku": "",
-   "unit": "m²",
-   "unitCost": 8.99,
-   "supplier": "Factory Direct Flooring",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "Ecostep Vinyl Flooring Storm Grey 991M from factory-direct-flooring.co.uk, £8.99/m². Available in 2m/3m/4m widths."
-  },
-  {
-   "name": "Medium Oak vinyl",
-   "category": "Flooring",
-   "sku": "",
-   "unit": "m²",
-   "unitCost": 8.99,
-   "supplier": "Factory Direct Flooring",
-   "packSize": null,
-   "orderUnit": "m² (4m-wide roll)",
-   "destination": "site",
-   "inStock": false,
-   "notes": "Ecostep Vinyl Flooring Golden Oak 006M from factory-direct-flooring.co.uk, £8.99/m². Available in 2m/3m/4m widths."
-  },
-  {
-   "name": "Vinyl spray adhesive (500ml can)",
-   "category": "Flooring",
-   "sku": "",
-   "unit": "can",
-   "unitCost": 5.75,
-   "supplier": "Amazon",
-   "packSize": null,
-   "orderUnit": "",
-   "destination": "site",
-   "inStock": false,
-   "notes": "Bonds laminate to plywood floor."
   },
   {
    "name": "Adjustable plastic pedestal",
@@ -2620,6 +2581,48 @@
    "destination": "site",
    "inStock": false,
    "notes": "CLAUDE ESTIMATE £110 per m² ex VAT (line cost uses pane area); 4-16-4 or 4-20-4 toughened DGU, argon, low-E. Sizes on the order line are APPROXIMATE (frame less ~60mm per edge) - confirm against the frame maker's glazing list."
+  },
+  {
+   "name": "Wickes laminate flooring - Natural Oak (1.48m² pack)",
+   "category": "Flooring",
+   "sku": "",
+   "unit": "pack",
+   "unitCost": 18.5,
+   "supplier": "Wickes",
+   "packSize": null,
+   "orderUnit": "",
+   "supply": "site",
+   "destination": "site",
+   "inStock": false,
+   "notes": "Wickes laminate, Natural Oak, 1.48m² per pack (Liam 2026-09-06). Round up + spare pack."
+  },
+  {
+   "name": "Wickes laminate flooring - Light Grey (1.48m² pack)",
+   "category": "Flooring",
+   "sku": "",
+   "unit": "pack",
+   "unitCost": 18.5,
+   "supplier": "Wickes",
+   "packSize": null,
+   "orderUnit": "",
+   "supply": "site",
+   "destination": "site",
+   "inStock": false,
+   "notes": "Wickes laminate, Light Grey, 1.48m² per pack (Liam 2026-09-06). Round up + spare pack."
+  },
+  {
+   "name": "Wickes laminate underlay (10.03m² pack)",
+   "category": "Flooring",
+   "sku": "",
+   "unit": "pack",
+   "unitCost": 28,
+   "supplier": "Wickes",
+   "packSize": null,
+   "orderUnit": "",
+   "supply": "site",
+   "destination": "site",
+   "inStock": false,
+   "notes": "Wickes laminate underlay, 10.03m² per pack, £28 (Liam 2026-09-06)."
   }
  ]
 }

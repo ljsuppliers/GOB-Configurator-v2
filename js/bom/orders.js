@@ -83,7 +83,8 @@ export function mergeShipped(saved, base) {
     const tm = out.suppliers.find((s) => s.name === 'Local timber merchant');
     const bmS = out.suppliers.find((s) => s.name === 'Builders merchant');
     if (tm && bmS && !bmS.email && tm.email) bmS.email = tm.email;
-    out.suppliers = out.suppliers.filter((s) => s.name !== 'Local timber merchant');
+    out.suppliers = out.suppliers.filter((s) => s.name !== 'Local timber merchant' && s.name !== 'Factory Direct Flooring');
+    for (const bs of base.suppliers || []) if (!out.suppliers.some((s) => s.name.toLowerCase() === bs.name.toLowerCase())) out.suppliers.push({ ...bs });
     out.version = base.version;
   }
   const haveSup = new Set(out.suppliers.map((s) => s.name.toLowerCase()));

@@ -172,5 +172,6 @@
     "hasDoor": true,
     "doorPosition": 0.5,
     "doorDirection": "right"
-  }
+  },
+  "flooring": "natural-oak"
 }

@@ -105,8 +105,7 @@ export const USE_TAGS = {
   'Satin wood paint (750ml)': 'Skirting',
   'Skirting board': 'Internal perimeter',
   'Decorators caulk (tube)': 'Internal junctions',
-  'Medium Oak vinyl': 'Internal floor finish',
-  'Vinyl spray adhesive (500ml can)': 'Vinyl to deck',
+  'Wickes laminate flooring - Natural Oak (1.48m² pack)': 'Internal floor', 'Wickes laminate flooring - Light Grey (1.48m² pack)': 'Internal floor', 'Wickes laminate underlay (10.03m² pack)': 'Under the laminate',
   'Composite decking board (3.6m)': 'Front decking',
   'Decking screws - colour-headed (Winchester grey)': 'Decking boards',
   'Bitumen paint (1L)': 'Decking sub-frame',
@@ -533,9 +532,16 @@ export function buildPremiumBom(state, componentDefs) {
   add('Plasterboard corner bead (2.4m)', 4 + [...front, ...rear, ...left, ...right].length, `Corners + reveals`);
   add('Multi-finish plaster (25kg bag)', Math.ceil(boardM2 / 10), `Skim ~10m2/bag`);
   add('Skirting board', Math.ceil(Math.max(0, 2 * (w + d) - fhWidth(front) - fhWidth(rear) - fhWidth(left) - fhWidth(right))), `Perimeter minus full-height openings, linear m`);
-  add('Medium Oak vinyl', Math.ceil((w - 0.2) * (d - 0.2)), `Internal floor area (colour per customer choice)`,
-    { orderText: `${Math.ceil((w - 0.3) * (d - 0.3))}m²: internal floor ${(w - 0.3).toFixed(2)} × ${(d - 0.3).toFixed(2)}m (e.g. ${Math.ceil(((d - 0.3) + 0.2) * 10) / 10}m off a 4m-wide roll, or ${Math.ceil(((w - 0.3) + 0.2) * 10) / 10}m off a 4m roll run the other way)` });
-  add('Vinyl spray adhesive (500ml can)', Math.ceil((w - 0.2) * (d - 0.2) / 4), `~4m2 per can`);
+  // FLOORING (Liam 2026-09-06): Wickes laminate, Natural Oak or Light Grey,
+  // 1.48m² packs - always round up and add a spare pack (two on big floors);
+  // Wickes underlay in 10.03m² packs.
+  const floorIntM2 = (w - 0.3) * (d - 0.3);
+  const lamPacks = Math.ceil(floorIntM2 / 1.48) + (floorIntM2 > 20 ? 2 : 1);
+  const lamName = state.flooring === 'light-grey' ? 'Wickes laminate flooring - Light Grey (1.48m² pack)' : 'Wickes laminate flooring - Natural Oak (1.48m² pack)';
+  add(lamName, lamPacks, `Internal floor ${(w - 0.3).toFixed(2)} × ${(d - 0.3).toFixed(2)}m = ${floorIntM2.toFixed(1)}m² ÷ 1.48m² per pack, rounded up + ${floorIntM2 > 20 ? '2 spare packs' : '1 spare pack'}`,
+    { orderText: `${lamPacks} packs (${(lamPacks * 1.48).toFixed(1)}m² for a ${floorIntM2.toFixed(1)}m² floor, incl. spare)` });
+  add('Wickes laminate underlay (10.03m² pack)', Math.ceil(floorIntM2 / 10.03), `Underlay for ${floorIntM2.toFixed(1)}m² ÷ 10.03m² per pack, rounded up`,
+    { orderText: `${Math.ceil(floorIntM2 / 10.03)} pack${Math.ceil(floorIntM2 / 10.03) === 1 ? '' : 's'} (${floorIntM2.toFixed(1)}m² floor)` });
 
   /* ======================================================================
      ELECTRICAL KIT (GOB buys + supplies all components from stock; the

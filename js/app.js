@@ -8,8 +8,8 @@ import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=17';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES } from './bom/orders.js?v=11';
+import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=18';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES } from './bom/orders.js?v=12';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=7';
 import { emptyInstaller } from './bom/installers.js?v=2';
@@ -40,6 +40,7 @@ function ensureStateDefaults(state) {
   if (!state.ordersSent) state.ordersSent = {};
   if (!state.orderStatus) state.orderStatus = {};
   if (!state.jobStatus) state.jobStatus = 'quote';
+  if (!state.flooring) state.flooring = 'natural-oak';
   if (!state.acUnits) state.acUnits = [];
   if (!state.drawingLabels) state.drawingLabels = [];
   if (!state.planning) state.planning = { required: false, reasons: [], customReason: '' };
@@ -1147,7 +1148,7 @@ createApp({
 
       // Internal finish
       buildFeatures.push('Internal wall finish: plaster-boarded, plastered and decorated white');
-      buildFeatures.push('Flooring and skirting board');
+      buildFeatures.push(`Laminate flooring (${s.flooring === 'light-grey' ? 'Light Grey' : 'Natural Oak'}) and skirting board`);
 
       // Electrical spec
       const sqm = (s.width / 1000) * (s.depth / 1000);
