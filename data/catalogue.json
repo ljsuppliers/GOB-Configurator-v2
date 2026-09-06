@@ -1,5 +1,5 @@
 {
- "version": 3,
+ "version": 4,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -256,7 +256,7 @@
   },
   {
    "name": "Glass for desk window 1000x1000",
-   "category": "Doors & Windows",
+   "category": "Glazing",
    "sku": "",
    "unit": "each",
    "unitCost": 75.0,
@@ -269,7 +269,7 @@
   },
   {
    "name": "Glass for full-height window 600x2050 fixed",
-   "category": "Doors & Windows",
+   "category": "Glazing",
    "sku": "",
    "unit": "each",
    "unitCost": 60.0,
@@ -282,7 +282,7 @@
   },
   {
    "name": "Glass for full-height window 600x2050 opener main",
-   "category": "Doors & Windows",
+   "category": "Glazing",
    "sku": "",
    "unit": "each",
    "unitCost": 48.0,
@@ -295,7 +295,7 @@
   },
   {
    "name": "Glass for full-height window 900x2050 fixed",
-   "category": "Doors & Windows",
+   "category": "Glazing",
    "sku": "",
    "unit": "each",
    "unitCost": 75.0,
@@ -308,7 +308,7 @@
   },
   {
    "name": "Glass for full-height window 900x2050 opener main",
-   "category": "Doors & Windows",
+   "category": "Glazing",
    "sku": "",
    "unit": "each",
    "unitCost": 30.0,
@@ -321,7 +321,7 @@
   },
   {
    "name": "Glass for full-height window opener top",
-   "category": "Doors & Windows",
+   "category": "Glazing",
    "sku": "",
    "unit": "each",
    "unitCost": 13.0,
@@ -334,7 +334,7 @@
   },
   {
    "name": "Glass for single door (clear)",
-   "category": "Doors & Windows",
+   "category": "Glazing",
    "sku": "",
    "unit": "each",
    "unitCost": 90.0,
@@ -347,7 +347,7 @@
   },
   {
    "name": "Glass for single door (frosted)",
-   "category": "Doors & Windows",
+   "category": "Glazing",
    "sku": "",
    "unit": "each",
    "unitCost": 110.0,
@@ -360,7 +360,7 @@
   },
   {
    "name": "Glass for sliding door",
-   "category": "Doors & Windows",
+   "category": "Glazing",
    "sku": "",
    "unit": "each",
    "unitCost": 80.0,
@@ -373,7 +373,7 @@
   },
   {
    "name": "Glass for slot window 900x450",
-   "category": "Doors & Windows",
+   "category": "Glazing",
    "sku": "",
    "unit": "each",
    "unitCost": 50.0,
@@ -2612,6 +2612,20 @@
    "destination": "site",
    "inStock": false,
    "notes": "£15 per 3m length (Liam 2026-09-06). U-shape 200x40x40, cut on site. Closed corner (covers the protruding side wall) and, with the 180x40 L, forms a glazed open corner."
+  },
+  {
+   "name": "Toughened double glazed unit 28mm (made to size)",
+   "category": "Glazing",
+   "sku": "",
+   "unit": "pane",
+   "unitCost": 110,
+   "supplier": "Advanced Sealed Units",
+   "packSize": null,
+   "orderUnit": "",
+   "supply": "site",
+   "destination": "site",
+   "inStock": false,
+   "notes": "CLAUDE ESTIMATE £110 per m² ex VAT (line cost uses pane area); 4-16-4 or 4-20-4 toughened DGU, argon, low-E. Sizes on the order line are APPROXIMATE (frame less ~60mm per edge) - confirm against the frame maker's glazing list."
   }
  ]
 }

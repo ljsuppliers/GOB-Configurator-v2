@@ -716,3 +716,8 @@ html, body {
 .po-datelabel { font-size: 12px; color: #475569; display: inline-flex; align-items: center; gap: 4px; }
 .po-date { width: 150px; }
 @media print { .jobs-side, .cal-strip { display: none !important; } .mp-layout { display: block; } }
+
+@media print {
+  .print-agreement-only .pack > :not(.agreement-part) { display: none !important; }
+  .print-agreement-only .agreement-part .pack-break { break-before: auto; }
+}

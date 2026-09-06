@@ -118,6 +118,7 @@ export const USE_TAGS = {
   'Expanding foam can': 'Around openings',
   'Gun foam (can)': 'Around openings + perimeter gaps',
   'Door/window seal': 'Door + window frames',
+  'Glass for sliding door': 'Sliding door panes', 'Glass for single door (clear)': 'Single door pane', 'Glass for desk window 1000x1000': 'Desk window', 'Glass for slot window 900x450': 'Slot window', 'Glass for full-height window 600x2050 fixed': 'FH window 600', 'Glass for full-height window 600x2050 opener main': 'FH window 600 opener', 'Glass for full-height window 900x2050 fixed': 'FH window 900', 'Glass for full-height window 900x2050 opener main': 'FH window 900 opener', 'Glass for full-height window opener top': 'Opener top pane', 'Toughened double glazed unit 28mm (made to size)': 'Bifold / other openings',
   '25x25mm white PVC reveal trim (2.5m length)': 'Window + door reveals',
   'TimberLok 150mm': 'Floor doubling',
   'TimberLok 100mm': 'Roof joists, plates, studs, canopy',
@@ -587,7 +588,40 @@ export function buildPremiumBom(state, componentDefs) {
     for (const o of ops) {
       const def = componentDefs[o.type] || {};
       add(def.label || o.type, 1, `On the ${wallName}${def.width ? ` - ${def.width}mm wide` : ''}`,
-        { orderText: `1 × ${def.label || o.type}${def.width ? `, ${def.width}mm wide` : ''}${def.height ? ` × ${def.height}mm high` : ''}, anthracite grey RAL 7016 outside / white inside, toughened double glazed - for the ${wallName} wall` });
+        { orderText: `1 × ${def.label || o.type}${def.width ? `, ${def.width}mm wide` : ''}${def.height ? ` × ${def.height}mm high` : ''}, anthracite grey RAL 7016 outside / white inside - FRAME ONLY, unglazed (glass ordered separately) - for the ${wallName} wall` });
+      // GLAZING comes from a separate supplier (Liam 2026-09-06): frames are
+      // supplied unglazed. One line per opening with approximate pane sizes
+      // (frame size less ~60mm per edge; confirm from the frame maker's
+      // glazing list before ordering).
+      const W = def.width || 900, H = def.height || 2050;
+      const pane = (pw, ph) => `${Math.round(pw)} × ${Math.round(ph)}mm`;
+      const cat = def.category || 'standard';
+      if (cat === 'sliding') {
+        add('Glass for sliding door', 2, `${def.label} on the ${wallName}: 2 panes`, { orderText: `2 panes approx ${pane(W / 2 - 100, H - 130)} toughened DGU 28mm (${def.label}, ${wallName})` });
+      } else if (cat === 'bifold') {
+        const leaves = W >= 4200 ? 5 : W >= 3200 ? 4 : 3;
+        add('Toughened double glazed unit 28mm (made to size)', leaves, `${def.label} on the ${wallName}: ${leaves} leaves`, { costQty: leaves * ((W / leaves - 110) / 1000) * ((H - 130) / 1000), orderText: `${leaves} panes approx ${pane(W / leaves - 110, H - 130)} toughened DGU 28mm (${def.label}, ${wallName})` });
+      } else if (o.type === 'single-glazed-door') {
+        add('Glass for single door (clear)', 1, `${def.label} on the ${wallName}`, { orderText: `1 pane approx ${pane(W - 120, H - 300)} toughened DGU 28mm (single door, ${wallName})` });
+      } else if (o.type === 'single-cladded-door') {
+        /* secret cladded door - no glass */
+      } else if (o.type === 'window-0.6m-fixed') {
+        add('Glass for full-height window 600x2050 fixed', 1, `${wallName}`, { orderText: `1 pane approx ${pane(W - 120, H - 120)} (600 × 2050 fixed, ${wallName})` });
+      } else if (o.type === 'window-0.6m-opener') {
+        add('Glass for full-height window 600x2050 opener main', 1, `${wallName}`, { orderText: `1 main pane (600 × 2050 opener, ${wallName})` });
+        add('Glass for full-height window opener top', 1, `${wallName}`, { orderText: `1 top-opener pane (600 × 2050 opener, ${wallName})` });
+      } else if (o.type === 'window-0.9m-fixed') {
+        add('Glass for full-height window 900x2050 fixed', 1, `${wallName}`, { orderText: `1 pane approx ${pane(W - 120, H - 120)} (900 × 2050 fixed, ${wallName})` });
+      } else if (o.type === 'window-0.9m-opener') {
+        add('Glass for full-height window 900x2050 opener main', 1, `${wallName}`, { orderText: `1 main pane (900 × 2050 opener, ${wallName})` });
+        add('Glass for full-height window opener top', 1, `${wallName}`, { orderText: `1 top-opener pane (900 × 2050 opener, ${wallName})` });
+      } else if (o.type === 'window-1.0m-square') {
+        add('Glass for desk window 1000x1000', 1, `${wallName}`, { orderText: `1 pane approx ${pane(W - 120, H - 120)} (1000 × 1000, ${wallName})` });
+      } else if (/slot/.test(o.type)) {
+        add('Glass for slot window 900x450', 1, `${wallName}`, { orderText: `1 pane approx ${pane(W - 120, H - 120)} (slot window${/opener/.test(o.type) ? ', opener' : ''}, ${wallName})` });
+      } else {
+        add('Toughened double glazed unit 28mm (made to size)', 1, `${def.label} on the ${wallName}`, { costQty: ((W - 120) / 1000) * ((H - 120) / 1000), orderText: `1 pane approx ${pane(W - 120, H - 120)} toughened DGU 28mm (${def.label}${/opener/.test(o.type) ? ', opener' : ''}, ${wallName})` });
+      }
     }
   }
   const opCount = [...front, ...rear, ...left, ...right].length;

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=9">
+  <link rel="stylesheet" href="css/app.css?v=10">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -1304,7 +1304,7 @@
 
 
     <!-- ─── INSTALLER PACK & AGREEMENT: FULL PAGE ─── -->
-    <section v-if="installerPage" class="materials-page installer-page">
+    <section v-if="installerPage" class="materials-page installer-page" :class="{ 'print-agreement-only': printMode === 'agreement' }">
       <div class="mp-top no-print">
         <div class="mp-job">
           <div class="mp-job-name">Installer pack · {{ state.customer && state.customer.name ? state.customer.name : 'Unnamed job' }} <span class="mp-ref">· ref {{ orderRef }}</span></div>
@@ -1313,7 +1313,8 @@
         <div class="mp-actions">
           <button class="btn" @click="installerPage = false; openMaterialsPage()">← Materials &amp; Orders</button>
           <button class="btn" :class="{ active: installersOpen }" @click="installersOpen = !installersOpen">Installer register</button>
-          <button class="btn btn-primary" @click="printInstallerPack">Print / PDF pack</button>
+          <button class="btn btn-primary" @click="printMode = 'pack'; printInstallerPack()">Print / PDF full pack</button>
+          <button class="btn" @click="printMode = 'agreement'; printInstallerPack()">Print agreement only</button>
         </div>
       </div>
 
@@ -1404,6 +1405,7 @@
           </table>
         </div>
 
+        <div class="agreement-part">
         <h2 class="pack-h2 pack-break">5. Installer agreement</h2>
         <p class="pack-p">This agreement is made between <strong>Garden Office Buildings</strong> ("the Company") and <strong>{{ state.installer && state.installer.name || '________________' }}</strong> ("the Installer") for the installation of one garden room at the site detailed below.</p>
         <h4>1. Parties &amp; site</h4>
@@ -1434,6 +1436,7 @@
         <p class="pack-p">The Installer must hold their own valid insurance for the duration of the install. Evidence of cover must be provided to the Company on request.</p>
         <h4>7. Health &amp; safety</h4>
         <p class="pack-p">The Installer is responsible for safe working practices on site, including (but not limited to) appropriate PPE, safe handling of panels and timber, electrical safety during fit-out, and securing the site at the end of each working day.</p>
+        </div><!-- /agreement-part -->
       </div>
     </section>
 
@@ -1853,7 +1856,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=71"></script>
+<script type="module" src="js/app.js?v=72"></script>
 
 </body>
 </html>
