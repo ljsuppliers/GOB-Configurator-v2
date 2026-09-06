@@ -8,7 +8,7 @@ import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom } from './bom/premium-bom.js?v=6';
+import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=7';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES } from './bom/orders.js?v=7';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=6';
@@ -585,6 +585,12 @@ createApp({
       this.rebuildOrders();
     },
     printMaterials() { this.$nextTick(() => window.print()); },
+    useTag(l) {
+      if (USE_TAGS[l.name]) return USE_TAGS[l.name];
+      const m = /^On the (front|rear|left side|right side)/i.exec(l.derivation || '');
+      if (m) return `${m[1].charAt(0).toUpperCase() + m[1].slice(1)} wall opening`;
+      return l.material?.category || '';
+    },
     orderAs(l) {
       if (l.stockPlan && l.stockPlan.text) return l.stockPlan.text;
       return `${l.orderQty}${l.orderUnit && l.orderUnit !== l.unit ? ' × ' + l.orderUnit : ' ' + (l.unit || '')}`;

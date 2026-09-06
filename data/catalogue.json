@@ -839,7 +839,7 @@
   },
   {
    "name": "22mm P5 T&G chipboard (2400x600)",
-   "category": "Flooring",
+   "category": "Sheet materials",
    "sku": "",
    "unit": "board",
    "unitCost": 15.0,
@@ -1138,7 +1138,7 @@
   },
   {
    "name": "12mm Plywood (1220×2440 sheet)",
-   "category": "Internal lining",
+   "category": "Sheet materials",
    "sku": "",
    "unit": "sheet",
    "unitCost": 16.49,
@@ -1164,7 +1164,7 @@
   },
   {
    "name": "18x38 treated batten",
-   "category": "Internal lining",
+   "category": "Battens",
    "sku": "",
    "unit": "linear m",
    "unitCost": 0.45,
@@ -1697,7 +1697,7 @@
   },
   {
    "name": "18mm OSB3 board (2440x1220)",
-   "category": "Structural timber",
+   "category": "Sheet materials",
    "sku": "",
    "unit": "board",
    "unitCost": 26.0,
@@ -1710,7 +1710,7 @@
   },
   {
    "name": "18mm T&G OSB3 roof board (2400x590)",
-   "category": "Structural timber",
+   "category": "Sheet materials",
    "sku": "",
    "unit": "sheet",
    "unitCost": 13.0,

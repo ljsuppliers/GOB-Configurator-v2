@@ -1233,7 +1233,7 @@
                 <tbody>
                   <tr v-for="l in sec.lines" :key="l.name" :class="{ 'bom-stock': l.inStock, 'bom-missing': !l.inCatalogue }">
                     <td><span class="chip" :class="'chip-' + l.orderStatus">{{ l.orderStatus === 'stock' ? 'IN STOCK' : l.orderStatus === 'delivered' ? 'Delivered' : l.orderStatus === 'ordered' ? 'Ordered' : 'To order' }}</span></td>
-                    <td><strong>{{ l.name }}</strong><span v-if="l.material && l.material.category" class="bom-cat">{{ l.material.category }}</span><span v-if="l.inStock" class="bom-cat bom-cat-stock">from factory stock</span><div v-if="showDerivations" class="bom-deriv">{{ l.derivation }}</div></td>
+                    <td><strong>{{ l.name }}</strong><span v-if="useTag(l)" class="bom-cat" title="Where it's used">{{ useTag(l) }}</span><span v-if="l.inStock" class="bom-cat bom-cat-stock">from factory stock</span><div v-if="showDerivations" class="bom-deriv">{{ l.derivation }}</div></td>
                     <td class="num">{{ l.qty }} {{ l.unit }}</td>
                     <td><template v-if="l.stockPlan && l.stockPlan.text"><strong>{{ l.stockPlan.text }}</strong><div v-if="showDerivations" class="bom-deriv" v-for="n in l.stockPlan.notes">{{ n }}</div></template><template v-else>{{ l.orderQty }}<span v-if="l.orderUnit && l.orderUnit !== l.unit"> × {{ l.orderUnit }}</span></template></td>
                     <td class="num">{{ l.unitCost ? fmt(l.unitCost) : '—' }}</td>
@@ -1853,7 +1853,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=62"></script>
+<script type="module" src="js/app.js?v=63"></script>
 
 </body>
 </html>
