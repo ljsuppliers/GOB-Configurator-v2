@@ -170,7 +170,7 @@ export function planStock(cuts, stockLengths, splittable = false) {
   const work = [];
   for (const c of cuts) {
     if (!c || !(c.len > 0) || !(c.n > 0)) continue;
-    if (c.len > maxL + 1e-6 && splittable) {
+    if (c.len > maxL + 1e-6 && (splittable || c.join)) {
       const k = Math.ceil(c.len / maxL);
       work.push({ len: c.len / k, n: c.n * k, what: `${c.what || 'pieces'} - each ${c.len.toFixed(2)}m run made of ${k} joined pieces` });
     } else work.push(c);

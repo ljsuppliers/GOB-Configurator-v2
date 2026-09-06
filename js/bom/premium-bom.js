@@ -256,7 +256,7 @@ export function buildPremiumBom(state, componentDefs) {
   const fDoubledLm = 2 * w + 2 * d + fDoubledInternals * d;
   add('5x2 tanalised C24 timber', Math.ceil((fJoists * d + 2 * w + fDoubledLm) * 1.10),
     `Floor: ${fJoists} joists x ${d.toFixed(2)}m @400mm front-to-back + rim (2 x ${w.toFixed(2)}m) + DOUBLING (outer ring + every 3rd joist / 1.2m grid: ${fDoubledInternals} x ${d.toFixed(2)}m), +10%`,
-    [{ len: d, n: fJoists + 2 + fDoubledInternals, what: 'floor joists incl. doubled sides + grid doubles' }, { len: w, n: 4, what: 'front + rear rim, doubled' }]);
+    [{ len: d, n: fJoists + 2 + fDoubledInternals, what: 'floor joists incl. doubled sides + grid doubles' }, { len: w, n: 4, what: 'front + rear rim, doubled (join over a joist/pedestal if longer than stock)', join: true }]);
   add('18x38 treated batten', Math.ceil(2 * (fJoists - 1) * d), `Floor PIR support battens, joist sides, tops 75mm down`,
     [{ len: d, n: 2 * (fJoists - 1), what: 'floor PIR battens' }]);
   add('75mm PIR insulation board', Math.ceil(w * d), `Floor: friction-fit between the 5x2 joists, ${(w * d).toFixed(1)}m2`,
@@ -466,9 +466,9 @@ export function buildPremiumBom(state, componentDefs) {
           ? `2.5m BUILD: joists STOP at the front wall (no height to oversail) - the canopy is formed by the firring overhang + 2x2 frame below`
           : `CLASSIC: joists stop at the front wall, ${canopyMm}mm token overhang in the firrings/deck only`
     }`,
-    [{ len: joistLen, n: rJoists * ladder.ply, what: 'roof joists' }, { len: w, n: 2, what: 'front + rear rim' }]);
+    [{ len: joistLen, n: rJoists * ladder.ply, what: 'roof joists' }, { len: w, n: 2, what: 'front + rear rim (join over a joist if longer than stock)', join: true }]);
   add('4x2 tanalised C24 timber', Math.ceil((2 * sideRun + w) * 1.05), `Flat 4x2 wall plate on the panel wall tops (sides + rear)`,
-    [{ len: sideRun, n: 2, what: 'side wall plates' }, { len: w, n: 1, what: 'rear wall plate' }]);
+    [{ len: sideRun, n: 2, what: 'side wall plates', join: true }, { len: w, n: 1, what: 'rear wall plate', join: true }]);
   if (ladder.web) add('18mm OSB3 board (2440x1220)', Math.ceil((rJoists * joistLen * ladder.depthM * 1.10) / PLY_SHEET_M2), `OSB webs glued+screwed between the doubled joist pairs, ripped from full sheets`,
     { orderText: `${Math.ceil((rJoists * joistLen * ladder.depthM * 1.10) / PLY_SHEET_M2)} sheets 2440 × 1220 × 18mm OSB3 (ripped to ${(ladder.depthM * 1000).toFixed(0)}mm webs on site)` });
   // Firrings are CUSTOM MADE per job (Liam 2026-09-05): give the exact spec.
@@ -677,7 +677,7 @@ export function buildPremiumBom(state, componentDefs) {
       const extCols = Math.ceil(w / 1.3) + 1, extRowsN = Math.ceil(extDepth / 1.3) + 1;
       const extSupports = extCols * extRowsN;
       add('4x2 tanalised C24 timber', extLm, `EXTRA DECKING FRAME (${extraRows} extra rows = ${extDepth.toFixed(2)}m deeper): ${extJoists} joists × ${extDepth.toFixed(2)}m @400mm + 2 rims × ${w.toFixed(2)}m, +10%`,
-        { cuts: [{ len: extDepth, n: extJoists, what: 'extra decking joists' }, { len: w, n: 2, what: 'extra decking rims' }], separate: 'EXTRA DECKING frame' });
+        { cuts: [{ len: extDepth, n: extJoists, what: 'extra decking joists' }, { len: w, n: 2, what: 'extra decking rims', join: true }], separate: 'EXTRA DECKING frame' });
       if (groundScrews) add('Radix ground screw', extSupports, `EXTRA DECKING: ${extCols} × ${extRowsN} grid under the extension frame (max 1.3m spacing)`, { separate: 'EXTRA DECKING supports' });
       else add('Adjustable plastic pedestal', extSupports, `EXTRA DECKING: ${extCols} × ${extRowsN} grid under the extension frame (max 1.3m spacing)`, { separate: 'EXTRA DECKING supports' });
       add('TimberLok 100mm', Math.ceil((extJoists * 4 + extSupports * 2) * 1.25), `EXTRA DECKING frame: joists to rims (4 per joist) + frame to supports, +25%`, { separate: 'EXTRA DECKING fixings' });
