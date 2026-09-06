@@ -26,6 +26,7 @@
       <span class="header-title">GOB Configurator</span>
       <div class="header-actions">
         <button class="btn btn-materials" @click="(materialsPage || installerPage) ? (materialsPage = false, installerPage = false) : openMaterialsPage()">{{ (materialsPage || installerPage) ? '← Back to design' : 'Materials & Orders' }}</button>
+        <button class="btn" @click="newJob" title="Clear the screen and start a new design">New</button>
         <button class="btn" @click="saveConfig">Save</button>
         <button class="btn" @click="loadConfig">Load</button>
         <div class="export-wrapper">
@@ -1856,7 +1857,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=72"></script>
+<script type="module" src="js/app.js?v=73"></script>
 
 </body>
 </html>

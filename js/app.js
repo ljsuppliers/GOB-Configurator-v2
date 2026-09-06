@@ -396,6 +396,21 @@ createApp({
   },
 
   watch: {
+    // AUTOSAVE: the current design is written to localStorage on every change,
+    // so a reload (or a crash) never loses an unsaved job.
+    state: {
+      deep: true,
+      handler() {
+        if (!this.state || this._restoring) return;
+        clearTimeout(this._draftTimer);
+        this._draftTimer = setTimeout(() => {
+          try { localStorage.setItem('gob-draft-v1', JSON.stringify({ state: this.state, cloudId: this.currentCloudId, cloudName: this.currentCloudName, orderRef: this.orderRef, at: Date.now() })); } catch (e) { /* ignore */ }
+        }, 400);
+      },
+    },
+    materialsPage() { this.syncUrl(); },
+    installerPage() { this.syncUrl(); },
+    currentCloudId() { this.syncUrl(); },
     'state.tier'(newTier) {
       if (!this.appData.cladding) return;
       const defaults = this.appData.cladding.defaultByTier[newTier];
@@ -471,6 +486,65 @@ createApp({
       this.orderRefManual = this.orderRef.trim() !== '' && this.orderRef !== this.defaultOrderRef();
       if (!this.orderRef.trim()) { this.orderRefManual = false; this.orderRef = this.defaultOrderRef(); }
       this.rebuildOrders();
+    },
+    /** URL = ?job=<cloud id>&view=design|materials|installer - reload / back / share safe. */
+    syncUrl() {
+      const p = new URLSearchParams();
+      if (this.currentCloudId) p.set('job', this.currentCloudId);
+      const view = this.installerPage ? 'installer' : this.materialsPage ? 'materials' : 'design';
+      if (view !== 'design') p.set('view', view);
+      const q = p.toString();
+      const url = `${window.location.pathname}${q ? '?' + q : ''}`;
+      if (window.location.search !== (q ? '?' + q : '')) window.history.pushState({ job: this.currentCloudId, view }, '', url);
+    },
+    applyView(view) {
+      if (view === 'materials') this.openMaterialsPage();
+      else if (view === 'installer') this.openInstallerPage();
+      else { this.materialsPage = false; this.installerPage = false; }
+    },
+    async restoreFromUrlOrDraft() {
+      const p = new URLSearchParams(window.location.search);
+      const jobId = p.get('job');
+      const view = p.get('view') || (p.get('materials') === '1' ? 'materials' : p.get('installer') === '1' ? 'installer' : 'design');
+      this._restoring = true;
+      try {
+        if (jobId && this.cloudReady) {
+          await this.loadFromCloud({ id: jobId, name: '' });
+          if (!this.currentCloudName) this.currentCloudName = this.cloudDesigns.find((d) => d.id === jobId)?.name || '';
+        } else {
+          // no job in the URL: bring back whatever was on screen last time
+          const raw = localStorage.getItem('gob-draft-v1');
+          if (raw) {
+            const draft = JSON.parse(raw);
+            if (draft && draft.state && draft.state.width) {
+              this.state = ensureStateDefaults(draft.state);
+              this.currentCloudId = draft.cloudId || null;
+              this.currentCloudName = draft.cloudName || '';
+              this.nextCompId = 100 + (this.state.components?.length || 0);
+              this.nextFeatureId = 1000 + (this.state.externalFeatures?.length || 0);
+              this.nextAcUnitId = 2000 + (this.state.acUnits?.length || 0);
+              this.nextLabelId = 3000 + (this.state.drawingLabels?.length || 0);
+            }
+          }
+        }
+      } catch (e) { console.warn('restore failed', e); }
+      finally { this._restoring = false; }
+      this.applyView(view);
+      window.addEventListener('popstate', (ev) => {
+        const q = new URLSearchParams(window.location.search);
+        const v = q.get('view') || 'design';
+        const j = q.get('job');
+        if (j && j !== this.currentCloudId) this.loadFromCloud({ id: j, name: '' }).then(() => this.applyView(v));
+        else this.applyView(v);
+      });
+    },
+    newJob() {
+      this.state = ensureStateDefaults(JSON.parse(JSON.stringify(this.appData.defaults || {})));
+      this.currentCloudId = null; this.currentCloudName = ''; this.orderRef = ''; this.orderRefManual = false;
+      this.bomLines = []; this.orders = [];
+      try { localStorage.removeItem('gob-draft-v1'); } catch (e) { /* ignore */ }
+      this.materialsPage = false; this.installerPage = false;
+      this.syncUrl();
     },
     async openJob(job) {
       await this.loadFromCloud(job);
@@ -1912,9 +1986,9 @@ createApp({
 
       this.appData = { prices, components, cladding, emailTemplates };
       this.state = ensureStateDefaults(JSON.parse(JSON.stringify(defaults)));
-      // Deep links (state must exist first): ?materials=1 / ?installer=1
-      if (/[?&]materials=1/.test(window.location.search)) this.$nextTick(() => this.openMaterialsPage());
-      else if (/[?&]installer=1/.test(window.location.search)) this.$nextTick(() => this.openInstallerPage());
+      this.appData.defaults = defaults;
+      // URL + draft restore runs after the cloud connects (see below)
+      this.$nextTick(() => setTimeout(() => this.restoreFromUrlOrDraft(), 300));
       
       // Ensure survey and site objects exist
       if (!this.state.survey) {
