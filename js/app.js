@@ -342,6 +342,14 @@ createApp({
         toSite: bySup(toSite),
         factoryDelivered: bySup(factory.filter((l) => !l.inStock)),
         fromStock: factory.filter((l) => l.inStock).sort((a, b) => (a.material?.category || '').localeCompare(b.material?.category || '')),
+        // stock items grouped by category (Installation kit, Electrical kit, Site equipment...) - Liam 2026-09-06
+        fromStockByCategory: (() => {
+          const m = new Map();
+          for (const l of factory.filter((l) => l.inStock)) { const k = l.material?.category || 'Other'; if (!m.has(k)) m.set(k, []); m.get(k).push(l); }
+          const order = ['Installation kit', 'Electrical kit', 'Site equipment (returns to factory)'];
+          return [...m.entries()].map(([name, ls]) => ({ name, lines: ls.sort((x, y) => (this.useTag(x) || '').localeCompare(this.useTag(y) || '') || x.name.localeCompare(y.name)) }))
+            .sort((x, y) => (order.indexOf(x.name) >= 0 ? order.indexOf(x.name) : 50) - (order.indexOf(y.name) >= 0 ? order.indexOf(y.name) : 50) || x.name.localeCompare(y.name));
+        })(),
         counts: { toSite: toSite.length, factory: factory.length },
       };
     },

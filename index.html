@@ -1110,9 +1110,12 @@
         </template>
         <template v-if="logistics.fromStock.length">
           <h3 class="pack-sub">From factory stock</h3>
-          <table class="pack-table pack-check">
-            <tr v-for="l in logistics.fromStock" :key="'st'+l.name"><td class="pack-tick">☐</td><td>{{ l.name }}</td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.material && l.material.category }}</td></tr>
-          </table>
+          <div v-for="g in logistics.fromStockByCategory" :key="'sc'+g.name" class="pack-cat">
+            <h3>{{ g.name }}</h3>
+            <table class="pack-table pack-check">
+              <tr v-for="l in g.lines" :key="'st'+l.name"><td class="pack-tick">☐</td><td>{{ l.name }}<span class="pack-small"> · {{ useTag(l) }}</span></td><td class="num">{{ orderAs(l) }}</td></tr>
+            </table>
+          </div>
         </template>
         <p v-if="!logistics.counts.factory" class="pack-note">Nothing to load - every line on this job is delivered straight to site.</p>
       </div>
@@ -1846,7 +1849,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=98"></script>
+<script type="module" src="js/app.js?v=99"></script>
 
 </body>
 </html>
