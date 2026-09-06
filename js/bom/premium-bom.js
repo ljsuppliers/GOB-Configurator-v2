@@ -12,7 +12,7 @@
 //    75mm PIR in the bays. Slat-clad sides also stick (rockwool in bays).
 //  - Flat timber roof: joist ladder by span, stock firrings 75/100mm -> 0
 //    at the rear + 2 reverse firrings (one per side edge) squaring the sides, 18mm T&G OSB,
-//    one-piece EPDM. Vented cold roof: 100mm PIR set 30mm below joist tops.
+//    one-piece EPDM. Vented cold roof: 75mm PIR set 30mm below joist tops.
 //  - CANOPY METHOD (Liam 2026-09-05, corrects the earlier "joists always
 //    oversail" rule):
 //      * 2.5m building: joists STOP at the front wall (no height to spare).
@@ -52,7 +52,7 @@ export const USE_TAGS = {
   'Radix ground screw': 'Foundation',
   '5x2 tanalised C24 timber': 'Floor joists + rim',
   '18x38 treated batten': 'Floor PIR support + cladding sub-frame',
-  '75mm PIR insulation board': 'Floor + stick-wall bays',
+  '75mm PIR insulation board': 'Floor, stick-wall bays + roof',
   '22mm P5 T&G chipboard (2400x600)': 'Floor deck',
   'Kingspan 100mm insulated wall panel (1.1m wide)': 'Rear + unclad side walls',
   'U-channel (40x102x40mm)': 'Panel tops, corners, opening edges',
@@ -77,7 +77,7 @@ export const USE_TAGS = {
   'Tapered firring (47mm, 1:40)': 'Roof fall + canopy overhang',
   '18mm T&G OSB3 roof board (2400x590)': 'Roof deck',
   'EPDM roof kit (membrane, adhesive, edge trims)': 'Roof covering',
-  '100mm PIR insulation board': 'Roof, between joists',
+
   '2x2 tanalised C16 timber': 'Canopy frame',
   'Soffit vent strip (2.5m)': 'Front soffit + rear rim vents',
   'Vapour control layer (roll)': 'Under roof joists + behind wall lining',
@@ -484,8 +484,10 @@ export function buildPremiumBom(state, componentDefs) {
     { orderText: `${Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2)} boards 2400 × 590 × 18mm OSB3 T&G (roof deck ${(w + 0.2).toFixed(2)} × ${roofLen.toFixed(2)}m)` });
   add('EPDM roof kit (membrane, adhesive, edge trims)', Math.ceil((w + 0.2) * roofLen * 1.15), `One-piece EPDM, deck m2 + 15% wraps/upstands, up-and-over the squared side edges`,
     { orderText: `ONE PIECE ${(w + 0.2 + 0.5).toFixed(2)}m wide × ${(roofLen + 0.5).toFixed(2)}m deep (roof deck ${(w + 0.2).toFixed(2)} × ${roofLen.toFixed(2)}m + 0.5m allowance each way) + contact adhesive + edge trims for ${(w + 2 * roofLen).toFixed(1)}m of edge` });
-  add('100mm PIR insulation board', Math.ceil(w * d), `VENTED COLD ROOF: between joists over the room only (${w.toFixed(2)} x ${d.toFixed(2)}m), set 30mm BELOW joist tops (50mm air path)`,
-    { orderText: `${Math.ceil(Math.ceil(w * d) / 2.88)} boards 2400 × 1200 × 100mm PIR (roof, ${(w * d).toFixed(1)}m²)` });
+  // Roof PIR is 75mm like the floor and walls (Liam 2026-09-06) - one thickness
+  // for the whole job. Set 30mm below the joist tops for the vent path.
+  add('75mm PIR insulation board', Math.ceil(w * d), `VENTED COLD ROOF: between joists over the room only (${w.toFixed(2)} x ${d.toFixed(2)}m), set 30mm BELOW joist tops (50mm air path)`,
+    { orderText: `${Math.ceil(Math.ceil(w * d) / 2.88)} boards 2400 × 1200 × 75mm PIR (roof, ${(w * d).toFixed(1)}m²)` });
   // Canopy 2x2 frame - one layer either way, method decides where it sits.
   // Ply on the front face + underside on EVERY canopied build (fascia + soffit
   // need a solid fixing) - Liam 2026-09-05.

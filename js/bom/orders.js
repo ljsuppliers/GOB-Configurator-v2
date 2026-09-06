@@ -56,7 +56,7 @@ export async function loadCatalogue() {
 // Items retired from the system: always removed from a saved catalogue, whatever
 // its version, so they can never reappear on a job or in the stock ledger.
 export const RETIRED_MATERIALS = new Set([
-  'CLS 4x2 timber', 'Treated CLS 4x2 timber', 'Composite decking board (3.6m)', 'Composite decking board (140×4880mm)',
+  'CLS 4x2 timber', 'Treated CLS 4x2 timber', '100mm PIR insulation board', 'Composite decking board (3.6m)', 'Composite decking board (140×4880mm)',
   'Medium Oak vinyl', 'Light Grey vinyl', 'Vinyl spray adhesive (500ml can)', 'Privacy screen (vertical slats on frame)',
   'Corner trims', 'Close corner trims', 'Open-corner glazing junction kit', 'Flitch beam bolts', 'uPVC frame fixing screw',
   'Twisted restraint strap 30x2.5x600mm', '25x25mm white PVC reveal trim (2.5m length)', 'Tapered firring (47mm, 1:40)',

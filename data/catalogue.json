@@ -1,5 +1,5 @@
 {
- "version": 12,
+ "version": 13,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -941,19 +941,6 @@
    "notes": "GAP. 1 per build at ground level, terminating the downpipe onto a soakaway or path."
   },
   {
-   "name": "100mm PIR insulation board",
-   "category": "Insulation",
-   "sku": "",
-   "unit": "m²",
-   "unitCost": 12.0,
-   "supplier": "Builders merchant",
-   "packSize": 2.88,
-   "orderUnit": "board 2400x1200",
-   "destination": "site",
-   "inStock": false,
-   "notes": "CLAUDE ESTIMATE £12/m². HYBRID roof - between the joists."
-  },
-  {
    "name": "50mm PIR insulation board",
    "category": "Insulation",
    "sku": "",
@@ -977,7 +964,7 @@
    "orderUnit": "board 2400x1200",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £9.50/m2. HYBRID floor: between the 4x2 joists on 18x38 battens laid flat (18+75=93 vs 95 joist = flush under deck). Replaces the 50mm floor PIR per Liam 2026-08-04."
+   "notes": "75mm PIR, 2400x1200 boards: floor, stick-wall bays AND roof (Liam 2026-09-06 - one thickness for the whole job)."
   },
   {
    "name": "Kingspan 100mm insulated wall panel (1.1m wide)",
@@ -2593,7 +2580,7 @@
    "supply": "site",
    "destination": "site",
    "inStock": false,
-   "notes": "Trex Enhance Clam Shell, 140mm × 25mm × 4.88m (Liam 2026-09-06). £32 per board carried over from the old 4880mm line - confirm."
+   "notes": "Trex Enhance Clam Shell, 140mm × 25mm × 4.88m. £32 per board confirmed by Liam 2026-09-06."
   }
  ]
 }
