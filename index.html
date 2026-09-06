@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=13">
+  <link rel="stylesheet" href="css/app.css?v=14">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -1099,7 +1099,7 @@
         </div>
 
         <h2 class="pack-h2">The building</h2>
-        <div class="pack-drawing" v-html="packDrawingSvg"></div>
+        <div class="pack-drawing pack-drawing-page"><div class="pack-drawing-title">Drawing · {{ orderRef }} · {{ state.customer && state.customer.name }}</div><div v-html="packDrawingSvg"></div></div>
         <table class="pack-table">
           <tr><th>Cladding</th><td>Front {{ (state.cladding.front||'').replace(/-/g,' ') }} · Left {{ (state.cladding.left||'').replace(/-/g,' ') }} · Right {{ (state.cladding.right||'').replace(/-/g,' ') }} · Rear {{ (state.cladding.rear||'').replace(/-/g,' ') }}</td></tr>
           <tr v-if="state.tier === 'signature'"><th>Canopy / corners</th><td>{{ state.hasCanopy !== false ? ((state.overhangDepth||400)) + 'mm canopy - ' + (state.height >= 2750 ? 'joists oversail 400mm + 2x2 layer under' : 'firrings overhang 400mm, 2x2 frame on the front wall top') : 'no canopy' }} · corners left {{ state.cornerLeft || 'open' }}, right {{ state.cornerRight || 'open' }}</td></tr>
@@ -1390,7 +1390,7 @@
         </table>
 
         <h2 class="pack-h2">2. Drawings</h2>
-        <div class="pack-drawing" v-html="packDrawingSvg"></div>
+        <div class="pack-drawing pack-drawing-page"><div class="pack-drawing-title">Drawing · {{ orderRef }} · {{ state.customer && state.customer.name }}</div><div v-html="packDrawingSvg"></div></div>
 
         <h2 class="pack-h2">3. Installation payment</h2>
         <table class="pack-table pack-pay">

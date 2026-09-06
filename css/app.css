@@ -734,3 +734,12 @@ html, body {
 .pack-check td:nth-child(2) { width: 42%; }
 .pack-check td.num { text-align: right; white-space: normal; }
 .logi-pack .pack-check td:nth-child(2) { width: 40%; }
+
+/* Drawings on their own LANDSCAPE page in both packs (Liam 2026-09-06) */
+.pack-drawing-title { display: none; }
+@media print {
+  @page drawing { size: A4 landscape; margin: 8mm; }
+  .pack-drawing-page { page: drawing; break-before: page; break-after: page; page-break-before: always; page-break-after: always; margin: 0; }
+  .pack-drawing-page .pack-drawing-title { display: block; font-size: 11px; color: #64748b; margin: 0 0 4px; }
+  .pack-drawing-page svg { width: 100% !important; height: auto !important; max-height: 185mm; }
+}
