@@ -1,5 +1,5 @@
 {
- "version": 10,
+ "version": 11,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -2578,6 +2578,34 @@
    "destination": "site",
    "inStock": false,
    "notes": "Wickes laminate underlay, 10.03m² per pack, £28 (Liam 2026-09-06)."
+  },
+  {
+   "name": "Fascia connector (500mm plastic, 300mm)",
+   "category": "Plastic trims",
+   "sku": "",
+   "unit": "each",
+   "unitCost": 4.5,
+   "supplier": "GAP",
+   "packSize": null,
+   "orderUnit": "",
+   "supply": "site",
+   "destination": "site",
+   "inStock": false,
+   "notes": "CLAUDE ESTIMATE ex VAT - GAP fascia joint trim; 1 per join + 1 spare per job (Liam 2026-09-06)."
+  },
+  {
+   "name": "Fascia connector (200mm plastic)",
+   "category": "Plastic trims",
+   "sku": "",
+   "unit": "each",
+   "unitCost": 3.5,
+   "supplier": "GAP",
+   "packSize": null,
+   "orderUnit": "",
+   "supply": "site",
+   "destination": "site",
+   "inStock": false,
+   "notes": "CLAUDE ESTIMATE ex VAT - GAP fascia joint trim; 1 per join + 1 spare per job (Liam 2026-09-06)."
   }
  ]
 }

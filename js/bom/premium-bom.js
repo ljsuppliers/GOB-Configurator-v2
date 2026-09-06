@@ -85,6 +85,8 @@ export const USE_TAGS = {
   '200mm plastic fascia (5m length, GAP)': 'Fascia: rear',
   '400mm plastic soffit (5m length, GAP)': 'Canopy soffit',
   'Fascia corner (500mm plastic)': 'Fascia corners',
+  'Fascia connector (500mm plastic, 300mm)': 'Fascia joins, front + sides',
+  'Fascia connector (200mm plastic)': 'Fascia joins, rear',
   'Steel top cap': 'Fascia + roof edge, front + sides',
   'Half-Round Gutter 4 Mtr (Black)': 'Rear gutter',
   'Half-Round Gutter Fascia Bracket (Black)': 'Rear gutter',
@@ -509,6 +511,13 @@ export function buildPremiumBom(state, componentDefs) {
   add('200mm plastic fascia (5m length, GAP)', Math.ceil(w / 5), `Rear`);
   if (hasCanopy) add('400mm plastic soffit (5m length, GAP)', Math.ceil(w / 5), `Front canopy soffit (closes the 2x2 frame underside)`);
   add('Fascia corner (500mm plastic)', 4, `4 corners`);
+  // Fascia connectors: one per join where a run is longer than a 5m length,
+  // PLUS one spare of each size on every job (Liam 2026-09-06: "even at 5m
+  // wide, include 1 just in case").
+  const joins = (run) => Math.max(0, Math.ceil(run / 5) - 1);
+  const joins300 = joins(w) + 2 * joins(roofLen);
+  add('Fascia connector (500mm plastic, 300mm)', joins300 + 1, `300mm fascia joins: front ${joins(w)} + sides ${2 * joins(roofLen)} + 1 spare`);
+  add('Fascia connector (200mm plastic)', joins(w) + 1, `200mm rear fascia joins: ${joins(w)} + 1 spare`);
   add('Steel top cap', Math.ceil((w + 2 * roofLen) / 3), `Over the top of the fascia + roof edge, EPDM underneath - FRONT + SIDES only (not the rear) / 3m lengths`);
   add('Half-Round Gutter 4 Mtr (Black)', Math.ceil(w / 4), `Rear gutter`);
   add('Half-Round Gutter Fascia Bracket (Black)', Math.ceil(w / 0.5), `1 per 500mm`);
