@@ -664,8 +664,11 @@ html, body {
 .pack-sub { font-size: 13px; color: #334155; margin: 14px 0 2px; }
 @media print {
   /* Materials page prints ONLY the logistics pack (no prices); screen content hidden */
-  .materials-page:not(.installer-page) > :not(.print-only) { display: none !important; }
+  /* the page body is now .mp-layout > .mp-main; hide everything in .mp-main except the pack */
+  .materials-page:not(.installer-page) .mp-main > :not(.print-only) { display: none !important; }
+  .materials-page:not(.installer-page) .jobs-side { display: none !important; }
   .materials-page .print-only { display: block !important; }
+  .mp-layout, .mp-main { display: block !important; }
   .logi-pack .pack-drawing svg { max-height: 600px; }
 }
 /* Supply + order status */
