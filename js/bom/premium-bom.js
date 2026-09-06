@@ -299,7 +299,7 @@ export function buildPremiumBom(state, componentDefs) {
     liningStudsTotal = liningStuds; liningRunTotal = liningRun;
     add('CLS 3x2 timber', Math.ceil((liningStuds * wallH + 2 * liningRun) * 1.10),
       `Lining frame on panel walls: studs @600mm (${liningStuds} x ${wallH.toFixed(2)}m) + top & bottom plates, +10%. Bays empty (panels insulate)`,
-      [{ len: wallH, n: liningStuds, what: 'lining studs' }, ...panelWalls.map((p) => ({ len: p.run, n: 2, what: `${p.label} lining plates` }))]);
+      [{ len: wallH, n: liningStuds, what: 'lining studs' }, ...panelWalls.map((p) => ({ len: p.run, n: 2, what: `${p.label} lining plates`, join: true }))]);
   }
 
   // Stick walls: front always + any slat-clad side + closed-corner extensions.
@@ -317,8 +317,8 @@ export function buildPremiumBom(state, componentDefs) {
     const kings = fhCount * (6 * wallH + 2);
     stickLm += (studs * wallH + 2 * sw.run + sw.run /* noggins */ + 4 * wallH + kings) * 1.10;
     stickCuts.push({ len: wallH, n: studs + 4 + fhCount * 6, what: `${sw.label} studs + corner/king studs` });
-    stickCuts.push({ len: sw.run, n: 3, what: `${sw.label} top plate x2 + noggin run` });
-    soleCuts.push({ len: sw.run, n: 1, what: `${sw.label} sole plate` });
+    stickCuts.push({ len: sw.run, n: 3, what: `${sw.label} top plate x2 + noggin run (join over a stud if longer than stock)`, join: true });
+    soleCuts.push({ len: sw.run, n: 1, what: `${sw.label} sole plate (join over a stud if longer than stock)`, join: true });
     const areaM2 = sw.run * wallH;
     plySheets += Math.ceil(areaM2 * 1.10 / PLY_SHEET_M2);
     tyvekM2 += Math.ceil(areaM2 * 1.10);
