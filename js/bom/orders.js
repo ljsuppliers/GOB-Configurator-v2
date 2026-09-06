@@ -57,15 +57,27 @@ export function mergeShipped(saved, base) {
   if (!base || !Array.isArray(base.materials)) return saved;
   const out = { ...saved, materials: [...saved.materials], suppliers: [...(saved.suppliers || [])], installers: [...(saved.installers || [])] };
   const have = new Map(out.materials.map((m) => [m.name.toLowerCase(), m]));
+  // Structure sync: when the shipped catalogue is NEWER than the saved copy,
+  // the shipped units / pack sizes / order units / categories / supply modes /
+  // notes win (they are code-driven), while saved COSTS, suppliers, supplier
+  // emails, stock counts and installers are kept. Items dropped from the
+  // shipped file are dropped too.
+  const newer = (base.version || 0) > (saved.version || 0);
+  const shippedNames = new Set(base.materials.map((m) => m.name.toLowerCase()));
   for (const bm of base.materials) {
     const sm = have.get(bm.name.toLowerCase());
     if (!sm) { out.materials.push({ ...bm }); continue; }
-    if (!(sm.unitCost > 0) && bm.unitCost > 0) {
+    if (newer) {
+      for (const k of ['unit', 'packSize', 'orderUnit', 'category', 'supply', 'destination', 'inStock', 'notes', 'sku']) sm[k] = bm[k];
+      if (!(sm.unitCost > 0) && bm.unitCost > 0) sm.unitCost = bm.unitCost;
+      if (!sm.supplier && bm.supplier) sm.supplier = bm.supplier;
+    } else if (!(sm.unitCost > 0) && bm.unitCost > 0) {
       sm.unitCost = bm.unitCost;
       if (bm.notes && !(sm.notes || '').includes('CLAUDE ESTIMATE')) sm.notes = bm.notes;
       if (!sm.supplier && bm.supplier) sm.supplier = bm.supplier;
     }
   }
+  if (newer) { out.materials = out.materials.filter((m) => shippedNames.has(m.name.toLowerCase())); out.version = base.version; }
   const haveSup = new Set(out.suppliers.map((s) => s.name.toLowerCase()));
   for (const bs of base.suppliers || []) if (!haveSup.has(bs.name.toLowerCase())) out.suppliers.push({ ...bs });
   return out;
@@ -273,7 +285,8 @@ function orderEmailText(order, opts = {}) {
     : (siteAddress ? `Job site:\n${siteAddress}` : 'Job site: [SITE ADDRESS - fill in]');
   // (factory-bound orders: our logistics team brings these to site later)
   const lines = order.items.map((l) => {
-    const unitBit = l.orderUnit && l.orderUnit !== 'each' ? ` (${l.orderUnit})` : '';
+    const unitWord = l.orderUnit && l.orderUnit !== 'each' ? l.orderUnit : '';
+    const unitBit = unitWord && !new RegExp(`\\b${unitWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(l.name) ? ` (${unitWord})` : '';
     const sku = l.material && l.material.sku ? `  [${l.material.sku}]` : '';
     let s;
     if (l.stockPlan && l.stockPlan.text) {
@@ -281,8 +294,13 @@ function orderEmailText(order, opts = {}) {
       for (const n of l.stockPlan.notes) s += `\n    ${n}`;
     } else if (l.orderText) {
       s = `- ${l.name}: ${l.orderText}${sku}`;
+    } else if (l.orderUnit && l.orderUnit !== l.unit) {
+      const sameCount = Number(l.orderQty) === Number(l.qty);
+      s = `- ${l.orderQty} × ${l.orderUnit} - ${l.name}${sku}${sameCount ? '' : `  (${l.qty} ${l.unit} needed)`}`;
+    } else if (/m²|m2|linear m|^m$/i.test(l.unit || '')) {
+      s = `- ${l.name}: ${l.qty} ${l.unit}${sku}  (please supply in your standard sheet/roll/length size to cover this)`;
     } else {
-      s = `- ${l.orderQty} x ${l.name}${unitBit}${sku}`;
+      s = `- ${l.orderQty} × ${l.name}${unitBit}${sku}`;
     }
     // Panel schedules, firring specs and cut instructions travel with the order line.
     if (/insulated wall panel|firring/i.test(l.name) && l.derivation) s += `\n    ${l.derivation.split('\n')[0]}`;

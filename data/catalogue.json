@@ -1,5 +1,5 @@
 {
- "version": 1,
+ "version": 3,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -2604,14 +2604,14 @@
    "category": "Steel trims",
    "sku": "",
    "unit": "each",
-   "unitCost": 18,
+   "unitCost": 15,
    "supplier": "Mighty Structural",
    "packSize": null,
    "orderUnit": "",
    "supply": "site",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £18 (ex VAT) - confirm. 3m U-shape 200x40x40, cut on site. Closed corner (covers the protruding side wall) and, with the 180x40 L, forms a glazed open corner."
+   "notes": "£15 per 3m length (Liam 2026-09-06). U-shape 200x40x40, cut on site. Closed corner (covers the protruding side wall) and, with the 180x40 L, forms a glazed open corner."
   }
  ]
 }

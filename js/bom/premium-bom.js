@@ -258,8 +258,10 @@ export function buildPremiumBom(state, componentDefs) {
     [{ len: d, n: fJoists + 2 + fDoubledInternals, what: 'floor joists incl. doubled sides + grid doubles' }, { len: w, n: 4, what: 'front + rear rim, doubled' }]);
   add('18x38 treated batten', Math.ceil(2 * (fJoists - 1) * d), `Floor PIR support battens, joist sides, tops 75mm down`,
     [{ len: d, n: 2 * (fJoists - 1), what: 'floor PIR battens' }]);
-  add('75mm PIR insulation board', Math.ceil(w * d), `Floor: friction-fit between the 5x2 joists, ${(w * d).toFixed(1)}m2`);
-  add('22mm P5 T&G chipboard (2400x600)', Math.ceil((w * d) * 1.05 / CHIPBOARD_M2), `Floor deck: ${(w * d).toFixed(1)}m2 + 5%, glued at every joint`);
+  add('75mm PIR insulation board', Math.ceil(w * d), `Floor: friction-fit between the 5x2 joists, ${(w * d).toFixed(1)}m2`,
+    { orderText: `${Math.ceil(Math.ceil(w * d) / 2.88)} boards 2400 × 1200 × 75mm PIR (floor, ${(w * d).toFixed(1)}m²)` });
+  add('22mm P5 T&G chipboard (2400x600)', Math.ceil((w * d) * 1.05 / CHIPBOARD_M2), `Floor deck: ${(w * d).toFixed(1)}m2 + 5%, glued at every joint`,
+    { orderText: `${Math.ceil((w * d) * 1.05 / CHIPBOARD_M2)} boards 2400 × 600 × 22mm P5 T&G (moisture-resistant)` });
 
   /* ---------- WALLS ---------- */
   // Panel walls: rear always; sides when steel-clad. Side run excludes the
@@ -362,7 +364,9 @@ export function buildPremiumBom(state, componentDefs) {
   //    that side, both at the corner): 180x40 L + 200x40x40 U together form the corner.
   //  Open front corner with cladding on both faces: a 50x50 L covers front + side cladding.
   //  Plain front corner (no canopy/decking): 180x40 L like the rear.
-  const nearCorner = (ops, atStart) => ops.some((o) => o.fullHeight && (atStart ? o.posM <= 0.3 : o.posM + o.widthM >= o.wallM - 0.3));
+  // "Glazing meets glazing" only when the frames TOUCH the corner (Liam 2026-09-06);
+  // any gap is at least 400mm of cladding, which is a clad corner.
+  const nearCorner = (ops, atStart) => ops.some((o) => o.fullHeight && (atStart ? o.posM <= 0.05 : o.posM + o.widthM >= o.wallM - 0.05));
   // front wall: positionX from the LEFT; left elevation: positionX from the REAR (front is at the drawing's right);
   // right elevation: positionX from the FRONT.
   const glassAtCorner = {
@@ -387,10 +391,13 @@ export function buildPremiumBom(state, componentDefs) {
   }
   add('CLS 4x2 timber', Math.ceil(stickLm - soleLm), `Stick walls (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): studs @400mm + plates + noggins + opening framing, +10%`, stickCuts);
   add('Treated CLS 4x2 timber', Math.ceil(soleLm * 1.10), `Stick-wall sole plates at deck level (treated)`, soleCuts);
-  add('12mm Plywood (1220×2440 sheet)', plySheets, `Stick wall external sheathing + 10% (openings cut out on site)`);
-  add('Tyvek breather membrane', tyvekM2, `Over the ply, under the battens (m2 + 10%)`);
+  add('12mm Plywood (1220×2440 sheet)', plySheets, `Stick wall external sheathing + 10% (openings cut out on site)`,
+    { orderText: `${plySheets} sheets 2440 × 1220 × 12mm structural ply (WBP/exterior grade)` });
+  add('Tyvek breather membrane', tyvekM2, `Over the ply, under the battens (m2 + 10%)`,
+    { orderText: `${Math.ceil(tyvekM2 / 70)} roll${Math.ceil(tyvekM2 / 70) === 1 ? '' : 's'} Tyvek Housewrap 1.4m × 50m (${tyvekM2}m² needed)` });
   add('Tyvek/breather tape (roll)', 1, `Tape laps + around openings`);
-  if (pirWallM2 > 0) add('75mm PIR insulation board', pirWallM2, `ALL stick wall bays (${stickWalls.map((x) => x.label).join(' + ')}): 75mm PIR friction-fit between the 4x2 studs (no Rockwool - partitions only)`);
+  if (pirWallM2 > 0) add('75mm PIR insulation board', pirWallM2, `ALL stick wall bays (${stickWalls.map((x) => x.label).join(' + ')}): 75mm PIR friction-fit between the 4x2 studs (no Rockwool - partitions only)`,
+    { orderText: `${Math.ceil(pirWallM2 / 2.88)} boards 2400 × 1200 × 75mm PIR (stick walls, ${pirWallM2}m²)` });
   // Cladding boards + double-batten sub-frame on every slat-clad wall
   // (front always clad; sides when not steel). Closed-corner returns add
   // ~0.4m to the front-cladding run.
@@ -414,7 +421,9 @@ export function buildPremiumBom(state, componentDefs) {
     cladBattenLm += Math.ceil(run / 0.4) * wallH + cw.run * Math.ceil(wallH / 0.4);
   }
   for (const [name, count] of cladTotals) {
-    add(name, count, `Vertical cladding runs across the clad walls (+4 spares per wall). Colour/type per wall spec`);
+    const boardW = /cedar|larch/i.test(name) ? '140mm' : '200mm';
+    add(name, count, `Vertical cladding runs across the clad walls (+4 spares per wall). Colour/type per wall spec`,
+      { orderText: `${count} boards × 2.5m long, ${boardW} wide - ${name.replace(/ \d+×\d+mm$/, '')} (walls: ${cladWalls.filter((cw) => (cw.type === 'western-red-cedar' ? 'Western Red Cedar' : cw.type === 'larch' ? 'Larch' : cw.type === 'composite-latte' ? 'Latte' : 'Coffee') === (name.includes('Cedar') ? 'Western Red Cedar' : name.includes('Larch') ? 'Larch' : name.includes('Latte') ? 'Latte' : 'Coffee')).map((cw) => cw.wall).join(' + ')})` });
   }
   if (cladBattenLm > 0) {
     add('18x38 treated batten', Math.ceil(cladBattenLm * 1.05), `Cladding double-batten sub-frame (vertical counter-battens + horizontal rows @400mm) on the clad walls`,
@@ -452,7 +461,8 @@ export function buildPremiumBom(state, componentDefs) {
     [{ len: joistLen, n: rJoists * ladder.ply, what: 'roof joists' }, { len: w, n: 2, what: 'front + rear rim' }]);
   add('4x2 tanalised C24 timber', Math.ceil((2 * sideRun + w) * 1.05), `Flat 4x2 wall plate on the panel wall tops (sides + rear)`,
     [{ len: sideRun, n: 2, what: 'side wall plates' }, { len: w, n: 1, what: 'rear wall plate' }]);
-  if (ladder.web) add('18mm OSB3 board (2440x1220)', Math.ceil((rJoists * joistLen * ladder.depthM * 1.10) / PLY_SHEET_M2), `OSB webs glued+screwed between the doubled joist pairs, ripped from full sheets`);
+  if (ladder.web) add('18mm OSB3 board (2440x1220)', Math.ceil((rJoists * joistLen * ladder.depthM * 1.10) / PLY_SHEET_M2), `OSB webs glued+screwed between the doubled joist pairs, ripped from full sheets`,
+    { orderText: `${Math.ceil((rJoists * joistLen * ladder.depthM * 1.10) / PLY_SHEET_M2)} sheets 2440 × 1220 × 18mm OSB3 (ripped to ${(ladder.depthM * 1000).toFixed(0)}mm webs on site)` });
   // Firrings are CUSTOM MADE per job (Liam 2026-09-05): give the exact spec.
   // Liam 2026-09-06: assume a 70mm front height on EVERY building (the fall is
   // whatever 70mm gives over the run - shown alongside).
@@ -467,10 +477,12 @@ export function buildPremiumBom(state, componentDefs) {
           : `They run ${canopyMm}mm past the front wall (classic token overhang)`
     }`,
     { costQty: (rJoists + 4) * roofLen, orderText: `${rJoists} × ${roofLen.toFixed(2)}m tapered ${firrFrontMm}→0mm  +  4 × ${roofLen.toFixed(2)}m REVERSE (0→${firrFrontMm}mm) for the side edges  · 47mm wide` });
-  add('18mm T&G OSB3 roof board (2400x590)', Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2), `Roof deck ${(w + 0.2).toFixed(2)} x ${roofLen.toFixed(2)}m incl. 100mm side overhangs + ${canopyMm}mm front + 100mm rear, +5%`);
+  add('18mm T&G OSB3 roof board (2400x590)', Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2), `Roof deck ${(w + 0.2).toFixed(2)} x ${roofLen.toFixed(2)}m incl. 100mm side overhangs + ${canopyMm}mm front + 100mm rear, +5%`,
+    { orderText: `${Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2)} boards 2400 × 590 × 18mm OSB3 T&G (roof deck ${(w + 0.2).toFixed(2)} × ${roofLen.toFixed(2)}m)` });
   add('EPDM roof kit (membrane, adhesive, edge trims)', Math.ceil((w + 0.2) * roofLen * 1.15), `One-piece EPDM, deck m2 + 15% wraps/upstands, up-and-over the squared side edges`,
-    { orderText: `ONE PIECE ${(w + 0.2 + 0.6).toFixed(1)}m × ${(roofLen + 0.6).toFixed(1)}m (deck ${(w + 0.2).toFixed(2)} × ${roofLen.toFixed(2)}m + 300mm each edge) + adhesive + edge trims` });
-  add('100mm PIR insulation board', Math.ceil(w * d), `VENTED COLD ROOF: between joists over the room only (${w.toFixed(2)} x ${d.toFixed(2)}m), set 30mm BELOW joist tops (50mm air path)`);
+    { orderText: `ONE PIECE ${(w + 0.2 + 0.5).toFixed(2)}m wide × ${(roofLen + 0.5).toFixed(2)}m deep (roof deck ${(w + 0.2).toFixed(2)} × ${roofLen.toFixed(2)}m + 0.5m allowance each way) + contact adhesive + edge trims for ${(w + 2 * roofLen).toFixed(1)}m of edge` });
+  add('100mm PIR insulation board', Math.ceil(w * d), `VENTED COLD ROOF: between joists over the room only (${w.toFixed(2)} x ${d.toFixed(2)}m), set 30mm BELOW joist tops (50mm air path)`,
+    { orderText: `${Math.ceil(Math.ceil(w * d) / 2.88)} boards 2400 × 1200 × 100mm PIR (roof, ${(w * d).toFixed(1)}m²)` });
   // Canopy 2x2 frame - one layer either way, method decides where it sits.
   // Ply on the front face + underside on EVERY canopied build (fascia + soffit
   // need a solid fixing) - Liam 2026-09-05.
@@ -491,7 +503,8 @@ export function buildPremiumBom(state, componentDefs) {
     add('12mm Plywood (1220×2440 sheet)', Math.ceil((w * 0.3) * 1.10 / PLY_SHEET_M2), `Front fascia backing strip (classic, no canopy): ${w.toFixed(2)} x 0.30m + 10%`);
   }
   add('Soffit vent strip (2.5m)', Math.ceil((2 * w) / 2.5), `Front soffit vent + rear rim mesh vents (cross-flow)`);
-  add('Vapour control layer (roll)', 2, `Warm-side VCL under the roof joists + continuous VCL to all walls behind the lining`);
+  add('Vapour control layer (roll)', 2, `Warm-side VCL under the roof joists + continuous VCL to all walls behind the lining`,
+    { orderText: `2 rolls VCL / polythene vapour barrier 2.7m × 50m (roof underside + walls)` });
 
   /* ---------- EXTERNAL TRIMS / RAINWATER ---------- */
   add('300mm plastic fascia (5m length, GAP)', Math.ceil((w + 2 * roofLen) / 5), `Front (${w.toFixed(2)}m) + both sides (2 x ${roofLen.toFixed(2)}m incl. canopy + rear oversail)`);
@@ -513,7 +526,8 @@ export function buildPremiumBom(state, componentDefs) {
     - [...front, ...rear, ...left, ...right].filter((o) => o.fullHeight).reduce((s, o) => s + o.widthM * o.heightM, 0));
   const ceilM2 = (w - 0.2) * (d - 0.2);
   const boardM2 = (wallsNetM2 + ceilM2) * 1.10;
-  add('Plasterboard 12.5mm (1200x2400 sheet)', Math.ceil(boardM2 / PLASTERBOARD_M2), `Walls (${wallsNetM2.toFixed(1)}m2) + ceiling (${ceilM2.toFixed(1)}m2) + 10%`);
+  add('Plasterboard 12.5mm (1200x2400 sheet)', Math.ceil(boardM2 / PLASTERBOARD_M2), `Walls (${wallsNetM2.toFixed(1)}m2) + ceiling (${ceilM2.toFixed(1)}m2) + 10%`,
+    { orderText: `${Math.ceil(boardM2 / PLASTERBOARD_M2)} boards 2400 × 1200 × 12.5mm tapered-edge plasterboard` });
   add('Plasterboard scrim/jointing tape (90m roll)', Math.ceil(boardM2 / 45), `Board joints`);
   add('Plasterboard corner bead (2.4m)', 4 + [...front, ...rear, ...left, ...right].length, `Corners + reveals`);
   add('Multi-finish plaster (25kg bag)', Math.ceil(boardM2 / 10), `Skim ~10m2/bag`);
@@ -572,7 +586,8 @@ export function buildPremiumBom(state, componentDefs) {
   for (const [wallName, ops] of [['front', front], ['rear', rear], ['left side', left], ['right side', right]]) {
     for (const o of ops) {
       const def = componentDefs[o.type] || {};
-      add(def.label || o.type, 1, `On the ${wallName}${def.width ? ` - ${def.width}mm wide` : ''}`);
+      add(def.label || o.type, 1, `On the ${wallName}${def.width ? ` - ${def.width}mm wide` : ''}`,
+        { orderText: `1 × ${def.label || o.type}${def.width ? `, ${def.width}mm wide` : ''}${def.height ? ` × ${def.height}mm high` : ''}, anthracite grey RAL 7016 outside / white inside, toughened double glazed - for the ${wallName} wall` });
     }
   }
   const opCount = [...front, ...rear, ...left, ...right].length;
@@ -583,7 +598,8 @@ export function buildPremiumBom(state, componentDefs) {
   /* ---------- DECKING ---------- */
   if (hasDecking) {
     const deckDepthM = ((state.deckingDepth || 400) + (state.structuralExtras?.additionalDecking || 0) * 140) / 1000;
-    add('Composite decking board (3.6m)', Math.ceil((w * deckDepthM) / (3.6 * 0.14) * 1.1), `Front decking ${w.toFixed(2)}m x ${deckDepthM.toFixed(2)}m + 10%`);
+    add('Composite decking board (3.6m)', Math.ceil((w * deckDepthM) / (3.6 * 0.14) * 1.1), `Front decking ${w.toFixed(2)}m x ${deckDepthM.toFixed(2)}m + 10%`,
+      { orderText: `${Math.ceil((w * deckDepthM) / (3.6 * 0.14) * 1.1)} composite decking boards 3.6m × 140mm (front deck ${w.toFixed(2)} × ${deckDepthM.toFixed(2)}m)` });
     add('Decking screws - colour-headed (Winchester grey)', Math.ceil(w * deckDepthM * 25 * 1.25), `~25/m2 + 25% over-estimate (Liam: over on fixings)`);
   }
 
