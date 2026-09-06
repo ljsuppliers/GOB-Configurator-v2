@@ -730,3 +730,7 @@ html, body {
   .pack-drawing { break-inside: avoid; page-break-inside: avoid; margin: 6px 0 10px; }
   .pack-drawing svg { width: 100% !important; height: auto !important; max-height: none !important; display: block; }
 }
+/* pack checklist: name column takes the space, order column wraps sensibly */
+.pack-check td:nth-child(2) { width: 42%; }
+.pack-check td.num { text-align: right; white-space: normal; }
+.logi-pack .pack-check td:nth-child(2) { width: 40%; }

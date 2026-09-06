@@ -183,6 +183,17 @@ createApp({
     bomMaterialCost() {
       return (this.bomLines || []).reduce((sum, l) => sum + (l.inStock ? 0 : l.lineCost), 0);
     },
+    /** The drawing SVG for the printable packs. The design canvas already holds
+     *  the same SVG (hidden), and fills like url(#grad) resolve to the FIRST
+     *  matching id in the document - a hidden element paints nothing, so the
+     *  pack copy came out as white boxes. Suffix every id in this copy. */
+    packDrawingSvg() {
+      const svg = this.drawingSvg || '';
+      return svg
+        .replace(/id="([^"]+)"/g, 'id="$1-pk"')
+        .replace(/url\(#([^)]+)\)/g, 'url(#$1-pk)')
+        .replace(/href="#([^"]+)"/g, 'href="#$1-pk"');
+    },
     jobSummary() {
       const s = this.state;
       const c = s.cladding || {};
