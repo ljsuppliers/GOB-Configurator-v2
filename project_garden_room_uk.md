@@ -1,0 +1,1 @@
+- **TERM (Liam 2026-09-06): "gob configurator" = the 2D one at gob-configurator.vercel.app** (not the designer). Build labour cut 1 day/£400 across the board (2026-09-06): Midi 14 / Maxi 14 (£5,600) / Multi 16 / Multi+ 18 build days; +3 delivery/groundworks unchanged → Maxi install fee £6,800.
