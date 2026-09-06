@@ -162,41 +162,51 @@ export function stockLengthsFor(name) { const r = stockRuleFor(name); return r ?
  * Returns { lengths: {stockLen: count}, totalM, notes[], text }.
  */
 export function planStock(cuts, stockLengths, splittable = false) {
+  // UNIFORM LENGTHS (Liam 2026-09-06): keep the lengths per material as few as
+  // possible rather than chasing the last bit of waste, and stay at 4.8m or
+  // under unless a single piece (a joist) genuinely needs 5.4/6.0m.
+  //   1. Pieces longer than 4.8m that may be joined (rims, plates, battens)
+  //      are split into equal pieces first.
+  //   2. Pieces are grouped SHORT (<= 2.4m) / LONG (> 2.4m); each group is
+  //      bought in ONE stock length = the smallest standard length that fits
+  //      the group's longest piece.
+  //   3. +10% spare pieces on every cut.
+  const PREFER_MAX = 4.8;
   const lengths = {};
   const notes = [];
   let totalM = 0;
-  const maxL = stockLengths[stockLengths.length - 1];
-  // Expand over-length runs into joined pieces where that is normal practice.
   const work = [];
   for (const c of cuts) {
     if (!c || !(c.len > 0) || !(c.n > 0)) continue;
-    if (c.len > maxL + 1e-6 && (splittable || c.join)) {
-      const k = Math.ceil(c.len / maxL);
+    const cap = (splittable || c.join) ? PREFER_MAX : stockLengths[stockLengths.length - 1];
+    if (c.len > cap + 1e-6 && (splittable || c.join)) {
+      const k = Math.ceil(c.len / cap);
       work.push({ len: c.len / k, n: c.n * k, what: `${c.what || 'pieces'} - each ${c.len.toFixed(2)}m run made of ${k} joined pieces` });
-    } else work.push(c);
+    } else work.push({ ...c });
   }
-  for (const c of work) {
-    const n = Math.ceil(c.n * SPARE_FACTOR);
-    const fits = stockLengths.filter((L) => L + 1e-6 >= c.len);
-    if (fits.length === 0) {
-      const L = stockLengths[stockLengths.length - 1];
-      notes.push(`${n} x ${c.len.toFixed(2)}m (${c.what || 'pieces'}) LONGER THAN ${L}m STOCK - order ${n} special lengths or join over a bearing`);
-      lengths[`${c.len.toFixed(2)}*`] = (lengths[`${c.len.toFixed(2)}*`] || 0) + n;
-      totalM += n * c.len;
+  const groups = { short: work.filter((c) => c.len <= 2.4 + 1e-6), long: work.filter((c) => c.len > 2.4 + 1e-6) };
+  for (const key of ['long', 'short']) {
+    const g = groups[key];
+    if (!g.length) continue;
+    const maxPiece = Math.max(...g.map((c) => c.len));
+    // smallest standard length that fits the longest piece; prefer <= 4.8m
+    const fits = stockLengths.filter((L) => L + 1e-6 >= maxPiece);
+    let L = fits.find((x) => x <= PREFER_MAX + 1e-6) ?? fits[0];
+    if (!L) {
+      L = stockLengths[stockLengths.length - 1];
+      for (const c of g) { notes.push(`${Math.ceil(c.n * SPARE_FACTOR)} x ${c.len.toFixed(2)}m (${c.what || 'pieces'}) LONGER THAN ${L}m STOCK - order special lengths`); lengths[`${c.len.toFixed(2)}*`] = (lengths[`${c.len.toFixed(2)}*`] || 0) + Math.ceil(c.n * SPARE_FACTOR); totalM += c.n * c.len; }
       continue;
     }
-    let best = null;
-    for (const L of fits) {
-      const per = Math.floor(L / c.len + 1e-6);
-      const wastePerPiece = (L - per * c.len) / per;
-      if (!best || wastePerPiece < best.wastePerPiece - 1e-6 || (Math.abs(wastePerPiece - best.wastePerPiece) < 1e-6 && L < best.L)) {
-        best = { L, per, wastePerPiece };
-      }
+    let count = 0;
+    for (const c of g) {
+      const n = Math.ceil(c.n * SPARE_FACTOR);
+      const per = Math.max(1, Math.floor(L / c.len + 1e-6));
+      const k = Math.ceil(n / per);
+      count += k;
+      notes.push(`${n} x ${c.len.toFixed(2)}m (${c.what || 'pieces'}) -> ${k} x ${L}m (${per} per length)`);
     }
-    const count = Math.ceil(n / best.per);
-    lengths[best.L] = (lengths[best.L] || 0) + count;
-    totalM += count * best.L;
-    notes.push(`${n} x ${c.len.toFixed(2)}m (${c.what || 'pieces'}) -> ${count} x ${best.L}m (${best.per} per length)`);
+    lengths[L] = (lengths[L] || 0) + count;
+    totalM += count * L;
   }
   const text = Object.entries(lengths)
     .sort((a, b) => parseFloat(b[0]) - parseFloat(a[0]))
