@@ -11,7 +11,7 @@ import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=17';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES } from './bom/orders.js?v=11';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
-import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=6';
+import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=7';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=1';
 

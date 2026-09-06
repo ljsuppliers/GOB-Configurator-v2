@@ -24,12 +24,13 @@ export const GROUNDWORKS_DAYS = 2;
  *  Beyond Multi+ (31.5m²): +2 days per extra 7m² (ESTIMATE). */
 export function buildDaysFor(externalAreaM2) {
   // Liam 2026-09-06: build labour down £400 (1 day) across the board:
-  // Midi 12 / Maxi 14 (£5,600) / Multi 16 / Multi+ 18.
-  if (externalAreaM2 <= 14.75) return { days: 12, model: 'Midi' };     // 4.0x3.0 = 12.0  (Liam 2026-09-06: Midi is 12)
-  if (externalAreaM2 <= 20.75) return { days: 14, model: 'Maxi' };     // 5.0x3.5 = 17.5
-  if (externalAreaM2 <= 27.75) return { days: 16, model: 'Multi' };    // 6.0x4.0 = 24.0
-  if (externalAreaM2 <= 35) return { days: 18, model: 'Multi+' };      // 7.0x4.5 = 31.5
-  return { days: 18 + 2 * Math.ceil((externalAreaM2 - 35) / 7), model: 'larger than Multi+ (ESTIMATE +2 days per 7m²)' };
+  // Midi 11 / Maxi 13 (£5,200) / Multi 15 / Multi+ 17.
+  // Liam 2026-09-06 (2nd cut, another £400/1 day): Midi 11 / Maxi 13 / Multi 15 / Multi+ 17
+  if (externalAreaM2 <= 14.75) return { days: 11, model: 'Midi' };     // 4.0x3.0 = 12.0
+  if (externalAreaM2 <= 20.75) return { days: 13, model: 'Maxi' };     // 5.0x3.5 = 17.5  -> £5,200 build, £6,600 with delivery + groundworks
+  if (externalAreaM2 <= 27.75) return { days: 15, model: 'Multi' };    // 6.0x4.0 = 24.0
+  if (externalAreaM2 <= 35) return { days: 17, model: 'Multi+' };      // 7.0x4.5 = 31.5
+  return { days: 17 + 2 * Math.ceil((externalAreaM2 - 35) / 7), model: 'larger than Multi+ (ESTIMATE +2 days per 7m²)' };
 }
 
 const DOOR_CATS = new Set(['sliding', 'bifold', 'french', 'door', 'single']);
