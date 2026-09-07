@@ -800,20 +800,13 @@ createApp({
       const p = new URLSearchParams({ view: 'cm', fs: '1', to: order.supplier?.email || '', su: order.email.subject, body: order.email.body });
       return `https://mail.google.com/mail/?${p.toString()}`;
     },
-    /** Copy as formatted HTML (headings bold, bullet list) so it pastes cleanly into Gmail. */
+    /** Copy for Gmail: rich text (bullets, paragraphs) via the shared rich-copy helper. */
     async copyOrderForGmail(order) {
-      const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      const html = order.email.body.split('\n').map((line) => {
-        if (line.startsWith('- ')) return `<li>${esc(line.slice(2))}</li>`;
-        if (/^\s{4}/.test(line)) return `<div style="margin-left:24px;color:#555;font-size:13px">${esc(line.trim())}</div>`;
-        if (line === '') return '<br>';
-        if (/^(Delivery address|Timber|Sheet materials|Insulation|Base)$/i.test(line.trim())) return `<strong>${esc(line)}</strong>`;
-        return `<div>${esc(line)}</div>`;
-      }).join('').replace(/(<li>.*?<\/li>)+/g, (m) => `<ul style="margin:6px 0 6px 18px;padding:0">${m}</ul>`);
+      const plain = order.email.body;
       try {
-        await copyRichText(html, `Subject: ${order.email.subject}\n\n${order.email.body}`);
+        await copyRichText(plain);
         order.copied = true; setTimeout(() => { order.copied = false; }, 2500);
-        this.bomStatus = `Copied for Gmail (subject: ${order.email.subject})`;
+        this.bomStatus = `Copied for Gmail - paste into the body. Subject: ${order.email.subject}`;
       } catch (e) { await this.copyOrderEmail(order); }
     },
     mailtoOrder(order) {
