@@ -173,5 +173,7 @@
     "doorPosition": 0.5,
     "doorDirection": "right"
   },
-  "flooring": "natural-oak"
+  "flooring": "natural-oak",
+  "featureWall": "none",
+  "pirFloorRoof": 75
 }

@@ -56,7 +56,7 @@ export async function loadCatalogue() {
 // Items retired from the system: always removed from a saved catalogue, whatever
 // its version, so they can never reappear on a job or in the stock ledger.
 export const RETIRED_MATERIALS = new Set([
-  'CLS 4x2 timber', 'Treated CLS 4x2 timber', '100mm PIR insulation board', 'Standard base trim (steel)', 'Composite decking board (3.6m)', 'Composite decking board (140×4880mm)',
+  'CLS 4x2 timber', 'Treated CLS 4x2 timber', 'Standard base trim (steel)', 'Composite decking board (3.6m)', 'Composite decking board (140×4880mm)',
   'Medium Oak vinyl', 'Light Grey vinyl', 'Vinyl spray adhesive (500ml can)', 'Privacy screen (vertical slats on frame)',
   'Corner trims', 'Close corner trims', 'Open-corner glazing junction kit', 'Flitch beam bolts', 'uPVC frame fixing screw',
   'Twisted restraint strap 30x2.5x600mm', '25x25mm white PVC reveal trim (2.5m length)', 'Tapered firring (47mm, 1:40)',
@@ -72,7 +72,7 @@ export const RETIRED_MATERIALS = new Set([
   'Kingspan 80mm (115mm ridge) trapezoid roof panel (1.0m wide)', 'Side soffit 150mm flat anthracite trim (5m length, GAP)',
   'Pre-finished plasterboard 12.5mm - Linen White (2440x1220 sheet)', 'Pre-finished plywood 3mm - White Wilkins (2440x1220 sheet)',
   'Internal double plug socket (extra)', 'Double light switch', 'LED panel light (ceiling)', 'LED panel light mounting bracket', 'White trunking',
-  'IP65 LED canopy spotlight', 'Canopy downlight (warm-white LED, recessed)',
+  'IP65 LED canopy spotlight', 'Canopy downlight (warm-white LED, recessed)', 'Acoustic slat wall panel (2400×600)',
 ]);
 
 export function mergeShipped(saved, base) {

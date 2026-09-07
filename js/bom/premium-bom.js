@@ -53,6 +53,8 @@ export const USE_TAGS = {
   '5x2 tanalised C24 timber': 'Floor joists + rim',
   '18x38 treated batten': 'Floor PIR support + cladding sub-frame',
   '75mm PIR insulation board': 'Floor, stick-wall bays + roof',
+  '100mm PIR insulation board': 'Floor + roof (100mm jobs)',
+  'Oak acoustic slat wall panel (2400×600)': 'Rear feature wall, over plasterboard',
   '22mm P5 T&G chipboard (2400x600)': 'Floor deck',
   'Kingspan 100mm insulated wall panel (1.1m wide)': 'Rear + unclad side walls',
   'U-channel (40x102x40mm)': 'Panel tops, corners, opening edges',
@@ -207,6 +209,9 @@ export function buildPremiumBom(state, componentDefs) {
   const h = extHeightMm / 1000;          // external height, m
   const tall = extHeightMm >= 2750;      // 2.75m / 3.0m builds: joists oversail
   const wallH = wallPanelHeightFor(h);
+  // Floor + roof PIR thickness is a per-job choice (75 standard, 100 on some jobs - Liam 2026-09-07); walls stay 75mm.
+  const pirFR = Number(state.pirFloorRoof) === 100 ? 100 : 75;
+  const pirFRName = `${pirFR}mm PIR insulation board`;
   const rows = [];
   // `cuts` = [{ len, n, what }] piece list for timber, so the ordering step
   // can pick the cheapest common stock lengths (3.6 / 4.2 / 4.8 / 5.4 / 6.0m).
@@ -257,10 +262,10 @@ export function buildPremiumBom(state, componentDefs) {
   add('5x2 tanalised C24 timber', Math.ceil((fJoists * d + 2 * w + fDoubledLm) * 1.10),
     `Floor: ${fJoists} joists x ${d.toFixed(2)}m @400mm front-to-back + rim (2 x ${w.toFixed(2)}m) + DOUBLING (outer ring + every 3rd joist / 1.2m grid: ${fDoubledInternals} x ${d.toFixed(2)}m), +10%`,
     [{ len: d, n: fJoists + 2 + fDoubledInternals, what: 'floor joists incl. doubled sides + grid doubles' }, { len: w, n: 4, what: 'front + rear rim, doubled (join over a joist/pedestal if longer than stock)', join: true }]);
-  add('18x38 treated batten', Math.ceil(2 * (fJoists - 1) * d), `Floor PIR support battens, joist sides, tops 75mm down`,
+  add('18x38 treated batten', Math.ceil(2 * (fJoists - 1) * d), `Floor PIR support battens, joist sides, tops ${pirFR}mm down`,
     [{ len: d, n: 2 * (fJoists - 1), what: 'floor PIR battens' }]);
-  add('75mm PIR insulation board', Math.ceil(w * d), `Floor: friction-fit between the 5x2 joists, ${(w * d).toFixed(1)}m2`,
-    { orderText: `${Math.ceil(Math.ceil(w * d) / 2.88)} boards 2400 × 1200 × 75mm PIR (floor, ${(w * d).toFixed(1)}m²)` });
+  add(pirFRName, Math.ceil(w * d), `Floor: friction-fit between the 5x2 joists, ${(w * d).toFixed(1)}m2`,
+    { orderText: `${Math.ceil(Math.ceil(w * d) / 2.88)} boards 2400 × 1200 × ${pirFR}mm PIR (floor, ${(w * d).toFixed(1)}m²)` });
   add('22mm P5 T&G chipboard (2400x600)', Math.ceil((w * d) * 1.05 / CHIPBOARD_M2), `Floor deck: ${(w * d).toFixed(1)}m2 + 5%, glued at every joint`,
     { orderText: `${Math.ceil((w * d) * 1.05 / CHIPBOARD_M2)} boards 2400 × 600 × 22mm P5 T&G (moisture-resistant)` });
 
@@ -491,8 +496,8 @@ export function buildPremiumBom(state, componentDefs) {
     { orderText: `ONE PIECE ${(w + 0.2 + 0.5).toFixed(2)}m wide × ${(roofLen + 0.5).toFixed(2)}m deep (roof deck ${(w + 0.2).toFixed(2)} × ${roofLen.toFixed(2)}m + 0.5m allowance each way) + contact adhesive + edge trims for ${(w + 2 * roofLen).toFixed(1)}m of edge` });
   // Roof PIR is 75mm like the floor and walls (Liam 2026-09-06) - one thickness
   // for the whole job. Set 30mm below the joist tops for the vent path.
-  add('75mm PIR insulation board', Math.ceil(w * d), `VENTED COLD ROOF: between joists over the room only (${w.toFixed(2)} x ${d.toFixed(2)}m), set 30mm BELOW joist tops (50mm air path)`,
-    { orderText: `${Math.ceil(Math.ceil(w * d) / 2.88)} boards 2400 × 1200 × 75mm PIR (roof, ${(w * d).toFixed(1)}m²)` });
+  add(pirFRName, Math.ceil(w * d), `VENTED COLD ROOF: between joists over the room only (${w.toFixed(2)} x ${d.toFixed(2)}m), set 30mm BELOW joist tops (50mm air path)`,
+    { orderText: `${Math.ceil(Math.ceil(w * d) / 2.88)} boards 2400 × 1200 × ${pirFR}mm PIR (roof, ${(w * d).toFixed(1)}m²)` });
   // Canopy 2x2 frame - one layer either way, method decides where it sits.
   // Ply on the front face + underside on EVERY canopied build (fascia + soffit
   // need a solid fixing) - Liam 2026-09-05.
@@ -543,11 +548,22 @@ export function buildPremiumBom(state, componentDefs) {
     - [...front, ...rear, ...left, ...right].filter((o) => o.fullHeight).reduce((s, o) => s + o.widthM * o.heightM, 0));
   const ceilM2 = (w - 0.2) * (d - 0.2);
   const boardM2 = (wallsNetM2 + ceilM2) * 1.10;
-  add('Plasterboard 12.5mm (1200x2400 sheet)', Math.ceil(boardM2 / PLASTERBOARD_M2), `Walls (${wallsNetM2.toFixed(1)}m2) + ceiling (${ceilM2.toFixed(1)}m2) + 10%`,
+  // FEATURE WALL (Liam 2026-09-07): oak acoustic slat panels on the REAR wall,
+  // fixed over the plasterboard - that wall is boarded but NOT skimmed/painted.
+  const featureRear = state.featureWall === 'rear';
+  const rearNetM2 = featureRear ? Math.max(0, (w - 0.3) * wallH - fhOn(rear).reduce((s2, o) => s2 + o.widthM * o.heightM, 0)) : 0;
+  const skimM2 = (boardM2 - rearNetM2 * 1.10);
+  add('Plasterboard 12.5mm (1200x2400 sheet)', Math.ceil(boardM2 / PLASTERBOARD_M2), `Walls (${wallsNetM2.toFixed(1)}m2) + ceiling (${ceilM2.toFixed(1)}m2) + 10%${featureRear ? ' (rear wall boarded behind the feature wall)' : ''}`,
     { orderText: `${Math.ceil(boardM2 / PLASTERBOARD_M2)} boards 2400 × 1200 × 12.5mm tapered-edge plasterboard` });
   add('Plasterboard scrim/jointing tape (90m roll)', Math.ceil(boardM2 / 45), `Board joints`);
   add('Plasterboard corner bead (2.4m)', 4 + [...front, ...rear, ...left, ...right].length, `Corners + reveals`);
-  add('Multi-finish plaster (25kg bag)', Math.ceil(boardM2 / 10), `Skim ~10m2/bag`);
+  add('Multi-finish plaster (25kg bag)', Math.ceil(skimM2 / 10), `Skim ~10m2/bag${featureRear ? ' - rear wall NOT skimmed (feature wall)' : ''}`);
+  if (featureRear) {
+    const slatPanels = Math.ceil(Math.max(0, (w - 0.3) - fhWidth(rear)) / 0.6) + 1;
+    add('Oak acoustic slat wall panel (2400×600)', slatPanels, `OAK ACOUSTIC FEATURE WALL on the rear: internal width ${(w - 0.3).toFixed(2)}m ÷ 0.6m per panel, run vertically (2.4m covers the ${wallH.toFixed(2)}m wall), fixed to the plasterboard with grab adhesive + screws into the studs, + 1 spare`,
+      { orderText: `${slatPanels} × oak acoustic slat panels 2400 × 600mm (rear feature wall)` });
+    add('Grab adhesive / Gripfill (tube)', 2, `Feature wall panels to the plasterboard`);
+  }
   add('Skirting board', Math.ceil(Math.max(0, 2 * (w + d) - fhWidth(front) - fhWidth(rear) - fhWidth(left) - fhWidth(right))), `Perimeter minus full-height openings, linear m`);
   // FLOORING (Liam 2026-09-06): Wickes laminate, Natural Oak or Light Grey,
   // 1.48m² packs - always round up and add a spare pack (two on big floors);
@@ -754,7 +770,7 @@ export function buildPremiumBom(state, componentDefs) {
   // -- Decorating (plastered + decorated standard) --
   add('Paint roller & tray set (large + small)', 1, `Per job`);
   add('Paint brushes (pack)', 2, `Cutting in + bitumen`);
-  add('White trade emulsion paint (10L)', Math.ceil((boardM2 * 3) / 120), `Mist coat + 2 coats over ${boardM2.toFixed(0)}m² of plaster; 10L covers ~120m² per coat`);
+  add('White trade emulsion paint (10L)', Math.ceil((skimM2 * 3) / 120), `Mist coat + 2 coats over ${skimM2.toFixed(0)}m² of plaster; 10L covers ~120m² per coat${featureRear ? ' (rear feature wall not painted)' : ''}`);
   add('Satin wood paint (750ml)', Math.ceil((perim * 0.12 * 2) / 12), `Skirting boards: ${perim.toFixed(1)}m x 120mm x 2 coats, ~12m² per tin`);
   if (hasDecking) add('Bitumen paint (1L)', 1, `Decking sub-frame protection`);
   // -- Site equipment (loaded from the factory, comes back) --
