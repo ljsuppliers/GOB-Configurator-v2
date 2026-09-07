@@ -795,16 +795,43 @@ createApp({
       await navigator.clipboard.writeText(txt);
       this.bomStatus = 'All purchase orders copied to clipboard';
     },
-    /** Gmail compose URL - opens Gmail (web) with To / Subject / Body filled in. */
+    /** Gmail compose URL - opens Gmail in the GOB account (authuser) with To / Subject / Body filled in. */
     gmailOrderUrl(order) {
-      const p = new URLSearchParams({ view: 'cm', fs: '1', to: order.supplier?.email || '', su: order.email.subject, body: order.email.body });
-      return `https://mail.google.com/mail/?${p.toString()}`;
+      const p = new URLSearchParams({ authuser: this.senderEmail, view: 'cm', fs: '1', to: order.supplier?.email || '', su: order.email.subject, body: order.email.body });
+      return `https://mail.google.com/mail/u/0/?${p.toString()}`;
     },
-    /** Copy for Gmail: rich text (bullets, paragraphs) via the shared rich-copy helper. */
+    /** Gmail-safe HTML for a purchase order (inline styles only). */
+    orderEmailHtml(order) {
+      const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const lines = order.email.body.split('\n');
+      const out = [];
+      let list = null;
+      const flush = () => { if (list) { out.push(`<ul style="margin:0 0 14px 0;padding-left:22px;">${list.join('')}</ul>`); list = null; } };
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.startsWith('- ')) {
+          if (!list) list = [];
+          // sub-lines (4-space indented) belong to this item
+          const subs = [];
+          while (i + 1 < lines.length && /^\s{4}\S/.test(lines[i + 1])) { subs.push(lines[++i].trim()); }
+          list.push(`<li style="margin:0 0 6px 0;">${esc(line.slice(2))}${subs.length ? `<div style="color:#666;font-size:12px;margin-top:2px;">${subs.map(esc).join('<br>')}</div>` : ''}</li>`);
+          continue;
+        }
+        flush();
+        if (line.trim() === '') continue;
+        if (/^Delivery address$/i.test(line.trim())) { out.push(`<p style="margin:0 0 4px 0;"><strong>${esc(line)}</strong></p>`); continue; }
+        // address block: consecutive non-empty lines after "Delivery address" stay together
+        out.push(`<p style="margin:0 0 ${lines[i + 1] && lines[i + 1].trim() !== '' && !lines[i + 1].startsWith('- ') ? '0' : '14px'} 0;">${esc(line)}</p>`);
+      }
+      flush();
+      return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#222;">${out.join('')}</div>`;
+    },
+    /** Copy for Gmail: rich HTML + plain text on the clipboard. */
     async copyOrderForGmail(order) {
       const plain = order.email.body;
+      const html = this.orderEmailHtml(order);
       try {
-        await copyRichText(plain);
+        await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([plain], { type: 'text/plain' }) })]);
         order.copied = true; setTimeout(() => { order.copied = false; }, 2500);
         this.bomStatus = `Copied for Gmail - paste into the body. Subject: ${order.email.subject}`;
       } catch (e) { await this.copyOrderEmail(order); }
