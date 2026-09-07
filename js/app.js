@@ -8,8 +8,8 @@ import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=30';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=32';
+import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=31';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=33';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=8';
 import { emptyInstaller } from './bom/installers.js?v=2';
@@ -205,7 +205,7 @@ createApp({
       const sidesTxt = sides.length && sides[0] === sides[1] ? `sides ${sides[0]}` : `left ${pretty(c.left)}, right ${pretty(c.right)}`;
       const canopy = s.tier === 'signature' && s.hasCanopy !== false ? ` + ${((s.overhangDepth || 400) / 1000).toFixed(1)}m canopy/decking` : '';
       const corners = s.tier === 'signature' ? ` · corners ${s.cornerLeft || 'open'}/${s.cornerRight || 'open'}` : '';
-      return `${(s.width / 1000).toFixed(1)}m × ${(s.depth / 1000).toFixed(1)}m × ${(s.height / 1000).toFixed(2).replace(/0$/, '')}m external${canopy} · ${s.tier || 'signature'} · front ${pretty(c.front)}, ${sidesTxt}${corners} · ${s.foundationType === 'ground-screw' ? 'ground screws' : 'pedestals'}`;
+      return `${(s.width / 1000).toFixed(1)}m × ${(s.depth / 1000).toFixed(1)}m × ${(s.height / 1000).toFixed(2).replace(/0$/, '')}m external${canopy} · ${s.tier || 'signature'} · front ${pretty(c.front)}, ${sidesTxt}${corners} · ${s.foundationType === 'ground-screw' || s.foundationType === 'hybrid' ? 'ground screws' : s.foundationType === 'concrete-pile' ? 'concrete blocks + Postcrete' : 'pedestals on existing base'}`;
     },
     labour() {
       if (!this.state) return { dayRate: DEFAULT_DAY_RATE, install: { lines: [], total: 0, days: 0 }, electrician: { lines: [], total: 0 }, subcontract: { lines: [], total: 0, needsPlumber: false }, total: 0 };

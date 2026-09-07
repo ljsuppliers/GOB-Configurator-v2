@@ -403,6 +403,8 @@ const MERCHANT_NAMES = {
   'EPDM roof kit (membrane, adhesive, edge trims)': 'EPDM roof membrane, one piece',
   'Trex Clam Shell composite decking board (140 × 4880mm)': 'Trex Clam Shell composite decking boards, 140mm x 4.88m',
   'Radix ground screw': 'Radix ground screws',
+  'Concrete block 440x215x100 medium density (7.3N)': 'Medium density (7.3N) concrete blocks, 440 x 215 x 100mm',
+  'Postcrete (20kg bag)': 'Postcrete, 20kg bags',
 };
 
 const pluralise = (n, unit) => { if (!unit) return `${n}`; if (/^(each|no\.|nr|unit)$/i.test(unit)) return `${n}`; if (/\bof\b|\d/.test(unit)) return `${n} x ${unit}`; return `${n} ${Number(n) === 1 ? unit : unit + (unit.endsWith('x') || unit.endsWith('s') || unit.endsWith('ch') ? 'es' : 's')}`; };

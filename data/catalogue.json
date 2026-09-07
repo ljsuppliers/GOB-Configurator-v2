@@ -1,5 +1,5 @@
 {
- "version": 19,
+ "version": 20,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -2693,6 +2693,34 @@
    "destination": "site",
    "inStock": false,
    "notes": "100mm PIR 2400x1200 boards - used in the floor + roof on jobs where 100mm is chosen (per-job option)."
+  },
+  {
+   "name": "Concrete block 440x215x100 medium density (7.3N)",
+   "category": "Foundations",
+   "sku": "",
+   "unit": "each",
+   "unitCost": 2.2,
+   "supplier": "Builders merchant",
+   "packSize": null,
+   "orderUnit": "",
+   "supply": "site",
+   "destination": "site",
+   "inStock": false,
+   "notes": "CLAUDE ESTIMATE £2.20 ex VAT - confirm. Concrete block base: 1 per support point (Liam 2026-09-07)."
+  },
+  {
+   "name": "Postcrete (20kg bag)",
+   "category": "Foundations",
+   "sku": "",
+   "unit": "bag",
+   "unitCost": 6.5,
+   "supplier": "Builders merchant",
+   "packSize": null,
+   "orderUnit": "",
+   "supply": "site",
+   "destination": "site",
+   "inStock": false,
+   "notes": "CLAUDE ESTIMATE £6.50 ex VAT - confirm. 2 bags per hole (Liam 2026-09-07)."
   }
  ]
 }

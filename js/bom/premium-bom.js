@@ -50,6 +50,8 @@ export const USE_TAGS = {
   'Adjustable plastic pedestal': 'Under the floor frame',
   'DPM sheet': 'Under the pedestals, on the slab',
   'Radix ground screw': 'Foundation',
+  'Concrete block 440x215x100 medium density (7.3N)': 'Base: 1 per support point',
+  'Postcrete (20kg bag)': 'Base: 2 bags per hole',
   '5x2 tanalised C24 timber': 'Floor joists + end joists',
   '18x38 treated batten': 'Floor PIR support, panel double battens, cladding sub-frame',
   '75mm PIR insulation board': 'Floor, stick-wall bays + roof',
@@ -224,7 +226,11 @@ export function buildPremiumBom(state, componentDefs) {
     rows.push(row);
   };
 
-  const groundScrews = state.foundationType === 'ground-screw';
+  // THREE groundwork systems (Liam 2026-09-07): ground screws | concrete blocks
+  // on Postcrete (1 block per hole, 2 bags per hole) | existing concrete base
+  // (pedestals on the slab). Legacy values map onto those three.
+  const groundScrews = state.foundationType === 'ground-screw' || state.foundationType === 'hybrid';
+  const blockBase = state.foundationType === 'concrete-pile';
   const hasCanopy = !!state.hasCanopy && !state.deductions?.removeCanopy;
   const hasDecking = !!state.hasDecking && !state.deductions?.removeDecking;
   // Signature canopy = 400mm. Classic = 100mm token overhang (Liam 2026-09-05).
@@ -249,6 +255,10 @@ export function buildPremiumBom(state, componentDefs) {
   const pedestals = cols * rowsN;
   if (groundScrews) {
     add('Radix ground screw', pedestals, `${cols}x${rowsN} grid (max 1.3m spacing) under the 5x2 joist lines`);
+  } else if (blockBase) {
+    add('Concrete block 440x215x100 medium density (7.3N)', pedestals, `CONCRETE BLOCK BASE: 1 block per support point, ${cols}x${rowsN} grid (max 1.3m spacing) under the 5x2 joist lines`);
+    add('Postcrete (20kg bag)', pedestals * 2, `2 bags per hole × ${pedestals} holes`);
+    add('DPM sheet', Math.ceil(w * d * 1.1), `Over the ground under the floor frame (${(w * d).toFixed(1)}m2 + 10% laps)`);
   } else {
     add('Adjustable plastic pedestal', pedestals, `${cols}x${rowsN} grid (max 1.3m spacing), rows under the 5x2 joist lines - frame builds DIRECTLY on the heads (no bearers). Anchored to the slab`);
     add('DPM sheet', Math.ceil(w * d * 1.1), `Over the slab under the pedestals (${(w * d).toFixed(1)}m2 + 10% laps)`);
@@ -742,7 +752,7 @@ export function buildPremiumBom(state, componentDefs) {
   add('Grey RAL 7016 self-drilling trim screw 25mm', up(visibleTrimM / 0.3), `VISIBLE ANTHRACITE STEEL TRIMS @300mm: base trims + corner trims + top cap (~${visibleTrimM.toFixed(0)}m), +25%`);
   add('Self-drilling screw 25mm plain (hidden trims / U-channel)', up(uChannelM / 0.3), `U-CHANNEL + hidden trims @300mm (~${uChannelM.toFixed(0)}m) - cheaper plain self-drillers, not visible (Liam), +25%`);
   add('Bay pole self-drilling screw 70mm (timber to panel)', up(((2 * sideRun + w) / 0.4) + liningStudsTotal * Math.ceil(wallH / 0.6)), `4x2 WALL PLATE into the panel tops @400mm + VERTICAL BATTENS into the panel steel @600mm (${liningStudsTotal} battens), +25%`);
-  if (!groundScrews) add('Concrete screw 100mm (Ammo)', up(pedestals * 2), `PEDESTALS anchored to the slab: 2 per pedestal (${pedestals}), +25%`);
+  if (!groundScrews && !blockBase) add('Concrete screw 100mm (Ammo)', up(pedestals * 2), `PEDESTALS anchored to the slab: 2 per pedestal (${pedestals}), +25%`);
   add('Stainless self-drilling screw 40mm (gutters/fascia)', up(Math.ceil(w / 0.5) * 2 + 3 * 2 + 12), `GUTTER brackets 2 each (${Math.ceil(w / 0.5)}) + downpipe clips + fascia corners, +25%. (Whether these also fix the fascia boards is UNCONFIRMED - fascia is on polytop pins here; ask the fitters)`);
   add('Polytop pins 40mm anthracite', up(((w + 2 * roofLen) + w) / 0.4 * 2), `FASCIA (front + sides + rear, both edges @400mm), +25%`);
   if (hasCanopy) add('Polytop pins 65mm anthracite', up((w / 0.4) * 2 + 12), `SOFFIT boards into the 2x2 canopy frame @400mm both edges, +25%`);
@@ -782,6 +792,7 @@ export function buildPremiumBom(state, componentDefs) {
   if (hasDecking) add('Bitumen paint (1L)', 1, `Decking sub-frame protection`);
   // -- Site equipment (loaded from the factory, comes back) --
   if (groundScrews) add('Auger + fuel', 1, `Ground screws`);
+  if (blockBase) add('Shovel / spade / post hole digger', 0, ``); // (already in the site kit)
   add('Shovel / spade / post hole digger', 1, `Site kit`);
   add('Tarpaulins x2 + tonne bag + black bin', 1, `Site kit`);
   add('Marketing sign board + banner', 1, `If applicable`);
