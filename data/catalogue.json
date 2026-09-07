@@ -1,5 +1,5 @@
 {
- "version": 14,
+ "version": 15,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -122,8 +122,9 @@
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
-   "notes": "200mm wide × 2500mm length, sold per length"
+   "inStock": true,
+   "notes": "200mm wide × 2500mm length, sold per length",
+   "supply": "stock"
   },
   {
    "name": "Composite slatted cladding (Latte) 200×2500mm",
@@ -135,8 +136,9 @@
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
-   "notes": "200mm wide × 2500mm length, sold per length"
+   "inStock": true,
+   "notes": "200mm wide × 2500mm length, sold per length",
+   "supply": "stock"
   },
   {
    "name": "Desk window 1000x1000 (uPVC, anthracite/white)",
@@ -149,7 +151,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Standard viewing window. Opening style TBD."
+   "notes": "Standard viewing window. Opening style TBD.",
+   "supply": "site"
   },
   {
    "name": "Door/window seal",
@@ -162,7 +165,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Frame seal / weather strip per opening | 1 per opening. Cost included in the Spectral frame price — listed here so installers see it on the materials list."
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Frame seal / weather strip per opening | 1 per opening. Cost included in the Spectral frame price — listed here so installers see it on the materials list.",
+   "supply": "site"
   },
   {
    "name": "Full-height window 600x2050 fixed",
@@ -175,7 +179,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Fixed pane."
+   "notes": "Fixed pane.",
+   "supply": "site"
   },
   {
    "name": "Full-height window 600x2050 with top opener",
@@ -188,7 +193,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Fixed lower 80% + top-hung awning opener (top 20%)."
+   "notes": "Fixed lower 80% + top-hung awning opener (top 20%).",
+   "supply": "site"
   },
   {
    "name": "Full-height window 900x2050 fixed (wide)",
@@ -201,7 +207,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Fixed pane."
+   "notes": "Fixed pane.",
+   "supply": "site"
   },
   {
    "name": "Full-height window 900x2050 with top opener (wide)",
@@ -214,7 +221,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Same as above, wide version."
+   "notes": "Same as above, wide version.",
+   "supply": "site"
   },
   {
    "name": "Glass for desk window 1000x1000",
@@ -227,7 +235,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Glass for full-height window 600x2050 fixed",
@@ -240,7 +249,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Glass for full-height window 600x2050 opener main",
@@ -253,7 +263,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Glass for full-height window 900x2050 fixed",
@@ -266,7 +277,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Glass for full-height window 900x2050 opener main",
@@ -279,7 +291,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Glass for full-height window opener top",
@@ -292,7 +305,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Glass for single door (clear)",
@@ -305,7 +319,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Glass for single door (frosted)",
@@ -318,7 +333,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Glass for sliding door",
@@ -331,7 +347,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Glass for slot window 900x450",
@@ -344,7 +361,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Interior door 826x2040",
@@ -357,7 +375,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Interior door ironmongery set",
@@ -370,7 +389,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Interior door lining & frame",
@@ -383,7 +403,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Single door 900x2050 (uPVC, anthracite/white)",
@@ -396,7 +417,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Sliding door 2200x2050 (uPVC, anthracite/white)",
@@ -409,7 +431,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "uPVC frame, anthracite outside / white inside. L or R handed (configurator option). Supplier TBD."
+   "notes": "uPVC frame, anthracite outside / white inside. L or R handed (configurator option). Supplier TBD.",
+   "supply": "site"
   },
   {
    "name": "Slot window 900x450 (uPVC, anthracite/white)",
@@ -422,7 +445,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Slot/envelope style, top-opening."
+   "notes": "Slot/envelope style, top-opening.",
+   "supply": "site"
   },
   {
    "name": "1.5mm twin & earth cable",
@@ -463,7 +487,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Break-even with retail (no margin). Billed per build, length and cost vary per site."
+   "notes": "Break-even with retail (no margin). Billed per build, length and cost vary per site.",
+   "supply": "site"
   },
   {
    "name": "Cable clip",
@@ -490,7 +515,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Break-even with retail (no margin). Billed per build."
+   "notes": "Break-even with retail (no margin). Billed per build.",
+   "supply": "site"
   },
   {
    "name": "Consumer unit (garden room, 4-6 way, RCBO/dual RCD)",
@@ -587,7 +613,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Optional. Brand/model TBD."
+   "notes": "Optional. Brand/model TBD.",
+   "supply": "site"
   },
   {
    "name": "Air conditioning isolator switch",
@@ -782,7 +809,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £15. HYBRID floor deck (1.44m²/board)."
+   "notes": "CLAUDE ESTIMATE £15. HYBRID floor deck (1.44m²/board).",
+   "supply": "site"
   },
   {
    "name": "Adjustable plastic pedestal",
@@ -795,7 +823,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £3.50. Adjustable-height plastic pedestal, loose-laid on the concrete base under the 4x2 bearers (NOT fixed - building weight holds it). 1.1m grid, same layout as ground screws."
+   "notes": "CLAUDE ESTIMATE £3.50. Adjustable-height plastic pedestal, loose-laid on the concrete base under the 4x2 bearers (NOT fixed - building weight holds it). 1.1m grid, same layout as ground screws.",
+   "supply": "site"
   },
   {
    "name": "DPM jointing tape (roll)",
@@ -808,7 +837,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £6. Tapes the DPM sheet overlaps. 1 roll per build (2 on floors over 20m²)."
+   "notes": "CLAUDE ESTIMATE £6. Tapes the DPM sheet overlaps. 1 roll per build (2 on floors over 20m²).",
+   "supply": "site"
   },
   {
    "name": "Radix ground screw",
@@ -820,8 +850,9 @@
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
-   "notes": "Default foundation. Supplier: Radix (radixgroup.co.uk). Model TBD."
+   "inStock": true,
+   "notes": "Default foundation. Supplier: Radix (radixgroup.co.uk). Model TBD.",
+   "supply": "stock"
   },
   {
    "name": "Half-Round Gutter 4 Mtr (Black)",
@@ -834,7 +865,8 @@
    "orderUnit": "4m length",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP 4m half-round black gutter section. Quantity = ceil(width / 4)."
+   "notes": "GAP 4m half-round black gutter section. Quantity = ceil(width / 4).",
+   "supply": "site"
   },
   {
    "name": "Half-Round Gutter Fascia Bracket (Black)",
@@ -847,7 +879,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP. 1 per 500mm of gutter run."
+   "notes": "GAP. 1 per 500mm of gutter run.",
+   "supply": "site"
   },
   {
    "name": "Half-Round Gutter Joiner (Black)",
@@ -860,7 +893,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP. Joins adjacent 4m gutter sections. Only needed on builds wider than 4m: 4.4–8m wide = 1 joiner, 8.05–8.8m wide = 2 joiners."
+   "notes": "GAP. Joins adjacent 4m gutter sections. Only needed on builds wider than 4m: 4.4–8m wide = 1 joiner, 8.05–8.8m wide = 2 joiners.",
+   "supply": "site"
   },
   {
    "name": "Half-Round Gutter Stop End Ext (Black)",
@@ -873,7 +907,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP. 1 per build at the opposite corner."
+   "notes": "GAP. 1 per build at the opposite corner.",
+   "supply": "site"
   },
   {
    "name": "Half-Round Stop End Outlet (Black)",
@@ -886,7 +921,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP. 1 per build at the downpipe corner."
+   "notes": "GAP. 1 per build at the downpipe corner.",
+   "supply": "site"
   },
   {
    "name": "Rnd D/pipe Offset Bend 112.5 Deg (Black)",
@@ -899,7 +935,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP. 2 per build — used as an S-curve to offset the downpipe from the fascia outlet to vertical drop."
+   "notes": "GAP. 2 per build — used as an S-curve to offset the downpipe from the fascia outlet to vertical drop.",
+   "supply": "site"
   },
   {
    "name": "Round 68mm Downpipe 2.5 Mtr (Black)",
@@ -912,7 +949,8 @@
    "orderUnit": "2.5m length",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP 68mm round black downpipe, 2.5m length. 1 per build covers the drop from gutter to shoe."
+   "notes": "GAP 68mm round black downpipe, 2.5m length. 1 per build covers the drop from gutter to shoe.",
+   "supply": "site"
   },
   {
    "name": "Round Downpipe Clip (Black)",
@@ -925,7 +963,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP. 3 per build, securing the downpipe to the rear wall."
+   "notes": "GAP. 3 per build, securing the downpipe to the rear wall.",
+   "supply": "site"
   },
   {
    "name": "Round Downpipe Shoe (Black)",
@@ -938,7 +977,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP. 1 per build at ground level, terminating the downpipe onto a soakaway or path."
+   "notes": "GAP. 1 per build at ground level, terminating the downpipe onto a soakaway or path.",
+   "supply": "site"
   },
   {
    "name": "50mm PIR insulation board",
@@ -951,7 +991,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £7.50/m². HYBRID floor - between the joists."
+   "notes": "CLAUDE ESTIMATE £7.50/m². HYBRID floor - between the joists.",
+   "supply": "site"
   },
   {
    "name": "75mm PIR insulation board",
@@ -964,7 +1005,8 @@
    "orderUnit": "board 2400x1200",
    "destination": "site",
    "inStock": false,
-   "notes": "75mm PIR, 2400x1200 boards: floor, stick-wall bays AND roof (Liam 2026-09-06 - one thickness for the whole job)."
+   "notes": "75mm PIR, 2400x1200 boards: floor, stick-wall bays AND roof (Liam 2026-09-06 - one thickness for the whole job).",
+   "supply": "site"
   },
   {
    "name": "Kingspan 100mm insulated wall panel (1.1m wide)",
@@ -977,7 +1019,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "£56 per m² (Liam 2026-09-06); line shows PANEL COUNT and length, cost = panels × 1.1m × length."
+   "notes": "£56 per m² (Liam 2026-09-06); line shows PANEL COUNT and length, cost = panels × 1.1m × length. DELIVERY: straight to site OR from factory - decide per job (Liam 2026-09-07).",
+   "supply": "site"
   },
   {
    "name": "12mm Plywood (1220×2440 sheet)",
@@ -990,7 +1033,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "Selhurst 12mm Structural Ply H/F 1220x2440 EN314-2 CE2+ (2DWBP8412)"
+   "notes": "Selhurst 12mm Structural Ply H/F 1220x2440 EN314-2 CE2+ (2DWBP8412)",
+   "supply": "site"
   },
   {
    "name": "18x38 treated batten",
@@ -1003,7 +1047,8 @@
    "orderUnit": "4.8m length",
    "destination": "site",
    "inStock": false,
-   "notes": "Selhurst 19x38 4.8m treated roofing batten (1B01903848), £2.16/length"
+   "notes": "Selhurst 19x38 4.8m treated roofing batten (1B01903848), £2.16/length",
+   "supply": "site"
   },
   {
    "name": "Acoustic insulation roll (100mm)",
@@ -1016,7 +1061,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Acoustic slat wall panel (2400×600)",
@@ -1029,7 +1075,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "ESTIMATE (trade ~£40: Alsford 3-for-£120; Panel Hub cheaper, Travis Perkins dearer) - replace with real supplier price. Oak/grey finishes. Run vertically, no stagger, pinned to plasterboard"
+   "notes": "ESTIMATE (trade ~£40: Alsford 3-for-£120; Panel Hub cheaper, Travis Perkins dearer) - replace with real supplier price. Oak/grey finishes. Run vertically, no stagger, pinned to plasterboard",
+   "supply": "site"
   },
   {
    "name": "Decorators caulk (tube)",
@@ -1042,7 +1089,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £1.50. Internal junction/gap filling before finishing - used on plastered AND pre-finished builds (Liam 2026-07-26)."
+   "notes": "CLAUDE ESTIMATE £1.50. Internal junction/gap filling before finishing - used on plastered AND pre-finished builds (Liam 2026-07-26).",
+   "supply": "site"
   },
   {
    "name": "Multi-finish plaster (25kg bag)",
@@ -1055,7 +1103,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Plasterboard 12.5mm (1200x2400 sheet)",
@@ -1068,7 +1117,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Plasterboard corner bead (2.4m)",
@@ -1081,7 +1131,8 @@
    "orderUnit": "2.4m length",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £2. Thin-coat angle bead for external corners and door/window reveals - plastered builds only."
+   "notes": "CLAUDE ESTIMATE £2. Thin-coat angle bead for external corners and door/window reveals - plastered builds only.",
+   "supply": "site"
   },
   {
    "name": "Plasterboard scrim/jointing tape (90m roll)",
@@ -1094,7 +1145,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "White trade emulsion paint (10L)",
@@ -1107,7 +1159,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": ""
+   "notes": "",
+   "supply": "site"
   },
   {
    "name": "Skirting board",
@@ -1120,7 +1173,8 @@
    "orderUnit": "4.2m length",
    "destination": "site",
    "inStock": false,
-   "notes": "Around perimeter of internal floor. Profile/material TBD."
+   "notes": "Around perimeter of internal floor. Profile/material TBD.",
+   "supply": "site"
   },
   {
    "name": "DPM sheet",
@@ -1133,7 +1187,8 @@
    "orderUnit": "roll (4m x 25m)",
    "destination": "site",
    "inStock": false,
-   "notes": "Laid on top of plywood; tucks under base trims at perimeter."
+   "notes": "Laid on top of plywood; tucks under base trims at perimeter.",
+   "supply": "site"
   },
   {
    "name": "Tyvek breather membrane",
@@ -1146,7 +1201,8 @@
    "orderUnit": "roll (1.4m x 50m)",
    "destination": "site",
    "inStock": false,
-   "notes": "ESTIMATE (Claude, ~£75 per 1.4x50m roll) - replace with real invoice price. Front wall: over the ply, under the battens"
+   "notes": "ESTIMATE (Claude, ~£75 per 1.4x50m roll) - replace with real invoice price. Front wall: over the ply, under the battens",
+   "supply": "site"
   },
   {
    "name": "Tyvek/breather tape (roll)",
@@ -1159,7 +1215,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "ESTIMATE - tape Tyvek laps + around front openings"
+   "notes": "ESTIMATE - tape Tyvek laps + around front openings",
+   "supply": "site"
   },
   {
    "name": "Door mat",
@@ -1172,7 +1229,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £15. Complimentary with every job - 1 per build."
+   "notes": "CLAUDE ESTIMATE £15. Complimentary with every job - 1 per build.",
+   "supply": "site"
   },
   {
    "name": "Rockwool insulation 100mm",
@@ -1185,7 +1243,8 @@
    "orderUnit": "pack (8 slabs)",
    "destination": "site",
    "inStock": false,
-   "notes": "ESTIMATE (Claude, ~£4-6/m2 trade for 100mm slab) - replace with real invoice price. Between the 4x2 studs of the stick-built front wall"
+   "notes": "ESTIMATE (Claude, ~£4-6/m2 trade for 100mm slab) - replace with real invoice price. Between the 4x2 studs of the stick-built front wall",
+   "supply": "site"
   },
   {
    "name": "Rockwool insulation 50mm (acoustic)",
@@ -1198,7 +1257,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £3.00/m2, get quote. THE single wall wool SKU building-wide (Liam 2026-08-04): panel walls 50mm MAX (condensation one-third rule behind the 60mm panel, fitted against the panel, 45mm services gap in front) and clad walls same 50mm."
+   "notes": "CLAUDE ESTIMATE £3.00/m2, get quote. THE single wall wool SKU building-wide (Liam 2026-08-04): panel walls 50mm MAX (condensation one-third rule behind the 60mm panel, fitted against the panel, 45mm services gap in front) and clad walls same 50mm.",
+   "supply": "site"
   },
   {
    "name": "200mm plastic fascia (5m length, GAP)",
@@ -1211,7 +1271,8 @@
    "orderUnit": "5m length",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP supplier, 5m lengths, 200mm height. Used on rear of the building only."
+   "notes": "GAP supplier, 5m lengths, 200mm height. Used on rear of the building only.",
+   "supply": "site"
   },
   {
    "name": "300mm plastic fascia (5m length, GAP)",
@@ -1224,7 +1285,8 @@
    "orderUnit": "5m length",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP supplier, 5m lengths, 300mm height. Used on front and 2 sides of the building."
+   "notes": "GAP supplier, 5m lengths, 300mm height. Used on front and 2 sides of the building.",
+   "supply": "site"
   },
   {
    "name": "400mm plastic soffit (5m length, GAP)",
@@ -1237,7 +1299,8 @@
    "orderUnit": "5m length",
    "destination": "site",
    "inStock": false,
-   "notes": "GAP supplier, 5m lengths, 400mm wide. Fitted to the underside of the front canopy (Signature builds only). One length covers buildings up to 5m wide; wider builds need 2 lengths."
+   "notes": "GAP supplier, 5m lengths, 400mm wide. Fitted to the underside of the front canopy (Signature builds only). One length covers buildings up to 5m wide; wider builds need 2 lengths.",
+   "supply": "site"
   },
   {
    "name": "Fascia corner (500mm plastic)",
@@ -1250,7 +1313,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "500mm plastic fascia corner. 4 per build (2 front + 2 rear)."
+   "notes": "500mm plastic fascia corner. 4 per build (2 front + 2 rear).",
+   "supply": "site"
   },
   {
    "name": "Soffit vent strip (2.5m)",
@@ -1263,7 +1327,8 @@
    "orderUnit": "2.5m length",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £4.50 per 2.5m length, confirm product/supplier. PREMIUM vented cold roof: continuous front soffit vent + rear rim vent slots (mesh) behind the fascia."
+   "notes": "CLAUDE ESTIMATE £4.50 per 2.5m length, confirm product/supplier. PREMIUM vented cold roof: continuous front soffit vent + rear rim vent slots (mesh) behind the fascia.",
+   "supply": "site"
   },
   {
    "name": "EPDM roof kit (membrane, adhesive, edge trims)",
@@ -1276,7 +1341,8 @@
    "orderUnit": "one-piece sheet",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £16/m² supplied as a kit (one-piece membrane, water-based + contact adhesive, drip/gutter edge trims). HYBRID roof."
+   "notes": "CLAUDE ESTIMATE £16/m² supplied as a kit (one-piece membrane, water-based + contact adhesive, drip/gutter edge trims). HYBRID roof.",
+   "supply": "site"
   },
   {
    "name": "Vapour control layer (roll)",
@@ -1289,7 +1355,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £25. HYBRID roof - warm-side VCL under the joists."
+   "notes": "CLAUDE ESTIMATE £25. HYBRID roof - warm-side VCL under the joists.",
+   "supply": "site"
   },
   {
    "name": "Corner Trim (40x180 anthracite L)",
@@ -1301,8 +1368,9 @@
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
-   "notes": "3m length supplied, cut to size on site. Rear corners, plain front corners, and (with the 200x40x40 U) glazed open corners."
+   "inStock": true,
+   "notes": "3m length supplied, cut to size on site. Rear corners, plain front corners, and (with the 200x40x40 U) glazed open corners.",
+   "supply": "stock"
   },
   {
    "name": "Corner Trim (50x50 anthracite L)",
@@ -1314,8 +1382,9 @@
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
-   "notes": "3m length supplied, cut to size on site. Open corner where cladding meets cladding (covers front + side cladding)."
+   "inStock": true,
+   "notes": "3m length supplied, cut to size on site. Open corner where cladding meets cladding (covers front + side cladding).",
+   "supply": "stock"
   },
   {
    "name": "Door base trim",
@@ -1327,8 +1396,9 @@
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
-   "notes": "Same profile as the standard base trim but different dimensions: covers the front face the same, SHORTER internal return (door is thinner than the 100mm panel) and 15mm upstand instead of 60mm. Front wall: fitted ONLY across door openings (no base trim along the rest of the stick-built front)."
+   "inStock": true,
+   "notes": "Same profile as the standard base trim but different dimensions: covers the front face the same, SHORTER internal return (door is thinner than the 100mm panel) and 15mm upstand instead of 60mm. Front wall: fitted ONLY across door openings (no base trim along the rest of the stick-built front).",
+   "supply": "stock"
   },
   {
    "name": "Standard panel base trim (steel)",
@@ -1340,8 +1410,9 @@
    "packSize": 1,
    "orderUnit": "3m length",
    "destination": "site",
-   "inStock": false,
-   "notes": "148mm drop / 104mm flange / 60mm upstand. Steel, 3m lengths. Metalwork supplier TBD."
+   "inStock": true,
+   "notes": "148mm drop / 104mm flange / 60mm upstand. Steel, 3m lengths. Metalwork supplier TBD.",
+   "supply": "stock"
   },
   {
    "name": "Steel top cap",
@@ -1354,7 +1425,8 @@
    "orderUnit": "3m length",
    "destination": "site",
    "inStock": false,
-   "notes": "75mm down the fascia face + 150mm across the roof top. Folded steel. 3m lengths."
+   "notes": "75mm down the fascia face + 150mm across the roof top. Folded steel. 3m lengths.",
+   "supply": "site"
   },
   {
    "name": "U-channel (40x102x40mm)",
@@ -1366,8 +1438,9 @@
    "packSize": 1,
    "orderUnit": "3m length",
    "destination": "site",
-   "inStock": false,
-   "notes": "Sits on top of every wall panel AND on uprights where panels meet (rear-to-side, front-to-side, around door/window openings). Steel, 3m lengths."
+   "inStock": true,
+   "notes": "Sits on top of every wall panel AND on uprights where panels meet (rear-to-side, front-to-side, around door/window openings). Steel, 3m lengths.",
+   "supply": "stock"
   },
   {
    "name": "Wide U-channel (40x140x40mm, for composite openings)",
@@ -1379,8 +1452,9 @@
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
-   "notes": "Wider version of U-channel used around door/window openings on a wall with composite cladding. Steel, 3m lengths."
+   "inStock": true,
+   "notes": "Wider version of U-channel used around door/window openings on a wall with composite cladding. Steel, 3m lengths.",
+   "supply": "stock"
   },
   {
    "name": "18mm OSB3 board (2440x1220)",
@@ -1393,7 +1467,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £26. HYBRID roof deck."
+   "notes": "CLAUDE ESTIMATE £26. HYBRID roof deck.",
+   "supply": "site"
   },
   {
    "name": "18mm T&G OSB3 roof board (2400x590)",
@@ -1406,7 +1481,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £13. ACTIVE for PREMIUM builds (2026-08-24): T&G OSB roof deck over the firrings, under the EPDM. (Was shelved 2026-08-05 with the hybrid timber roof.)"
+   "notes": "CLAUDE ESTIMATE £13. ACTIVE for PREMIUM builds (2026-08-24): T&G OSB roof deck over the firrings, under the EPDM. (Was shelved 2026-08-05 with the hybrid timber roof.)",
+   "supply": "site"
   },
   {
    "name": "2x2 tanalised C16 timber",
@@ -1419,7 +1495,8 @@
    "orderUnit": "4.8m length",
    "destination": "site",
    "inStock": false,
-   "notes": "Built on site under the 400mm front canopy. Provides fixing for front fascia + 400mm soffit."
+   "notes": "Built on site under the 400mm front canopy. Provides fixing for front fascia + 400mm soffit.",
+   "supply": "site"
   },
   {
    "name": "4x2 tanalised C24 timber",
@@ -1432,7 +1509,8 @@
    "orderUnit": "4.8m length",
    "destination": "site",
    "inStock": false,
-   "notes": "Tanalised C24 4x2 (47x95): stick-wall studs/plates/noggins, sole plates, open-corner posts, flat wall plates on panel tops. Liam 2026-09-06: NO CLS 4x2 anywhere."
+   "notes": "Tanalised C24 4x2 (47x95): stick-wall studs/plates/noggins, sole plates, open-corner posts, flat wall plates on panel tops. Liam 2026-09-06: NO CLS 4x2 anywhere.",
+   "supply": "site"
   },
   {
    "name": "5x2 tanalised C24 timber",
@@ -1445,7 +1523,8 @@
    "orderUnit": "4.2m length",
    "destination": "site",
    "inStock": false,
-   "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 5x2 spec used on builds with width up to 4.05m (i.e. 3.3m, 3.85m). Source: Selhurst C24 47x125 4.8m treated regularised (1BC2404712548) at £11.59/length = £2.41/m."
+   "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 5x2 spec used on builds with width up to 4.05m (i.e. 3.3m, 3.85m). Source: Selhurst C24 47x125 4.8m treated regularised (1BC2404712548) at £11.59/length = £2.41/m.",
+   "supply": "site"
   },
   {
    "name": "6x2 tanalised C24 timber",
@@ -1458,7 +1537,8 @@
    "orderUnit": "4.2m length",
    "destination": "site",
    "inStock": false,
-   "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 6x2 spec required on builds with width >4.05m (i.e. 4.4m and above) to handle the extra span. Not in current Selhurst invoices — interpolated price between 47x125 (£2.41/m) and 47x175 (£3.28/m). Confirm with a Selhurst quote when you next order."
+   "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 6x2 spec required on builds with width >4.05m (i.e. 4.4m and above) to handle the extra span. Not in current Selhurst invoices — interpolated price between 47x125 (£2.41/m) and 47x175 (£3.28/m). Confirm with a Selhurst quote when you next order.",
+   "supply": "site"
   },
   {
    "name": "7x2 tanalised C24 timber",
@@ -1471,7 +1551,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £3.90/m (47x170 C24). HYBRID build roof joists @400mm."
+   "notes": "CLAUDE ESTIMATE £3.90/m (47x170 C24). HYBRID build roof joists @400mm.",
+   "supply": "site"
   },
   {
    "name": "9x2 tanalised C24 timber",
@@ -1484,7 +1565,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "SHELVED 2026-08-05, DO NOT ORDER: timber+EPDM hybrid roof cannot fit under the 2.5m PD height cap (sandwich panel spans 4m at 80mm; timber needs 170-220mm + fall). Row kept dormant in case a timber roof returns for 2.75/3.0m builds."
+   "notes": "SHELVED 2026-08-05, DO NOT ORDER: timber+EPDM hybrid roof cannot fit under the 2.5m PD height cap (sandwich panel spans 4m at 80mm; timber needs 170-220mm + fall). Row kept dormant in case a timber roof returns for 2.75/3.0m builds.",
+   "supply": "site"
   },
   {
    "name": "CLS 3x2 timber",
@@ -1497,7 +1579,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE £1.40/m (38x63 kiln-dried CLS). PREMIUM system 2026-08-24: lining frame inside the panel walls (studs @600 + plates), replaces the wall double battens. Bays left empty - panels insulate."
+   "notes": "CLAUDE ESTIMATE £1.40/m (38x63 kiln-dried CLS). PREMIUM system 2026-08-24: lining frame inside the panel walls (studs @600 + plates), replaces the wall double battens. Bays left empty - panels insulate.",
+   "supply": "site"
   },
   {
    "name": "Tapered firring 47mm (custom cut)",
@@ -1510,7 +1593,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CUSTOM CUT per job by the timber merchant: 47mm wide tapers, 70mm at the front to 0 at the rear on EVERY building (Liam 2026-09-06), length per the order text; priced ~£3 per linear metre."
+   "notes": "CUSTOM CUT per job by the timber merchant: 47mm wide tapers, 70mm at the front to 0 at the rear on EVERY building (Liam 2026-09-06), length per the order text; priced ~£3 per linear metre.",
+   "supply": "site"
   },
   {
    "name": "Canopy light (recessed, IP65)",
@@ -1537,7 +1621,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite 2-pane uPVC slider ~2000x2100; retail supply-only £1,050-1,150 inc VAT | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite 2-pane uPVC slider ~2000x2100; retail supply-only £1,050-1,150 inc VAT | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "2.5m UPVC Sliding Door",
@@ -1550,7 +1635,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite 2-pane uPVC slider ~2500x2100; retail £1,250-1,450 inc VAT (Climadoor/AWM range £1,099-2,549) | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite 2-pane uPVC slider ~2500x2100; retail £1,250-1,450 inc VAT (Climadoor/AWM range £1,099-2,549) | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "3.2m UPVC Sliding Door (4-pane)",
@@ -1563,7 +1649,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite 4-pane uPVC slider 3200x2100; Liniar/Master Plastics + anthracite uplift ~£518; retail ~£1,900-2,100 inc | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite 4-pane uPVC slider 3200x2100; Liniar/Master Plastics + anthracite uplift ~£518; retail ~£1,900-2,100 inc | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "2.7m Aluminium Bi-fold (3-leaf)",
@@ -1576,7 +1663,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite alu bifold 2700x2100 3-leaf; Climadoor £2,199 inc, UK Doors Online £1,780-2,700 | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite alu bifold 2700x2100 3-leaf; Climadoor £2,199 inc, UK Doors Online £1,780-2,700 | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "3.5m Aluminium Bi-fold (4-leaf)",
@@ -1589,7 +1677,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite alu bifold 3500x2100 4-leaf; 3.6m stock bifold £2,090 inc (eBay), Home Build Doors Smart 3500 | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite alu bifold 3500x2100 4-leaf; 3.6m stock bifold £2,090 inc (eBay), Home Build Doors Smart 3500 | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "4.5m Aluminium Bi-fold (5-leaf)",
@@ -1602,7 +1691,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite alu bifold 4500x2100 5-leaf; extrapolated from 4-leaf pricing (+~£600 per leaf) | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite alu bifold 4500x2100 5-leaf; extrapolated from 4-leaf pricing (+~£600 per leaf) | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "Single Opening Glazed Door",
@@ -1615,7 +1705,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC full-glass single door 900x2100; Glass Openings £510-550 inc, Solomons £456-480 | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC full-glass single door 900x2100; Glass Openings £510-550 inc, Solomons £456-480 | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "Secret Cladded Door",
@@ -1628,7 +1719,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Flush external door blank + frame + concealed hinges + lock, clad on site with the wall cladding (boards from cladding order). No direct comparable - allowance | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Flush external door blank + frame + concealed hinges + lock, clad on site with the wall cladding (boards from cladding order). No direct comparable - allowance | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "0.4m Full Height Fixed Window",
@@ -1641,7 +1733,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed 400x2050; small fixed frames from ~£92-112 + VAT base, tall size + anthracite uplift | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed 400x2050; small fixed frames from ~£92-112 + VAT base, tall size + anthracite uplift | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "0.6m Full Height Fixed Window",
@@ -1654,7 +1747,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed 600x2050 (Vufold 630x2100 fixed comparable) | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed 600x2050 (Vufold 630x2100 fixed comparable) | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "0.6m Full Height Window w/ Opener",
@@ -1667,7 +1761,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC 600x2050 with top opener | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC 600x2050 with top opener | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "0.9m Full Height Fixed Window",
@@ -1680,7 +1775,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed 900x2050 | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed 900x2050 | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "0.9m Full Height Window w/ Opener",
@@ -1693,7 +1789,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC 900x2050 with opener | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC 900x2050 with opener | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "0.9m Standard Fixed Window",
@@ -1706,7 +1803,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed ~900x1200 | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed ~900x1200 | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "0.9m Standard Window w/ Opener",
@@ -1719,7 +1817,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC casement ~900x1200 opening (ilikesheds/Vufold comparables) | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC casement ~900x1200 opening (ilikesheds/Vufold comparables) | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "1.0m x 1.0m Window",
@@ -1732,7 +1831,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed 1000x1000 (desk window) | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed 1000x1000 (desk window) | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "1.2m Fixed Window",
@@ -1745,7 +1845,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed ~1200x1200 | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed ~1200x1200 | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "Slot Window (Fixed)",
@@ -1758,7 +1859,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed slot ~1200x400 | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed slot ~1200x400 | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "Slot Window (Opening)",
@@ -1771,7 +1873,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC opening slot ~1200x400 | From 2D configurator components - SET COST + SUPPLIER"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC opening slot ~1200x400 | From 2D configurator components - SET COST + SUPPLIER",
+   "supply": "site"
   },
   {
    "name": "13A double socket with USB",
@@ -1798,7 +1901,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "NO COST LINE: the return boards are already counted in the front-cladding board quantity (+0.4m run per closed corner). Kept as a reminder line for the fitters."
+   "notes": "NO COST LINE: the return boards are already counted in the front-cladding board quantity (+0.4m run per closed corner). Kept as a reminder line for the fitters.",
+   "supply": "site"
   },
   {
    "name": "Larch slatted cladding 140×2500mm",
@@ -1811,7 +1915,8 @@
    "orderUnit": "",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Siberian larch 20x145 ~£4.50-5.10/m ex x 2.5m length | SET COST + SUPPLIER if offered"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Siberian larch 20x145 ~£4.50-5.10/m ex x 2.5m length | SET COST + SUPPLIER if offered",
+   "supply": "site"
   },
   {
    "name": "Western Red Cedar slatted cladding 140×2500mm",
@@ -1824,7 +1929,8 @@
    "orderUnit": "2.5m length",
    "destination": "site",
    "inStock": false,
-   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. WRC 18x144 shadow-gap/slat board ~£11.55/m ex (£13.86 inc, Timber Living) x 2.5m length | SET COST + SUPPLIER (missing from designer catalogue too)"
+   "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. WRC 18x144 shadow-gap/slat board ~£11.55/m ex (£13.86 inc, Timber Living) x 2.5m length | SET COST + SUPPLIER (missing from designer catalogue too)",
+   "supply": "site"
   },
   {
    "name": "TimberLok 150mm",
@@ -2479,9 +2585,9 @@
    "supplier": "Mighty Structural",
    "packSize": null,
    "orderUnit": "",
-   "supply": "site",
+   "supply": "stock",
    "destination": "site",
-   "inStock": false,
+   "inStock": true,
    "notes": "£15 per 3m length (Liam 2026-09-06). U-shape 200x40x40, cut on site. Closed corner (covers the protruding side wall) and, with the 180x40 L, forms a glazed open corner."
   },
   {
@@ -2577,9 +2683,9 @@
    "supplier": "Southern Sheeting",
    "packSize": null,
    "orderUnit": "4.88m board",
-   "supply": "site",
+   "supply": "stock",
    "destination": "site",
-   "inStock": false,
+   "inStock": true,
    "notes": "Trex Enhance Clam Shell, 140mm × 25mm × 4.88m. £32 per board confirmed by Liam 2026-09-06."
   }
  ]
