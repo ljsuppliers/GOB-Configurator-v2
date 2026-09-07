@@ -1,5 +1,5 @@
 {
- "version": 18,
+ "version": 19,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -834,17 +834,17 @@
   },
   {
    "name": "DPM jointing tape (roll)",
-   "category": "Foundations",
+   "category": "Membranes",
    "sku": "",
    "unit": "roll",
    "unitCost": 6.0,
-   "supplier": "Builders merchant",
+   "supplier": "Montravia",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
+   "inStock": true,
    "notes": "CLAUDE ESTIMATE £6. Tapes the DPM sheet overlaps. 1 roll per build (2 on floors over 20m²).",
-   "supply": "site"
+   "supply": "stock"
   },
   {
    "name": "Radix ground screw",
@@ -1188,13 +1188,13 @@
    "sku": "",
    "unit": "m²",
    "unitCost": 1.5,
-   "supplier": "Builders merchant",
+   "supplier": "Montravia",
    "packSize": 100,
    "orderUnit": "roll (4m x 25m)",
    "destination": "site",
-   "inStock": false,
+   "inStock": true,
    "notes": "Laid on top of plywood; tucks under base trims at perimeter.",
-   "supply": "site"
+   "supply": "stock"
   },
   {
    "name": "Tyvek breather membrane",
@@ -1202,13 +1202,13 @@
    "sku": "",
    "unit": "m²",
    "unitCost": 1.2,
-   "supplier": "Builders merchant",
+   "supplier": "Montravia",
    "packSize": 70,
    "orderUnit": "roll (1.4m x 50m)",
    "destination": "site",
-   "inStock": false,
+   "inStock": true,
    "notes": "ESTIMATE (Claude, ~£75 per 1.4x50m roll) - replace with real invoice price. Front wall: over the ply, under the battens",
-   "supply": "site"
+   "supply": "stock"
   },
   {
    "name": "Tyvek/breather tape (roll)",
@@ -1216,13 +1216,13 @@
    "sku": "",
    "unit": "roll",
    "unitCost": 14.0,
-   "supplier": "Builders merchant",
+   "supplier": "Montravia",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
+   "inStock": true,
    "notes": "ESTIMATE - tape Tyvek laps + around front openings",
-   "supply": "site"
+   "supply": "stock"
   },
   {
    "name": "Door mat",
@@ -1352,17 +1352,17 @@
   },
   {
    "name": "Vapour control layer (roll)",
-   "category": "Roofing",
+   "category": "Membranes",
    "sku": "",
    "unit": "roll",
    "unitCost": 25.0,
-   "supplier": "Builders merchant",
+   "supplier": "Montravia",
    "packSize": null,
    "orderUnit": "",
    "destination": "site",
-   "inStock": false,
+   "inStock": true,
    "notes": "CLAUDE ESTIMATE £25. HYBRID roof - warm-side VCL under the joists.",
-   "supply": "site"
+   "supply": "stock"
   },
   {
    "name": "Corner Trim (40x180 anthracite L)",

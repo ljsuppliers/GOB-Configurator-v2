@@ -93,8 +93,10 @@ export function mergeShipped(saved, base) {
       for (const k of ['unit', 'packSize', 'orderUnit', 'category', 'supply', 'destination', 'inStock', 'notes', 'sku']) sm[k] = bm[k];
       if (sm.supplier === 'Local timber merchant') sm.supplier = 'Builders merchant'; // merged 2026-09-06
       // supplier moves (Liam 2026-09-06) applied to saved copies too
-      if (['100mm PIR insulation board', '50mm PIR insulation board', '18mm T&G OSB3 roof board (2400x590)', 'Decorators caulk (tube)', 'Multi-finish plaster (25kg bag)', 'Plasterboard 12.5mm (1200x2400 sheet)', 'Plasterboard corner bead (2.4m)', 'Plasterboard scrim/jointing tape (90m roll)', 'White trade emulsion paint (10L)', 'DPM sheet', 'DPM jointing tape (roll)', 'Tyvek breather membrane', 'Tyvek/breather tape (roll)', 'Vapour control layer (roll)', 'Acoustic insulation roll (100mm)', 'Rockwool insulation 50mm (acoustic)'].includes(sm.name)) sm.supplier = 'Builders merchant';
+      if (['100mm PIR insulation board', '50mm PIR insulation board', '18mm T&G OSB3 roof board (2400x590)', 'Decorators caulk (tube)', 'Multi-finish plaster (25kg bag)', 'Plasterboard 12.5mm (1200x2400 sheet)', 'Plasterboard corner bead (2.4m)', 'Plasterboard scrim/jointing tape (90m roll)', 'White trade emulsion paint (10L)', 'Acoustic insulation roll (100mm)', 'Rockwool insulation 50mm (acoustic)'].includes(sm.name)) sm.supplier = 'Builders merchant';
       if (['Interior door 826x2040', 'Interior door ironmongery set', 'Interior door lining & frame'].includes(sm.name)) sm.supplier = 'Howden';
+      // membranes: Montravia, delivered from the factory as standard (Liam 2026-09-07)
+      if (['Tyvek breather membrane', 'Tyvek/breather tape (roll)', 'Vapour control layer (roll)', 'DPM sheet', 'DPM jointing tape (roll)'].includes(sm.name)) { sm.supplier = 'Montravia'; sm.supply = 'stock'; sm.inStock = true; }
       if (!(sm.unitCost > 0) && bm.unitCost > 0) sm.unitCost = bm.unitCost;
       if (!sm.supplier && bm.supplier) sm.supplier = bm.supplier;
     } else if (!(sm.unitCost > 0) && bm.unitCost > 0) {
