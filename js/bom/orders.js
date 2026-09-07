@@ -391,6 +391,7 @@ function orderEmailText(order, opts = {}) {
     if (/insulated wall panel|firring/i.test(l.name) && l.derivation) s += `\n    ${l.derivation.split('\n')[0]}`;
     return s;
   });
+  const note = (opts.supplierNotes || {})[order.noteKey || order.supplierName] || {};
   const subject = `Order for delivery to site${siteAddress ? ' - ' + siteAddress.split('\n').pop() : ''} - ref ${ref}${order.stage === 'week2' ? ' (2nd delivery, week 2)' : ''}`;
   // Liam 2026-09-07: plain email - "Hi", the list, address, delivery date,
   // "Please confirm price", "Thanks, Liam". No phone/footer, no other placeholders.
