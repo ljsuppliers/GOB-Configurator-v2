@@ -8,7 +8,7 @@ import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=32';
+import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=33';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=34';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=8';
@@ -43,6 +43,7 @@ function ensureStateDefaults(state) {
   if (!state.flooring) state.flooring = 'natural-oak';
   if (!state.featureWall) state.featureWall = 'none';
   if (!state.pirFloorRoof) state.pirFloorRoof = 75;
+  if (!state.firringFrontMm) state.firringFrontMm = 70;
   if (!state.acUnits) state.acUnits = [];
   if (!state.drawingLabels) state.drawingLabels = [];
   if (!state.planning) state.planning = { required: false, reasons: [], customReason: '' };

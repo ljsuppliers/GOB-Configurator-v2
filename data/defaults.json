@@ -175,5 +175,6 @@
   },
   "flooring": "natural-oak",
   "featureWall": "none",
-  "pirFloorRoof": 75
+  "pirFloorRoof": 75,
+  "firringFrontMm": 70
 }

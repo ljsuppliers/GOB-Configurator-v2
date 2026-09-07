@@ -497,7 +497,7 @@ export function buildPremiumBom(state, componentDefs) {
   // Firrings are CUSTOM MADE per job (Liam 2026-09-05): give the exact spec.
   // Liam 2026-09-06: assume a 70mm front height on EVERY building (the fall is
   // whatever 70mm gives over the run - shown alongside).
-  const firrFrontMm = 70;
+  const firrFrontMm = Number(state.firringFrontMm) > 0 ? Number(state.firringFrontMm) : 70; // per-job override (e.g. 45mm on Dan Smith)
   const firrFallText = `1:${Math.round(roofLen / 0.07)}`;
   add('Tapered firring 47mm (custom cut)', rJoists + 2,
     `CUSTOM MADE FOR THIS JOB: ${rJoists} firrings x ${roofLen.toFixed(2)}m long, 47mm wide, tapering from ${firrFrontMm}mm at the FRONT to 0 at the REAR (${firrFallText} fall over ${roofLen.toFixed(2)}m), one per joist; PLUS 2 REVERSE firrings x ${roofLen.toFixed(2)}m (0 at the front rising to ${firrFrontMm}mm at the rear), one along each side edge, so the sides read level. Length = ${d.toFixed(2)}m building + ${canopyMm}mm front + 100mm rear oversail. ${

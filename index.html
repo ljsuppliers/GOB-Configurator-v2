@@ -744,6 +744,9 @@
           <label style="display:block;margin:6px 0 4px">PIR in floor + roof
             <select v-model.number="state.pirFloorRoof" style="width:100%;margin-top:3px"><option :value="75">75mm (standard)</option><option :value="100">100mm</option></select>
           </label>
+          <label style="display:block;margin:6px 0 4px">Firring height at the front (mm)
+            <input type="number" v-model.number="state.firringFrontMm" min="20" max="150" step="5" placeholder="70" style="width:90px;margin-left:6px" title="Standard 70mm tapering to 0 at the rear. Change per job if needed.">
+          </label>
           <label style="display:block;margin:6px 0 4px">Laminate flooring colour (Wickes)
             <select v-model="state.flooring" style="width:100%;margin-top:3px"><option value="natural-oak">Natural Oak</option><option value="light-grey">Light Grey</option></select>
           </label>
@@ -1857,7 +1860,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=118"></script>
+<script type="module" src="js/app.js?v=119"></script>
 
 </body>
 </html>
