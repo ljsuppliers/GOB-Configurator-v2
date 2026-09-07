@@ -318,25 +318,41 @@ export function joinBom(bomRows, catalogue, overrides = {}) {
   });
 }
 
-/** Group joined lines into supplier orders, split by destination. */
+/** Items that go on the builders merchant's SECOND delivery (week 2 of the
+ *  build, once the shell is watertight) so they aren't damaged on site. */
+export const WEEK2_ITEMS = new Set([
+  'Plasterboard 12.5mm (1200x2400 sheet)', 'Plasterboard scrim/jointing tape (90m roll)', 'Plasterboard corner bead (2.4m)',
+  'Multi-finish plaster (25kg bag)', 'Decorators caulk (tube)', 'White trade emulsion paint (10L)', 'Skirting board',
+]);
+export function stageFor(line) {
+  return WEEK2_ITEMS.has(line.catalogueName || line.name) ? 'week2' : '';
+}
+export const stageLabel = (stage) => (stage === 'week2' ? '2nd delivery - week 2 (plastering + decorating)' : '');
+
+/** Group joined lines into supplier orders, split by destination and stage. */
 export function buildOrders(lines, catalogue, opts) {
   const supByName = new Map(catalogue.suppliers.map((s) => [s.name.toLowerCase(), s]));
   const groups = new Map();
   for (const l of lines) {
     if (l.inStock || l.orderQty <= 0) continue;
     const supplierName = l.supplier || 'NO SUPPLIER SET';
-    const key = `${supplierName}||${l.destination}`;
+    const stage = stageFor(l);
+    const key = `${supplierName}||${l.destination}||${stage}`;
     if (!groups.has(key)) {
       groups.set(key, {
         supplierName,
         supplier: supByName.get(supplierName.toLowerCase()) || null,
         destination: l.destination,
+        stage,
+        stageLabel: stageLabel(stage),
+        // notes/dates are per ORDER: supplier name + stage
+        noteKey: stage ? `${supplierName} (${stage})` : supplierName,
         items: [],
       });
     }
     groups.get(key).items.push(l);
   }
-  const orders = [...groups.values()].sort((a, b) => a.supplierName.localeCompare(b.supplierName));
+  const orders = [...groups.values()].sort((a, b) => a.supplierName.localeCompare(b.supplierName) || (a.stage ? 1 : 0) - (b.stage ? 1 : 0));
   for (const o of orders) o.email = orderEmailText(o, opts);
   return orders;
 }
@@ -373,12 +389,14 @@ function orderEmailText(order, opts = {}) {
     if (/insulated wall panel|firring/i.test(l.name) && l.derivation) s += `\n    ${l.derivation.split('\n')[0]}`;
     return s;
   });
-  const subject = `Purchase order ${ref} - Garden Office Buildings`;
-  const note = (opts.supplierNotes || {})[order.supplierName] || {};
+  const subject = `Purchase order ${ref}${order.stage === 'week2' ? ' (2nd delivery - week 2)' : ''} - Garden Office Buildings`;
+  const note = (opts.supplierNotes || {})[order.noteKey || order.supplierName] || {};
   const body = [
     'Hi,',
     '',
-    `Please can we place the following order. Our reference: ${ref}.`,
+    order.stage === 'week2'
+      ? `Please can we place the following order for the SECOND delivery on this job - the plastering and decorating materials, to arrive in week 2 of the build once the building is watertight. Our reference: ${ref}.`
+      : `Please can we place the following order. Our reference: ${ref}.`,
     '',
     ...lines,
     '',

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=21">
+  <link rel="stylesheet" href="css/app.css?v=22">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -1099,7 +1099,7 @@
         <div v-for="g in logistics.toSite" :key="'ts'+g.name" class="pack-cat">
           <h3>{{ g.name }}</h3>
           <table class="pack-table pack-check">
-            <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}</td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.orderStatus === 'delivered' ? 'delivered' : l.orderStatus === 'ordered' ? 'ordered' : 'NOT YET ORDERED' }}</td></tr>
+            <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}<span v-if="l.stage === 'week2'" class="pack-small"> · 2ND DELIVERY (week 2)</span></td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.orderStatus === 'delivered' ? 'delivered' : l.orderStatus === 'ordered' ? 'ordered' : 'NOT YET ORDERED' }}</td></tr>
           </table>
         </div>
 
@@ -1225,7 +1225,7 @@
                 <tbody>
                   <tr v-for="l in sec.lines" :key="l.name" :class="{ 'bom-stock': l.inStock, 'bom-missing': !l.inCatalogue }">
                     <td><span class="chip" :class="'chip-' + l.orderStatus">{{ l.orderStatus === 'stock' ? 'IN STOCK' : l.orderStatus === 'delivered' ? 'Delivered' : l.orderStatus === 'ordered' ? 'Ordered' : 'To order' }}</span></td>
-                    <td><strong>{{ l.name }}</strong><span v-if="useTag(l)" class="bom-cat" title="Where it's used">{{ useTag(l) }}</span><span v-if="l.inStock" class="bom-cat bom-cat-stock">from factory stock</span><div v-if="showDerivations" class="bom-deriv">{{ l.derivation }}</div></td>
+                    <td><strong>{{ l.name }}</strong><span v-if="useTag(l)" class="bom-cat" title="Where it's used">{{ useTag(l) }}</span><span v-if="l.inStock" class="bom-cat bom-cat-stock">from factory stock</span><span v-if="l.stage === 'week2'" class="bom-cat bom-cat-week2">2nd delivery, week 2</span><div v-if="showDerivations" class="bom-deriv">{{ l.derivation }}</div></td>
                     <td class="num">{{ fmtQty(l.qty, l.unit) }}</td>
                     <td><template v-if="l.stockPlan && l.stockPlan.text"><strong>{{ l.stockPlan.text }}</strong><div v-if="showDerivations" class="bom-deriv" v-for="n in l.stockPlan.notes">{{ n }}</div></template><template v-else-if="l.orderText"><strong>{{ l.orderText }}</strong></template><template v-else>{{ l.orderQty }}<span v-if="l.orderUnit && l.orderUnit !== l.unit"> × {{ l.orderUnit }}</span></template></td>
                     <td class="num">{{ l.unitCost ? fmt(l.unitCost) : '—' }}</td>
@@ -1237,9 +1237,9 @@
               <!-- Purchase order(s) for this supplier: one per destination -->
               <div v-for="o in sec.orders" :key="o.supplierName + o.destination" class="po-card">
                 <div class="po-head">
-                  <span class="po-dest">Purchase order · {{ o.destination === 'factory' ? 'supplier delivers to FACTORY (Biggin Hill), we bring it to site' : 'supplier delivers straight to SITE' }}</span>
-                  <label class="po-datelabel">Delivery <input class="po-note po-date" type="date" :value="orderNoteFor(sec.name).delivery" @change="setOrderNote(sec.name, 'delivery', $event.target.value)"></label>
-                  <input class="po-note po-note-wide" :value="orderNoteFor(sec.name).notes" @change="setOrderNote(sec.name, 'notes', $event.target.value)" placeholder="Notes to supplier (account no., call before delivery, offload…)">
+                  <span class="po-dest">{{ o.stage === 'week2' ? '2ND DELIVERY (week 2, plastering + decorating)' : 'Purchase order' }} · {{ o.destination === 'factory' ? 'supplier delivers to FACTORY (Biggin Hill), we bring it to site' : 'supplier delivers straight to SITE' }}</span>
+                  <label class="po-datelabel">Delivery <input class="po-note po-date" type="date" :value="orderNoteFor(o.noteKey).delivery" @change="setOrderNote(o.noteKey, 'delivery', $event.target.value)"></label>
+                  <input class="po-note po-note-wide" :value="orderNoteFor(o.noteKey).notes" @change="setOrderNote(o.noteKey, 'notes', $event.target.value)" placeholder="Notes to supplier (account no., call before delivery, offload…)">
                   <span style="flex:1"></span>
                   <span class="chip" :class="'chip-' + (o.status || 'not-ordered')">{{ statusLabel(o) }}</span>
                   <button v-if="!o.status" class="btn btn-sm" @click="setOrderStatus(o, 'ordered')" title="Ordered by phone / email / trade counter">Mark ordered</button>
@@ -1855,7 +1855,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=105"></script>
+<script type="module" src="js/app.js?v=106"></script>
 
 </body>
 </html>

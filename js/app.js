@@ -9,7 +9,7 @@ import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=30';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES } from './bom/orders.js?v=26';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=27';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=8';
 import { emptyInstaller } from './bom/installers.js?v=2';
@@ -303,7 +303,7 @@ createApp({
       // current unsaved job too
       if (this.state) {
         const cur = { ref: this.orderRef, customer: this.state.customer?.name || '', id: this.currentCloudId, current: true };
-        for (const o of this.orders || []) { const n = this.orderNoteFor(o.supplierName); if (n.delivery) push(cur, n.delivery, o.supplierName, 'delivery', o.status); }
+        for (const o of this.orders || []) { const n = this.orderNoteFor(o.noteKey || o.supplierName); if (n.delivery) push(cur, n.delivery, o.supplierName + (o.stage ? ' (week 2)' : ''), 'delivery', o.status); }
       }
       const seen = new Set();
       return items.filter((i) => { const k = `${i.job.id || 'cur'}|${i.kind}|${i.label}|${i.date.toDateString()}`; if (seen.has(k)) return false; seen.add(k); return true; })
@@ -497,13 +497,14 @@ createApp({
         o.statusAt = st[this.orderKey(o)]?.at || o.sentAt || '';
       }
       // each line carries its order's status (for the table chips + logistics pack)
-      const byKey = new Map(this.orders.map((o) => [`${o.supplierName}||${o.destination}`, o]));
+      const byKey = new Map(this.orders.map((o) => [`${o.supplierName}||${o.destination}||${o.stage || ''}`, o]));
       for (const l of this.bomLines) {
-        const o = l.inStock ? null : byKey.get(`${l.supplier || 'NO SUPPLIER SET'}||${l.destination}`);
+        const o = l.inStock ? null : byKey.get(`${l.supplier || 'NO SUPPLIER SET'}||${l.destination}||${stageFor(l)}`);
+        l.stage = stageFor(l);
         l.orderStatus = o ? (o.status || 'not-ordered') : (l.inStock ? 'stock' : 'not-ordered');
       }
     },
-    orderKey(o) { return `${this.orderRef}||${o.supplierName}||${o.destination}`; },
+    orderKey(o) { return `${this.orderRef}||${o.supplierName}||${o.destination}${o.stage ? '||' + o.stage : ''}`; },
     defaultOrderRef() {
       const name = (this.state.customer?.name || '').trim();
       const parts = name.split(/\s+/).filter(Boolean);
