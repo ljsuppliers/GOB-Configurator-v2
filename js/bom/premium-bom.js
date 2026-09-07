@@ -397,8 +397,8 @@ export function buildPremiumBom(state, componentDefs) {
   }
   add('4x2 tanalised C24 timber', Math.ceil(stickLm - soleLm), `Stick walls (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): studs @400mm + plates + noggins + opening framing, +10%`, stickCuts);
   add('4x2 tanalised C24 timber', Math.ceil(soleLm * 1.10), `Stick-wall sole plates at deck level (tanalised)`, soleCuts);
-  add('12mm Plywood (1220×2440 sheet)', plySheets, `Stick wall external sheathing + 10% (openings cut out on site)`,
-    { orderText: `${plySheets} sheets 2440 × 1220 × 12mm structural ply (WBP/exterior grade)` });
+  add('12mm Plywood (1220×2440 sheet)', plySheets + 1, `Stick wall external sheathing + 10% + 1 spare sheet (openings cut out on site)`,
+    { orderText: `${plySheets + 1} sheets 2440 × 1220 × 12mm structural ply (WBP/exterior grade), incl. 1 spare` });
   add('Tyvek breather membrane', tyvekM2, `Over the ply, under the battens (m2 + 10%)`,
     { orderText: `${Math.ceil(tyvekM2 / 70)} roll${Math.ceil(tyvekM2 / 70) === 1 ? '' : 's'} Tyvek Housewrap 1.4m × 50m (${tyvekM2}m² needed)` });
   add('Tyvek/breather tape (roll)', 1, `Tape laps + around openings`);
@@ -489,7 +489,7 @@ export function buildPremiumBom(state, componentDefs) {
           ? `They sit on top of the oversailed joists right out to the canopy edge`
           : `They run ${canopyMm}mm past the front wall (classic token overhang)`
     }`,
-    { costQty: (rJoists + 2) * roofLen, orderText: `${rJoists} × ${roofLen.toFixed(2)}m tapered ${firrFrontMm}→0mm  +  2 × ${roofLen.toFixed(2)}m REVERSE (0→${firrFrontMm}mm), one per side edge  · 47mm wide` });
+    { costQty: (rJoists + 2) * roofLen, orderText: `${rJoists + 2} × ${roofLen.toFixed(2)}m long, 47mm wide, tapered ${firrFrontMm}mm → 0mm (identical pieces; 2 are fitted reversed on the side edges)` });
   add('18mm T&G OSB3 roof board (2400x590)', Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2), `Roof deck ${(w + 0.2).toFixed(2)} x ${roofLen.toFixed(2)}m incl. 100mm side overhangs + ${canopyMm}mm front + 100mm rear, +5%`,
     { orderText: `${Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2)} boards 2400 × 590 × 18mm OSB3 T&G (roof deck ${(w + 0.2).toFixed(2)} × ${roofLen.toFixed(2)}m)` });
   add('EPDM roof kit (membrane, adhesive, edge trims)', Math.ceil((w + 0.2) * roofLen * 1.15), `One-piece EPDM, deck m2 + 15% wraps/upstands, up-and-over the squared side edges`,
@@ -557,7 +557,7 @@ export function buildPremiumBom(state, componentDefs) {
     { orderText: `${Math.ceil(boardM2 / PLASTERBOARD_M2)} boards 2400 × 1200 × 12.5mm tapered-edge plasterboard` });
   add('Plasterboard scrim/jointing tape (90m roll)', Math.ceil(boardM2 / 45), `Board joints`);
   add('Plasterboard corner bead (2.4m)', 4 + [...front, ...rear, ...left, ...right].length, `Corners + reveals`);
-  add('Multi-finish plaster (25kg bag)', Math.ceil(skimM2 / 10), `Skim ~10m2/bag${featureRear ? ' - rear wall NOT skimmed (feature wall)' : ''}`);
+  add('Multi-finish plaster (25kg bag)', Math.ceil(skimM2 / 8) + 1, `Skim ${skimM2.toFixed(0)}m² at ~8m² per 25kg bag, rounded up + 1 spare${featureRear ? ' - rear wall NOT skimmed (feature wall)' : ''}`);
   if (featureRear) {
     const slatPanels = Math.ceil(Math.max(0, (w - 0.3) - fhWidth(rear)) / 0.6) + 1;
     add('Oak acoustic slat wall panel (2400×600)', slatPanels, `OAK ACOUSTIC FEATURE WALL on the rear: internal width ${(w - 0.3).toFixed(2)}m ÷ 0.6m per panel, run vertically (2.4m covers the ${wallH.toFixed(2)}m wall), fixed to the plasterboard with grab adhesive + screws into the studs, + 1 spare`,
