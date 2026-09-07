@@ -258,6 +258,7 @@ export function buildPremiumBom(state, componentDefs) {
   } else if (blockBase) {
     add('Concrete block 440x215x100 medium density (7.3N)', pedestals, `CONCRETE BLOCK BASE: 1 block per support point, ${cols}x${rowsN} grid (max 1.3m spacing) under the 5x2 joist lines`);
     add('Postcrete (20kg bag)', pedestals * 2, `2 bags per hole × ${pedestals} holes`);
+    add('Adjustable plastic pedestal', pedestals, `1 adjustable pedestal on each concrete block (Liam 2026-09-07) - frame builds on the pedestal heads`);
     add('DPM sheet', Math.ceil(w * d * 1.1), `Over the ground under the floor frame (${(w * d).toFixed(1)}m2 + 10% laps)`);
   } else {
     add('Adjustable plastic pedestal', pedestals, `${cols}x${rowsN} grid (max 1.3m spacing), rows under the 5x2 joist lines - frame builds DIRECTLY on the heads (no bearers). Anchored to the slab`);
