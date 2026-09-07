@@ -362,7 +362,7 @@ function orderEmailText(order, opts = {}) {
   const siteAddress = (opts.siteAddress || '').trim();
   const dest = order.destination === 'factory'
     ? FACTORY_ADDRESS
-    : (siteAddress ? `Job site:\n${siteAddress}` : 'Job site: [SITE ADDRESS - fill in]');
+    : (siteAddress || '[site address]');
   // (factory-bound orders: our logistics team brings these to site later)
   const lines = order.items.map((l) => {
     const unitWord = l.orderUnit && l.orderUnit !== 'each' ? l.orderUnit : '';
@@ -389,27 +389,25 @@ function orderEmailText(order, opts = {}) {
     if (/insulated wall panel|firring/i.test(l.name) && l.derivation) s += `\n    ${l.derivation.split('\n')[0]}`;
     return s;
   });
-  const subject = `Purchase order ${ref}${order.stage === 'week2' ? ' (2nd delivery - week 2)' : ''} - Garden Office Buildings`;
-  const note = (opts.supplierNotes || {})[order.noteKey || order.supplierName] || {};
+  const subject = `Order for delivery to site${siteAddress ? ' - ' + siteAddress.split('\n').pop() : ''} - ref ${ref}${order.stage === 'week2' ? ' (2nd delivery, week 2)' : ''}`;
+  // Liam 2026-09-07: plain email - "Hi", the list, address, delivery date,
+  // "Please confirm price", "Thanks, Liam". No phone/footer, no other placeholders.
   const body = [
     'Hi,',
     '',
     order.stage === 'week2'
-      ? `Please can we place the following order for the SECOND delivery on this job - the plastering and decorating materials, to arrive in week 2 of the build once the building is watertight. Our reference: ${ref}.`
-      : `Please can we place the following order. Our reference: ${ref}.`,
+      ? 'Please can we place the following order for the second delivery on this job, the plastering and decorating materials, to arrive in week 2 of the build once the building is watertight.'
+      : 'Please can we place the following order for delivery to site.',
     '',
     ...lines,
     '',
-    'Delivery address:',
+    'Delivery address',
     dest,
-    ...(note.delivery ? ['', `Requested delivery: ${note.delivery}`] : []),
-    ...(note.notes ? ['', `Notes: ${note.notes}`] : []),
     '',
-    'Please confirm price and delivery date. Any questions, call us on 01689 818 400.',
+    `Please could this be delivered on ${note.delivery ? new Date(note.delivery).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : '[delivery date]'}${order.stage === 'week2' ? '' : ' (first drop)'}.${note.notes ? ' ' + note.notes : ''} Please confirm price.`,
     '',
     'Thanks,',
-    'Garden Office Buildings',
-    'info@gardenofficebuildings.co.uk · 01689 818 400',
+    'Liam',
   ].join('\n');
   return { subject, body };
 }
