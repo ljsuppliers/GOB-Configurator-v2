@@ -795,6 +795,27 @@ createApp({
       await navigator.clipboard.writeText(txt);
       this.bomStatus = 'All purchase orders copied to clipboard';
     },
+    /** Gmail compose URL - opens Gmail (web) with To / Subject / Body filled in. */
+    gmailOrderUrl(order) {
+      const p = new URLSearchParams({ view: 'cm', fs: '1', to: order.supplier?.email || '', su: order.email.subject, body: order.email.body });
+      return `https://mail.google.com/mail/?${p.toString()}`;
+    },
+    /** Copy as formatted HTML (headings bold, bullet list) so it pastes cleanly into Gmail. */
+    async copyOrderForGmail(order) {
+      const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const html = order.email.body.split('\n').map((line) => {
+        if (line.startsWith('- ')) return `<li>${esc(line.slice(2))}</li>`;
+        if (/^\s{4}/.test(line)) return `<div style="margin-left:24px;color:#555;font-size:13px">${esc(line.trim())}</div>`;
+        if (line === '') return '<br>';
+        if (/^(Delivery address|Timber|Sheet materials|Insulation|Base)$/i.test(line.trim())) return `<strong>${esc(line)}</strong>`;
+        return `<div>${esc(line)}</div>`;
+      }).join('').replace(/(<li>.*?<\/li>)+/g, (m) => `<ul style="margin:6px 0 6px 18px;padding:0">${m}</ul>`);
+      try {
+        await copyRichText(html, `Subject: ${order.email.subject}\n\n${order.email.body}`);
+        order.copied = true; setTimeout(() => { order.copied = false; }, 2500);
+        this.bomStatus = `Copied for Gmail (subject: ${order.email.subject})`;
+      } catch (e) { await this.copyOrderEmail(order); }
+    },
     mailtoOrder(order) {
       const to = order.supplier?.email || '';
       return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(order.email.subject)}&body=${encodeURIComponent(order.email.body)}`;

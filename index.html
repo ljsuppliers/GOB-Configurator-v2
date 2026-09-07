@@ -1245,8 +1245,9 @@
                   <button v-if="!o.status" class="btn btn-sm" @click="setOrderStatus(o, 'ordered')" title="Ordered by phone / email / trade counter">Mark ordered</button>
                   <button v-if="o.status === 'ordered'" class="btn btn-sm" @click="setOrderStatus(o, 'delivered')" :title="o.destination === 'factory' ? 'Arrived at the factory' : 'Arrived on site'">Mark delivered</button>
                   <button v-if="o.status" class="btn btn-sm" @click="setOrderStatus(o, '')" title="Clear status">↺</button>
-                  <button class="btn btn-sm" @click="copyOrderEmail(o)">{{ o.copied ? 'Copied ✓' : 'Copy email' }}</button>
-                  <a v-if="o.supplier && o.supplier.email" class="btn btn-sm" :href="mailtoOrder(o)">Open in mail</a>
+                  <a class="btn btn-sm btn-primary" :href="gmailOrderUrl(o)" target="_blank" rel="noopener" title="Opens a Gmail compose window with To, Subject and the order filled in">Open in Gmail</a>
+                  <button class="btn btn-sm" @click="copyOrderForGmail(o)" title="Copies the email formatted (bullets, bold headings) to paste into Gmail">{{ o.copied ? 'Copied ✓' : 'Copy for Gmail' }}</button>
+                  <a v-if="o.supplier && o.supplier.email" class="btn btn-sm" :href="mailtoOrder(o)">Open in mail app</a>
                   <button v-if="gmailReady && o.supplier && o.supplier.email" class="btn btn-sm btn-primary" :disabled="sending" @click="sendOrder(o)">{{ o.sentAt ? 'Send again' : 'Send from Gmail' }}</button>
                   <button class="btn btn-sm" @click="o.showEmail = !o.showEmail">{{ o.showEmail ? 'Hide email' : 'Preview email' }}</button>
                 </div>
@@ -1855,7 +1856,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=109"></script>
+<script type="module" src="js/app.js?v=110"></script>
 
 </body>
 </html>
