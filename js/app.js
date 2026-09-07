@@ -184,7 +184,7 @@ createApp({
 
   computed: {
     bomMaterialCost() {
-      return (this.bomLines || []).reduce((sum, l) => sum + (l.inStock ? 0 : l.lineCost), 0);
+      return (this.bomLines || []).reduce((sum, l) => sum + (l.lineCost || 0), 0);
     },
     /** The drawing SVG for the printable packs. The design canvas already holds
      *  the same SVG (hidden), and fills like url(#grad) resolve to the FIRST
@@ -241,7 +241,7 @@ createApp({
         sent: (this.orders || []).filter((o) => o.sentAt).length,
         noEmail: (this.orders || []).filter((o) => !o.supplier?.email).length,
         notInCatalogue: lines.filter((l) => !l.inCatalogue).length,
-        missingCost: lines.filter((l) => l.inCatalogue && !l.inStock && !(l.unitCost > 0) && !/Site equipment/.test(l.material?.category || '')).length,
+        missingCost: lines.filter((l) => l.inCatalogue && !(l.unitCost > 0) && !/Site equipment/.test(l.material?.category || '')).length,
       };
     },
     supplierSections() {
@@ -258,7 +258,7 @@ createApp({
         const orders = (this.orders || []).filter((o) => o.supplierName === name);
         return {
           name, lines, supplier: sup, email: sup?.email || '',
-          subtotal: lines.reduce((t, l) => t + (l.inStock ? 0 : l.lineCost), 0),
+          subtotal: lines.reduce((t, l) => t + (l.lineCost || 0), 0),
           destinations: [...new Set(lines.map((l) => l.destination))],
           orders,
           allSent: orders.length > 0 && orders.every((o) => o.sentAt),
@@ -363,7 +363,7 @@ createApp({
         groups.get(key).push(l);
       }
       return [...groups.entries()].map(([name, lines]) => ({
-        name, lines, subtotal: lines.reduce((t, l) => t + (l.inStock ? 0 : l.lineCost), 0),
+        name, lines, subtotal: lines.reduce((t, l) => t + (l.lineCost || 0), 0),
       })).sort((a, b) => a.name.localeCompare(b.name));
     },
     filteredCatalogue() {
