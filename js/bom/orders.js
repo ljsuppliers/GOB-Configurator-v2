@@ -374,8 +374,8 @@ function orderEmailText(order, opts = {}) {
     const unitLabel = /^(each|panel|board|sheet)$/i.test(l.unit || '') ? '' : ` ${l.unit || ''}`;
     const needed = `  (${l.qty}${unitLabel} needed)`;
     if (l.stockPlan && l.stockPlan.text) {
+      // the order only - cut lists / workings stay in the app (Liam 2026-09-07)
       s = `- ${l.name}: ${l.stockPlan.text}${sku}${needed}`;
-      for (const n of l.stockPlan.notes) s += `\n    ${n}`;
     } else if (l.orderText) {
       const showNeeded = /m²|m2|linear|^m$/i.test(l.unit || '') && !/needed/i.test(l.orderText);
       s = `- ${l.name}: ${l.orderText}${sku}${showNeeded ? needed : ''}`;
@@ -387,8 +387,6 @@ function orderEmailText(order, opts = {}) {
     } else {
       s = `- ${l.orderQty} × ${l.name}${unitBit}${sku}`;
     }
-    // Panel schedules, firring specs and cut instructions travel with the order line.
-    if (/insulated wall panel|firring/i.test(l.name) && l.derivation) s += `\n    ${l.derivation.split('\n')[0]}`;
     return s;
   });
   const note = (opts.supplierNotes || {})[order.noteKey || order.supplierName] || {};
