@@ -142,7 +142,7 @@ export async function saveCatalogue(cat) {
 const STOCK_LENGTHS = [
   { test: /firring/i, lengths: null },
   { test: /\bCLS\b/i, lengths: [2.4], splittable: true }, // Liam 2026-09-06: CLS = 2.4m lengths only, plates joined
-  { test: /batten/i, lengths: [4.2], splittable: true }, // Liam 2026-09-06: battens 4.2m only
+  { test: /batten/i, lengths: [4.8], splittable: true }, // Liam 2026-09-07: battens 4.8m (standard roofing-batten length)
   { test: /2x2/i, lengths: [3.0], splittable: true },    // Liam 2026-09-06: 2x2 3.0m only
   { test: /^4x2 tanalised/i, lengths: [4.8], splittable: true }, // Liam 2026-09-07: 4x2 in 4.8m only (cut in half for studs)
   { test: /C(16|24)|tanalised|treated|timber|joist/i, lengths: [2.4, 3.0, 3.6, 4.2, 4.8, 5.4, 6.0], splittable: false },

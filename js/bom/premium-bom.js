@@ -50,7 +50,7 @@ export const USE_TAGS = {
   'Adjustable plastic pedestal': 'Under the floor frame',
   'DPM sheet': 'Under the pedestals, on the slab',
   'Radix ground screw': 'Foundation',
-  '5x2 tanalised C24 timber': 'Floor joists + rim',
+  '5x2 tanalised C24 timber': 'Floor joists + end joists',
   '18x38 treated batten': 'Floor PIR support, panel double battens, cladding sub-frame',
   '75mm PIR insulation board': 'Floor, stick-wall bays + roof',
   '100mm PIR insulation board': 'Floor + roof (100mm jobs)',
@@ -71,7 +71,7 @@ export const USE_TAGS = {
   'Corner Trim (40x180 anthracite L)': 'Rear + plain corners',
   'Corner Trim (50x50 anthracite L)': 'Open corner, clad both faces',
   'Corner Trim (200x40x40 anthracite U)': 'Closed corner / glazed open corner',
-  '6x2 tanalised C24 timber': 'Roof joists + flitch over openings',
+  '6x2 tanalised C24 timber': 'Roof joists, end joists + flitch over openings',
   '7x2 tanalised C24 timber': 'Roof joists',
   'Flitch beam bolts': 'Flitch over front openings',
   '4x2 tanalised C24 timber': 'Stick walls, sole plates, corner posts, wall plates',
@@ -184,7 +184,7 @@ function openingsOn(state, componentDefs, elevation) {
         type: c.type,
         posM: (c.positionX || 0) / 1000,
         wallM: (elevation === 'front' || elevation === 'rear' ? state.width : state.depth) / 1000,
-        widthM: (def.width || 900) / 1000,
+        widthM: ((c.customWidth && c.customWidth > 0 ? c.customWidth : def.width) || 900) / 1000,
         heightM: (def.height || 2050) / 1000,
         category: def.category || 'standard',
         fullHeight: def.category === 'sliding' || def.category === 'bifold' || def.category === 'french'
@@ -259,8 +259,8 @@ export function buildPremiumBom(state, componentDefs) {
   const fDoubledInternals = Math.max(0, Math.floor((fJoists - 2) / 3));
   const fDoubledLm = 2 * w + 2 * d + fDoubledInternals * d;
   add('5x2 tanalised C24 timber', Math.ceil((fJoists * d + 2 * w + fDoubledLm) * 1.10),
-    `Floor: ${fJoists} joists x ${d.toFixed(2)}m @400mm front-to-back + rim (2 x ${w.toFixed(2)}m) + DOUBLING (outer ring + every 3rd joist / 1.2m grid: ${fDoubledInternals} x ${d.toFixed(2)}m), +10%`,
-    [{ len: d, n: fJoists + 2 + fDoubledInternals, what: 'floor joists incl. doubled sides + grid doubles' }, { len: w, n: 4, what: 'front + rear rim, doubled (join over a joist/pedestal if longer than stock)', join: true }]);
+    `Floor: ${fJoists} joists x ${d.toFixed(2)}m @400mm front-to-back + front/rear end joists (2 x ${w.toFixed(2)}m) + DOUBLING (outer ring + every 3rd joist / 1.2m grid: ${fDoubledInternals} x ${d.toFixed(2)}m), +10%`,
+    [{ len: d, n: fJoists + 2 + fDoubledInternals, what: 'floor joists incl. doubled sides + grid doubles' }, { len: w, n: 4, what: 'front + rear END JOISTS (the long outer pieces the joists fix into), doubled - join over a joist/pedestal if longer than stock', join: true }]);
   add('18x38 treated batten', Math.ceil(2 * (fJoists - 1) * d), `Floor PIR support battens, joist sides, tops ${pirFR}mm down`,
     [{ len: d, n: 2 * (fJoists - 1), what: 'floor PIR battens' }]);
   add(pirFRName, Math.ceil(w * d), `Floor: friction-fit between the 5x2 joists, ${(w * d).toFixed(1)}m2`,
@@ -321,11 +321,14 @@ export function buildPremiumBom(state, componentDefs) {
   const stickCuts = [];
   const soleCuts = [];
   for (const sw of stickWalls) {
-    const studs = Math.ceil(sw.run / 0.4) + 1;
+    const openW = fhOn(sw.openings).reduce((s2, o) => s2 + o.widthM, 0);
+    // studs @400 across the wall, LESS the ones that fall inside door/window
+    // openings, PLUS 6 per full-height opening (triple kings/jacks each side)
+    const studs = Math.max(2, Math.ceil(sw.run / 0.4) + 1 - fhOn(sw.openings).reduce((s2, o) => s2 + Math.floor(o.widthM / 0.4), 0));
     const fhCount = fhOn(sw.openings).length;
     const kings = fhCount * (6 * wallH + 2);
     stickLm += (studs * wallH + 2 * sw.run + sw.run /* noggins */ + 4 * wallH + kings) * 1.10;
-    stickCuts.push({ len: wallH, n: studs + 4 + fhCount * 6, what: `${sw.label} studs + corner/king studs` });
+    stickCuts.push({ len: wallH, n: studs + 4 + fhCount * 6, what: `${sw.label} studs (${studs} after the ${openW.toFixed(1)}m of openings) + corner + king/jack studs (${fhCount * 6})` });
     stickCuts.push({ len: sw.run, n: 3, what: `${sw.label} top plate x2 + noggin run (join over a stud if longer than stock)`, join: true });
     soleCuts.push({ len: sw.run, n: 1, what: `${sw.label} sole plate (join over a stud if longer than stock)`, join: true });
     const areaM2 = sw.run * wallH;
@@ -468,14 +471,14 @@ export function buildPremiumBom(state, componentDefs) {
   const rJoists = Math.ceil(w / ladder.spacing) + 1;
   const canopyMm = (canopyM * 1000).toFixed(0);
   add(ladder.sku, Math.ceil((rJoists * ladder.ply * joistLen + 2 * w) * 1.10),
-    `Roof: ${ladder.label} - ${rJoists}${ladder.ply === 2 ? ' pairs' : ''} x ${joistLen.toFixed(2)}m @${(ladder.spacing * 1000).toFixed(0)}mm + rim, +10%. Bears on front top plate/flitch + rear wall plate, OVERSAILS THE REAR BY 100mm. ${
+    `Roof: ${ladder.label} - ${rJoists}${ladder.ply === 2 ? ' pairs' : ''} x ${joistLen.toFixed(2)}m @${(ladder.spacing * 1000).toFixed(0)}mm + front/rear end joists, +10%. Bears on front top plate/flitch + rear wall plate, OVERSAILS THE REAR BY 100mm. ${
       canopyMethod === 'joists-oversail'
         ? `${(h).toFixed(2)}m BUILD: joists also OVERSAIL the front by ${canopyMm}mm to form the canopy`
         : canopyMethod === 'firrings-overhang'
           ? `2.5m BUILD: joists STOP at the front wall (no height to oversail) - the canopy is formed by the firring overhang + 2x2 frame below`
           : `CLASSIC: joists stop at the front wall, ${canopyMm}mm token overhang in the firrings/deck only`
     }`,
-    [{ len: joistLen, n: rJoists * ladder.ply, what: 'roof joists' }, { len: w, n: 2, what: 'front + rear rim (join over a joist if longer than stock)', join: true }]);
+    [{ len: joistLen, n: rJoists * ladder.ply, what: 'roof joists' }, { len: w, n: 2, what: 'front + rear END JOISTS of the roof (join over a joist if longer than stock)', join: true }]);
   add('4x2 tanalised C24 timber', Math.ceil((2 * sideRun + w) * 1.05), `Flat 4x2 wall plate on the panel wall tops (sides + rear)`,
     [{ len: sideRun, n: 2, what: 'side wall plates', join: true }, { len: w, n: 1, what: 'rear wall plate', join: true }]);
   if (ladder.web) add('18mm OSB3 board (2440x1220)', Math.ceil((rJoists * joistLen * ladder.depthM * 1.10) / PLY_SHEET_M2), `OSB webs glued+screwed between the doubled joist pairs, ripped from full sheets`,
@@ -697,7 +700,7 @@ export function buildPremiumBom(state, componentDefs) {
       const extCols = Math.ceil(w / 1.3) + 1, extRowsN = Math.ceil(extDepth / 1.3) + 1;
       const extSupports = extCols * extRowsN;
       add('4x2 tanalised C24 timber', extLm, `EXTRA DECKING FRAME (${extraRows} extra rows = ${extDepth.toFixed(2)}m deeper): ${extJoists} joists × ${extDepth.toFixed(2)}m @400mm + 2 rims × ${w.toFixed(2)}m, +10%`,
-        { cuts: [{ len: extDepth, n: extJoists, what: 'extra decking joists' }, { len: w, n: 2, what: 'extra decking rims', join: true }], separate: 'EXTRA DECKING frame' });
+        { cuts: [{ len: extDepth, n: extJoists, what: 'extra decking joists' }, { len: w, n: 2, what: 'extra decking front + rear end pieces', join: true }], separate: 'EXTRA DECKING frame' });
       if (groundScrews) add('Radix ground screw', extSupports, `EXTRA DECKING: ${extCols} × ${extRowsN} grid under the extension frame (max 1.3m spacing)`, { separate: 'EXTRA DECKING supports' });
       else add('Adjustable plastic pedestal', extSupports, `EXTRA DECKING: ${extCols} × ${extRowsN} grid under the extension frame (max 1.3m spacing)`, { separate: 'EXTRA DECKING supports' });
       add('TimberLok 100mm', Math.ceil((extJoists * 4 + extSupports * 2) * 1.25), `EXTRA DECKING frame: joists to rims (4 per joist) + frame to supports, +25%`, { separate: 'EXTRA DECKING fixings' });
