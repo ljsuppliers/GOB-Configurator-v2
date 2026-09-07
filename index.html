@@ -1074,10 +1074,11 @@
           <span class="mat-status">{{ catSaveStatus }}</span>
         </div>
         <table class="cat-table">
-          <thead><tr><th>Supplier</th><th>Order email</th><th>Phone</th><th>Notes (account no. etc.)</th></tr></thead>
+          <thead><tr><th>Supplier</th><th>Contact (for "Hi …,")</th><th>Order email</th><th>Phone</th><th>Notes (account no. etc.)</th></tr></thead>
           <tbody>
             <tr v-for="sp in catalogue.suppliers" :key="sp.name">
               <td><input v-model="sp.name"></td>
+<td><input v-model="sp.contact" placeholder="e.g. Selhurst" style="width:130px"></td>
               <td><input v-model="sp.email" placeholder="orders@…"></td>
               <td><input v-model="sp.phone" style="width:120px"></td>
               <td><input v-model="sp.notes"></td>
@@ -1856,7 +1857,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=114"></script>
+<script type="module" src="js/app.js?v=115"></script>
 
 </body>
 </html>

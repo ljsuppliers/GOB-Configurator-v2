@@ -359,53 +359,122 @@ export function buildOrders(lines, catalogue, opts) {
   return orders;
 }
 
+// ---------------------------------------------------------------------------
+// ORDER EMAIL - merchant-style wording, grouped under section headings, exactly
+// the format Liam writes by hand (2026-09-07): "- 5x2 (47 x 125mm) C24: 31
+// lengths at 3.0m". No workings, no "needed" figures, no footer.
+// ---------------------------------------------------------------------------
+const SECTION_OF = {
+  'Structural timber': 'TIMBER (all tanalised / treated)', 'Battens': 'TIMBER (all tanalised / treated)', 'Timber': 'TIMBER (all tanalised / treated)',
+  'Sheet materials': 'SHEET MATERIALS', 'Flooring': 'FLOORING', 'Insulation': 'INSULATION', 'Membranes': 'MEMBRANES', 'Roofing': 'ROOFING',
+  'Cladding': 'CLADDING', 'Decking': 'DECKING', 'Foundations': 'BASE', 'Steel trims': 'STEEL TRIMS', 'Trims': 'STEEL TRIMS',
+  'Plastic trims': 'FASCIA AND SOFFIT', 'External trims': 'FASCIA AND SOFFIT', 'Gutter & rainwater': 'GUTTERING', 'Insulated panels': 'INSULATED PANELS',
+  'Doors & Windows': 'DOORS AND WINDOWS', 'Glazing': 'GLAZING', 'Internal lining': 'PLASTERING AND DECORATING', 'Internal trims': 'PLASTERING AND DECORATING',
+  'Feature wall': 'FEATURE WALL', 'Electrical kit': 'ELECTRICAL', 'Installation kit': 'FIXINGS AND CONSUMABLES', 'Other': 'OTHER',
+};
+const SECTION_ORDER = ['TIMBER (all tanalised / treated)', 'SHEET MATERIALS', 'INSULATION', 'INSULATED PANELS', 'MEMBRANES', 'ROOFING', 'CLADDING', 'DECKING', 'BASE', 'STEEL TRIMS', 'FASCIA AND SOFFIT', 'GUTTERING', 'DOORS AND WINDOWS', 'GLAZING', 'PLASTERING AND DECORATING', 'FLOORING', 'FEATURE WALL', 'ELECTRICAL', 'FIXINGS AND CONSUMABLES', 'OTHER'];
+
+/** Merchant description for a material (falls back to the catalogue name). */
+const MERCHANT_NAMES = {
+  '5x2 tanalised C24 timber': '5x2 (47 x 125mm) C24',
+  '6x2 tanalised C24 timber': '6x2 (47 x 150mm) C24',
+  '7x2 tanalised C24 timber': '7x2 (47 x 170mm) C24',
+  '4x2 tanalised C24 timber': '4x2 (47 x 95mm) C24',
+  '2x2 tanalised C16 timber': '2x2 (47 x 47mm) C16',
+  '18x38 treated batten': '18 x 38mm treated batten',
+  'Tapered firring 47mm (custom cut)': 'Tapered firrings, 47mm wide, cut to order',
+  '18mm T&G OSB3 roof board (2400x590)': '18mm OSB3 T&G roof boards, 2400 x 590mm',
+  '18mm OSB3 board (2440x1220)': '18mm OSB3 boards, 2440 x 1220mm',
+  '12mm Plywood (1220×2440 sheet)': '12mm structural plywood, 2440 x 1220mm (WBP / exterior grade)',
+  '22mm P5 T&G chipboard (2400x600)': '22mm P5 T&G chipboard, 2400 x 600mm',
+  'Plasterboard 12.5mm (1200x2400 sheet)': '12.5mm tapered-edge plasterboard, 2400 x 1200mm',
+  '75mm PIR insulation board': '75mm PIR board, 2400 x 1200mm (Celotex / Recticel / Ecotherm or equivalent)',
+  '100mm PIR insulation board': '100mm PIR board, 2400 x 1200mm (Celotex / Recticel / Ecotherm or equivalent)',
+  'Tyvek breather membrane': 'Breather membrane (Tyvek Housewrap or equivalent), 1.4m x 50m roll',
+  'Tyvek/breather tape (roll)': 'Breather membrane tape',
+  'Vapour control layer (roll)': 'Vapour control layer / polythene, 2.7m x 50m roll',
+  'DPM sheet': 'Damp proof membrane, 4m x 25m roll',
+  'Multi-finish plaster (25kg bag)': 'Multi-finish plaster, 25kg',
+  'Plasterboard scrim/jointing tape (90m roll)': 'Plasterboard scrim tape, 90m',
+  'Plasterboard corner bead (2.4m)': 'Plasterboard corner bead, 2.4m',
+  'Decorators caulk (tube)': 'Decorators caulk',
+  'White trade emulsion paint (10L)': 'White trade emulsion, 10L',
+  'Kingspan 100mm insulated wall panel (1.1m wide)': 'Kingspan 100mm insulated wall panels, 1.1m wide, anthracite',
+  'EPDM roof kit (membrane, adhesive, edge trims)': 'EPDM roof membrane, one piece',
+  'Trex Clam Shell composite decking board (140 × 4880mm)': 'Trex Clam Shell composite decking boards, 140mm x 4.88m',
+  'Radix ground screw': 'Radix ground screws',
+};
+
+const pluralise = (n, unit) => { if (!unit) return `${n}`; if (/^(each|no\.|nr|unit)$/i.test(unit)) return `${n}`; if (/\bof\b|\d/.test(unit)) return `${n} x ${unit}`; return `${n} ${Number(n) === 1 ? unit : unit + (unit.endsWith('x') || unit.endsWith('s') || unit.endsWith('ch') ? 'es' : 's')}`; };
+
+/** "31 lengths at 3.0m and 3 at 2.4m" from a stock plan. */
+function lengthsText(plan) {
+  const parts = Object.entries(plan.lengths).sort((a, b) => parseFloat(b[0]) - parseFloat(a[0]));
+  return parts.map(([L, k], i) => (i === 0 ? `${k} lengths at ${Number(L).toFixed(1)}m` : `${k} at ${Number(L).toFixed(1)}m`)).join(' and ');
+}
+
+/** One email line: "- <merchant description>: <quantity>". */
+export function orderLine(l) {
+  const base = l.catalogueName || l.name;
+  const desc = MERCHANT_NAMES[base] || base;
+  const suffix = l.separate ? ` (${l.separate.toLowerCase()})` : '';
+  if (l.stockPlan && l.stockPlan.text) return `- ${desc}${suffix}: ${lengthsText(l.stockPlan)}`;
+  if (/firring/i.test(base) && l.orderText) {
+    const m = l.orderText.match(/^(\d+) × ([\d.]+)m long.*tapered (\d+)mm/);
+    if (m) return `- ${desc}: ${m[1]} at ${m[2]}m, tapering ${m[3]}mm to 0`;
+  }
+  if (/PIR insulation board/.test(base)) {
+    const total = l.orderText && l.orderText.match(/TOTAL (\d+) boards/);
+    const n = total ? total[1] : (l.orderText && l.orderText.match(/^(\d+) boards/) ? l.orderText.match(/^(\d+) boards/)[1] : l.orderQty);
+    return `- ${desc}: ${n} boards`;
+  }
+  if (/plasterboard 12.5mm|OSB3|Plywood|chipboard/i.test(base)) { const m = (l.orderText || '').match(/^(\d+) (boards|sheets)/); if (m) return `- ${desc}: ${m[1]} ${m[2]}`; }
+  if (/Kingspan 100mm/.test(base)) return `- ${desc}: ${l.qty} panels at ${(l.orderText.match(/× (\d+)mm long/) || [])[1] || ''}mm`;
+  if (/EPDM/.test(base)) return `- ${desc}: ${(l.orderText || '').replace(/^ONE PIECE /, '')}`;
+  if (/Tyvek breather|Vapour control|DPM sheet/.test(base)) { const m = (l.orderText || '').match(/^(\d+) rolls?/); return `- ${desc}: ${m ? m[1] : l.orderQty}`; }
+  if (l.orderText) return `- ${desc}: ${l.orderText}`;
+  if (l.orderUnit && l.orderUnit !== l.unit) {
+    // the description already carries the size (e.g. "corner bead, 2.4m") -> just the count
+    if (MERCHANT_NAMES[base] || /\d/.test(desc)) return `- ${desc}: ${l.orderQty}`;
+    return `- ${desc}: ${l.orderQty} x ${l.orderUnit}`;
+  }
+  return `- ${desc}: ${pluralise(l.orderQty, l.unit)}`;
+}
+
 function orderEmailText(order, opts = {}) {
   const ref = opts.ref || 'GOB-ORDER';
   const siteAddress = (opts.siteAddress || '').trim();
-  const dest = order.destination === 'factory'
-    ? FACTORY_ADDRESS
-    : (siteAddress || '[site address]');
-  // (factory-bound orders: our logistics team brings these to site later)
-  const lines = order.items.map((l) => {
-    const unitWord = l.orderUnit && l.orderUnit !== 'each' ? l.orderUnit : '';
-    const unitBit = unitWord && !new RegExp(`\\b${unitWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(l.name) ? ` (${unitWord})` : '';
-    const sku = l.material && l.material.sku ? `  [${l.material.sku}]` : '';
-    let s;
-    const unitLabel = /^(each|panel|board|sheet)$/i.test(l.unit || '') ? '' : ` ${l.unit || ''}`;
-    const needed = `  (${l.qty}${unitLabel} needed)`;
-    if (l.stockPlan && l.stockPlan.text) {
-      // the order only - cut lists / workings stay in the app (Liam 2026-09-07)
-      s = `- ${l.name}: ${l.stockPlan.text}${sku}${needed}`;
-    } else if (l.orderText) {
-      const showNeeded = /m²|m2|linear|^m$/i.test(l.unit || '') && !/needed/i.test(l.orderText);
-      s = `- ${l.name}: ${l.orderText}${sku}${showNeeded ? needed : ''}`;
-    } else if (l.orderUnit && l.orderUnit !== l.unit) {
-      const sameCount = Number(l.orderQty) === Number(l.qty);
-      s = `- ${l.orderQty} × ${l.orderUnit} - ${l.name}${sku}${sameCount ? '' : needed}`;
-    } else if (/m²|m2|linear m|^m$/i.test(l.unit || '')) {
-      s = `- ${l.name}: ${l.qty} ${l.unit}${sku}  (please supply in your standard sheet/roll/length size to cover this)`;
-    } else {
-      s = `- ${l.orderQty} × ${l.name}${unitBit}${sku}`;
-    }
-    return s;
-  });
+  const addrOneLine = siteAddress.split('\n').map((s) => s.trim()).filter(Boolean).join(', ');
+  const town = (siteAddress.match(/([A-Za-z ]+),?\s+([A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2})\s*$/) || []);
+  const place = town.length ? `${town[1].trim().split(',').pop().trim()} ${town[2].replace(/\s+/, ' ')}` : (siteAddress.split('\n').pop() || '');
+  const dest = order.destination === 'factory' ? FACTORY_ADDRESS.replace(/\n/g, ', ') : (addrOneLine || '[site address]');
   const note = (opts.supplierNotes || {})[order.noteKey || order.supplierName] || {};
-  const subject = `Order for delivery to site${siteAddress ? ' - ' + siteAddress.split('\n').pop() : ''} - ref ${ref}${order.stage === 'week2' ? ' (2nd delivery, week 2)' : ''}`;
-  // Liam 2026-09-07: plain email - "Hi", the list, address, delivery date,
-  // "Please confirm price", "Thanks, Liam". No phone/footer, no other placeholders.
+  const contact = (order.supplier && order.supplier.contact) ? order.supplier.contact.trim() : '';
+  // sections
+  const bySection = new Map();
+  for (const l of order.items) {
+    const sec = SECTION_OF[(l.material && l.material.category) || ''] || 'OTHER';
+    if (!bySection.has(sec)) bySection.set(sec, []);
+    bySection.get(sec).push(orderLine(l));
+  }
+  const sections = [...bySection.entries()].sort((a, b) => SECTION_ORDER.indexOf(a[0]) - SECTION_ORDER.indexOf(b[0]));
+  const single = sections.length === 1;
+  const listBlock = sections.flatMap(([title, ls], i) => (single ? ls : [...(i ? [''] : []), title, ...ls]));
+  const subject = `Order for delivery to ${order.destination === 'factory' ? 'our factory (Biggin Hill)' : 'site'}${place ? ' - ' + place : ''} - ref ${ref}${order.stage === 'week2' ? ' (2nd delivery, week 2)' : ''}`;
+  const when = note.delivery ? new Date(note.delivery).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : '[delivery date]';
   const body = [
-    'Hi,',
+    contact ? `Hi ${contact},` : 'Hi,',
     '',
     order.stage === 'week2'
       ? 'Please can we place the following order for the second delivery on this job, the plastering and decorating materials, to arrive in week 2 of the build once the building is watertight.'
-      : 'Please can we place the following order for delivery to site.',
+      : `Please can we place the following order for delivery to ${order.destination === 'factory' ? 'our factory' : 'site'}.`,
     '',
-    ...lines,
+    ...listBlock,
     '',
     'Delivery address',
     dest,
     '',
-    `Please could this be delivered on ${note.delivery ? new Date(note.delivery).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : '[delivery date]'}${order.stage === 'week2' ? '' : ' (first drop)'}.${note.notes ? ' ' + note.notes : ''} Please confirm price.`,
+    `Please could this be delivered ${order.stage === 'week2' ? 'on ' + when : 'first thing on ' + when + ' (first drop)'}.${note.notes ? ' ' + note.notes : ''} Please confirm price.`,
     '',
     'Thanks,',
     'Liam',
