@@ -56,7 +56,7 @@ export async function loadCatalogue() {
 // Items retired from the system: always removed from a saved catalogue, whatever
 // its version, so they can never reappear on a job or in the stock ledger.
 export const RETIRED_MATERIALS = new Set([
-  'CLS 4x2 timber', 'Treated CLS 4x2 timber', 'Standard base trim (steel)', 'Composite decking board (3.6m)', 'Composite decking board (140×4880mm)',
+  'CLS 4x2 timber', 'Treated CLS 4x2 timber', 'CLS 3x2 timber', 'Standard base trim (steel)', 'Composite decking board (3.6m)', 'Composite decking board (140×4880mm)',
   'Medium Oak vinyl', 'Light Grey vinyl', 'Vinyl spray adhesive (500ml can)', 'Privacy screen (vertical slats on frame)',
   'Corner trims', 'Close corner trims', 'Open-corner glazing junction kit', 'Flitch beam bolts', 'uPVC frame fixing screw',
   'Twisted restraint strap 30x2.5x600mm', '25x25mm white PVC reveal trim (2.5m length)', 'Tapered firring (47mm, 1:40)',
@@ -144,6 +144,7 @@ const STOCK_LENGTHS = [
   { test: /\bCLS\b/i, lengths: [2.4], splittable: true }, // Liam 2026-09-06: CLS = 2.4m lengths only, plates joined
   { test: /batten/i, lengths: [4.2], splittable: true }, // Liam 2026-09-06: battens 4.2m only
   { test: /2x2/i, lengths: [3.0], splittable: true },    // Liam 2026-09-06: 2x2 3.0m only
+  { test: /^4x2 tanalised/i, lengths: [4.8], splittable: true }, // Liam 2026-09-07: 4x2 in 4.8m only (cut in half for studs)
   { test: /C(16|24)|tanalised|treated|timber|joist/i, lengths: [2.4, 3.0, 3.6, 4.2, 4.8, 5.4, 6.0], splittable: false },
 ];
 const SPARE_FACTOR = 1.10; // Liam: "rather over order than under order"

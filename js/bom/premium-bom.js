@@ -7,7 +7,7 @@
 //    on the pedestal heads (NO bearer layer). Outer ring doubled + every 3rd
 //    joist doubled (1.2m grid). 75mm PIR on 18x38 side battens, 22mm P5 T&G.
 //  - 100mm Kingspan panels on the rear + any steel-clad side, ALL ONE LENGTH
-//    (square building, no raked sides). 3x2 CLS lining frame inside them.
+//    (square building, no raked sides). DOUBLE 18x38 battens inside them (Liam 2026-09-07).
 //  - Front always stick: 4x2 TANALISED C24 @400 (Liam 2026-09-06: no CLS 4x2 anywhere), tanalised sole plate, 12mm ply, Tyvek,
 //    75mm PIR in the bays. Slat-clad sides also stick (rockwool in bays).
 //  - Flat timber roof: joist ladder by span, stock firrings 75/100mm -> 0
@@ -51,7 +51,7 @@ export const USE_TAGS = {
   'DPM sheet': 'Under the pedestals, on the slab',
   'Radix ground screw': 'Foundation',
   '5x2 tanalised C24 timber': 'Floor joists + rim',
-  '18x38 treated batten': 'Floor PIR support + cladding sub-frame',
+  '18x38 treated batten': 'Floor PIR support, panel double battens, cladding sub-frame',
   '75mm PIR insulation board': 'Floor, stick-wall bays + roof',
   '100mm PIR insulation board': 'Floor + roof (100mm jobs)',
   'Oak acoustic slat wall panel (2400×600)': 'Rear feature wall, over plasterboard',
@@ -60,7 +60,6 @@ export const USE_TAGS = {
   'U-channel (40x102x40mm)': 'Panel tops, corners, opening edges',
   'Standard panel base trim (steel)': 'Panel bottoms + front FH windows',
   'Door base trim': 'Under every door',
-  'CLS 3x2 timber': 'Lining frame inside the panels',
     '12mm Plywood (1220×2440 sheet)': 'Stick-wall sheathing + canopy box',
   'Tyvek breather membrane': 'Over the ply, stick walls',
   'Tyvek/breather tape (roll)': 'Tyvek laps + openings',
@@ -298,13 +297,18 @@ export function buildPremiumBom(state, componentDefs) {
     const frontFhWinM = fhOn(front).filter((o) => !/sliding|bifold|french|door|single/.test(o.category)).reduce((x, o) => x + o.widthM, 0);
     add('Standard panel base trim (steel)', Math.ceil((panelBaseM + frontFhWinM) / 3),
       `Capping the panel bottoms (${panelBaseM.toFixed(1)}m)${frontFhWinM ? ` + across the front full-height windows (${frontFhWinM.toFixed(1)}m)` : ''} / 3m lengths`);
-    // 3x2 CLS lining frame inside panel walls
+    // DOUBLE BATTENS inside the panel walls (Liam 2026-09-07, replaces the 3x2
+    // CLS lining frame): vertical 18x38 battens @600mm screwed into the panel
+    // steel, then horizontal rows @600mm over them - plasterboard fixes to the
+    // horizontal layer.
     const liningRun = panelWalls.reduce((s, p) => s + Math.max(0, p.run - p.openings.reduce((x, o) => x + o.widthM, 0)), 0);
     const liningStuds = Math.ceil(liningRun / 0.6) + panelWalls.length;
     liningStudsTotal = liningStuds; liningRunTotal = liningRun;
-    add('CLS 3x2 timber', Math.ceil((liningStuds * wallH + 2 * liningRun) * 1.10),
-      `Lining frame on panel walls: studs @600mm (${liningStuds} x ${wallH.toFixed(2)}m) + top & bottom plates, +10%. Bays empty (panels insulate)`,
-      [{ len: wallH, n: liningStuds, what: 'lining studs' }, ...panelWalls.map((p) => ({ len: p.run, n: 2, what: `${p.label} lining plates`, join: true }))]);
+    const rowsPerWall = Math.ceil(wallH / 0.6) + 1;
+    const liningBattenLm = liningStuds * wallH + liningRun * rowsPerWall;
+    add('18x38 treated batten', Math.ceil(liningBattenLm * 1.10),
+      `DOUBLE BATTENS on the panel walls (rear${panelWalls.length > 1 ? ' + unclad sides' : ''}): ${liningStuds} vertical @600mm × ${wallH.toFixed(2)}m + ${rowsPerWall} horizontal rows × ${liningRun.toFixed(1)}m, +10%`,
+      [{ len: wallH, n: liningStuds, what: 'vertical panel battens' }, ...panelWalls.map((p) => ({ len: p.run, n: rowsPerWall, what: `${p.label} horizontal batten rows`, join: true }))]);
   }
 
   // Stick walls: front always + any slat-clad side + closed-corner extensions.
@@ -721,11 +725,11 @@ export function buildPremiumBom(state, componentDefs) {
   add('TimberLok 150mm', up(fDoubledLm / 0.4 + rJoists * ladder.ply * 0), `FLOOR DOUBLING: laminating the doubled ring + 1.2m-grid joist pairs, 1 per 400mm staggered (${fDoubledLm.toFixed(1)}m of doubled run) +25%`);
   const canopyFixings = hasCanopy ? Math.ceil(w / 0.4) * 2 + 8 : 0;
   add('TimberLok 100mm', up(rJoists * 4 + (2 * sideRun + w) / 0.6 + 8 + totalStuds * 2 + canopyFixings + closedCorners * 10), `ROOF joists to wall plates/flitch (~4 skew per joist, ${rJoists} joists) + flat 4x2 wall plate into panel tops @600mm + STUDS to sole plate (2 per stud, ${totalStuds} studs) + CANOPY 2x2 frame/box to the front wall/joists (${canopyFixings}) + closed-corner extensions, +25% (Liam: used for all of these)`);
-  add('TimberLok 89mm', up(liningStudsTotal * 3 + liningRunTotal / 0.6 + closedCorners * 12 + (hasCanopy ? Math.ceil(w / 0.4) + 1 : 0) + totalStuds), `CLS 3x2 LINING FRAME into the panels: 3 per stud (${liningStudsTotal} studs) + plates @600mm + closed-corner extension framing + canopy 2x2 cross pieces + stud-to-plate where 100mm is too long, +25%. (89mm not a FastenMaster size - Timberfix/Spax 6x90 equivalent)`);
+  add('TimberLok 89mm', up(closedCorners * 12 + (hasCanopy ? Math.ceil(w / 0.4) + 1 : 0) + totalStuds), `Closed-corner extension framing + canopy 2x2 cross pieces + stud-to-plate where 100mm is too long, +25%. (89mm not a FastenMaster size - Timberfix/Spax 6x90 equivalent)`);
   add('TimberLok 225mm', up(fJoists * 2 * 2 + 8), `FLOOR RIM through into the joist ends: 2 per joist end, both rims (${fJoists} joists) + 8 spare, +25%. (nearest stock size 200/250mm TimberLok)`);
   // -- Wood screws --
   add('Wood screw 5.0 x 100mm', up(totalStuds * 6 + (hasCanopy ? Math.ceil(w / 0.4) * 2 + 8 : 0) + wideFront.length * 12), `STICK FRAMING: ~6 per stud (studs to plates, noggins, kings; ${totalStuds} studs) + canopy 2x2 frame/box fixings + flitch packing, +25%`);
-  add('Wood screw 5.0 x 70mm', up(cladBattenLm / 0.4 + 2 * (fJoists - 1) * d / 0.6 + (rJoists + 2) * roofLen / 0.4), `BATTENS + FIRRINGS: cladding sub-frame battens @400mm crossings (${cladBattenLm.toFixed(0)}m) + floor PIR battens @600mm + firrings down into joists @400mm, +25%`);
+  add('Wood screw 5.0 x 70mm', up(cladBattenLm / 0.4 + 2 * (fJoists - 1) * d / 0.6 + (rJoists + 2) * roofLen / 0.4 + liningRunTotal * (Math.ceil(wallH / 0.6) + 1) / 0.6), `BATTENS + FIRRINGS: cladding sub-frame battens @400mm crossings (${cladBattenLm.toFixed(0)}m) + floor PIR battens @600mm + firrings down into joists @400mm + horizontal panel battens onto the verticals @600mm, +25%`);
   add('Wood screw 5.0 x 50mm', up(plySheets * 30 + floorM2 * 12 + roofDeckM2 * 10 + pedestals * 4), `SHEET FIXING: ply sheathing ~30/sheet (${plySheets} sheets) + 22mm floor deck ~12/m² (${floorM2.toFixed(1)}m²) + 18mm roof deck ~10/m² (${roofDeckM2.toFixed(1)}m²) + 4 per pedestal head, +25%`);
   add('Drywall screw 3.5 x 38mm black (coarse)', up(boardM2 * 12), `PLASTERBOARD: ~12/m² over ${boardM2.toFixed(0)}m² of board, +25%`);
   // -- Steel / trim fixings --
@@ -734,7 +738,7 @@ export function buildPremiumBom(state, componentDefs) {
   const trimRunM = visibleTrimM + uChannelM;
   add('Grey RAL 7016 self-drilling trim screw 25mm', up(visibleTrimM / 0.3), `VISIBLE ANTHRACITE STEEL TRIMS @300mm: base trims + corner trims + top cap (~${visibleTrimM.toFixed(0)}m), +25%`);
   add('Self-drilling screw 25mm plain (hidden trims / U-channel)', up(uChannelM / 0.3), `U-CHANNEL + hidden trims @300mm (~${uChannelM.toFixed(0)}m) - cheaper plain self-drillers, not visible (Liam), +25%`);
-  add('Bay pole self-drilling screw 70mm (timber to panel)', up(((2 * sideRun + w) / 0.4) + liningRunTotal / 0.6), `4x2 WALL PLATE + lining plates into the panel steel @400-600mm, +25%`);
+  add('Bay pole self-drilling screw 70mm (timber to panel)', up(((2 * sideRun + w) / 0.4) + liningStudsTotal * Math.ceil(wallH / 0.6)), `4x2 WALL PLATE into the panel tops @400mm + VERTICAL BATTENS into the panel steel @600mm (${liningStudsTotal} battens), +25%`);
   if (!groundScrews) add('Concrete screw 100mm (Ammo)', up(pedestals * 2), `PEDESTALS anchored to the slab: 2 per pedestal (${pedestals}), +25%`);
   add('Stainless self-drilling screw 40mm (gutters/fascia)', up(Math.ceil(w / 0.5) * 2 + 3 * 2 + 12), `GUTTER brackets 2 each (${Math.ceil(w / 0.5)}) + downpipe clips + fascia corners, +25%. (Whether these also fix the fascia boards is UNCONFIRMED - fascia is on polytop pins here; ask the fitters)`);
   add('Polytop pins 40mm anthracite', up(((w + 2 * roofLen) + w) / 0.4 * 2), `FASCIA (front + sides + rear, both edges @400mm), +25%`);
