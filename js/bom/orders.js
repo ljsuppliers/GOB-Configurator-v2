@@ -186,7 +186,10 @@ export function planStock(cuts, stockLengths, splittable = false) {
       work.push({ len: c.len / k, n: c.n * k, what: `${c.what || 'pieces'} - each ${c.len.toFixed(2)}m run made of ${k} joined pieces` });
     } else work.push({ ...c });
   }
-  const groups = { short: work.filter((c) => c.len <= 2.4 + 1e-6), long: work.filter((c) => c.len > 2.4 + 1e-6) };
+  const pickL = (g) => { const maxPiece = Math.max(...g.map((c) => c.len)); const fits = stockLengths.filter((L) => L + 1e-6 >= maxPiece); return fits.find((x) => x <= PREFER_MAX + 1e-6) ?? fits[0]; };
+  let groups = { short: work.filter((c) => c.len <= 2.4 + 1e-6), long: work.filter((c) => c.len > 2.4 + 1e-6) };
+  // if both groups resolve to the same stock length, pack them together
+  if (groups.short.length && groups.long.length && pickL(groups.short) === pickL(groups.long)) groups = { long: work, short: [] };
   for (const key of ['long', 'short']) {
     const g = groups[key];
     if (!g.length) continue;
@@ -199,16 +202,21 @@ export function planStock(cuts, stockLengths, splittable = false) {
       for (const c of g) { notes.push(`${Math.ceil(c.n * SPARE_FACTOR)} x ${c.len.toFixed(2)}m (${c.what || 'pieces'}) LONGER THAN ${L}m STOCK - order special lengths`); lengths[`${c.len.toFixed(2)}*`] = (lengths[`${c.len.toFixed(2)}*`] || 0) + Math.ceil(c.n * SPARE_FACTOR); totalM += c.n * c.len; }
       continue;
     }
-    let count = 0;
-    for (const c of g) {
-      const n = Math.ceil(c.n * SPARE_FACTOR);
-      const per = Math.max(1, Math.floor(L / c.len + 1e-6));
-      const k = Math.ceil(n / per);
-      count += k;
-      notes.push(`${n} x ${c.len.toFixed(2)}m (${c.what || 'pieces'}) -> ${k} x ${L}m (${per} per length)`);
+    // Pack every piece in the group into L-length bars, first-fit decreasing,
+    // so a 2.5m plate and a 2.14m stud share one 4.8m length instead of each
+    // taking its own (Liam 2026-09-07: "42 lengths of 4x2, why?").
+    const pieces = [];
+    for (const c of g) { const n = Math.ceil(c.n * SPARE_FACTOR); for (let i = 0; i < n; i++) pieces.push(c.len); notes.push(`${n} x ${c.len.toFixed(2)}m (${c.what || 'pieces'})`); }
+    pieces.sort((a, b) => b - a);
+    const bars = [];
+    for (const p of pieces) {
+      let placed = false;
+      for (const b of bars) { if (b.left + 1e-6 >= p) { b.left -= p; placed = true; break; } }
+      if (!placed) bars.push({ left: L - p });
     }
-    lengths[L] = (lengths[L] || 0) + count;
-    totalM += count * L;
+    notes.push(`-> ${bars.length} x ${L}m (packed: ${pieces.length} pieces, ${(bars.length * L - pieces.reduce((a, b) => a + b, 0)).toFixed(1)}m offcut in total)`);
+    lengths[L] = (lengths[L] || 0) + bars.length;
+    totalM += bars.length * L;
   }
   const text = Object.entries(lengths)
     .sort((a, b) => parseFloat(b[0]) - parseFloat(a[0]))
