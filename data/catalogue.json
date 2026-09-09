@@ -1,5 +1,5 @@
 {
- "version": 20,
+ "version": 21,
  "updated": "2026-09-05",
  "suppliers": [
   {
@@ -1254,9 +1254,9 @@
   },
   {
    "name": "Rockwool insulation 50mm (acoustic)",
-   "category": "Other",
+   "category": "Insulation",
    "sku": "",
-   "unit": "m2",
+   "unit": "m²",
    "unitCost": 3.0,
    "supplier": "Builders merchant",
    "packSize": null,
@@ -2721,6 +2721,48 @@
    "destination": "site",
    "inStock": false,
    "notes": "CLAUDE ESTIMATE £6.50 ex VAT - confirm. 2 bags per hole (Liam 2026-09-07)."
+  },
+  {
+   "name": "Quinetic wireless switch kit (receiver + 2 switches)",
+   "category": "Electrical kit",
+   "sku": "",
+   "unit": "each",
+   "unitCost": 120,
+   "supplier": "Regent Electrical",
+   "packSize": null,
+   "orderUnit": "",
+   "supply": "stock",
+   "destination": "site",
+   "inStock": true,
+   "notes": "CLAUDE ESTIMATE ex VAT - Quinetic kinetic switch receiver + 2 switches."
+  },
+  {
+   "name": "HDMI cable 5m + brush plates (pair)",
+   "category": "Electrical kit",
+   "sku": "",
+   "unit": "each",
+   "unitCost": 25,
+   "supplier": "Regent Electrical",
+   "packSize": null,
+   "orderUnit": "",
+   "supply": "stock",
+   "destination": "site",
+   "inStock": true,
+   "notes": "CLAUDE ESTIMATE ex VAT."
+  },
+  {
+   "name": "IP66 outdoor junction box",
+   "category": "Electrical kit",
+   "sku": "",
+   "unit": "each",
+   "unitCost": 8,
+   "supplier": "Regent Electrical",
+   "packSize": null,
+   "orderUnit": "",
+   "supply": "stock",
+   "destination": "site",
+   "inStock": true,
+   "notes": "CLAUDE ESTIMATE ex VAT."
   }
  ]
 }

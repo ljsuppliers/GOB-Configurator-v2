@@ -121,6 +121,8 @@ export const USE_TAGS = {
   'Expanding foam can': 'Around openings',
   'Gun foam (can)': 'Around openings + perimeter gaps',
   'Door/window seal': 'Door + window frames',
+  'Quinetic wireless switch kit (receiver + 2 switches)': 'Wireless switching', 'HDMI cable 5m + brush plates (pair)': 'TV point', 'IP66 outdoor junction box': 'Floodlight feed',
+  'Interior door 826x2040': 'Partition door', 'Interior door lining & frame': 'Partition door', 'Interior door ironmongery set': 'Partition door', 'Rockwool insulation 50mm (acoustic)': 'Partition bays',
   'Glass for sliding door': 'Sliding door panes', 'Glass for single door (clear)': 'Single door pane', 'Glass for desk window 1000x1000': 'Desk window', 'Glass for slot window 900x450': 'Slot window', 'Glass for full-height window 600x2050 fixed': 'FH window 600', 'Glass for full-height window 600x2050 opener main': 'FH window 600 opener', 'Glass for full-height window 900x2050 fixed': 'FH window 900', 'Glass for full-height window 900x2050 opener main': 'FH window 900 opener', 'Glass for full-height window opener top': 'Opener top pane', 'Toughened double glazed unit 28mm (made to size)': 'Bifold / other openings',
   '25x25mm white PVC reveal trim (2.5m length)': 'Window + door reveals',
   'TimberLok 150mm': 'Floor doubling',
@@ -594,6 +596,36 @@ export function buildPremiumBom(state, componentDefs) {
   add('Wickes laminate underlay (10.03m² pack)', Math.ceil(floorIntM2 / 10.03), `Underlay for ${floorIntM2.toFixed(1)}m² ÷ 10.03m² per pack, rounded up`,
     { orderText: `${Math.ceil(floorIntM2 / 10.03)} pack${Math.ceil(floorIntM2 / 10.03) === 1 ? '' : 's'} (${floorIntM2.toFixed(1)}m² floor)` });
 
+  /* ---------- PARTITIONS (corner room / straight partition) ----------
+     Stud wall: 4x2 tanalised @400 + plates + noggins, 12.5mm plasterboard BOTH
+     sides, 50mm acoustic Rockwool in the bays, skirting both sides, interior
+     door set from Howden where a door is fitted. (Encoded 2026-09-09 - Liam
+     to confirm the build-up.) */
+  const partWalls = [];
+  if (state.partitionRoom?.enabled) {
+    const pw = (state.partitionRoom.width || 1500) / 1000, pd = (state.partitionRoom.depth || 1500) / 1000;
+    partWalls.push({ label: `corner room (${state.partitionRoom.label || state.partitionRoom.type || 'room'})`, run: pw + pd, door: true });
+  }
+  if (state.straightPartition?.enabled) {
+    partWalls.push({ label: 'straight partition', run: d - 0.3, door: !!state.straightPartition.hasDoor });
+  }
+  for (const pwall of partWalls) {
+    const studsN = Math.ceil(pwall.run / 0.4) + 2 + (pwall.door ? 4 : 0);
+    const lm = Math.ceil((studsN * wallH + 3 * pwall.run) * 1.10);
+    add('4x2 tanalised C24 timber', lm, `PARTITION (${pwall.label}, ${pwall.run.toFixed(2)}m): ${studsN} studs @400mm × ${wallH.toFixed(2)}m + head/sole plates + noggins, +10%`,
+      { cuts: [{ len: wallH, n: studsN, what: 'partition studs' }, { len: pwall.run, n: 3, what: 'partition plates + noggins', join: true }], separate: `PARTITION ${pwall.label}` });
+    const boardM2p = pwall.run * wallH * 2 * 1.10;
+    add('Plasterboard 12.5mm (1200x2400 sheet)', Math.ceil(boardM2p / PLASTERBOARD_M2), `PARTITION (${pwall.label}): both sides, ${boardM2p.toFixed(1)}m² incl. 10%`, { separate: `PARTITION ${pwall.label}` });
+    add('Rockwool insulation 50mm (acoustic)', Math.ceil(pwall.run * wallH * 1.10), `PARTITION (${pwall.label}): acoustic wool in the bays`, { separate: `PARTITION ${pwall.label}` });
+    add('Multi-finish plaster (25kg bag)', Math.ceil(boardM2p / 8) + 1, `PARTITION (${pwall.label}): skim both sides`, { separate: `PARTITION ${pwall.label}` });
+    add('Skirting board', Math.ceil(pwall.run * 2), `PARTITION (${pwall.label}): both sides`, { separate: `PARTITION ${pwall.label}` });
+    if (pwall.door) {
+      add('Interior door 826x2040', 1, `PARTITION (${pwall.label}): interior door`, { separate: `PARTITION ${pwall.label}` });
+      add('Interior door lining & frame', 1, `PARTITION (${pwall.label})`, { separate: `PARTITION ${pwall.label}` });
+      add('Interior door ironmongery set', 1, `PARTITION (${pwall.label}): hinges, latch, handles`, { separate: `PARTITION ${pwall.label}` });
+    }
+  }
+
   /* ======================================================================
      ELECTRICAL KIT (GOB buys + supplies all components from stock; the
      electrician charges labour only - £500/£600/£700 for 1st + 2nd fix by
@@ -610,13 +642,14 @@ export function buildPremiumBom(state, componentDefs) {
   const ex = state.extras || {};
   const zones = 1 + (state.partitionRoom?.enabled ? 1 : 0) + (state.straightPartition?.enabled ? 1 : 0) + (ex.additionalLightingZone || 0);
   const extSockets = ex.externalSocket || 0;
-  const upDownLights = 1 + (ex.upDownLight || 0); // 1 included in the standard pack
+  const placedUpDown = (state.externalFeatures || []).filter((f) => f.type === 'upDownLight').length;
+  const upDownLights = Math.max(1, Math.max(ex.upDownLight || 0, placedUpDown - 1) + 1); // 1 in the standard pack; extras = the stepper OR lights placed on the drawing, whichever is higher
   const extraSockets = (ex.additionalSocket || 0) + (ex.additionalSocketUsb || 0);
   const acCount = (state.acUnits || []).length || (ex.acUnit && ex.acUnit !== 'none' ? 1 : 0);
   const cat6 = ex.cat6Point || 0;
   const extLightRun = upDownLights * 8 + extSockets * 8;
   const perimE = 2 * (w + d);
-  const run15 = perimE * 1.5 + downlights * 1.5 + extLightRun + (hasCanopy ? w + 6 : 0);
+  const run15 = perimE * 1.5 + downlights * 1.5 + extLightRun + (hasCanopy ? w + 6 : 0) + (ex.floodlightCabling ? 12 : 0);
   const run25 = perimE * 2 + extraSockets * 4 + extSockets * 6 + acCount * 15 + (ex.heater ? 10 : 0);
 
   add('Consumer unit (garden room, 4-6 way, RCBO/dual RCD)', 1, `1 per build - main switch + RCD protection, fed from the electrician's supply cable`);
@@ -634,6 +667,10 @@ export function buildPremiumBom(state, componentDefs) {
   if (acCount) add('Air conditioning isolator switch', acCount, `1 per AC unit (unit itself is supplied/fitted by the AC installer)`);
   if (ex.heater) add('1.5kW electric radiator', ex.heater, `Oil-filled panel radiator extra`);
   if (ex.heater) add('Fuse spur', ex.heater, `Fused spur per radiator`);
+  if (ex.quineticSwitch) add('Quinetic wireless switch kit (receiver + 2 switches)', 1, `Wireless switch system extra`);
+  if (ex.hdmiCables) add('HDMI cable 5m + brush plates (pair)', 1, `HDMI + brush plates for the TV`);
+  if (ex.floodlightCabling) add('IP66 outdoor junction box', 1, `Floodlight cabling extra (12m of 1.5mm added to the lighting cable)`);
+  if (ex.tvMountingPrep) add('18mm OSB3 board (2440x1220)', 1, `TV mounting prep: OSB pattress behind the plasterboard`);
   add('1.5mm twin & earth cable', Math.ceil(run15 * 1.15), `LIGHTING: ~1.5x perimeter (${perimE.toFixed(1)}m) + 1.5m per downlight + external/canopy lights, +15%`);
   add('2.5mm twin & earth cable', Math.ceil(run25 * 1.15), `SOCKET RADIAL: ~2x perimeter${acCount ? ' + 15m per AC radial' : ''}${extSockets ? ' + external sockets' : ''}, +15%`);
   add('Cable clip', Math.ceil(((run15 + run25) * 1.15) / 0.3), `~1 per 300mm of cable run`);
@@ -684,6 +721,12 @@ export function buildPremiumBom(state, componentDefs) {
   const opCount = [...front, ...rear, ...left, ...right].length;
   if (opCount > 0) {
     add('Door/window seal', opCount, `1 per opening`);
+  }
+
+  // Secret cladded door: the structural-extra tick adds the door set when no
+  // 'single-cladded-door' component has been placed on the drawing.
+  if (state.structuralExtras?.secretDoor && !(state.components || []).some((c) => c.type === 'single-cladded-door')) {
+    add('Secret Cladded Door', 1, `Secret cladded door ticked as an extra but not placed on the drawing - place it on an elevation to set its position`);
   }
 
   /* ---------- DECKING ---------- */
