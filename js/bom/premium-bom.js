@@ -731,7 +731,10 @@ export function buildPremiumBom(state, componentDefs) {
 
   /* ---------- DECKING ---------- */
   if (hasDecking) {
-    const deckDepthM = ((state.deckingDepth || 400) + (state.structuralExtras?.additionalDecking || 0) * 140) / 1000;
+    // Deck depth comes from the DRAWING (decking depth slider). NOTE: the
+    // structural extra 'additionalDecking' is a PRICE input in square metres
+    // (£/sqm), not rows - it must not change the geometry here (fixed 2026-09-10).
+    const deckDepthM = (state.deckingDepth || 400) / 1000;
     // Trex Clam Shell, 140mm × 4.88m boards (Liam 2026-09-06). Rows across the
     // deck depth at 146mm pitch (140 board + 6 gap), boards per row along the
     // width, + 1 spare board.
@@ -746,16 +749,21 @@ export function buildPremiumBom(state, componentDefs) {
     // sections (Liam 2026-09-06). 4x2 tanalised joists @400mm running front to
     // back over the extension depth + front/back rims, ground screws (or
     // pedestals) on a 1.3m grid, TimberLok 100s for the frame.
-    const extraRows = state.structuralExtras?.additionalDecking || 0;
-    if (extraRows > 0) {
-      const extDepth = extraRows * 0.146;
+    const extDepth = Math.max(0, deckDepthM - 0.4);
+    const extraRows = Math.round(extDepth / 0.146);
+    if (extDepth > 0.05) {
       const extJoists = Math.ceil(w / 0.4) + 1;
       const extLm = Math.ceil((extJoists * extDepth + 2 * w) * 1.10);
       const extCols = Math.ceil(w / 1.3) + 1, extRowsN = Math.ceil(extDepth / 1.3) + 1;
       const extSupports = extCols * extRowsN;
-      add('4x2 tanalised C24 timber', extLm, `EXTRA DECKING FRAME (${extraRows} extra rows = ${extDepth.toFixed(2)}m deeper): ${extJoists} joists × ${extDepth.toFixed(2)}m @400mm + 2 rims × ${w.toFixed(2)}m, +10%`,
+      add('4x2 tanalised C24 timber', extLm, `EXTRA DECKING FRAME (${extDepth.toFixed(2)}m beyond the standard 400mm, ~${extraRows} extra board rows): ${extJoists} joists × ${extDepth.toFixed(2)}m @400mm + 2 rims × ${w.toFixed(2)}m, +10%`,
         { cuts: [{ len: extDepth, n: extJoists, what: 'extra decking joists' }, { len: w, n: 2, what: 'extra decking front + rear end pieces', join: true }], separate: 'EXTRA DECKING frame' });
       if (groundScrews) add('Radix ground screw', extSupports, `EXTRA DECKING: ${extCols} × ${extRowsN} grid under the extension frame (max 1.3m spacing)`, { separate: 'EXTRA DECKING supports' });
+      else if (blockBase) {
+        add('Concrete block 440x215x100 medium density (7.3N)', extSupports, `EXTRA DECKING: ${extCols} × ${extRowsN} grid under the extension frame (max 1.3m spacing), 1 block per support`, { separate: 'EXTRA DECKING supports' });
+        add('Postcrete (20kg bag)', extSupports * 2, `EXTRA DECKING: 2 bags per hole × ${extSupports} holes`, { separate: 'EXTRA DECKING supports' });
+        add('Adjustable plastic pedestal', extSupports, `EXTRA DECKING: 1 pedestal on each block`, { separate: 'EXTRA DECKING supports' });
+      }
       else add('Adjustable plastic pedestal', extSupports, `EXTRA DECKING: ${extCols} × ${extRowsN} grid under the extension frame (max 1.3m spacing)`, { separate: 'EXTRA DECKING supports' });
       add('TimberLok 100mm', Math.ceil((extJoists * 4 + extSupports * 2) * 1.25), `EXTRA DECKING frame: joists to rims (4 per joist) + frame to supports, +25%`, { separate: 'EXTRA DECKING fixings' });
       add('Bitumen paint (1L)', extraRows > 4 ? 1 : 0, `EXTRA DECKING sub-frame protection (2nd tin on deep extensions)`, { separate: 'EXTRA DECKING' });

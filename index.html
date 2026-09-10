@@ -1374,7 +1374,7 @@
           <tr><th>Build system</th><td>PREMIUM: 5x2 C24 floor on pedestals/screws + 75mm PIR + 22mm chipboard · 100mm Kingspan panels on unclad walls, double-battened inside · 4x2 tanalised stick walls (front + clad sides, 75mm PIR) · flat timber roof, 70mm firrings to the rear, 18mm T&G OSB, EPDM · plastered &amp; decorated</td></tr>
           <tr><th>Foundation</th><td>{{ state.foundationType === 'ground-screw' || state.foundationType === 'hybrid' ? 'Radix ground screws' : state.foundationType === 'concrete-pile' ? 'Concrete blocks on Postcrete (2 bags per hole)' : 'Adjustable pedestals on the existing concrete base' }}</td></tr>
           <tr><th>Cladding</th><td>Front {{ (state.cladding.front||'').replace(/-/g,' ') }} · Left {{ (state.cladding.left||'').replace(/-/g,' ') }} · Right {{ (state.cladding.right||'').replace(/-/g,' ') }} · Rear {{ (state.cladding.rear||'').replace(/-/g,' ') }}</td></tr>
-          <tr v-if="state.tier === 'signature'"><th>Canopy / decking</th><td>{{ state.hasCanopy !== false ? ((state.overhangDepth||400)) + 'mm canopy' : 'no canopy' }}{{ state.hasDecking !== false ? ' · decking ' + (((state.deckingDepth||400) + (state.structuralExtras && state.structuralExtras.additionalDecking||0)*140)) + 'mm deep' : '' }} · corners left {{ state.cornerLeft || 'open' }}, right {{ state.cornerRight || 'open' }}<template v-if="state.hasCanopy !== false"> · canopy method: {{ state.height >= 2750 ? 'joists oversail 400mm + 2x2 layer under' : 'firrings overhang 400mm, 2x2 frame on the front wall top' }}</template></td></tr>
+          <tr v-if="state.tier === 'signature'"><th>Canopy / decking</th><td>{{ state.hasCanopy !== false ? ((state.overhangDepth||400)) + 'mm canopy' : 'no canopy' }}{{ state.hasDecking !== false ? ' · decking ' + (state.deckingDepth||400) + 'mm deep' : '' }} · corners left {{ state.cornerLeft || 'open' }}, right {{ state.cornerRight || 'open' }}<template v-if="state.hasCanopy !== false"> · canopy method: {{ state.height >= 2750 ? 'joists oversail 400mm + 2x2 layer under' : 'firrings overhang 400mm, 2x2 frame on the front wall top' }}</template></td></tr>
           <tr v-for="elev in ['front','left','right','rear']" :key="elev" v-if="openingsOn(elev).length"><th style="text-transform:capitalize">{{ elev }} openings</th><td><span v-for="c in openingsOn(elev)" :key="c.id" class="pack-chip">{{ c.def.label || c.type }}<template v-if="c.def.width"> · {{ c.def.width }}mm</template> @ {{ c.positionX }}mm from left</span></td></tr>
           <tr v-if="state.partitionRoom && state.partitionRoom.enabled"><th>Partition</th><td>{{ state.partitionRoom.label || state.partitionRoom.type }} {{ state.partitionRoom.width }}×{{ state.partitionRoom.depth }}mm in the {{ state.partitionRoom.corner }} corner, with door</td></tr>
           <tr v-if="state.bathroom && state.bathroom.enabled"><th>Bathroom</th><td>{{ state.bathroom.type === 'wc' ? 'WC: toilet, basin, extractor, tiling' : 'Shower room: toilet, basin, shower, extractor, towel rail, tiling' }} · plumber to be arranged</td></tr>
@@ -1860,7 +1860,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=121"></script>
+<script type="module" src="js/app.js?v=122"></script>
 
 </body>
 </html>

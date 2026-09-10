@@ -66,7 +66,10 @@ export function computeLabour(state, componentDefs) {
   const extraDoors = Math.max(0, doors.length - 1);
   if (extraDoors) day('extra_doors', `Additional doors ×${extraDoors} (0.5 day each)`, extraDoors * 0.5, true);
   if (state.structuralExtras?.secretDoor) day('secret_door', 'Secret cladded door (clad + hang on site)', 0.5, true);
-  if ((state.structuralExtras?.additionalDecking || 0) > 0) day('extra_decking', `Extra decking rows ×${state.structuralExtras.additionalDecking}`, 0.5, true);
+  // Extra decking = decking deeper than the standard 400mm on the drawing
+  // (the 'additional decking' structural extra is a £/sqm price input, not geometry).
+  const extraDeckM = (state.hasDecking !== false && !state.deductions?.removeDecking) ? Math.max(0, ((state.deckingDepth || 400) - 400) / 1000) : 0;
+  if (extraDeckM > 0.05) day('extra_decking', `Extra decking (${extraDeckM.toFixed(2)}m deeper than standard)`, 0.5, true);
   // Manual adjustment (± days) for anything else on this job
   const adj = Number(lab.extraDays || 0);
   if (adj) day('adjust', lab.extraDaysLabel || 'Job-specific adjustment', adj);
