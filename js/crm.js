@@ -235,3 +235,20 @@ export async function mergeDesignIntoProject(projectId, designId) {
   await pref.update(fields);
   await dref.delete();
 }
+
+/* ───────────── TASKS & REMINDERS ───────────── */
+//   tasks/{id}: { title, due (YYYY-MM-DD), assignee, done, doneAt, customerId, customerName, projectId, projectName, createdBy, createdAt }
+export async function listTasks() {
+  const snap = await db().collection('tasks').orderBy('createdAt', 'desc').limit(1000).get();
+  return snap.docs.map(fromDoc);
+}
+export async function addTask({ title, due = '', assignee = '', customerId = '', customerName = '', projectId = '', projectName = '' }, author) {
+  const ref = await db().collection('tasks').add({ title, due, assignee, done: false, doneAt: null, customerId, customerName, projectId, projectName, createdBy: author || '', createdAt: ts(), updatedAt: ts() });
+  return ref.id;
+}
+export async function updateTask(id, fields) {
+  await db().collection('tasks').doc(id).update({ ...fields, updatedAt: ts() });
+}
+export async function deleteTask(id) {
+  await db().collection('tasks').doc(id).delete();
+}

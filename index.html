@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB CRM</title>
-  <link rel="stylesheet" href="css/app.css?v=25">
+  <link rel="stylesheet" href="css/app.css?v=26">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -1032,6 +1032,23 @@
         </div>
 
         <div class="crm-card">
+          <h3>Tasks <span class="crm-muted">{{ overdueCount ? overdueCount + ' overdue' : '' }}</span>
+            <span class="crm-filters" style="margin-left:auto;padding:0;border:0;"><button :class="{ on: taskFilter === 'mine' }" @click="taskFilter = 'mine'">Mine</button><button :class="{ on: taskFilter === 'all' }" @click="taskFilter = 'all'">Everyone</button></span>
+          </h3>
+          <div class="crm-task-new">
+            <input v-model.trim="newTask.title" placeholder="Add a task or reminder…" @keydown.enter="createTask('none')">
+            <input type="date" v-model="newTask.due" title="Due date">
+            <select v-model="newTask.assignee"><option value="">Me</option><option v-for="a in taskAssignees" :value="a">{{ a }}</option></select>
+            <button class="btn btn-primary btn-small" @click="createTask('none')" :disabled="!newTask.title">Add</button>
+          </div>
+          <div v-if="!homeTasks.length" class="crm-muted">No open tasks.</div>
+          <div v-for="t in homeTasks" :key="t.id" class="crm-task" :class="taskDueClass(t)">
+            <input type="checkbox" :checked="t.done" @change="toggleTask(t)">
+            <span class="crm-task-main"><span class="crm-task-title">{{ t.title }}</span><small>{{ fmtDue(t.due) }}<template v-if="t.assignee"> · {{ t.assignee }}</template><template v-if="t.projectName"> · <a href="#" @click.prevent="openProjectsPage(t.projectId)">{{ t.projectName }}</a></template><template v-else-if="t.customerName"> · <a href="#" @click.prevent="openCustomersPage(t.customerId)">{{ t.customerName }}</a></template></small></span>
+          </div>
+        </div>
+
+        <div class="crm-card">
           <h3>Next 14 days <span class="crm-muted">deliveries &amp; installs</span></h3>
           <div v-if="!upcoming.length" class="crm-muted">Nothing scheduled. Set delivery and start dates on a project.</div>
           <div v-for="u in upcoming" :key="u.key" class="home-row" @click="openProjectsPage(u.id)">
@@ -1179,6 +1196,23 @@
 
             <div class="crm-col">
               <div class="crm-card">
+                <h3>Tasks &amp; reminders <span class="crm-muted">{{ taskListFor('project').filter(t => !t.done).length }}</span></h3>
+                <div class="crm-task-new">
+                  <input v-model.trim="newTask.title" placeholder="Add a task or reminder…" @keydown.enter="createTask('project')">
+                  <input type="date" v-model="newTask.due" title="Due date">
+                  <select v-model="newTask.assignee"><option value="">Me</option><option v-for="a in taskAssignees" :value="a">{{ a }}</option></select>
+                  <button class="btn btn-primary btn-small" @click="createTask('project')" :disabled="!newTask.title">Add</button>
+                </div>
+                <div v-if="!taskListFor('project').length" class="crm-muted">No open tasks.</div>
+                <div v-for="t in taskListFor('project')" :key="t.id" class="crm-task" :class="[taskDueClass(t), { done: t.done }]">
+                  <input type="checkbox" :checked="t.done" @change="toggleTask(t)">
+                  <span class="crm-task-main"><span class="crm-task-title">{{ t.title }}</span><small>{{ fmtDue(t.due) }}<template v-if="t.assignee"> · {{ t.assignee }}</template></small></span>
+                  <button class="btn-tiny" @click="removeTask(t)">delete</button>
+                </div>
+                <label class="crm-muted" style="display:block;margin-top:6px;"><input type="checkbox" v-model="showDoneTasks"> show completed</label>
+              </div>
+
+              <div class="crm-card">
                 <h3>Notes &amp; activity <span class="crm-muted">{{ projectNotes.length }}</span></h3>
                 <div class="crm-note-new">
                   <textarea v-model="projectNote" rows="3" placeholder="Add a note for this project…" @keydown.meta.enter="addProjectNote" @keydown.ctrl.enter="addProjectNote"></textarea>
@@ -1321,6 +1355,23 @@
                     <button class="btn btn-small" v-if="j.hasState" @click="openCustomerProject(j, 'materials')">Materials</button>
                   </div>
                 </div>
+              </div>
+
+              <div class="crm-card" v-if="currentCustomer && currentCustomer.id">
+                <h3>Tasks &amp; reminders <span class="crm-muted">{{ taskListFor('customer').filter(t => !t.done).length }}</span></h3>
+                <div class="crm-task-new">
+                  <input v-model.trim="newTask.title" placeholder="Add a task or reminder…" @keydown.enter="createTask('customer')">
+                  <input type="date" v-model="newTask.due" title="Due date">
+                  <select v-model="newTask.assignee"><option value="">Me</option><option v-for="a in taskAssignees" :value="a">{{ a }}</option></select>
+                  <button class="btn btn-primary btn-small" @click="createTask('customer')" :disabled="!newTask.title">Add</button>
+                </div>
+                <div v-if="!taskListFor('customer').length" class="crm-muted">No open tasks.</div>
+                <div v-for="t in taskListFor('customer')" :key="t.id" class="crm-task" :class="[taskDueClass(t), { done: t.done }]">
+                  <input type="checkbox" :checked="t.done" @change="toggleTask(t)">
+                  <span class="crm-task-main"><span class="crm-task-title">{{ t.title }}</span><small>{{ fmtDue(t.due) }}<template v-if="t.assignee"> · {{ t.assignee }}</template></small></span>
+                  <button class="btn-tiny" @click="removeTask(t)">delete</button>
+                </div>
+                <label class="crm-muted" style="display:block;margin-top:6px;"><input type="checkbox" v-model="showDoneTasks"> show completed</label>
               </div>
 
               <div class="crm-card" v-if="currentCustomer && currentCustomer.id">
@@ -2253,7 +2304,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=127"></script>
+<script type="module" src="js/app.js?v=128"></script>
 
 </body>
 </html>

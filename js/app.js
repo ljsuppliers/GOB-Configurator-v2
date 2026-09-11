@@ -15,7 +15,7 @@ import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=9';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
-import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject, mergeDesignIntoProject } from './crm.js?v=4';
+import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject, mergeDesignIntoProject, listTasks, addTask, updateTask, deleteTask } from './crm.js?v=5';
 
 const { createApp } = Vue;
 
@@ -144,6 +144,12 @@ createApp({
       showStageNotes: false,
       customerPickerQuery: '',
       customerPickerOpen: false,
+      // Tasks & reminders
+      tasks: [],
+      taskAssignees: ['Liam', 'Richard', 'Guillaume', 'Info Admin'],
+      newTask: { title: '', due: '', assignee: '' },
+      taskFilter: 'mine',
+      showDoneTasks: false,
       // Home dashboard
       homePage: false,
       homeSearch: '',
@@ -260,6 +266,13 @@ createApp({
       else sorted.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
       return sorted;
     },
+    homeTasks() {
+      const me = (this.userName() || '').toLowerCase();
+      let list = this.tasks.filter((t) => !t.done);
+      if (this.taskFilter === 'mine') list = list.filter((t) => !t.assignee || t.assignee.toLowerCase().startsWith(me));
+      return list.sort((a, b) => (a.due || '9').localeCompare(b.due || '9')).slice(0, 20);
+    },
+    overdueCount() { const today = new Date().toISOString().slice(0, 10); return this.tasks.filter((t) => !t.done && t.due && t.due < today).length; },
     pipelineGroups() {
       const open = this.cloudDesigns.filter((j) => !['complete', 'cancelled'].includes(j.jobStatus));
       const groups = [
@@ -615,7 +628,7 @@ createApp({
       this.loginError = '';
       if (this.cloudReady) await this.refreshCloudDesigns();
       await this.restoreFromUrlOrDraft();
-      if (this.cloudReady) this.loadCustomers();
+      if (this.cloudReady) { this.loadCustomers(); this.loadTasks(); }
     },
     async loginGoogle() {
       this.loginBusy = true; this.loginError = '';
@@ -865,6 +878,45 @@ createApp({
       this.orderRefManual = this.orderRef.trim() !== '' && this.orderRef !== this.defaultOrderRef();
       if (!this.orderRef.trim()) { this.orderRefManual = false; this.orderRef = this.defaultOrderRef(); }
       this.rebuildOrders();
+    },
+    /* ───────────── TASKS ───────────── */
+    async loadTasks() {
+      if (!this.cloudReady) return;
+      try { this.tasks = await listTasks(); } catch (e) { console.error('tasks', e); }
+    },
+    async createTask(scope) {
+      const t = this.newTask;
+      if (!t.title.trim()) return;
+      const j = scope === 'project' ? this.currentProject : null;
+      const c = scope === 'customer' ? this.currentCustomer : (j && j.customerId ? this.customerById(j.customerId) : null);
+      try {
+        await addTask({ title: t.title.trim(), due: t.due, assignee: t.assignee || this.userName(), customerId: c ? c.id : '', customerName: c ? c.name : '', projectId: j ? j.id : '', projectName: j ? this.projectTitle(j) : '' }, this.userName());
+        this.newTask = { title: '', due: '', assignee: t.assignee };
+        await this.loadTasks();
+      } catch (e) { this.notify('Task failed: ' + e.message); }
+    },
+    async toggleTask(t) {
+      const done = !t.done;
+      try { await updateTask(t.id, { done, doneAt: done ? new Date().toISOString().slice(0, 10) : null, doneBy: done ? this.userName() : '' }); t.done = done; }
+      catch (e) { this.notify('Update failed: ' + e.message); }
+    },
+    async removeTask(t) {
+      if (!confirm(`Delete task "${t.title}"?`)) return;
+      await deleteTask(t.id);
+      this.tasks = this.tasks.filter((x) => x.id !== t.id);
+    },
+    taskDueClass(t) {
+      if (t.done || !t.due) return '';
+      const today = new Date().toISOString().slice(0, 10);
+      if (t.due < today) return 'overdue';
+      if (t.due === today) return 'today';
+      return '';
+    },
+    fmtDue(d) { if (!d) return 'no date'; const x = new Date(d); return isNaN(x) ? d : x.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); },
+    taskListFor(scope) {
+      const id = scope === 'project' ? (this.currentProject && this.currentProject.id) : (this.currentCustomer && this.currentCustomer.id);
+      if (!id) return [];
+      return this.tasks.filter((t) => (scope === 'project' ? t.projectId === id : t.customerId === id) && (this.showDoneTasks || !t.done)).sort((a, b) => (a.done - b.done) || (a.due || '9').localeCompare(b.due || '9'));
     },
     /* ───────────── HOME ───────────── */
     async openHome() {
