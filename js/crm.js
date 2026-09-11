@@ -213,3 +213,25 @@ export async function createProject({ name, customerId = '', customerName = '', 
 export async function deleteProject(designId) {
   await db().collection('designs').doc(designId).delete();
 }
+
+/** Attach an existing configurator design to a project that has no drawing:
+ *  the project doc takes the drawing state (and the design's install/orders
+ *  metadata), the separate design doc is removed. Notes stay on the customer. */
+export async function mergeDesignIntoProject(projectId, designId) {
+  const dref = db().collection('designs').doc(designId);
+  const pref = db().collection('designs').doc(projectId);
+  const [dsnap, psnap] = await Promise.all([dref.get(), pref.get()]);
+  if (!dsnap.exists || !psnap.exists) throw new Error('Design or project not found');
+  const d = dsnap.data(); const p = psnap.data();
+  if (!d.state || !d.state.width) throw new Error('That design has no drawing');
+  const state = JSON.parse(JSON.stringify(d.state));
+  state.customer = state.customer || {};
+  if (p.quoteNumber) state.customer.number = p.quoteNumber;
+  state.customerId = p.customerId || state.customerId || '';
+  const fields = { state, hasState: true, tier: d.tier || p.tier || 'signature', dimensions: d.dimensions || p.dimensions || '', address: p.address || d.address || '',
+    installStart: d.installStart || p.installStart || '', installEnd: d.installEnd || p.installEnd || '', installerName: d.installerName || p.installerName || '',
+    ordersOrdered: d.ordersOrdered || 0, ordersDelivered: d.ordersDelivered || 0, deliveries: d.deliveries || [],
+    mergedFromDesign: designId, mergedFromName: d.name || '', updatedAt: ts() };
+  await pref.update(fields);
+  await dref.delete();
+}

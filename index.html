@@ -1075,6 +1075,12 @@
               </div>
             </div>
             <div class="crm-head-actions">
+              <div class="export-wrapper" v-if="attachableDesigns.length">
+                <button class="btn" @click="showExportMenu = !showExportMenu" title="Attach a drawing already made for this customer">Attach drawing &#9662;</button>
+                <div id="export-menu" :class="{ show: showExportMenu }">
+                  <button v-for="d in attachableDesigns" :key="d.id" @click="showExportMenu = false; attachDesignToProject(d)">{{ d.name }} · {{ d.dimensions }}</button>
+                </div>
+              </div>
               <button class="btn btn-primary" @click="openProjectDesign('design')">{{ currentProject.hasState ? 'Open design' : 'Start design' }}</button>
               <button class="btn" v-if="currentProject.hasState" @click="openProjectDesign('materials')">Materials &amp; orders</button>
               <button class="btn" v-if="!currentProject.hasState" @click="removeProject" title="Delete project">Delete</button>
@@ -2189,7 +2195,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=125"></script>
+<script type="module" src="js/app.js?v=126"></script>
 
 </body>
 </html>

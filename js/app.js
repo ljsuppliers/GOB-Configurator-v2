@@ -15,7 +15,7 @@ import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=9';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
-import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject } from './crm.js?v=3';
+import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject, mergeDesignIntoProject } from './crm.js?v=4';
 
 const { createApp } = Vue;
 
@@ -256,6 +256,11 @@ createApp({
       else if (this.projectSort === 'quote') sorted.sort((a, b) => String(b.quoteNumber || '').localeCompare(String(a.quoteNumber || ''), undefined, { numeric: true }));
       else sorted.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
       return sorted;
+    },
+    attachableDesigns() {
+      const j = this.currentProject;
+      if (!j || j.hasState || !j.customerId) return [];
+      return this.cloudDesigns.filter((d) => d.id !== j.id && d.hasState && d.customerId === j.customerId);
     },
     projectCounts() {
       const c = { all: this.cloudDesigns.length, open: 0, complete: 0, cancelled: 0 };
@@ -948,6 +953,20 @@ createApp({
       this.currentProject = null; this.projectDraft = null;
       await this.refreshCloudDesigns();
       this.syncUrl();
+    },
+    async attachDesignToProject(design) {
+      const j = this.currentProject;
+      if (!j || !design) return;
+      if (!confirm(`Attach the drawing "${design.name}" to project "${j.name}"?\n\nThe project takes over the drawing, quote and materials; the separate design entry is removed.`)) return;
+      this.projectBusy = true;
+      try {
+        await mergeDesignIntoProject(j.id, design.id);
+        if (this.currentCloudId === design.id) { this.currentCloudId = j.id; this.currentCloudName = j.name; }
+        await this.refreshCloudDesigns();
+        await this.selectProject(j.id);
+        this.notify('Drawing attached to ' + j.name);
+      } catch (e) { this.projectStatus = 'Attach failed: ' + e.message; }
+      this.projectBusy = false;
     },
     async openProjectDesign(view = 'design') {
       const j = this.currentProject;
