@@ -12,8 +12,8 @@ h1, h2, h3, h4 { letter-spacing: -0.01em; }
 /* ─── Shell: side nav + top bar ─── */
 .app { display: grid; grid-template-columns: 232px minmax(0, 1fr); grid-template-rows: 56px minmax(0, 1fr) auto; height: 100vh; }
 .side-nav { grid-column: 1; grid-row: 1 / span 3; background: var(--nav-bg); color: var(--nav-text); display: flex; flex-direction: column; padding: 14px 12px; gap: 4px; overflow-y: auto; }
-.side-logo { display: block; padding: 6px 8px 16px; }
-.side-logo img { height: 34px; width: auto; filter: brightness(0) invert(1); opacity: .95; }
+.side-logo { display: block; margin: 2px 4px 14px; padding: 10px 12px; background: #fff; border-radius: 10px; }
+.side-logo img { height: 32px; width: auto; display: block; }
 .nav-label { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #64748b; padding: 12px 12px 4px; font-weight: 700; }
 .nav-group { display: flex; flex-direction: column; gap: 2px; }
 .nav-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 9px 12px; border-radius: 8px; border: none; background: transparent; color: var(--nav-text); font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; }
