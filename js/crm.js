@@ -14,13 +14,13 @@ export function emptyCustomer() {
   return {
     name: '', firstName: '', lastName: '', email: '', phone: '', mobile: '',
     address: '', postcode: '', town: '', source: '', owner: '', tags: [],
-    background: '', status: 'active', insightlyContactId: null,
+    background: '', status: 'active', insightlyContactId: null, title: '', organisation: '',
   };
 }
 
 /** Lowercase blob used for the search box (name, email, phones, address). */
 export function searchBlobFor(c) {
-  return [c.name, c.firstName, c.lastName, c.email, c.phone, c.mobile, c.address, c.postcode, c.town, (c.tags || []).join(' ')]
+  return [c.name, c.firstName, c.lastName, c.email, c.phone, c.mobile, c.address, c.postcode, c.town, c.title, c.organisation, (c.tags || []).join(' ')]
     .filter(Boolean).join(' ').toLowerCase();
 }
 

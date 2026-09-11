@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB CRM</title>
-  <link rel="stylesheet" href="css/app.css?v=27">
+  <link rel="stylesheet" href="css/app.css?v=28">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -1134,113 +1134,206 @@
         </div>
 
         <template v-else>
-          <div class="crm-head">
-            <span class="crm-avatar big" :class="'chip-job-' + currentProject.jobStatus" style="color:inherit">{{ stageOf(currentProject) || '–' }}</span>
-            <div class="crm-head-main">
-              <h2>{{ projectTitle(currentProject) }}</h2>
-              <div class="crm-head-meta">
-                <span v-if="projectCustomer">Customer: <a href="#" @click.prevent="openCustomersPage(projectCustomer.id)">{{ projectCustomer.name }}</a><template v-if="projectCustomer.phone || projectCustomer.mobile"> · {{ projectCustomer.phone || projectCustomer.mobile }}</template><template v-if="projectCustomer.email"> · {{ projectCustomer.email }}</template></span>
-                <span v-else class="crm-warn">No customer linked · <input v-model="newProjectQuery" placeholder="search a customer to link…" class="crm-inline-input"></span>
-                <span v-if="currentProject.dimensions">{{ currentProject.dimensions }}</span>
-                <span class="chip" :class="'chip-job-' + currentProject.jobStatus">{{ statusMeta(currentProject.jobStatus).label }}</span>
-                <span v-if="currentProject.legacy && currentProject.insightly" class="crm-tag" title="Imported from Insightly">Insightly</span>
-              </div>
-              <div v-if="!projectCustomer && newProjectCustomerResults.length" class="cust-picker" style="max-width:420px;">
-                <button type="button" v-for="c in newProjectCustomerResults" :key="c.id" class="cust-picker-row" @click="linkProjectCustomer(c)"><strong>{{ c.name }}</strong> <span>{{ [c.postcode, c.email].filter(Boolean).join(' · ') }}</span></button>
-              </div>
-            </div>
-            <div class="crm-head-actions">
-              <div class="export-wrapper" v-if="attachableDesigns.length">
-                <button class="btn" @click="showExportMenu = !showExportMenu" title="Attach a drawing already made for this customer">Attach drawing &#9662;</button>
+          <div class="blade">
+            <div class="blade-head">
+              <span class="blade-icon">🔨</span>
+              <div class="blade-title"><small>Project</small><h2>{{ projectTitle(currentProject) }}</h2></div>
+              <button class="blade-pencil" :class="{ on: projectEdit }" @click="projectEdit = !projectEdit; projectTab = 'details'" title="Edit">✎</button>
+              <div class="export-wrapper">
+                <button class="btn blade-actions" @click="showExportMenu = !showExportMenu">Actions &#9662;</button>
                 <div id="export-menu" :class="{ show: showExportMenu }">
-                  <button v-for="d in attachableDesigns" :key="d.id" @click="showExportMenu = false; attachDesignToProject(d)">{{ d.name }} · {{ d.dimensions }}</button>
-                </div>
-              </div>
-              <button class="btn btn-primary" @click="openProjectDesign('design')">{{ currentProject.hasState ? 'Open design' : 'Start design' }}</button>
-              <button class="btn" v-if="currentProject.hasState" @click="openProjectDesign('materials')">Materials &amp; orders</button>
-              <button class="btn" v-if="!currentProject.hasState" @click="removeProject" title="Delete project">Delete</button>
-            </div>
-          </div>
-          <p v-if="projectStatus" class="crm-status">{{ projectStatus }}</p>
-
-          <div class="crm-grid">
-            <div class="crm-col">
-              <div class="crm-card">
-                <h3>Pipeline <span class="crm-muted">stage {{ stageOf(currentProject) }} of {{ pipeline.length }}</span></h3>
-                <ol class="crm-pipeline">
-                  <li v-for="st in pipeline" :key="st.order" :class="{ done: st.order < stageOf(currentProject), current: st.order === stageOf(currentProject) }" @click="setProjectStage(st.order)" :title="'Move to stage ' + st.order">
-                    <span class="crm-pipe-n">{{ st.order }}</span><span class="crm-pipe-name">{{ st.name }}</span>
-                  </li>
-                </ol>
-              </div>
-
-              <div class="crm-card">
-                <h3>Project details</h3>
-                <div class="crm-form">
-                  <label class="wide">Project name <input v-model.trim="projectDraft.name"></label>
-                  <label>Quote number <input v-model.trim="projectDraft.quoteNumber"></label>
-                  <label>Status <select v-model="projectDraft.projectStatus"><option v-for="ps in projectStatuses" :value="ps.value">{{ ps.label }}</option></select></label>
-                  <label>Owner <select v-model="projectDraft.owner"><option value="">—</option><option>Liam</option><option>Richard</option><option>Guillaume</option><option>Info Admin</option></select></label>
-                  <label>Installer / team <input v-model.trim="projectDraft.installerName"></label>
-                  <label>Delivery &amp; start <input type="date" v-model="projectDraft.installStart"></label>
-                  <label>Finish <input type="date" v-model="projectDraft.installEnd"></label>
-                  <label class="wide">Details <textarea v-model="projectDraft.details" rows="9" placeholder="Size, contact, address, electrician, flooring, team, delivery date, aircon…"></textarea></label>
-                </div>
-                <div class="crm-form-actions">
-                  <button class="btn btn-primary" @click="saveProjectDraft" :disabled="projectBusy">Save changes</button>
-                  <span class="crm-muted" v-if="currentProject.insightly">Insightly: {{ currentProject.insightly.status }}<template v-if="currentProject.insightly.created"> · created {{ currentProject.insightly.created }}</template><template v-if="currentProject.insightly.completed"> · completed {{ currentProject.insightly.completed }}</template></span>
-                  <span class="crm-muted" v-else-if="currentProject.updatedAt">updated {{ fmtDateTime(currentProject.updatedAt) }}</span>
+                  <button @click="showExportMenu = false; openProjectDesign('design')">{{ currentProject.hasState ? 'Open design / quote' : 'Start design / quote' }}</button>
+                  <button v-if="currentProject.hasState" @click="showExportMenu = false; openProjectDesign('materials')">Materials &amp; orders</button>
+                  <button v-for="d in attachableDesigns" :key="d.id" @click="showExportMenu = false; attachDesignToProject(d)">Attach drawing: {{ d.name }} · {{ d.dimensions }}</button>
+                  <button v-if="projectCustomer" @click="showExportMenu = false; openCustomersPage(projectCustomer.id)">Open contact: {{ projectCustomer.name }}</button>
+                  <button v-if="!currentProject.hasState" @click="showExportMenu = false; removeProject()">Delete project</button>
                 </div>
               </div>
             </div>
+            <div class="blade-meta">
+              <div><small>User Responsible</small><span>{{ currentProject.owner || '—' }}</span></div>
+              <div><small>Category</small><span>{{ currentProject.dimensions ? (currentProject.tier === 'classic' ? 'Classic' : 'Signature') + ' · ' + currentProject.dimensions : '—' }}</span></div>
+              <div><small>Status</small><span>{{ (projectStatuses.find(x => x.value === projectStatusOf(currentProject)) || {}).label || projectStatusOf(currentProject) }}</span></div>
+              <div><small>Contact</small><span><a v-if="projectCustomer" href="#" @click.prevent="openCustomersPage(projectCustomer.id)">{{ projectCustomer.name }}</a><span v-else class="crm-warn">not linked</span></span></div>
+              <div class="blade-meta-right"><small>Project Owner</small><span>{{ currentProject.owner || '—' }}</span></div>
+            </div>
 
-            <div class="crm-col">
-              <div class="crm-card">
-                <h3>Tasks &amp; reminders <span class="crm-muted">{{ taskListFor('project').filter(t => !t.done).length }}</span></h3>
-                <div class="crm-task-new">
-                  <input v-model.trim="newTask.title" placeholder="Add a task or reminder…" @keydown.enter="createTask('project')">
-                  <input type="date" v-model="newTask.due" title="Due date">
-                  <select v-model="newTask.assignee"><option value="">Me</option><option v-for="a in taskAssignees" :value="a">{{ a }}</option></select>
-                  <button class="btn btn-primary btn-small" @click="createTask('project')" :disabled="!newTask.title">Add</button>
+            <div class="pipe-head">
+              <span class="pipe-label">PIPELINE: <b>Project Pipeline</b></span>
+              <span class="pipe-stage"><b>Stage {{ stageOf(currentProject) }} of {{ pipeline.length }} : {{ stageName(stageOf(currentProject)) }}</b>
+                <select class="pipe-change" :value="stageOf(currentProject)" @change="setProjectStage(Number($event.target.value))" :disabled="projectBusy" title="Change Pipeline Stage">
+                  <option v-for="st in pipeline" :value="st.order">{{ st.order }}. {{ st.name }}</option>
+                </select>
+              </span>
+            </div>
+            <ol class="pipe-bar" :class="{ busy: projectBusy }">
+              <li v-for="st in pipeline" :key="st.order" :class="{ done: st.order < stageOf(currentProject), current: st.order === stageOf(currentProject) }" :title="st.order + '. ' + st.name" @click="setProjectStage(st.order)">
+                <span v-if="st.order < stageOf(currentProject)">✓</span><span v-else>{{ st.name.length > 6 ? st.name.slice(0, 5) + '…' : st.name }}</span>
+              </li>
+            </ol>
+
+            <div class="blade-tabs">
+              <button :class="{ on: projectTab === 'details' }" @click="projectTab = 'details'">Details</button>
+              <button :class="{ on: projectTab === 'related' }" @click="projectTab = 'related'">Related</button>
+              <button :class="{ on: projectTab === 'activity' }" @click="projectTab = 'activity'">Activity</button>
+            </div>
+            <p v-if="projectStatus" class="crm-status">{{ projectStatus }}</p>
+
+            <!-- DETAILS -->
+            <div v-if="projectTab === 'details'" class="blade-body">
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('p-details')"><span class="sec-caret">{{ secOpen['p-details'] === false ? '⌄' : '⌃' }}</span> Project Details</div>
+                <div v-show="secOpen['p-details'] !== false" class="sec-body">
+                  <template v-if="!projectEdit">
+                    <div class="kv"><label>Record ID</label><span>{{ currentProject.insightly && currentProject.insightly.projectId || currentProject.id }}</span></div>
+                    <div class="kv"><label>Project Name</label><span>{{ currentProject.name }}</span></div>
+                    <div class="kv"><label>Status</label><span>{{ (projectStatuses.find(x => x.value === projectStatusOf(currentProject)) || {}).label || projectStatusOf(currentProject) }}</span></div>
+                    <div class="kv"><label>Category</label><span>{{ currentProject.tier === 'classic' ? 'Classic' : 'Signature' }}</span></div>
+                    <div class="kv"><label>User Responsible</label><span>{{ currentProject.owner || '' }}</span></div>
+                    <div class="kv"><label>Quote Number</label><span>{{ currentProject.quoteNumber || '' }}</span></div>
+                    <div class="kv"><label>Building Size</label><span>{{ currentProject.dimensions || '' }}</span></div>
+                    <div class="kv"><label>Project Created</label><span>{{ currentProject.insightly && currentProject.insightly.created ? fmtDateOnly(currentProject.insightly.created) : (currentProject.savedAt ? fmtDateOnly(currentProject.savedAt) : '') }}</span></div>
+                    <div class="kv"><label>Date of Next Activity</label><span>{{ projectUpcoming.length ? fmtDue(projectUpcoming[0].due) + ' · ' + projectUpcoming[0].title : '' }}</span></div>
+                    <div class="kv"><label>Date of Last Activity</label><span>{{ projectPast.length ? fmtDateTime(projectPast[0].when) : '' }}</span></div>
+                    <div class="kv"><label>Drawing / Quote</label><span><template v-if="currentProject.hasState"><a href="#" @click.prevent="openProjectDesign('design')">Open design</a> · <a href="#" @click.prevent="openProjectDesign('materials')">Materials &amp; orders</a></template><template v-else>None yet · <a href="#" @click.prevent="openProjectDesign('design')">start one</a></template></span></div>
+                  </template>
+                  <template v-else>
+                    <div class="kv"><label>Project Name</label><span><input v-model.trim="projectDraft.name"></span></div>
+                    <div class="kv"><label>Status</label><span><select v-model="projectDraft.projectStatus"><option v-for="ps in projectStatuses" :value="ps.value">{{ ps.label }}</option></select></span></div>
+                    <div class="kv"><label>User Responsible</label><span><select v-model="projectDraft.owner"><option value="">—</option><option v-for="a in taskAssignees" :value="a">{{ a }}</option></select></span></div>
+                    <div class="kv"><label>Quote Number</label><span><input v-model.trim="projectDraft.quoteNumber"></span></div>
+                  </template>
                 </div>
-                <div v-if="!taskListFor('project').length" class="crm-muted">No open tasks.</div>
-                <div v-for="t in taskListFor('project')" :key="t.id" class="crm-task" :class="[taskDueClass(t), { done: t.done }]">
-                  <input type="checkbox" :checked="t.done" @change="toggleTask(t)">
-                  <span class="crm-task-main"><span class="crm-task-title">{{ t.title }}</span><small>{{ fmtDue(t.due) }}<template v-if="t.assignee"> · {{ t.assignee }}</template></small></span>
-                  <button class="btn-tiny" @click="removeTask(t)">delete</button>
-                </div>
-                <label class="crm-muted" style="display:block;margin-top:6px;"><input type="checkbox" v-model="showDoneTasks"> show completed</label>
               </div>
 
-              <div class="crm-card">
-                <h3>Notes &amp; activity <span class="crm-muted">{{ projectNotes.length }}</span></h3>
-                <div class="crm-note-new">
-                  <textarea v-model="projectNote" rows="3" placeholder="Add a note for this project…" @keydown.meta.enter="addProjectNote" @keydown.ctrl.enter="addProjectNote"></textarea>
-                  <div class="crm-note-new-actions">
-                    <select v-model="projectNoteKind"><option value="note">Note</option><option value="call">Call</option><option value="email">Email</option><option value="visit">Site visit</option></select>
-                    <button class="btn btn-primary btn-small" @click="addProjectNote" :disabled="projectBusy || !projectNote.trim()">Add note</button>
-                    <label class="crm-muted" style="margin-left:auto;"><input type="checkbox" v-model="showStageNotes"> show stage changes</label>
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('p-install')"><span class="sec-caret">{{ secOpen['p-install'] === false ? '⌄' : '⌃' }}</span> Installation Information</div>
+                <div v-show="secOpen['p-install'] !== false" class="sec-body">
+                  <template v-if="!projectEdit">
+                    <div class="kv"><label>Installer / Team</label><span>{{ currentProject.installerName || '' }}</span></div>
+                    <div class="kv"><label>Delivery &amp; Start</label><span>{{ currentProject.installStart ? fmtDateOnly(currentProject.installStart) : '' }}</span></div>
+                    <div class="kv"><label>Finish</label><span>{{ currentProject.installEnd ? fmtDateOnly(currentProject.installEnd) : '' }}</span></div>
+                    <div class="kv"><label>Site Address</label><span>{{ currentProject.address || '' }}</span></div>
+                  </template>
+                  <template v-else>
+                    <div class="kv"><label>Installer / Team</label><span><input v-model.trim="projectDraft.installerName"></span></div>
+                    <div class="kv"><label>Delivery &amp; Start</label><span><input type="date" v-model="projectDraft.installStart"></span></div>
+                    <div class="kv"><label>Finish</label><span><input type="date" v-model="projectDraft.installEnd"></span></div>
+                  </template>
+                </div>
+              </div>
+
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('p-desc')"><span class="sec-caret">{{ secOpen['p-desc'] === false ? '⌄' : '⌃' }}</span> Description Information</div>
+                <div v-show="secOpen['p-desc'] !== false" class="sec-body">
+                  <div class="kv kv-top" v-if="!projectEdit"><label>Description</label><span><pre class="kv-pre" :class="{ clamp: !projectDescExpanded }">{{ currentProject.details || '' }}</pre><a v-if="(currentProject.details || '').split('\n').length > 4" href="#" class="kv-more" @click.prevent="projectDescExpanded = !projectDescExpanded">{{ projectDescExpanded ? 'less' : 'more' }}</a></span></div>
+                  <div class="kv kv-top" v-else><label>Description</label><span><textarea v-model="projectDraft.details" rows="10"></textarea></span></div>
+                </div>
+              </div>
+
+              <div class="sec" v-if="projectEdit">
+                <div class="sec-body sec-actions">
+                  <button class="btn btn-primary" @click="saveProjectDraft().then(() => projectEdit = false)" :disabled="projectBusy">Save</button>
+                  <button class="btn" @click="projectEdit = false; selectProject(currentProject.id)">Cancel</button>
+                </div>
+              </div>
+              <div class="sec" v-if="currentProject.insightly">
+                <div class="sec-body crm-muted">Imported from Insightly · {{ currentProject.insightly.status }}<template v-if="currentProject.insightly.completed"> · completed {{ currentProject.insightly.completed }}</template><template v-if="currentProject.mergedFromName"> · drawing attached from "{{ currentProject.mergedFromName }}"</template></div>
+              </div>
+            </div>
+
+            <!-- RELATED -->
+            <div v-if="projectTab === 'related'" class="blade-body">
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('p-contacts')"><span class="sec-caret">{{ secOpen['p-contacts'] === false ? '⌄' : '⌃' }}</span> Contacts <em>{{ projectCustomer ? 1 : 0 }}</em>
+                  <span class="sec-tools" @click.stop><a v-if="projectCustomer && projectCustomer.email" :href="'mailto:' + projectCustomer.email">✉ Email Contact</a><input v-model="newProjectQuery" placeholder="+ Add Link (search contact)" class="crm-inline-input"></span>
+                </div>
+                <div v-show="secOpen['p-contacts'] !== false" class="sec-body">
+                  <div v-if="newProjectCustomerResults.length" class="cust-picker" style="max-width:480px;margin-bottom:8px;"><button type="button" v-for="c in newProjectCustomerResults" :key="c.id" class="cust-picker-row" @click="linkProjectCustomer(c)"><strong>{{ c.name }}</strong> <span>{{ [c.postcode, c.email].filter(Boolean).join(' · ') }}</span></button></div>
+                  <table v-if="projectCustomer" class="rel-table"><tr><th>Name</th><th>Phone</th><th>Email</th><th>Postcode</th><th></th></tr>
+                    <tr><td><a href="#" @click.prevent="openCustomersPage(projectCustomer.id)">{{ projectCustomer.name }}</a></td><td>{{ projectCustomer.phone || projectCustomer.mobile }}</td><td>{{ projectCustomer.email }}</td><td>{{ projectCustomer.postcode }}</td><td><button class="btn-tiny" @click="openCustomersPage(projectCustomer.id)">open</button></td></tr></table>
+                  <div v-else class="crm-muted">No contact linked. Search above to link one.</div>
+                </div>
+              </div>
+
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('p-notes')"><span class="sec-caret">{{ secOpen['p-notes'] === false ? '⌄' : '⌃' }}</span> Notes <em>{{ projectNotes.filter(n => n.kind !== 'stage').length }}</em>
+                  <span class="sec-tools" @click.stop><a href="#" @click.prevent="secOpen['p-notes'] = true; newNoteOpen = !newNoteOpen">+ Add Note</a></span>
+                </div>
+                <div v-show="secOpen['p-notes'] !== false" class="sec-body">
+                  <div v-if="newNoteOpen" class="crm-note-new">
+                    <textarea v-model="projectNote" rows="3" placeholder="Note…" @keydown.meta.enter="addProjectNote" @keydown.ctrl.enter="addProjectNote"></textarea>
+                    <div class="crm-note-new-actions"><select v-model="projectNoteKind"><option value="note">Note</option><option value="call">Call</option><option value="email">Email</option><option value="visit">Site visit</option></select><button class="btn btn-primary btn-small" @click="addProjectNote" :disabled="projectBusy || !projectNote.trim()">Save note</button><button class="btn btn-small" @click="newNoteOpen = false">Cancel</button></div>
+                  </div>
+                  <div v-if="!projectNotes.filter(n => n.kind !== 'stage').length" class="crm-muted">No notes.</div>
+                  <div v-for="n in projectNotes.filter(n => n.kind !== 'stage')" :key="n.id" class="crm-note" :class="'kind-' + n.kind">
+                    <div class="crm-note-head"><span class="crm-note-kind">{{ n.kind }}</span> <span class="crm-muted">{{ fmtDateTime(n.createdAt) }}<template v-if="n.author"> · {{ n.author }}</template></span> <button class="btn-tiny" @click="removeProjectNote(n)">delete</button></div>
+                    <div v-if="n.title && n.title !== n.body" class="crm-note-title">{{ n.title }}</div>
+                    <div class="crm-note-body">{{ n.body }}</div>
                   </div>
                 </div>
-                <div v-if="!projectNotes.length" class="crm-muted">No notes yet.</div>
-                <div v-for="n in projectNotes" :key="n.id" v-show="showStageNotes || n.kind !== 'stage'" class="crm-note" :class="'kind-' + n.kind">
-                  <div class="crm-note-head"><span class="crm-note-kind">{{ n.kind }}</span> <span class="crm-muted">{{ fmtDateTime(n.createdAt) }}<template v-if="n.author"> · {{ n.author }}</template></span> <button class="btn-tiny" @click="removeProjectNote(n)">delete</button></div>
-                  <div v-if="n.title && n.title !== n.body" class="crm-note-title">{{ n.title }}</div>
-                  <div class="crm-note-body">{{ n.body }}</div>
+              </div>
+
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('p-files')"><span class="sec-caret">{{ secOpen['p-files'] === false ? '⌄' : '⌃' }}</span> Files <em>{{ projectFiles.length }}</em>
+                  <span class="sec-tools" @click.stop><label class="crm-upload"><input type="file" multiple @change="uploadProjectFile" :disabled="projectBusy"><a>+ Add Files</a></label></span>
+                </div>
+                <div v-show="secOpen['p-files'] !== false" class="sec-body">
+                  <div v-if="!projectFiles.length" class="crm-muted">No files.</div>
+                  <table v-else class="rel-table"><tr><th>Name</th><th>Size</th><th>Category</th><th>Date Added</th><th>Added By</th></tr>
+                    <tr v-for="f in projectFiles" :key="f.id"><td><a v-if="f.url" :href="f.url" target="_blank" rel="noopener">{{ f.name }}</a><span v-else>{{ f.name }}</span></td><td>{{ fmtSize(f.size) }}</td><td>{{ f.category || '' }}</td><td>{{ f.createdAt ? fmtDateOnly(f.createdAt) : '' }}</td><td>{{ f.author || '' }}</td></tr></table>
                 </div>
               </div>
 
-              <div class="crm-card">
-                <h3>Documents <span class="crm-muted">{{ projectFiles.length }}</span></h3>
-                <label class="crm-upload"><input type="file" multiple @change="uploadProjectFile" :disabled="projectBusy"> <span class="btn btn-small">Upload files…</span></label>
-                <div v-if="!projectFiles.length" class="crm-muted">No documents yet.</div>
-                <table v-else class="crm-files">
-                  <tr v-for="f in projectFiles" :key="f.id">
-                    <td><a v-if="f.url" :href="f.url" target="_blank" rel="noopener">{{ f.name }}</a><span v-else>{{ f.name }} <em class="crm-muted">(pending upload)</em></span></td>
-                    <td class="crm-muted">{{ f.size ? (f.size / 1024 > 1024 ? (f.size / 1048576).toFixed(1) + ' MB' : Math.round(f.size / 1024) + ' KB') : '' }}</td>
-                    <td class="crm-muted">{{ f.createdAt ? f.createdAt.toLocaleDateString('en-GB') : '' }}</td>
-                  </tr>
-                </table>
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('p-tasks')"><span class="sec-caret">{{ secOpen['p-tasks'] === false ? '⌄' : '⌃' }}</span> Tasks <em>{{ taskListFor('project').filter(t => !t.done).length }}</em></div>
+                <div v-show="secOpen['p-tasks'] !== false" class="sec-body">
+                  <div class="crm-task-new">
+                    <input v-model.trim="newTask.title" placeholder="+ Add Task" @keydown.enter="createTask('project')">
+                    <input type="date" v-model="newTask.due" title="Due date">
+                    <select v-model="newTask.assignee"><option value="">Me</option><option v-for="a in taskAssignees" :value="a">{{ a }}</option></select>
+                    <button class="btn btn-primary btn-small" @click="createTask('project')" :disabled="!newTask.title">Add</button>
+                  </div>
+                  <div v-if="!taskListFor('project').length" class="crm-muted">No open tasks.</div>
+                  <div v-for="t in taskListFor('project')" :key="t.id" class="crm-task" :class="[taskDueClass(t), { done: t.done }]">
+                    <input type="checkbox" :checked="t.done" @change="toggleTask(t)">
+                    <span class="crm-task-main"><span class="crm-task-title">{{ t.title }}</span><small>{{ fmtDue(t.due) }}<template v-if="t.assignee"> · {{ t.assignee }}</template></small></span>
+                    <button class="btn-tiny" @click="removeTask(t)">delete</button>
+                  </div>
+                  <label class="crm-muted" style="display:block;margin-top:6px;"><input type="checkbox" v-model="showDoneTasks"> show completed</label>
+                </div>
+              </div>
+
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('p-design')"><span class="sec-caret">{{ secOpen['p-design'] === false ? '⌄' : '⌃' }}</span> Drawing, Quote &amp; Materials <em>{{ currentProject.hasState ? 1 : 0 }}</em></div>
+                <div v-show="secOpen['p-design'] !== false" class="sec-body">
+                  <div v-if="currentProject.hasState" class="btn-row"><button class="btn btn-primary" @click="openProjectDesign('design')">Open design &amp; quote</button><button class="btn" @click="openProjectDesign('materials')">Materials, costings &amp; orders</button></div>
+                  <div v-else class="btn-row"><button class="btn btn-primary" @click="openProjectDesign('design')">Start design &amp; quote</button><button v-for="d in attachableDesigns" :key="d.id" class="btn" @click="attachDesignToProject(d)">Attach "{{ d.name }}"</button></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ACTIVITY -->
+            <div v-if="projectTab === 'activity'" class="blade-body">
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('p-upcoming')"><span class="sec-caret">{{ secOpen['p-upcoming'] === false ? '⌄' : '⌃' }}</span> Upcoming Activities <em>{{ projectUpcoming.length }}</em>
+                  <span class="sec-tools" @click.stop><a href="#" @click.prevent="projectTab = 'related'; secOpen['p-tasks'] = true">+ Add Activity</a></span>
+                </div>
+                <div v-show="secOpen['p-upcoming'] !== false" class="sec-body">
+                  <div v-if="!projectUpcoming.length" class="crm-muted">Nothing scheduled.</div>
+                  <div v-for="t in projectUpcoming" :key="t.id" class="crm-task" :class="taskDueClass(t)"><input type="checkbox" :checked="t.done" @change="toggleTask(t)"><span class="crm-task-main"><span class="crm-task-title">{{ t.title }}</span><small>{{ fmtDue(t.due) }}<template v-if="t.assignee"> · {{ t.assignee }}</template></small></span></div>
+                </div>
+              </div>
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('p-past')"><span class="sec-caret">{{ secOpen['p-past'] === false ? '⌄' : '⌃' }}</span> Past Activity <em>{{ projectPast.length }}</em></div>
+                <div v-show="secOpen['p-past'] !== false" class="sec-body">
+                  <div v-if="!projectPast.length" class="crm-muted">No activity yet.</div>
+                  <div v-for="a in projectPast" :key="a.key" class="act-row" :class="'act-' + a.kind">
+                    <span class="act-date">{{ fmtDateTime(a.when) }}</span>
+                    <span class="act-kind">{{ a.kindLabel }}</span>
+                    <span class="act-body">{{ a.text }}<small v-if="a.who"> · {{ a.who }}</small></span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1278,116 +1371,194 @@
           <p>Every customer in one place: contact details, every quote and project from the configurator, notes and documents. Pick a customer on the left or create a new one.</p>
         </div>
         <template v-else>
-          <div class="crm-head">
-            <span class="crm-avatar big">{{ customerInitials(customerDraft) }}</span>
-            <div class="crm-head-main">
-              <h2>{{ customerDraft.name || 'New customer' }}</h2>
-              <div class="crm-head-meta">
-                <span v-if="customerDraft.email"><a :href="'mailto:' + customerDraft.email">{{ customerDraft.email }}</a></span>
-                <span v-if="customerDraft.phone"><a :href="'tel:' + customerDraft.phone">{{ customerDraft.phone }}</a></span>
-                <span v-if="customerDraft.mobile && customerDraft.mobile !== customerDraft.phone"><a :href="'tel:' + customerDraft.mobile">{{ customerDraft.mobile }}</a></span>
-                <span v-if="customerDraft.postcode">{{ customerDraft.postcode }}</span>
-                <span v-if="currentCustomer && currentCustomer.insightlyContactId" class="crm-tag" title="Imported from Insightly">Insightly</span>
+          <div class="blade">
+            <div class="blade-head">
+              <span class="crm-avatar big">{{ customerInitials(customerDraft) }}</span>
+              <div class="blade-title"><small>Contact</small><h2>{{ [customerDraft.title && !/^\d/.test(customerDraft.title) ? customerDraft.title : '', customerDraft.name || 'New contact'].filter(Boolean).join(' ') }}</h2></div>
+              <button class="blade-pencil" :class="{ on: customerEdit }" @click="customerEdit = !customerEdit; customerTab = 'details'" title="Edit">✎</button>
+              <div class="export-wrapper" v-if="currentCustomer && currentCustomer.id">
+                <button class="btn blade-actions" @click="showExportMenu = !showExportMenu">Actions &#9662;</button>
+                <div id="export-menu" :class="{ show: showExportMenu }">
+                  <button @click="showExportMenu = false; newDesignForCustomer()">New design / quote</button>
+                  <button @click="showExportMenu = false; newProject.customerId = currentCustomer.id; openProjectsPage(); newProjectOpen = true">New project</button>
+                  <a v-if="customerDraft.email" :href="'mailto:' + customerDraft.email" class="menu-link" @click="showExportMenu = false">Email contact</a>
+                  <button @click="showExportMenu = false; removeCustomer()">Delete contact</button>
+                </div>
               </div>
             </div>
-            <div class="crm-head-actions">
-              <button class="btn btn-primary" @click="newDesignForCustomer" :disabled="!currentCustomer || !currentCustomer.id">+ New design / quote</button>
-              <button class="btn" @click="removeCustomer" v-if="currentCustomer && currentCustomer.id" title="Delete customer">Delete</button>
+            <div class="blade-meta">
+              <div><small>Title</small><span>{{ customerDraft.title || '—' }}</span></div>
+              <div><small>Organization</small><span>{{ customerDraft.organisation || '—' }}</span></div>
+              <div><small>Phone</small><span>{{ customerDraft.phone || customerDraft.mobile || '—' }}</span></div>
+              <div><small>Email</small><span><a v-if="customerDraft.email" :href="'mailto:' + customerDraft.email">{{ customerDraft.email }}</a><template v-else>—</template></span></div>
+              <div class="blade-meta-right"><small>Contact Owner</small><span>{{ customerDraft.owner || '—' }}</span></div>
             </div>
-          </div>
-          <p v-if="customerStatus" class="crm-status">{{ customerStatus }}</p>
 
-          <div class="crm-grid">
-            <div class="crm-col">
-              <div class="crm-card">
-                <h3>Contact details</h3>
-                <div class="crm-form">
-                  <label>First name(s) <input v-model.trim="customerDraft.firstName"></label>
-                  <label>Surname <input v-model.trim="customerDraft.lastName"></label>
-                  <label class="wide">Display name <input v-model.trim="customerDraft.name" placeholder="e.g. Dan and Hannah Smith"></label>
-                  <label>Email <input type="email" v-model.trim="customerDraft.email"></label>
-                  <label>Phone <input v-model.trim="customerDraft.phone"></label>
-                  <label>Mobile <input v-model.trim="customerDraft.mobile"></label>
-                  <label>Postcode <input v-model.trim="customerDraft.postcode" style="text-transform:uppercase"></label>
-                  <label class="wide">Address <input v-model.trim="customerDraft.address" placeholder="Street, town"></label>
-                  <label>Town <input v-model.trim="customerDraft.town"></label>
-                  <label>Source <select v-model="customerDraft.source"><option value="">—</option><option>Website</option><option>Phone</option><option>Showroom</option><option>Referral</option><option>Google</option><option>Facebook</option><option>Checkatrade</option><option>Repeat</option><option>Insightly</option><option>configurator</option></select></label>
-                  <label>Owner <select v-model="customerDraft.owner"><option value="">—</option><option>Liam</option><option>Richard</option><option>Guillaume</option></select></label>
-                  <label>Status <select v-model="customerDraft.status"><option value="active">Active</option><option value="lead">Lead</option><option value="past">Past customer</option><option value="lost">Lost</option></select></label>
-                  <label class="wide">Background / notes <textarea v-model="customerDraft.background" rows="3"></textarea></label>
+            <div class="blade-tabs">
+              <button :class="{ on: customerTab === 'details' }" @click="customerTab = 'details'">Details</button>
+              <button :class="{ on: customerTab === 'related' }" @click="customerTab = 'related'">Related</button>
+              <button :class="{ on: customerTab === 'activity' }" @click="customerTab = 'activity'">Activity</button>
+            </div>
+            <p v-if="customerStatus" class="crm-status">{{ customerStatus }}</p>
+
+            <!-- DETAILS -->
+            <div v-if="customerTab === 'details'" class="blade-body">
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('c-name')"><span class="sec-caret">{{ secOpen['c-name'] === false ? '⌄' : '⌃' }}</span> Name and Occupation</div>
+                <div v-show="secOpen['c-name'] !== false" class="sec-body">
+                  <template v-if="!customerEdit && currentCustomer && currentCustomer.id">
+                    <div class="kv"><label>Record ID</label><span>{{ currentCustomer.insightlyContactId || currentCustomer.id }}</span></div>
+                    <div class="kv"><label>Name</label><span>{{ customerDraft.name }}</span></div>
+                    <div class="kv"><label>Organization</label><span>{{ customerDraft.organisation || '' }}</span></div>
+                    <div class="kv"><label>Title</label><span>{{ customerDraft.title || '' }}</span></div>
+                    <div class="kv"><label>Contact Owner</label><span>{{ customerDraft.owner || '' }}</span></div>
+                    <div class="kv"><label>Source</label><span>{{ customerDraft.source || '' }}</span></div>
+                    <div class="kv"><label>Status</label><span>{{ customerDraft.status || '' }}</span></div>
+                  </template>
+                  <template v-else>
+                    <div class="kv"><label>First name(s)</label><span><input v-model.trim="customerDraft.firstName"></span></div>
+                    <div class="kv"><label>Surname</label><span><input v-model.trim="customerDraft.lastName"></span></div>
+                    <div class="kv"><label>Display name</label><span><input v-model.trim="customerDraft.name" placeholder="e.g. Dan and Hannah Smith"></span></div>
+                    <div class="kv"><label>Title</label><span><input v-model.trim="customerDraft.title" placeholder="Mr &amp; Mrs, or quote number"></span></div>
+                    <div class="kv"><label>Organization</label><span><input v-model.trim="customerDraft.organisation"></span></div>
+                    <div class="kv"><label>Contact Owner</label><span><select v-model="customerDraft.owner"><option value="">—</option><option v-for="a in taskAssignees" :value="a">{{ a }}</option></select></span></div>
+                    <div class="kv"><label>Source</label><span><select v-model="customerDraft.source"><option value="">—</option><option>Website</option><option>Phone</option><option>Showroom</option><option>Referral</option><option>Google</option><option>Facebook</option><option>Checkatrade</option><option>Repeat</option><option>Insightly</option><option>configurator</option></select></span></div>
+                    <div class="kv"><label>Status</label><span><select v-model="customerDraft.status"><option value="active">Active</option><option value="lead">Lead</option><option value="past">Past customer</option><option value="lost">Lost</option></select></span></div>
+                  </template>
                 </div>
-                <div class="crm-form-actions">
-                  <button class="btn btn-primary" @click="saveCurrentCustomer" :disabled="customerBusy">{{ currentCustomer && currentCustomer.id ? 'Save changes' : 'Create customer' }}</button>
+              </div>
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('c-contact')"><span class="sec-caret">{{ secOpen['c-contact'] === false ? '⌄' : '⌃' }}</span> Contact Details</div>
+                <div v-show="secOpen['c-contact'] !== false" class="sec-body">
+                  <template v-if="!customerEdit && currentCustomer && currentCustomer.id">
+                    <div class="kv"><label>Email</label><span><a v-if="customerDraft.email" :href="'mailto:' + customerDraft.email">{{ customerDraft.email }}</a></span></div>
+                    <div class="kv"><label>Phone</label><span>{{ customerDraft.phone || '' }}</span></div>
+                    <div class="kv"><label>Mobile Phone</label><span>{{ customerDraft.mobile || '' }}</span></div>
+                  </template>
+                  <template v-else>
+                    <div class="kv"><label>Email</label><span><input type="email" v-model.trim="customerDraft.email"></span></div>
+                    <div class="kv"><label>Phone</label><span><input v-model.trim="customerDraft.phone"></span></div>
+                    <div class="kv"><label>Mobile Phone</label><span><input v-model.trim="customerDraft.mobile"></span></div>
+                  </template>
+                </div>
+              </div>
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('c-address')"><span class="sec-caret">{{ secOpen['c-address'] === false ? '⌄' : '⌃' }}</span> Address Information</div>
+                <div v-show="secOpen['c-address'] !== false" class="sec-body">
+                  <template v-if="!customerEdit && currentCustomer && currentCustomer.id">
+                    <div class="kv"><label>Address</label><span>{{ customerDraft.address || '' }}</span></div>
+                    <div class="kv"><label>Town</label><span>{{ customerDraft.town || '' }}</span></div>
+                    <div class="kv"><label>Postcode</label><span>{{ customerDraft.postcode || '' }}</span></div>
+                  </template>
+                  <template v-else>
+                    <div class="kv"><label>Address</label><span><input v-model.trim="customerDraft.address" placeholder="Street"></span></div>
+                    <div class="kv"><label>Town</label><span><input v-model.trim="customerDraft.town"></span></div>
+                    <div class="kv"><label>Postcode</label><span><input v-model.trim="customerDraft.postcode" style="text-transform:uppercase"></span></div>
+                  </template>
+                </div>
+              </div>
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('c-bg')"><span class="sec-caret">{{ secOpen['c-bg'] === false ? '⌄' : '⌃' }}</span> Background Information</div>
+                <div v-show="secOpen['c-bg'] !== false" class="sec-body">
+                  <div class="kv kv-top" v-if="!customerEdit && currentCustomer && currentCustomer.id"><label>Background</label><span><pre class="kv-pre">{{ customerDraft.background || '' }}</pre></span></div>
+                  <div class="kv kv-top" v-else><label>Background</label><span><textarea v-model="customerDraft.background" rows="4"></textarea></span></div>
+                </div>
+              </div>
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('c-tags')"><span class="sec-caret">{{ secOpen['c-tags'] === false ? '⌄' : '⌃' }}</span> Tag Information</div>
+                <div v-show="secOpen['c-tags'] !== false" class="sec-body">
+                  <div class="kv" v-if="!customerEdit && currentCustomer && currentCustomer.id"><label>Tag List</label><span><span v-for="t in (customerDraft.tags || [])" class="crm-tag" style="margin-right:4px;">{{ t }}</span></span></div>
+                  <div class="kv" v-else><label>Tag List</label><span><input :value="(customerDraft.tags || []).join(', ')" @input="customerDraft.tags = $event.target.value.split(',').map(x => x.trim()).filter(Boolean)" placeholder="comma separated"></span></div>
+                </div>
+              </div>
+              <div class="sec" v-if="customerEdit || !(currentCustomer && currentCustomer.id)">
+                <div class="sec-body sec-actions">
+                  <button class="btn btn-primary" @click="saveCurrentCustomer().then(() => customerEdit = false)" :disabled="customerBusy">{{ currentCustomer && currentCustomer.id ? 'Save' : 'Create contact' }}</button>
+                  <button class="btn" @click="customerEdit = false; currentCustomer && currentCustomer.id ? selectCustomer(currentCustomer.id) : (currentCustomer = null, customerDraft = null)">Cancel</button>
                   <span class="crm-muted" v-if="currentCustomer && currentCustomer.updatedAt">updated {{ fmtDateTime(currentCustomer.updatedAt) }}<template v-if="currentCustomer.updatedBy"> by {{ currentCustomer.updatedBy }}</template></span>
                 </div>
               </div>
+            </div>
 
-              <div class="crm-card" v-if="currentCustomer && currentCustomer.id">
-                <h3>Documents <span class="crm-muted">{{ customerFiles.length }}</span></h3>
-                <label class="crm-upload"><input type="file" multiple @change="uploadCustomerFile" :disabled="customerBusy"> <span class="btn btn-small">Upload files…</span></label>
-                <div v-if="!customerFiles.length" class="crm-muted">No documents yet.</div>
-                <table v-else class="crm-files">
-                  <tr v-for="f in customerFiles" :key="f.id">
-                    <td><a v-if="f.url" :href="f.url" target="_blank" rel="noopener">{{ f.name }}</a><span v-else :title="f.localPath || ''">{{ f.name }} <em class="crm-muted">(pending upload)</em></span></td>
-                    <td class="crm-muted">{{ f.size ? (f.size / 1024 > 1024 ? (f.size / 1048576).toFixed(1) + ' MB' : Math.round(f.size / 1024) + ' KB') : '' }}</td>
-                    <td class="crm-muted">{{ f.projectName || '' }}</td>
-                    <td><button class="btn-tiny" @click="removeCustomerFile(f)">remove</button></td>
-                  </tr>
-                </table>
+            <!-- RELATED -->
+            <div v-if="customerTab === 'related' && currentCustomer && currentCustomer.id" class="blade-body">
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('c-projects')"><span class="sec-caret">{{ secOpen['c-projects'] === false ? '⌄' : '⌃' }}</span> Projects <em>{{ customerProjects.length }}</em>
+                  <span class="sec-tools" @click.stop><a href="#" @click.prevent="newDesignForCustomer()">+ New design / quote</a><a href="#" @click.prevent="newProject.customerId = currentCustomer.id; openProjectsPage(); newProjectOpen = true">+ New project</a></span>
+                </div>
+                <div v-show="secOpen['c-projects'] !== false" class="sec-body">
+                  <div v-if="!customerProjects.length" class="crm-muted">No projects linked.</div>
+                  <table v-else class="rel-table"><tr><th>Project Name</th><th>Stage</th><th>Status</th><th>Size</th><th>Updated</th><th></th></tr>
+                    <tr v-for="j in customerProjects" :key="j.id"><td><a href="#" @click.prevent="openProjectsPage(j.id)">{{ projectTitle(j) }}</a></td><td>{{ stageOf(j) }}. {{ stageName(stageOf(j)) }}</td><td><span class="chip" :class="'chip-job-' + j.jobStatus">{{ statusMeta(j.jobStatus).label }}</span></td><td>{{ j.dimensions }}</td><td>{{ j.updatedAt ? fmtDateOnly(j.updatedAt) : '' }}</td><td class="btn-row"><button class="btn-tiny" @click="openProjectsPage(j.id)">project</button><button class="btn-tiny" @click="openCustomerProject(j, 'design')">{{ j.hasState ? 'design' : 'start design' }}</button><button v-if="j.hasState" class="btn-tiny" @click="openCustomerProject(j, 'materials')">materials</button></td></tr></table>
+                </div>
+              </div>
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('c-notes')"><span class="sec-caret">{{ secOpen['c-notes'] === false ? '⌄' : '⌃' }}</span> Notes <em>{{ customerNotes.filter(n => n.kind !== 'stage').length }}</em>
+                  <span class="sec-tools" @click.stop><a href="#" @click.prevent="secOpen['c-notes'] = true; newNoteOpen = !newNoteOpen">+ Add Note</a></span>
+                </div>
+                <div v-show="secOpen['c-notes'] !== false" class="sec-body">
+                  <div v-if="newNoteOpen" class="crm-note-new">
+                    <textarea v-model="newNote" rows="3" placeholder="Note…" @keydown.meta.enter="addCustomerNote" @keydown.ctrl.enter="addCustomerNote"></textarea>
+                    <div class="crm-note-new-actions"><select v-model="newNoteKind"><option value="note">Note</option><option value="call">Call</option><option value="email">Email</option><option value="visit">Site visit</option></select><button class="btn btn-primary btn-small" @click="addCustomerNote" :disabled="customerBusy || !newNote.trim()">Save note</button><button class="btn btn-small" @click="newNoteOpen = false">Cancel</button></div>
+                  </div>
+                  <div v-if="!customerNotes.filter(n => n.kind !== 'stage').length" class="crm-muted">No notes.</div>
+                  <div v-for="n in customerNotes.filter(n => n.kind !== 'stage')" :key="n.id" class="crm-note" :class="'kind-' + n.kind">
+                    <div class="crm-note-head"><span class="crm-note-kind">{{ n.kind }}</span> <span v-if="n.projectName" class="crm-muted">{{ n.projectName }}</span> <span class="crm-muted">{{ fmtDateTime(n.createdAt) }}<template v-if="n.author"> · {{ n.author }}</template></span> <button class="btn-tiny" @click="removeCustomerNote(n)">delete</button></div>
+                    <div v-if="n.title && n.title !== n.body" class="crm-note-title">{{ n.title }}</div>
+                    <div class="crm-note-body">{{ n.body }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('c-files')"><span class="sec-caret">{{ secOpen['c-files'] === false ? '⌄' : '⌃' }}</span> Files <em>{{ customerFiles.length }}</em>
+                  <span class="sec-tools" @click.stop><label class="crm-upload"><input type="file" multiple @change="uploadCustomerFile" :disabled="customerBusy"><a>+ Add Files</a></label></span>
+                </div>
+                <div v-show="secOpen['c-files'] !== false" class="sec-body">
+                  <div v-if="!customerFiles.length" class="crm-muted">No files.</div>
+                  <table v-else class="rel-table"><tr><th>Name</th><th>Size</th><th>Project</th><th>Date Added</th><th>Added By</th><th></th></tr>
+                    <tr v-for="f in customerFiles" :key="f.id"><td><a v-if="f.url" :href="f.url" target="_blank" rel="noopener">{{ f.name }}</a><span v-else>{{ f.name }}</span></td><td>{{ fmtSize(f.size) }}</td><td>{{ f.projectName || '' }}</td><td>{{ f.createdAt ? fmtDateOnly(f.createdAt) : '' }}</td><td>{{ f.author || '' }}</td><td><button class="btn-tiny" @click="removeCustomerFile(f)">remove</button></td></tr></table>
+                </div>
+              </div>
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('c-tasks')"><span class="sec-caret">{{ secOpen['c-tasks'] === false ? '⌄' : '⌃' }}</span> Tasks <em>{{ taskListFor('customer').filter(t => !t.done).length }}</em></div>
+                <div v-show="secOpen['c-tasks'] !== false" class="sec-body">
+                  <div class="crm-task-new">
+                    <input v-model.trim="newTask.title" placeholder="+ Add Task" @keydown.enter="createTask('customer')">
+                    <input type="date" v-model="newTask.due" title="Due date">
+                    <select v-model="newTask.assignee"><option value="">Me</option><option v-for="a in taskAssignees" :value="a">{{ a }}</option></select>
+                    <button class="btn btn-primary btn-small" @click="createTask('customer')" :disabled="!newTask.title">Add</button>
+                  </div>
+                  <div v-if="!taskListFor('customer').length" class="crm-muted">No open tasks.</div>
+                  <div v-for="t in taskListFor('customer')" :key="t.id" class="crm-task" :class="[taskDueClass(t), { done: t.done }]">
+                    <input type="checkbox" :checked="t.done" @change="toggleTask(t)">
+                    <span class="crm-task-main"><span class="crm-task-title">{{ t.title }}</span><small>{{ fmtDue(t.due) }}<template v-if="t.assignee"> · {{ t.assignee }}</template></small></span>
+                    <button class="btn-tiny" @click="removeTask(t)">delete</button>
+                  </div>
+                  <label class="crm-muted" style="display:block;margin-top:6px;"><input type="checkbox" v-model="showDoneTasks"> show completed</label>
+                </div>
               </div>
             </div>
 
-            <div class="crm-col">
-              <div class="crm-card" v-if="currentCustomer && currentCustomer.id">
-                <h3>Projects &amp; quotes <span class="crm-muted">{{ customerProjects.length }}</span></h3>
-                <div v-if="!customerProjects.length" class="crm-muted">No projects linked yet. Start one with "+ New design / quote", or open an existing design and link it from Customer &amp; Project.</div>
-                <div v-for="j in customerProjects" :key="j.id" class="crm-project">
-                  <div class="crm-project-main">
-                    <strong>{{ j.ref && !j.ref.endsWith('-NOQUOTENO') ? j.ref : j.name }}</strong>
-                    <span class="chip" :class="'chip-job-' + j.jobStatus">{{ statusMeta(j.jobStatus).label }}</span>
-                    <small>{{ j.dimensions }}<template v-if="j.address"> · {{ j.address }}</template><template v-if="j.installStart"> · install {{ new Date(j.installStart).toLocaleDateString('en-GB') }}</template><template v-if="j.updatedAt"> · updated {{ j.updatedAt.toLocaleDateString('en-GB') }}</template></small>
-                    <small v-if="j.legacy && j.insightly" class="crm-legacy">Insightly project · {{ j.insightly.stage || j.insightly.status }}<template v-if="j.insightly.completed"> · completed {{ j.insightly.completed }}</template></small>
-                    <pre v-if="j.legacy && j.insightly && j.insightly.details" class="crm-details">{{ j.insightly.details }}</pre>
-                  </div>
-                  <div class="crm-project-actions">
-                    <button class="btn btn-small" @click="openProjectsPage(j.id)">Project</button>
-                    <button class="btn btn-small" @click="openCustomerProject(j, 'design')">{{ j.hasState ? 'Open design' : 'Start design' }}</button>
-                    <button class="btn btn-small" v-if="j.hasState" @click="openCustomerProject(j, 'materials')">Materials</button>
-                  </div>
+            <!-- ACTIVITY -->
+            <div v-if="customerTab === 'activity' && currentCustomer && currentCustomer.id" class="blade-body">
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('c-upcoming')"><span class="sec-caret">{{ secOpen['c-upcoming'] === false ? '⌄' : '⌃' }}</span> Upcoming Activities <em>{{ customerUpcoming.length }}</em>
+                  <span class="sec-tools" @click.stop><a href="#" @click.prevent="customerTab = 'related'; secOpen['c-tasks'] = true">+ Add Activity</a></span>
+                </div>
+                <div v-show="secOpen['c-upcoming'] !== false" class="sec-body">
+                  <div v-if="!customerUpcoming.length" class="crm-muted">Nothing scheduled.</div>
+                  <div v-for="t in customerUpcoming" :key="t.id" class="crm-task" :class="taskDueClass(t)"><input type="checkbox" :checked="t.done" @change="toggleTask(t)"><span class="crm-task-main"><span class="crm-task-title">{{ t.title }}</span><small>{{ fmtDue(t.due) }}<template v-if="t.assignee"> · {{ t.assignee }}</template><template v-if="t.projectName"> · {{ t.projectName }}</template></small></span></div>
                 </div>
               </div>
-
-              <div class="crm-card" v-if="currentCustomer && currentCustomer.id">
-                <h3>Tasks &amp; reminders <span class="crm-muted">{{ taskListFor('customer').filter(t => !t.done).length }}</span></h3>
-                <div class="crm-task-new">
-                  <input v-model.trim="newTask.title" placeholder="Add a task or reminder…" @keydown.enter="createTask('customer')">
-                  <input type="date" v-model="newTask.due" title="Due date">
-                  <select v-model="newTask.assignee"><option value="">Me</option><option v-for="a in taskAssignees" :value="a">{{ a }}</option></select>
-                  <button class="btn btn-primary btn-small" @click="createTask('customer')" :disabled="!newTask.title">Add</button>
-                </div>
-                <div v-if="!taskListFor('customer').length" class="crm-muted">No open tasks.</div>
-                <div v-for="t in taskListFor('customer')" :key="t.id" class="crm-task" :class="[taskDueClass(t), { done: t.done }]">
-                  <input type="checkbox" :checked="t.done" @change="toggleTask(t)">
-                  <span class="crm-task-main"><span class="crm-task-title">{{ t.title }}</span><small>{{ fmtDue(t.due) }}<template v-if="t.assignee"> · {{ t.assignee }}</template></small></span>
-                  <button class="btn-tiny" @click="removeTask(t)">delete</button>
-                </div>
-                <label class="crm-muted" style="display:block;margin-top:6px;"><input type="checkbox" v-model="showDoneTasks"> show completed</label>
-              </div>
-
-              <div class="crm-card" v-if="currentCustomer && currentCustomer.id">
-                <h3>Notes &amp; activity <span class="crm-muted">{{ customerNotes.length }}</span></h3>
-                <div class="crm-note-new">
-                  <textarea v-model="newNote" rows="3" placeholder="Add a note, call summary, or what was agreed…" @keydown.meta.enter="addCustomerNote" @keydown.ctrl.enter="addCustomerNote"></textarea>
-                  <div class="crm-note-new-actions">
-                    <select v-model="newNoteKind"><option value="note">Note</option><option value="call">Call</option><option value="email">Email</option><option value="visit">Site visit</option></select>
-                    <button class="btn btn-primary btn-small" @click="addCustomerNote" :disabled="customerBusy || !newNote.trim()">Add note</button>
-                    <label class="crm-muted" style="margin-left:auto;"><input type="checkbox" v-model="showStageNotes"> show stage changes</label>
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('c-past')"><span class="sec-caret">{{ secOpen['c-past'] === false ? '⌄' : '⌃' }}</span> Past Activity <em>{{ customerPast.length }}</em></div>
+                <div v-show="secOpen['c-past'] !== false" class="sec-body">
+                  <div v-if="!customerPast.length" class="crm-muted">No activity yet.</div>
+                  <div v-for="a in customerPast" :key="a.key" class="act-row" :class="'act-' + a.kind">
+                    <span class="act-date">{{ fmtDateTime(a.when) }}</span>
+                    <span class="act-kind">{{ a.kindLabel }}</span>
+                    <span class="act-body">{{ a.text }}<small v-if="a.project"> · {{ a.project }}</small><small v-if="a.who"> · {{ a.who }}</small></span>
                   </div>
-                </div>
-                <div v-for="n in customerNotes" :key="n.id" v-show="showStageNotes || n.kind !== 'stage'" class="crm-note" :class="'kind-' + n.kind">
-                  <div class="crm-note-head"><span class="crm-note-kind">{{ n.kind }}</span> <span v-if="n.projectName" class="crm-muted">{{ n.projectName }}</span> <span class="crm-muted">{{ fmtDateTime(n.createdAt) }}<template v-if="n.author"> · {{ n.author }}</template></span> <button class="btn-tiny" @click="removeCustomerNote(n)">delete</button></div>
-                  <div v-if="n.title && n.title !== n.body" class="crm-note-title">{{ n.title }}</div>
-                  <div class="crm-note-body">{{ n.body }}</div>
                 </div>
               </div>
             </div>
@@ -2304,7 +2475,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=128"></script>
+<script type="module" src="js/app.js?v=129"></script>
 
 </body>
 </html>

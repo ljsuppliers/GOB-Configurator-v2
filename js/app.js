@@ -15,7 +15,7 @@ import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=9';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
-import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject, mergeDesignIntoProject, listTasks, addTask, updateTask, deleteTask } from './crm.js?v=5';
+import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject, mergeDesignIntoProject, listTasks, addTask, updateTask, deleteTask } from './crm.js?v=6';
 
 const { createApp } = Vue;
 
@@ -144,6 +144,14 @@ createApp({
       showStageNotes: false,
       customerPickerQuery: '',
       customerPickerOpen: false,
+      // Insightly-style record blades
+      projectTab: 'details',
+      projectEdit: false,
+      projectDescExpanded: false,
+      customerTab: 'details',
+      customerEdit: false,
+      secOpen: {},
+      newNoteOpen: false,
       // Tasks & reminders
       tasks: [],
       taskAssignees: ['Liam', 'Richard', 'Guillaume', 'Info Admin'],
@@ -266,6 +274,10 @@ createApp({
       else sorted.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
       return sorted;
     },
+    projectUpcoming() { return this.taskListFor('project').filter((t) => !t.done); },
+    projectPast() { return this.activityRows(this.projectNotes, this.tasks.filter((t) => this.currentProject && t.projectId === this.currentProject.id)); },
+    customerUpcoming() { return this.taskListFor('customer').filter((t) => !t.done); },
+    customerPast() { return this.activityRows(this.customerNotes, this.tasks.filter((t) => this.currentCustomer && t.customerId === this.currentCustomer.id)); },
     homeTasks() {
       const me = (this.userName() || '').toLowerCase();
       let list = this.tasks.filter((t) => !t.done);
@@ -674,6 +686,7 @@ createApp({
       const c = this.customers.find((x) => x.id === id) || (this.cloudReady ? await getCustomer(id) : null);
       if (!c) { this.customerStatus = 'Customer not found'; return; }
       this.currentCustomer = c;
+      this.customerEdit = false; this.newNoteOpen = false;
       this.customerDraft = JSON.parse(JSON.stringify({ ...emptyCustomer(), ...c }));
       this.customerNotes = []; this.customerFiles = [];
       this.customerStatus = '';
@@ -685,6 +698,7 @@ createApp({
     },
     newCustomer(prefill = {}) {
       this.currentCustomer = { id: null, name: '' };
+      this.customerEdit = true; this.customerTab = 'details';
       this.customerDraft = { ...emptyCustomer(), ...prefill };
       this.customerNotes = []; this.customerFiles = [];
       this.customerStatus = '';
@@ -879,6 +893,16 @@ createApp({
       if (!this.orderRef.trim()) { this.orderRefManual = false; this.orderRef = this.defaultOrderRef(); }
       this.rebuildOrders();
     },
+    /* ───────────── BLADE HELPERS ───────────── */
+    toggleSec(k) { this.secOpen[k] = this.secOpen[k] === false; },
+    fmtDateOnly(d) { if (!d) return ''; const x = d instanceof Date ? d : new Date(d); return isNaN(x) ? String(d) : x.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }); },
+    fmtSize(n) { if (!n) return ''; return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; },
+    activityRows(notes, tasks) {
+      const rows = [];
+      for (const n of notes) rows.push({ key: 'n' + n.id, kind: n.kind || 'note', kindLabel: n.kind === 'stage' ? 'Stage' : (n.kind || 'note'), when: n.createdAt || new Date(0), text: n.kind === 'stage' ? (n.title || n.body) : (n.body || n.title), who: n.author, project: n.projectName });
+      for (const t of tasks) if (t.done) rows.push({ key: 't' + t.id, kind: 'task', kindLabel: 'Task done', when: t.doneAt ? new Date(t.doneAt) : (t.updatedAt || new Date(0)), text: t.title, who: t.doneBy || t.assignee, project: t.projectName });
+      return rows.sort((a, b) => b.when - a.when);
+    },
     /* ───────────── TASKS ───────────── */
     async loadTasks() {
       if (!this.cloudReady) return;
@@ -945,6 +969,7 @@ createApp({
       const j = this.cloudDesigns.find((x) => x.id === id);
       if (!j) { this.projectStatus = 'Project not found'; return; }
       this.currentProject = j;
+      this.projectEdit = false; this.projectDescExpanded = false; this.newNoteOpen = false;
       this.projectDraft = { name: j.name || '', details: j.details || '', quoteNumber: j.quoteNumber || '', projectStatus: projectStatusOf(j), owner: j.owner || '', installStart: j.installStart || '', installEnd: j.installEnd || '', installerName: j.installerName || '' };
       this.projectNotes = []; this.projectFiles = []; this.projectStatus = '';
       this.projectCustomer = j.customerId ? (this.customers.find((c) => c.id === j.customerId) || null) : null;
