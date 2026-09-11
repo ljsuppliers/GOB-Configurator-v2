@@ -7,5 +7,5 @@
 //   (no redirect URI needed for the token flow). Enable the Gmail API.
 //   OAuth consent screen: add liam@gardenofficebuildings.co.uk as a test user
 //   (or publish the app). Then paste the client ID below and redeploy.
-export const GOOGLE_WEB_CLIENT_ID = '';
+export const GOOGLE_WEB_CLIENT_ID = '626901522350-fb1tfe9o9bfkhak6023tcb6lvvlh8jf2.apps.googleusercontent.com';
 export const SENDER_EMAIL = 'liam@gardenofficebuildings.co.uk';

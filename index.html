@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=22">
+  <link rel="stylesheet" href="css/app.css?v=23">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -13,8 +13,27 @@
 <div id="app" v-cloak>
 
   <!-- Loading state -->
-  <div v-if="!loaded" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial;">
+  <div v-if="!loaded || !authReady" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial;">
     <p style="color:#666;">Loading GOB Configurator...</p>
+  </div>
+
+  <!-- Staff login -->
+  <div v-else-if="!user" class="login-screen">
+    <form class="login-card" @submit.prevent="loginEmailPassword">
+      <img src="assets/logo.png" alt="Garden Office Buildings" class="login-logo">
+      <h1>GOB Configurator &amp; CRM</h1>
+      <p class="login-sub">Staff sign-in. Use your @gardenofficebuildings.co.uk Google account.</p>
+      <button type="button" class="btn-google" @click="loginGoogle" :disabled="loginBusy">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.5 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.2 5.5-4.7 7.2l7.5 5.8c4.4-4 7-10 7-17.5z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.2 0 11.6-2 15.5-5.5l-7.5-5.8c-2.1 1.4-4.8 2.3-8 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg>
+        Sign in with Google
+      </button>
+      <div class="login-or">or with email and password</div>
+      <label>Email <input type="email" v-model.trim="loginEmail" autocomplete="username" placeholder="you@gardenofficebuildings.co.uk"></label>
+      <label>Password <input type="password" v-model="loginPassword" autocomplete="current-password"></label>
+      <button type="submit" class="btn btn-primary login-submit" :disabled="loginBusy">Sign in</button>
+      <button type="button" class="login-link" @click="loginForgot">Forgotten password</button>
+      <p v-if="loginError" class="login-error">{{ loginError }}</p>
+    </form>
   </div>
 
   <!-- Main app -->
@@ -25,7 +44,8 @@
       <img src="assets/logo.png" alt="Garden Office Buildings" class="header-logo">
       <span class="header-title">GOB Configurator</span>
       <div class="header-actions">
-        <button class="btn btn-materials" @click="(materialsPage || installerPage) ? (materialsPage = false, installerPage = false) : openMaterialsPage()">{{ (materialsPage || installerPage) ? '← Back to design' : 'Materials & Orders' }}</button>
+        <button class="btn btn-crm" :class="{ active: customersPage }" @click="customersPage ? closeCustomersPage() : openCustomersPage()" title="Customers, projects, notes and documents (replaces Insightly)">{{ customersPage ? '← Back to design' : 'Customers' }}</button>
+        <button class="btn btn-materials" @click="(materialsPage || installerPage) ? (materialsPage = false, installerPage = false, customersPage = false) : openMaterialsPage()">{{ (materialsPage || installerPage) ? '← Back to design' : 'Materials & Orders' }}</button>
         <button class="btn" @click="newJob" title="Clear the screen and start a new design">New</button>
         <button class="btn" @click="saveConfig">Save</button>
         <button class="btn" @click="loadConfig">Load</button>
@@ -39,11 +59,16 @@
             <button @click="printDrawing">Print Drawing</button>
           </div>
         </div>
+        <div class="user-chip" :title="user && user.email">
+          <span class="user-avatar">{{ (userName() || '?')[0].toUpperCase() }}</span>
+          <span class="user-name">{{ userName() }}</span>
+          <button class="btn btn-small" @click="logout" title="Sign out">Sign out</button>
+        </div>
       </div>
     </header>
 
     <!-- ─── MAIN 3-PANEL LAYOUT ─── -->
-    <main class="main-content" v-show="!materialsPage && !installerPage">
+    <main class="main-content" v-show="!materialsPage && !installerPage && !customersPage">
 
       <!-- LEFT: Config Panel -->
       <aside class="config-panel">
@@ -122,6 +147,26 @@
         <!-- Customer & Project -->
         <div class="config-section">
           <h4>Customer & Project</h4>
+          <div class="cust-link" v-if="cloudReady">
+            <template v-if="designCustomer">
+              <span class="cust-link-label">Customer record</span>
+              <a href="#" class="cust-link-name" @click.prevent="openCustomersPage(designCustomer.id)">{{ designCustomer.name }}</a>
+              <span class="cust-link-meta">{{ designCustomer.postcode || designCustomer.email || '' }}</span>
+              <button type="button" class="btn-tiny" @click="unlinkDesignCustomer" title="Unlink this design from the customer record">unlink</button>
+            </template>
+            <template v-else>
+              <span class="cust-link-label">Customer record</span>
+              <button type="button" class="btn-tiny" @click="customerPickerOpen = !customerPickerOpen">{{ customerPickerOpen ? 'close' : 'link existing…' }}</button>
+              <button type="button" class="btn-tiny" @click="createCustomerFromDesign" :disabled="!state.customer.name" title="Create a customer record from the name/address below and link it">create from details</button>
+              <div v-if="customerPickerOpen" class="cust-picker">
+                <input type="text" v-model="customerPickerQuery" placeholder="Search name, email, postcode…" autofocus>
+                <div v-if="!customerPickerResults.length" class="cust-picker-empty">{{ customers.length ? 'No matches' : 'No customers yet' }}</div>
+                <button type="button" v-for="c in customerPickerResults" :key="c.id" class="cust-picker-row" @click="linkDesignToCustomer(c)">
+                  <strong>{{ c.name }}</strong> <span>{{ [c.postcode, c.email].filter(Boolean).join(' · ') }}</span>
+                </button>
+              </div>
+            </template>
+          </div>
           <label>Name <input type="text" v-model="state.customer.name" placeholder="Full name"></label>
           <label>Address <input type="text" v-model="state.customer.address" placeholder="Full address"></label>
           <label>Sales Rep
@@ -955,6 +1000,137 @@
 
 
     <!-- ─── MATERIALS & ORDERS: FULL PAGE ─── -->
+<!-- ─── CUSTOMERS (CRM) PAGE ─── -->
+    <section v-if="customersPage" class="crm-page">
+      <aside class="crm-list">
+        <div class="crm-list-head">
+          <input type="search" v-model="customerSearch" placeholder="Search customers… (name, email, phone, postcode)" class="crm-search">
+          <button class="btn btn-primary btn-small" @click="newCustomer()">+ New</button>
+        </div>
+        <div class="crm-filters">
+          <button :class="{ on: customerFilter === 'all' }" @click="customerFilter = 'all'">All <span>{{ customers.length }}</span></button>
+          <button :class="{ on: customerFilter === 'active' }" @click="customerFilter = 'active'">Live jobs</button>
+          <button :class="{ on: customerFilter === 'projects' }" @click="customerFilter = 'projects'">With projects</button>
+          <button class="crm-reload" @click="loadCustomers" title="Reload">↻</button>
+        </div>
+        <div v-if="customersLoading" class="crm-empty">Loading…</div>
+        <div v-else-if="!filteredCustomers.length" class="crm-empty">{{ customers.length ? 'No customers match' : 'No customers yet. Import from Insightly or click + New.' }}</div>
+        <div v-else class="crm-rows">
+          <div v-for="c in filteredCustomers" :key="c.id" class="crm-row" :class="{ current: currentCustomer && currentCustomer.id === c.id }" @click="selectCustomer(c.id)">
+            <span class="crm-avatar">{{ customerInitials(c) }}</span>
+            <span class="crm-row-main"><strong>{{ c.name }}</strong><small>{{ [c.town, c.postcode].filter(Boolean).join(' ') || c.email || c.phone || '' }}</small></span>
+            <span class="crm-row-count" v-if="projectCountFor(c.id)">{{ projectCountFor(c.id) }}</span>
+          </div>
+        </div>
+      </aside>
+
+      <div class="crm-main">
+        <div v-if="!customerDraft" class="crm-blank">
+          <h2>Customers</h2>
+          <p>Every customer in one place: contact details, every quote and project from the configurator, notes and documents. Pick a customer on the left or create a new one.</p>
+        </div>
+        <template v-else>
+          <div class="crm-head">
+            <span class="crm-avatar big">{{ customerInitials(customerDraft) }}</span>
+            <div class="crm-head-main">
+              <h2>{{ customerDraft.name || 'New customer' }}</h2>
+              <div class="crm-head-meta">
+                <span v-if="customerDraft.email"><a :href="'mailto:' + customerDraft.email">{{ customerDraft.email }}</a></span>
+                <span v-if="customerDraft.phone"><a :href="'tel:' + customerDraft.phone">{{ customerDraft.phone }}</a></span>
+                <span v-if="customerDraft.mobile && customerDraft.mobile !== customerDraft.phone"><a :href="'tel:' + customerDraft.mobile">{{ customerDraft.mobile }}</a></span>
+                <span v-if="customerDraft.postcode">{{ customerDraft.postcode }}</span>
+                <span v-if="currentCustomer && currentCustomer.insightlyContactId" class="crm-tag" title="Imported from Insightly">Insightly</span>
+              </div>
+            </div>
+            <div class="crm-head-actions">
+              <button class="btn btn-primary" @click="newDesignForCustomer" :disabled="!currentCustomer || !currentCustomer.id">+ New design / quote</button>
+              <button class="btn" @click="removeCustomer" v-if="currentCustomer && currentCustomer.id" title="Delete customer">Delete</button>
+            </div>
+          </div>
+          <p v-if="customerStatus" class="crm-status">{{ customerStatus }}</p>
+
+          <div class="crm-grid">
+            <div class="crm-col">
+              <div class="crm-card">
+                <h3>Contact details</h3>
+                <div class="crm-form">
+                  <label>First name(s) <input v-model.trim="customerDraft.firstName"></label>
+                  <label>Surname <input v-model.trim="customerDraft.lastName"></label>
+                  <label class="wide">Display name <input v-model.trim="customerDraft.name" placeholder="e.g. Dan and Hannah Smith"></label>
+                  <label>Email <input type="email" v-model.trim="customerDraft.email"></label>
+                  <label>Phone <input v-model.trim="customerDraft.phone"></label>
+                  <label>Mobile <input v-model.trim="customerDraft.mobile"></label>
+                  <label>Postcode <input v-model.trim="customerDraft.postcode" style="text-transform:uppercase"></label>
+                  <label class="wide">Address <input v-model.trim="customerDraft.address" placeholder="Street, town"></label>
+                  <label>Town <input v-model.trim="customerDraft.town"></label>
+                  <label>Source <select v-model="customerDraft.source"><option value="">—</option><option>Website</option><option>Phone</option><option>Showroom</option><option>Referral</option><option>Google</option><option>Facebook</option><option>Checkatrade</option><option>Repeat</option><option>Insightly</option><option>configurator</option></select></label>
+                  <label>Owner <select v-model="customerDraft.owner"><option value="">—</option><option>Liam</option><option>Richard</option><option>Guillaume</option></select></label>
+                  <label>Status <select v-model="customerDraft.status"><option value="active">Active</option><option value="lead">Lead</option><option value="past">Past customer</option><option value="lost">Lost</option></select></label>
+                  <label class="wide">Background / notes <textarea v-model="customerDraft.background" rows="3"></textarea></label>
+                </div>
+                <div class="crm-form-actions">
+                  <button class="btn btn-primary" @click="saveCurrentCustomer" :disabled="customerBusy">{{ currentCustomer && currentCustomer.id ? 'Save changes' : 'Create customer' }}</button>
+                  <span class="crm-muted" v-if="currentCustomer && currentCustomer.updatedAt">updated {{ fmtDateTime(currentCustomer.updatedAt) }}<template v-if="currentCustomer.updatedBy"> by {{ currentCustomer.updatedBy }}</template></span>
+                </div>
+              </div>
+
+              <div class="crm-card" v-if="currentCustomer && currentCustomer.id">
+                <h3>Documents <span class="crm-muted">{{ customerFiles.length }}</span></h3>
+                <label class="crm-upload"><input type="file" multiple @change="uploadCustomerFile" :disabled="customerBusy"> <span class="btn btn-small">Upload files…</span></label>
+                <div v-if="!customerFiles.length" class="crm-muted">No documents yet.</div>
+                <table v-else class="crm-files">
+                  <tr v-for="f in customerFiles" :key="f.id">
+                    <td><a v-if="f.url" :href="f.url" target="_blank" rel="noopener">{{ f.name }}</a><span v-else :title="f.localPath || ''">{{ f.name }} <em class="crm-muted">(pending upload)</em></span></td>
+                    <td class="crm-muted">{{ f.size ? (f.size / 1024 > 1024 ? (f.size / 1048576).toFixed(1) + ' MB' : Math.round(f.size / 1024) + ' KB') : '' }}</td>
+                    <td class="crm-muted">{{ f.projectName || '' }}</td>
+                    <td><button class="btn-tiny" @click="removeCustomerFile(f)">remove</button></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <div class="crm-col">
+              <div class="crm-card" v-if="currentCustomer && currentCustomer.id">
+                <h3>Projects &amp; quotes <span class="crm-muted">{{ customerProjects.length }}</span></h3>
+                <div v-if="!customerProjects.length" class="crm-muted">No projects linked yet. Start one with "+ New design / quote", or open an existing design and link it from Customer &amp; Project.</div>
+                <div v-for="j in customerProjects" :key="j.id" class="crm-project">
+                  <div class="crm-project-main">
+                    <strong>{{ j.ref && !j.ref.endsWith('-NOQUOTENO') ? j.ref : j.name }}</strong>
+                    <span class="chip" :class="'chip-job-' + j.jobStatus">{{ statusMeta(j.jobStatus).label }}</span>
+                    <small>{{ j.dimensions }}<template v-if="j.address"> · {{ j.address }}</template><template v-if="j.installStart"> · install {{ new Date(j.installStart).toLocaleDateString('en-GB') }}</template><template v-if="j.updatedAt"> · updated {{ j.updatedAt.toLocaleDateString('en-GB') }}</template></small>
+                    <small v-if="j.legacy && j.insightly" class="crm-legacy">Insightly project · {{ j.insightly.stage || j.insightly.status }}<template v-if="j.insightly.completed"> · completed {{ j.insightly.completed }}</template></small>
+                    <pre v-if="j.legacy && j.insightly && j.insightly.details" class="crm-details">{{ j.insightly.details }}</pre>
+                  </div>
+                  <div class="crm-project-actions">
+                    <button class="btn btn-small" @click="openCustomerProject(j, 'design')">{{ j.hasState ? 'Open design' : 'Start design' }}</button>
+                    <button class="btn btn-small" v-if="j.hasState" @click="openCustomerProject(j, 'materials')">Materials</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="crm-card" v-if="currentCustomer && currentCustomer.id">
+                <h3>Notes &amp; activity <span class="crm-muted">{{ customerNotes.length }}</span></h3>
+                <div class="crm-note-new">
+                  <textarea v-model="newNote" rows="3" placeholder="Add a note, call summary, or what was agreed…" @keydown.meta.enter="addCustomerNote" @keydown.ctrl.enter="addCustomerNote"></textarea>
+                  <div class="crm-note-new-actions">
+                    <select v-model="newNoteKind"><option value="note">Note</option><option value="call">Call</option><option value="email">Email</option><option value="visit">Site visit</option></select>
+                    <button class="btn btn-primary btn-small" @click="addCustomerNote" :disabled="customerBusy || !newNote.trim()">Add note</button>
+                    <label class="crm-muted" style="margin-left:auto;"><input type="checkbox" v-model="showStageNotes"> show stage changes</label>
+                  </div>
+                </div>
+                <div v-for="n in customerNotes" :key="n.id" v-show="showStageNotes || n.kind !== 'stage'" class="crm-note" :class="'kind-' + n.kind">
+                  <div class="crm-note-head"><span class="crm-note-kind">{{ n.kind }}</span> <span v-if="n.projectName" class="crm-muted">{{ n.projectName }}</span> <span class="crm-muted">{{ fmtDateTime(n.createdAt) }}<template v-if="n.author"> · {{ n.author }}</template></span> <button class="btn-tiny" @click="removeCustomerNote(n)">delete</button></div>
+                  <div v-if="n.title && n.title !== n.body" class="crm-note-title">{{ n.title }}</div>
+                  <div class="crm-note-body">{{ n.body }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
+
     <section v-if="materialsPage" class="materials-page">
      <div class="mp-layout">
       <!-- ===== JOB BOARD (saved jobs) ===== -->
@@ -1858,9 +2034,11 @@
 <!-- Firebase (compat SDK for cloud saves) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=122"></script>
+<script type="module" src="js/app.js?v=123"></script>
 
 </body>
 </html>

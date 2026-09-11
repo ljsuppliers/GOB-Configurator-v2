@@ -13,7 +13,9 @@ import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMater
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=9';
 import { emptyInstaller } from './bom/installers.js?v=2';
-import { SENDER_EMAIL } from './google-config.js?v=1';
+import { SENDER_EMAIL } from './google-config.js?v=2';
+import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
+import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore } from './crm.js?v=1';
 
 const { createApp } = Vue;
 
@@ -57,6 +59,7 @@ function ensureStateDefaults(state) {
   if (!state.discount) state.discount = { type: 'none', amount: 0, description: '' };
   if (!state.extras) state.extras = {};
   if (state.deckingDepth === undefined) state.deckingDepth = 400;
+  if (state.customerId === undefined) state.customerId = '';
   if (state.rooms) {
     for (const room of state.rooms) {
       if (room.labelOffsetX === undefined) room.labelOffsetX = 0;
@@ -109,6 +112,7 @@ createApp({
       jobStatuses: [
         { value: 'quote', label: 'Quote' }, { value: 'deposit', label: 'Deposit paid' }, { value: 'ordered', label: 'Materials ordered' },
         { value: 'delivered', label: 'Delivered' }, { value: 'installing', label: 'Installing' }, { value: 'complete', label: 'Complete' },
+        { value: 'cancelled', label: 'Cancelled' },
       ],
       jobsOpen: true,
       jobSearch: '',
@@ -116,6 +120,30 @@ createApp({
       stockOpen: false,
       materialsPage: false,
       installerPage: false,
+      // Staff login (Firebase Auth) - the app is hidden until a staff account is signed in
+      user: null,
+      authReady: false,
+      loginEmail: '',
+      loginPassword: '',
+      loginError: '',
+      loginBusy: false,
+      // CRM (customers replace Insightly)
+      customersPage: false,
+      customers: [],
+      customersLoading: false,
+      customerSearch: '',
+      customerFilter: 'all',
+      currentCustomer: null,
+      customerDraft: null,
+      customerNotes: [],
+      customerFiles: [],
+      customerBusy: false,
+      customerStatus: '',
+      newNote: '',
+      newNoteKind: 'note',
+      showStageNotes: false,
+      customerPickerQuery: '',
+      customerPickerOpen: false,
       printMode: 'pack',
       orderRefManual: false,
       labourOpen: true,
@@ -184,6 +212,32 @@ createApp({
   },
 
   computed: {
+    filteredCustomers() {
+      const q = (this.customerSearch || '').trim().toLowerCase();
+      let list = this.customers;
+      if (this.customerFilter === 'projects') list = list.filter((c) => this.projectCountFor(c.id) > 0);
+      if (this.customerFilter === 'active') { const act = new Set(this.cloudDesigns.filter((d) => d.customerId && !['complete', 'cancelled'].includes(d.jobStatus)).map((d) => d.customerId)); list = list.filter((c) => act.has(c.id)); }
+      if (!q) return list;
+      const terms = q.split(/\s+/).filter(Boolean);
+      return list.filter((c) => { const b = c.searchBlob || ''; return terms.every((t) => b.includes(t)); });
+    },
+    customerProjects() {
+      const c = this.currentCustomer;
+      if (!c || !c.id) return [];
+      return this.cloudDesigns.filter((d) => d.customerId === c.id).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    },
+    designCustomer() {
+      const id = this.state && this.state.customerId;
+      return id ? this.customers.find((c) => c.id === id) || null : null;
+    },
+    customerPickerResults() {
+      const q = (this.customerPickerQuery || '').trim().toLowerCase();
+      const cust = this.state.customer || {};
+      let list = this.customers;
+      if (q) { const terms = q.split(/\s+/); list = list.filter((c) => terms.every((t) => (c.searchBlob || '').includes(t))); }
+      else if (cust.name || cust.email) { list = list.map((c) => ({ c, s: matchScore(c, cust) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).map((x) => x.c); }
+      return list.slice(0, 8);
+    },
     bomMaterialCost() {
       return (this.bomLines || []).reduce((sum, l) => sum + (l.lineCost || 0), 0);
     },
@@ -462,6 +516,207 @@ createApp({
   },
 
   methods: {
+    /* ───────────── STAFF LOGIN ───────────── */
+    async afterLogin() {
+      if (this._loggedIn) return;
+      this._loggedIn = true;
+      this.loginError = '';
+      if (this.cloudReady) await this.refreshCloudDesigns();
+      await this.restoreFromUrlOrDraft();
+      if (this.cloudReady) this.loadCustomers();
+    },
+    async loginGoogle() {
+      this.loginBusy = true; this.loginError = '';
+      try { await signInWithGoogle(); } catch (e) { this.loginError = friendlyAuthError(e); }
+      this.loginBusy = false;
+    },
+    async loginEmailPassword() {
+      if (!this.loginEmail || !this.loginPassword) { this.loginError = 'Enter your email and password.'; return; }
+      this.loginBusy = true; this.loginError = '';
+      try { await signInWithEmail(this.loginEmail, this.loginPassword); this.loginPassword = ''; }
+      catch (e) { this.loginError = friendlyAuthError(e); }
+      this.loginBusy = false;
+    },
+    async loginForgot() {
+      if (!this.loginEmail) { this.loginError = 'Type your email first, then click Forgotten password.'; return; }
+      try { await sendPasswordReset(this.loginEmail); this.loginError = 'Password reset email sent to ' + this.loginEmail; }
+      catch (e) { this.loginError = friendlyAuthError(e); }
+    },
+    async logout() {
+      try { localStorage.removeItem('gob-draft-v1'); } catch (e) { /* ignore */ }
+      await signOut();
+      window.location.href = window.location.pathname;
+    },
+    userName() { return userLabel(this.user); },
+
+    /* ───────────── CRM: CUSTOMERS ───────────── */
+    async loadCustomers() {
+      if (!this.cloudReady) return;
+      this.customersLoading = true;
+      try { this.customers = await listCustomers(); }
+      catch (e) { console.error('customers', e); this.customerStatus = 'Could not load customers: ' + e.message; }
+      this.customersLoading = false;
+    },
+    async openCustomersPage(customerId) {
+      this.materialsPage = false; this.installerPage = false; this.customersPage = true;
+      if (!this.customers.length) await this.loadCustomers();
+      if (customerId) await this.selectCustomer(customerId);
+      this.syncUrl();
+      window.scrollTo(0, 0);
+    },
+    closeCustomersPage() { this.customersPage = false; this.syncUrl(); },
+    async selectCustomer(id) {
+      const c = this.customers.find((x) => x.id === id) || (this.cloudReady ? await getCustomer(id) : null);
+      if (!c) { this.customerStatus = 'Customer not found'; return; }
+      this.currentCustomer = c;
+      this.customerDraft = JSON.parse(JSON.stringify({ ...emptyCustomer(), ...c }));
+      this.customerNotes = []; this.customerFiles = [];
+      this.customerStatus = '';
+      this.syncUrl();
+      try {
+        const [notes, files] = await Promise.all([listNotes(id), listFiles(id)]);
+        if (this.currentCustomer && this.currentCustomer.id === id) { this.customerNotes = notes; this.customerFiles = files; }
+      } catch (e) { console.error('customer detail', e); }
+    },
+    newCustomer(prefill = {}) {
+      this.currentCustomer = { id: null, name: '' };
+      this.customerDraft = { ...emptyCustomer(), ...prefill };
+      this.customerNotes = []; this.customerFiles = [];
+      this.customerStatus = '';
+      this.customersPage = true; this.materialsPage = false; this.installerPage = false;
+      this.syncUrl();
+    },
+    async saveCurrentCustomer() {
+      if (!this.customerDraft) return;
+      const d = this.customerDraft;
+      if (!d.name && !d.lastName && !d.firstName) { this.customerStatus = 'Give the customer a name first'; return; }
+      this.customerBusy = true;
+      try {
+        const id = await saveCustomer(this.currentCustomer && this.currentCustomer.id, d, this.userName());
+        await this.loadCustomers();
+        await this.selectCustomer(id);
+        this.customerStatus = 'Saved';
+        this.notify('Customer saved');
+      } catch (e) { this.customerStatus = 'Save failed: ' + e.message; }
+      this.customerBusy = false;
+    },
+    async removeCustomer() {
+      const c = this.currentCustomer;
+      if (!c || !c.id) return;
+      if (this.customerProjects.length) { this.customerStatus = 'This customer has projects - unlink or delete those first'; return; }
+      if (!confirm(`Delete customer "${c.name}"? Notes and documents go with it. This cannot be undone.`)) return;
+      await deleteCustomer(c.id);
+      this.currentCustomer = null; this.customerDraft = null;
+      await this.loadCustomers();
+      this.syncUrl();
+    },
+    async addCustomerNote() {
+      const c = this.currentCustomer;
+      const body = (this.newNote || '').trim();
+      if (!c || !c.id || !body) return;
+      this.customerBusy = true;
+      try {
+        await addNote(c.id, { body, kind: this.newNoteKind }, this.userName());
+        this.newNote = '';
+        this.customerNotes = await listNotes(c.id);
+      } catch (e) { this.customerStatus = 'Note failed: ' + e.message; }
+      this.customerBusy = false;
+    },
+    async removeCustomerNote(n) {
+      const c = this.currentCustomer;
+      if (!c || !c.id || !confirm('Delete this note?')) return;
+      await deleteNote(c.id, n.id);
+      this.customerNotes = this.customerNotes.filter((x) => x.id !== n.id);
+    },
+    async uploadCustomerFile(ev) {
+      const c = this.currentCustomer;
+      const files = Array.from((ev.target && ev.target.files) || []);
+      if (!c || !c.id || !files.length) return;
+      this.customerBusy = true;
+      try {
+        for (const f of files) await uploadFile(c.id, f, this.userName());
+        this.customerFiles = await listFiles(c.id);
+        this.notify(`${files.length} file${files.length === 1 ? '' : 's'} uploaded`);
+      } catch (e) { this.customerStatus = 'Upload failed: ' + e.message; }
+      this.customerBusy = false;
+      if (ev.target) ev.target.value = '';
+    },
+    async removeCustomerFile(f) {
+      const c = this.currentCustomer;
+      if (!c || !c.id || !confirm(`Remove "${f.name}" from this customer?`)) return;
+      try {
+        if (f.storagePath && firebase.storage) await firebase.storage().ref(f.storagePath).delete().catch(() => {});
+        await deleteFileRecord(c.id, f.id);
+        this.customerFiles = this.customerFiles.filter((x) => x.id !== f.id);
+      } catch (e) { this.customerStatus = 'Remove failed: ' + e.message; }
+    },
+    customerInitials(c) {
+      const n = (c && c.name) || '';
+      return n.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '?';
+    },
+    customerById(id) { return this.customers.find((c) => c.id === id) || null; },
+    projectCountFor(customerId) { return this.cloudDesigns.filter((d) => d.customerId === customerId).length; },
+    fmtDateTime(d) {
+      if (!d) return '';
+      const x = d instanceof Date ? d : new Date(d);
+      if (isNaN(x)) return String(d);
+      return x.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + x.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    },
+    /** Open a project from the customer page: real designs load into the
+     *  designer; legacy Insightly projects (no drawing yet) start a new design
+     *  pre-filled from the customer, saved back into the same record. */
+    async openCustomerProject(job, view = 'design') {
+      if (job.legacy && !job.hasState) {
+        const c = this.currentCustomer || {};
+        this.state = ensureStateDefaults(JSON.parse(JSON.stringify(this.appData.defaults || {})));
+        this.state.customer = { ...(this.state.customer || {}), name: c.name || job.customer || '', address: [c.address, c.postcode].filter(Boolean).join(', ') || job.address || '', email: c.email || '', phone: c.phone || c.mobile || '', number: job.quoteNumber || '' };
+        this.state.customerId = c.id || job.customerId || '';
+        this.currentCloudId = job.id; this.currentCloudName = job.name;
+        this.customersPage = false; this.materialsPage = false; this.installerPage = false;
+        this.syncUrl();
+        this.notify('Started a design for ' + job.name + ' - Save keeps it on this project');
+        return;
+      }
+      await this.loadFromCloud(job);
+      this.customersPage = false;
+      if (view === 'materials') { this.ensureLabourState(); await this.generateBom(); this.materialsPage = true; this.installerPage = false; }
+      else { this.materialsPage = false; this.installerPage = false; }
+      this.syncUrl();
+      window.scrollTo(0, 0);
+    },
+    newDesignForCustomer() {
+      const c = this.currentCustomer;
+      if (!c || !c.id) return;
+      this.newJob();
+      this.state.customer = { ...(this.state.customer || {}), name: c.name || '', address: [c.address, c.postcode].filter(Boolean).join(', '), email: c.email || '', phone: c.phone || c.mobile || '' };
+      this.state.customerId = c.id;
+      this.customersPage = false;
+      this.syncUrl();
+    },
+    /** Design view: attach the open design to a customer record. */
+    async linkDesignToCustomer(c) {
+      this.state.customerId = c.id;
+      const cust = this.state.customer || (this.state.customer = {});
+      if (!cust.name) cust.name = c.name;
+      if (!cust.address) cust.address = [c.address, c.postcode].filter(Boolean).join(', ');
+      if (!cust.email) cust.email = c.email || '';
+      if (!cust.phone) cust.phone = c.phone || c.mobile || '';
+      this.customerPickerOpen = false; this.customerPickerQuery = '';
+      if (this.currentCloudId) { try { await setDesignCustomer(this.currentCloudId, c.id); } catch (e) { /* saved on next Save */ } }
+      this.notify('Linked to ' + c.name);
+    },
+    unlinkDesignCustomer() { this.state.customerId = ''; },
+    async createCustomerFromDesign() {
+      const cust = this.state.customer || {};
+      if (!cust.name) { this.notify('Type the customer name first'); return; }
+      const addr = String(cust.address || '');
+      const pc = (addr.match(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i) || [''])[0].toUpperCase();
+      try {
+        const id = await saveCustomer(null, { name: cust.name, email: cust.email || '', phone: cust.phone || '', address: addr.replace(pc, '').replace(/[,\s]+$/, ''), postcode: pc, source: 'configurator' }, this.userName());
+        await this.loadCustomers();
+        await this.linkDesignToCustomer(this.customers.find((c) => c.id === id));
+      } catch (e) { this.notify('Could not create customer: ' + e.message); }
+    },
     fmt: formatPrice,
 
     // ─── Materials & Orders ───
@@ -523,16 +778,18 @@ createApp({
     syncUrl() {
       const p = new URLSearchParams();
       if (this.currentCloudId) p.set('job', this.currentCloudId);
-      const view = this.installerPage ? 'installer' : this.materialsPage ? 'materials' : 'design';
+      const view = this.customersPage ? 'customers' : this.installerPage ? 'installer' : this.materialsPage ? 'materials' : 'design';
       if (view !== 'design') p.set('view', view);
+      if (view === 'customers') { p.delete('job'); if (this.currentCustomer && this.currentCustomer.id) p.set('customer', this.currentCustomer.id); }
       const q = p.toString();
       const url = `${window.location.pathname}${q ? '?' + q : ''}`;
       if (window.location.search !== (q ? '?' + q : '')) window.history.pushState({ job: this.currentCloudId, view }, '', url);
     },
-    applyView(view) {
-      if (view === 'materials') this.openMaterialsPage();
-      else if (view === 'installer') this.openInstallerPage();
-      else { this.materialsPage = false; this.installerPage = false; }
+    applyView(view, customerId) {
+      if (view === 'customers') this.openCustomersPage(customerId || null);
+      else if (view === 'materials') { this.customersPage = false; this.openMaterialsPage(); }
+      else if (view === 'installer') { this.customersPage = false; this.openInstallerPage(); }
+      else { this.materialsPage = false; this.installerPage = false; this.customersPage = false; }
     },
     async restoreFromUrlOrDraft() {
       const p = new URLSearchParams(window.location.search);
@@ -562,13 +819,13 @@ createApp({
       } catch (e) { console.warn('restore failed', e); }
       finally { this._restoring = false; }
       if (p.get('print') === 'agreement') this.printMode = 'agreement';
-      this.applyView(view);
+      this.applyView(view, p.get('customer'));
       window.addEventListener('popstate', (ev) => {
         const q = new URLSearchParams(window.location.search);
         const v = q.get('view') || 'design';
         const j = q.get('job');
-        if (j && j !== this.currentCloudId) this.loadFromCloud({ id: j, name: '' }).then(() => this.applyView(v));
-        else this.applyView(v);
+        if (j && j !== this.currentCloudId) this.loadFromCloud({ id: j, name: '' }).then(() => this.applyView(v, q.get('customer')));
+        else this.applyView(v, q.get('customer'));
       });
     },
     newJob() {
@@ -576,7 +833,7 @@ createApp({
       this.currentCloudId = null; this.currentCloudName = ''; this.orderRef = ''; this.orderRefManual = false;
       this.bomLines = []; this.orders = [];
       try { localStorage.removeItem('gob-draft-v1'); } catch (e) { /* ignore */ }
-      this.materialsPage = false; this.installerPage = false;
+      this.materialsPage = false; this.installerPage = false; this.customersPage = false;
       this.syncUrl();
     },
     async openJob(job) {
@@ -584,7 +841,7 @@ createApp({
       this.ensureLabourState();
       this.orderRefManual = false;
       await this.generateBom();
-      this.materialsPage = true; this.installerPage = false;
+      this.materialsPage = true; this.installerPage = false; this.customersPage = false;
       window.scrollTo(0, 0);
     },
     async saveJob() {
@@ -2072,8 +2329,7 @@ createApp({
       this.appData = { prices, components, cladding, emailTemplates };
       this.state = ensureStateDefaults(JSON.parse(JSON.stringify(defaults)));
       this.appData.defaults = defaults;
-      // URL + draft restore runs after the cloud connects (see below)
-      this.$nextTick(() => setTimeout(() => this.restoreFromUrlOrDraft(), 300));
+      // URL + draft restore runs once a staff user is signed in (see afterLogin)
       
       // Ensure survey and site objects exist
       if (!this.state.survey) {
@@ -2202,16 +2458,28 @@ createApp({
       this.loaded = true;
       console.log('GOB Configurator v2 loaded');
 
-      // Initialize Firebase cloud saves
+      // Initialize Firebase cloud saves + staff login. Firestore reads wait for the login.
       try {
         const fbReady = initFirebase();
         this.cloudReady = fbReady && isFirebaseReady();
-        if (this.cloudReady) {
-          this.refreshCloudDesigns();
-        }
       } catch (err) {
         console.warn('Firebase init skipped:', err.message);
         this.cloudReady = false;
+      }
+      if (authAvailable()) {
+        // If the auth SDK never reports (blocked network, odd browser), show the login screen anyway.
+        setTimeout(() => { if (!this.authReady) this.authReady = true; }, 6000);
+        initAuth((u, err) => {
+          this.user = u;
+          this.authReady = true;
+          if (err) this.loginError = err;
+          if (u) this.afterLogin();
+        });
+      } else {
+        // No auth SDK (offline / file:// testing): behave as before, no cloud.
+        this.authReady = true;
+        this.user = { email: 'offline', displayName: 'Offline' };
+        this.afterLogin();
       }
     } catch (err) {
       console.error('Failed to initialise:', err);

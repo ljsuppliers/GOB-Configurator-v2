@@ -1,0 +1,10 @@
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script>
+console.log('has firebase', !!window.firebase, 'has auth', !!(window.firebase && firebase.auth));
+try {
+firebase.initializeApp({apiKey:"AIzaSyAQ30H9QGeQMylmymVc0RBJ6jKSby3IUBc",authDomain:"gob-configurator-76940.firebaseapp.com",projectId:"gob-configurator-76940"});
+firebase.auth().onAuthStateChanged(u=>console.log('AUTH STATE', u ? u.email : 'null'), e=>console.log('AUTH ERR', e.message));
+} catch(e) { console.log('THROW', e.message); }
+</script>

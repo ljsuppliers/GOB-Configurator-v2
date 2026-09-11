@@ -67,6 +67,8 @@ function extractMetadata(state) {
     ordersOrdered: orders.filter((o) => o.status).length,
     ordersDelivered: orders.filter((o) => o.status === 'delivered').length,
     deliveries,
+    customerId: state.customerId || '',
+    hasState: true,
   };
 }
 
@@ -116,6 +118,10 @@ export async function listDesigns() {
       ordersOrdered: d.ordersOrdered || 0,
       ordersDelivered: d.ordersDelivered || 0,
       deliveries: d.deliveries || [],
+      customerId: d.customerId || '',
+      legacy: !!d.legacy,
+      hasState: d.hasState !== undefined ? !!d.hasState : !!(d.state && d.state.width),
+      insightly: d.insightly || null,
       savedAt: d.savedAt?.toDate?.() || null,
       updatedAt: d.updatedAt?.toDate?.() || null,
     };
@@ -126,7 +132,9 @@ export async function loadDesign(docId) {
   if (!designsCollection) throw new Error('Firebase not initialised');
   const doc = await designsCollection.doc(docId).get();
   if (!doc.exists) throw new Error('Design not found');
-  return doc.data().state;
+  const st = doc.data().state;
+  if (!st || !st.width) throw new Error('This project has no drawing yet - open it from the customer page to start one');
+  return st;
 }
 
 export async function deleteDesign(docId) {
