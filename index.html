@@ -1887,7 +1887,7 @@
     </section>
 
     <!-- ─── BOTTOM PANEL ─── -->
-    <div class="bottom-panel" v-show="!materialsPage && !installerPage">
+    <div class="bottom-panel" v-show="!materialsPage && !installerPage && !customersPage && !projectsPage && !homePage">
       <div class="tab-bar">
         <button :class="{ active: activeBottomTab === 'email' }" @click="activeBottomTab = 'email'">Email Drafter</button>
         <button :class="{ active: activeBottomTab === 'survey' }" @click="activeBottomTab = 'survey'">Site Visit Notes</button>
