@@ -144,6 +144,9 @@ createApp({
       showStageNotes: false,
       customerPickerQuery: '',
       customerPickerOpen: false,
+      // Home dashboard
+      homePage: false,
+      homeSearch: '',
       // Projects (Insightly-style pipeline over the designs collection)
       projectsPage: false,
       pipeline: PIPELINE,
@@ -256,6 +259,43 @@ createApp({
       else if (this.projectSort === 'quote') sorted.sort((a, b) => String(b.quoteNumber || '').localeCompare(String(a.quoteNumber || ''), undefined, { numeric: true }));
       else sorted.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
       return sorted;
+    },
+    pipelineGroups() {
+      const open = this.cloudDesigns.filter((j) => !['complete', 'cancelled'].includes(j.jobStatus));
+      const groups = [
+        { key: 'quote', label: 'Quotes out', from: 1, to: 1 }, { key: 'deposit', label: 'Deposit & design', from: 2, to: 8 },
+        { key: 'ordering', label: 'Ordering', from: 9, to: 12 }, { key: 'delivery', label: 'Delivery', from: 13, to: 14 },
+        { key: 'install', label: 'Installing', from: 15, to: 16 }, { key: 'closing', label: 'Invoicing & review', from: 17, to: 18 },
+      ];
+      return groups.map((g) => ({ ...g, stages: g.from === g.to ? `stage ${g.from}` : `stages ${g.from}-${g.to}`, count: open.filter((j) => { const s = stageOf(j); return s >= g.from && s <= g.to; }).length }));
+    },
+    completedThisYear() {
+      const y = new Date().getFullYear();
+      return this.cloudDesigns.filter((j) => j.jobStatus === 'complete' && ((j.insightly && j.insightly.completed && j.insightly.completed.startsWith(String(y))) || (!(j.insightly && j.insightly.completed) && j.updatedAt && j.updatedAt.getFullYear() === y))).length;
+    },
+    upcoming() {
+      const now = Date.now() - 86400000, end = Date.now() + 14 * 86400000, out = [];
+      for (const j of this.cloudDesigns) {
+        if (['complete', 'cancelled'].includes(j.jobStatus)) continue;
+        const add = (d, what) => { const t = new Date(d); if (!isNaN(t) && t >= now && t <= end) out.push({ key: j.id + what, id: j.id, name: this.projectTitle(j), date: t, what }); };
+        if (j.installStart) add(j.installStart, 'Delivery & install start' + (j.installerName ? ' · ' + j.installerName : ''));
+        if (j.installEnd) add(j.installEnd, 'Install finish');
+        for (const d of j.deliveries || []) if (d.date) add(d.date, `${d.supplier} delivery${d.status ? ' · ' + d.status : ''}`);
+      }
+      return out.sort((a, b) => a.date - b.date).slice(0, 12);
+    },
+    staleProjects() {
+      const cutoff = Date.now() - 14 * 86400000;
+      return this.cloudDesigns.filter((j) => !['complete', 'cancelled'].includes(j.jobStatus) && (!j.updatedAt || j.updatedAt < cutoff)).sort((a, b) => (a.updatedAt || 0) - (b.updatedAt || 0)).slice(0, 8);
+    },
+    recentProjects() { return [...this.cloudDesigns].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).slice(0, 8); },
+    homeResults() {
+      const q = (this.homeSearch || '').trim().toLowerCase();
+      if (!q) return [];
+      const terms = q.split(/\s+/);
+      const cs = this.customers.filter((c) => terms.every((t) => (c.searchBlob || '').includes(t))).slice(0, 5).map((c) => ({ key: 'c' + c.id, type: 'customer', id: c.id, label: c.name, sub: [c.postcode, c.email].filter(Boolean).join(' · ') }));
+      const ps = this.cloudDesigns.filter((j) => terms.every((t) => [j.name, j.ref, j.customer, j.address, j.quoteNumber].filter(Boolean).join(' ').toLowerCase().includes(t))).slice(0, 6).map((j) => ({ key: 'p' + j.id, type: 'project', id: j.id, label: this.projectTitle(j), sub: [j.customer, stageName(stageOf(j))].filter(Boolean).join(' · ') }));
+      return [...ps, ...cs];
     },
     attachableDesigns() {
       const j = this.currentProject;
@@ -610,7 +650,7 @@ createApp({
       this.customersLoading = false;
     },
     async openCustomersPage(customerId) {
-      this.materialsPage = false; this.installerPage = false; this.projectsPage = false; this.customersPage = true;
+      this.materialsPage = false; this.installerPage = false; this.projectsPage = false; this.homePage = false; this.customersPage = true;
       if (!this.customers.length) await this.loadCustomers();
       if (customerId) await this.selectCustomer(customerId);
       this.syncUrl();
@@ -635,7 +675,7 @@ createApp({
       this.customerDraft = { ...emptyCustomer(), ...prefill };
       this.customerNotes = []; this.customerFiles = [];
       this.customerStatus = '';
-      this.customersPage = true; this.materialsPage = false; this.installerPage = false; this.projectsPage = false;
+      this.customersPage = true; this.materialsPage = false; this.installerPage = false; this.projectsPage = false; this.homePage = false;
       this.syncUrl();
     },
     async saveCurrentCustomer() {
@@ -826,13 +866,22 @@ createApp({
       if (!this.orderRef.trim()) { this.orderRefManual = false; this.orderRef = this.defaultOrderRef(); }
       this.rebuildOrders();
     },
+    /* ───────────── HOME ───────────── */
+    async openHome() {
+      this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.projectsPage = false; this.homePage = true;
+      if (this.cloudReady && !this.cloudDesigns.length) await this.refreshCloudDesigns();
+      if (this.cloudReady && !this.customers.length) await this.loadCustomers();
+      this.syncUrl(); window.scrollTo(0, 0);
+    },
+    closeHome() { this.homePage = false; this.syncUrl(); },
+    homeGo() { const r = this.homeResults[0]; if (r) (r.type === 'customer' ? this.openCustomersPage(r.id) : this.openProjectsPage(r.id)); },
     /* ───────────── CRM: PROJECTS ───────────── */
     stageOf(j) { return stageOf(j); },
     stageName(o) { return stageName(o); },
     projectStatusOf(j) { return projectStatusOf(j); },
     projectTitle(j) { return j.name || j.ref || 'Untitled project'; },
     async openProjectsPage(projectId) {
-      this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.projectsPage = true;
+      this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.homePage = false; this.projectsPage = true;
       if (this.cloudReady && !this.cloudDesigns.length) await this.refreshCloudDesigns();
       if (this.cloudReady && !this.customers.length) await this.loadCustomers();
       if (projectId) await this.selectProject(projectId);
@@ -979,25 +1028,27 @@ createApp({
     syncUrl() {
       const p = new URLSearchParams();
       if (this.currentCloudId) p.set('job', this.currentCloudId);
-      const view = this.projectsPage ? 'projects' : this.customersPage ? 'customers' : this.installerPage ? 'installer' : this.materialsPage ? 'materials' : 'design';
+      const view = this.homePage ? 'home' : this.projectsPage ? 'projects' : this.customersPage ? 'customers' : this.installerPage ? 'installer' : this.materialsPage ? 'materials' : 'design';
       if (view !== 'design') p.set('view', view);
       if (view === 'customers') { p.delete('job'); if (this.currentCustomer && this.currentCustomer.id) p.set('customer', this.currentCustomer.id); }
       if (view === 'projects') { p.delete('job'); if (this.currentProject && this.currentProject.id) p.set('project', this.currentProject.id); }
+      if (view === 'home') p.delete('job');
       const q = p.toString();
       const url = `${window.location.pathname}${q ? '?' + q : ''}`;
       if (window.location.search !== (q ? '?' + q : '')) window.history.pushState({ job: this.currentCloudId, view }, '', url);
     },
     applyView(view, customerId, projectId) {
-      if (view === 'projects') this.openProjectsPage(projectId || null);
+      if (view === 'home') this.openHome();
+      else if (view === 'projects') this.openProjectsPage(projectId || null);
       else if (view === 'customers') this.openCustomersPage(customerId || null);
       else if (view === 'materials') { this.customersPage = false; this.openMaterialsPage(); }
       else if (view === 'installer') { this.customersPage = false; this.openInstallerPage(); }
-      else { this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.projectsPage = false; }
+      else { this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.projectsPage = false; this.homePage = false; }
     },
     async restoreFromUrlOrDraft() {
       const p = new URLSearchParams(window.location.search);
       const jobId = p.get('job');
-      const view = p.get('view') || (p.get('materials') === '1' ? 'materials' : p.get('installer') === '1' ? 'installer' : 'design');
+      const view = p.get('view') || (p.get('materials') === '1' ? 'materials' : p.get('installer') === '1' ? 'installer' : (jobId || !this.cloudReady) ? 'design' : 'home');
       this._restoring = true;
       try {
         if (jobId && this.cloudReady) {
@@ -1036,7 +1087,7 @@ createApp({
       this.currentCloudId = null; this.currentCloudName = ''; this.orderRef = ''; this.orderRefManual = false;
       this.bomLines = []; this.orders = [];
       try { localStorage.removeItem('gob-draft-v1'); } catch (e) { /* ignore */ }
-      this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.projectsPage = false;
+      this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.projectsPage = false; this.homePage = false;
       this.syncUrl();
     },
     async openJob(job) {
@@ -1044,7 +1095,7 @@ createApp({
       this.ensureLabourState();
       this.orderRefManual = false;
       await this.generateBom();
-      this.materialsPage = true; this.installerPage = false; this.customersPage = false; this.projectsPage = false;
+      this.materialsPage = true; this.installerPage = false; this.customersPage = false; this.projectsPage = false; this.homePage = false;
       window.scrollTo(0, 0);
     },
     async saveJob() {
@@ -2659,7 +2710,7 @@ createApp({
       });
 
       this.loaded = true;
-      console.log('GOB Configurator v2 loaded');
+      console.log('GOB CRM loaded');
 
       // Initialize Firebase cloud saves + staff login. Firestore reads wait for the login.
       try {

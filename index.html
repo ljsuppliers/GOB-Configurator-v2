@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GOB Configurator</title>
-  <link rel="stylesheet" href="css/app.css?v=24">
+  <title>GOB CRM</title>
+  <link rel="stylesheet" href="css/app.css?v=25">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
@@ -21,7 +21,7 @@
   <div v-else-if="!user" class="login-screen">
     <form class="login-card" @submit.prevent="loginEmailPassword">
       <img src="assets/logo.png" alt="Garden Office Buildings" class="login-logo">
-      <h1>GOB Configurator &amp; CRM</h1>
+      <h1>GOB CRM</h1>
       <p class="login-sub">Staff sign-in. Use your @gardenofficebuildings.co.uk Google account.</p>
       <button type="button" class="btn-google" @click="loginGoogle" :disabled="loginBusy">
         <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.5 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.2 5.5-4.7 7.2l7.5 5.8c4.4-4 7-10 7-17.5z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.2 0 11.6-2 15.5-5.5l-7.5-5.8c-2.1 1.4-4.8 2.3-8 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg>
@@ -42,8 +42,9 @@
     <!-- ─── HEADER ─── -->
     <header class="header">
       <img src="assets/logo.png" alt="Garden Office Buildings" class="header-logo">
-      <span class="header-title">GOB Configurator</span>
+      <span class="header-title">GOB CRM</span>
       <div class="header-actions">
+        <button class="btn btn-crm" :class="{ active: homePage }" @click="homePage ? closeHome() : openHome()" title="Dashboard">{{ homePage ? '← Back to design' : 'Home' }}</button>
         <button class="btn btn-crm" :class="{ active: projectsPage }" @click="projectsPage ? closeProjectsPage() : openProjectsPage()" title="Every project on the pipeline (replaces Insightly Projects)">{{ projectsPage ? '← Back to design' : 'Projects' }}</button>
         <button class="btn btn-crm" :class="{ active: customersPage }" @click="customersPage ? closeCustomersPage() : openCustomersPage()" title="Customers, notes and documents (replaces Insightly Contacts)">{{ customersPage ? '← Back to design' : 'Customers' }}</button>
         <button class="btn btn-materials" @click="(materialsPage || installerPage) ? (materialsPage = false, installerPage = false, customersPage = false) : openMaterialsPage()">{{ (materialsPage || installerPage) ? '← Back to design' : 'Materials & Orders' }}</button>
@@ -69,7 +70,7 @@
     </header>
 
     <!-- ─── MAIN 3-PANEL LAYOUT ─── -->
-    <main class="main-content" v-show="!materialsPage && !installerPage && !customersPage && !projectsPage">
+    <main class="main-content" v-show="!materialsPage && !installerPage && !customersPage && !projectsPage && !homePage">
 
       <!-- LEFT: Config Panel -->
       <aside class="config-panel">
@@ -1001,6 +1002,63 @@
 
 
     <!-- ─── MATERIALS & ORDERS: FULL PAGE ─── -->
+<!-- ─── HOME / DASHBOARD ─── -->
+    <section v-if="homePage" class="home-page">
+      <div class="home-head">
+        <div>
+          <h2>Good {{ new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening' }}, {{ userName() }}</h2>
+          <p class="crm-muted">{{ new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }} · {{ projectCounts.open }} open projects · {{ customers.length }} customers</p>
+        </div>
+        <div class="home-actions">
+          <input type="search" v-model="homeSearch" placeholder="Find a customer or project…" class="crm-search home-search" @keydown.enter="homeGo">
+          <button class="btn btn-primary" @click="newJob(); homePage = false; syncUrl()">+ New quote / design</button>
+          <button class="btn" @click="openProjectsPage(); newProjectOpen = true">+ New project</button>
+          <button class="btn" @click="newCustomer()">+ New customer</button>
+        </div>
+      </div>
+      <div v-if="homeSearch.trim() && homeResults.length" class="crm-card home-results">
+        <button v-for="r in homeResults" :key="r.key" class="cust-picker-row" @click="r.type === 'customer' ? openCustomersPage(r.id) : openProjectsPage(r.id)"><strong>{{ r.label }}</strong> <span>{{ r.type === 'customer' ? 'Customer' : 'Project' }} · {{ r.sub }}</span></button>
+      </div>
+
+      <div class="home-grid">
+        <div class="crm-card home-pipeline">
+          <h3>Pipeline</h3>
+          <div class="home-stages">
+            <button v-for="g in pipelineGroups" :key="g.key" class="home-stage" @click="projectFilter = 'open'; projectSort = 'stage'; projectSearch = ''; openProjectsPage()">
+              <span class="home-stage-n">{{ g.count }}</span><span class="home-stage-label">{{ g.label }}</span><small>{{ g.stages }}</small>
+            </button>
+          </div>
+          <div class="home-totals"><span>{{ projectCounts.complete }} completed</span><span>{{ completedThisYear }} completed this year</span><span>{{ projectCounts.cancelled }} cancelled</span></div>
+        </div>
+
+        <div class="crm-card">
+          <h3>Next 14 days <span class="crm-muted">deliveries &amp; installs</span></h3>
+          <div v-if="!upcoming.length" class="crm-muted">Nothing scheduled. Set delivery and start dates on a project.</div>
+          <div v-for="u in upcoming" :key="u.key" class="home-row" @click="openProjectsPage(u.id)">
+            <span class="home-date">{{ u.date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) }}</span>
+            <span class="home-row-main"><strong>{{ u.name }}</strong><small>{{ u.what }}</small></span>
+          </div>
+        </div>
+
+        <div class="crm-card">
+          <h3>Needs attention <span class="crm-muted">open, not touched for 14+ days</span></h3>
+          <div v-if="!staleProjects.length" class="crm-muted">Everything open has been updated in the last two weeks.</div>
+          <div v-for="j in staleProjects" :key="j.id" class="home-row" @click="openProjectsPage(j.id)">
+            <span class="crm-stage-dot" :class="'chip-job-' + j.jobStatus">{{ stageOf(j) }}</span>
+            <span class="home-row-main"><strong>{{ projectTitle(j) }}</strong><small>{{ stageName(stageOf(j)) }} · {{ j.updatedAt ? Math.round((Date.now() - j.updatedAt) / 86400000) + ' days' : 'never' }}</small></span>
+          </div>
+        </div>
+
+        <div class="crm-card">
+          <h3>Recent activity</h3>
+          <div v-for="j in recentProjects" :key="j.id" class="home-row" @click="openProjectsPage(j.id)">
+            <span class="crm-stage-dot" :class="'chip-job-' + j.jobStatus">{{ stageOf(j) }}</span>
+            <span class="home-row-main"><strong>{{ projectTitle(j) }}</strong><small>{{ j.customer }} · {{ stageName(stageOf(j)) }} · {{ j.updatedAt ? fmtDateTime(j.updatedAt) : '' }}</small></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
 <!-- ─── PROJECTS (CRM) PAGE ─── -->
     <section v-if="projectsPage" class="crm-page">
       <aside class="crm-list">
@@ -2195,7 +2253,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=126"></script>
+<script type="module" src="js/app.js?v=127"></script>
 
 </body>
 </html>
