@@ -15,7 +15,7 @@ import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=9';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
-import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore } from './crm.js?v=1';
+import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject } from './crm.js?v=2';
 
 const { createApp } = Vue;
 
@@ -144,6 +144,25 @@ createApp({
       showStageNotes: false,
       customerPickerQuery: '',
       customerPickerOpen: false,
+      // Projects (Insightly-style pipeline over the designs collection)
+      projectsPage: false,
+      pipeline: PIPELINE,
+      projectStatuses: PROJECT_STATUSES,
+      projectSearch: '',
+      projectFilter: 'open',
+      projectSort: 'updated',
+      currentProject: null,
+      projectDraft: null,
+      projectNotes: [],
+      projectFiles: [],
+      projectCustomer: null,
+      projectBusy: false,
+      projectStatus: '',
+      projectNote: '',
+      projectNoteKind: 'note',
+      newProjectOpen: false,
+      newProject: { name: '', quoteNumber: '', customerId: '', details: '' },
+      newProjectQuery: '',
       printMode: 'pack',
       orderRefManual: false,
       labourOpen: true,
@@ -220,6 +239,34 @@ createApp({
       if (!q) return list;
       const terms = q.split(/\s+/).filter(Boolean);
       return list.filter((c) => { const b = c.searchBlob || ''; return terms.every((t) => b.includes(t)); });
+    },
+    filteredProjects() {
+      const q = (this.projectSearch || '').trim().toLowerCase();
+      let list = this.cloudDesigns;
+      if (this.projectFilter === 'open') list = list.filter((j) => !['complete', 'cancelled'].includes(j.jobStatus));
+      else if (this.projectFilter === 'complete') list = list.filter((j) => j.jobStatus === 'complete');
+      else if (this.projectFilter === 'cancelled') list = list.filter((j) => j.jobStatus === 'cancelled');
+      if (q) {
+        const terms = q.split(/\s+/).filter(Boolean);
+        list = list.filter((j) => { const b = [j.name, j.ref, j.customer, j.address, j.quoteNumber, j.dimensions, j.details].filter(Boolean).join(' ').toLowerCase(); return terms.every((t) => b.includes(t)); });
+      }
+      const sorted = [...list];
+      if (this.projectSort === 'stage') sorted.sort((a, b) => stageOf(b) - stageOf(a) || (b.updatedAt || 0) - (a.updatedAt || 0));
+      else if (this.projectSort === 'name') sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      else if (this.projectSort === 'quote') sorted.sort((a, b) => String(b.quoteNumber || '').localeCompare(String(a.quoteNumber || ''), undefined, { numeric: true }));
+      else sorted.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      return sorted;
+    },
+    projectCounts() {
+      const c = { all: this.cloudDesigns.length, open: 0, complete: 0, cancelled: 0 };
+      for (const j of this.cloudDesigns) { if (j.jobStatus === 'complete') c.complete++; else if (j.jobStatus === 'cancelled') c.cancelled++; else c.open++; }
+      return c;
+    },
+    newProjectCustomerResults() {
+      const q = (this.newProjectQuery || '').trim().toLowerCase();
+      if (!q) return [];
+      const terms = q.split(/\s+/);
+      return this.customers.filter((c) => terms.every((t) => (c.searchBlob || '').includes(t))).slice(0, 8);
     },
     customerProjects() {
       const c = this.currentCustomer;
@@ -558,7 +605,7 @@ createApp({
       this.customersLoading = false;
     },
     async openCustomersPage(customerId) {
-      this.materialsPage = false; this.installerPage = false; this.customersPage = true;
+      this.materialsPage = false; this.installerPage = false; this.projectsPage = false; this.customersPage = true;
       if (!this.customers.length) await this.loadCustomers();
       if (customerId) await this.selectCustomer(customerId);
       this.syncUrl();
@@ -583,7 +630,7 @@ createApp({
       this.customerDraft = { ...emptyCustomer(), ...prefill };
       this.customerNotes = []; this.customerFiles = [];
       this.customerStatus = '';
-      this.customersPage = true; this.materialsPage = false; this.installerPage = false;
+      this.customersPage = true; this.materialsPage = false; this.installerPage = false; this.projectsPage = false;
       this.syncUrl();
     },
     async saveCurrentCustomer() {
@@ -774,22 +821,159 @@ createApp({
       if (!this.orderRef.trim()) { this.orderRefManual = false; this.orderRef = this.defaultOrderRef(); }
       this.rebuildOrders();
     },
-    /** URL = ?job=<cloud id>&view=design|materials|installer - reload / back / share safe. */
+    /* ───────────── CRM: PROJECTS ───────────── */
+    stageOf(j) { return stageOf(j); },
+    stageName(o) { return stageName(o); },
+    projectStatusOf(j) { return projectStatusOf(j); },
+    projectTitle(j) { return j.name || j.ref || 'Untitled project'; },
+    async openProjectsPage(projectId) {
+      this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.projectsPage = true;
+      if (this.cloudReady && !this.cloudDesigns.length) await this.refreshCloudDesigns();
+      if (this.cloudReady && !this.customers.length) await this.loadCustomers();
+      if (projectId) await this.selectProject(projectId);
+      this.syncUrl();
+      window.scrollTo(0, 0);
+    },
+    closeProjectsPage() { this.projectsPage = false; this.syncUrl(); },
+    async selectProject(id) {
+      const j = this.cloudDesigns.find((x) => x.id === id);
+      if (!j) { this.projectStatus = 'Project not found'; return; }
+      this.currentProject = j;
+      this.projectDraft = { name: j.name || '', details: j.details || '', quoteNumber: j.quoteNumber || '', projectStatus: projectStatusOf(j), owner: j.owner || '', installStart: j.installStart || '', installEnd: j.installEnd || '', installerName: j.installerName || '' };
+      this.projectNotes = []; this.projectFiles = []; this.projectStatus = '';
+      this.projectCustomer = j.customerId ? (this.customers.find((c) => c.id === j.customerId) || null) : null;
+      this.syncUrl();
+      if (j.customerId) {
+        try {
+          const [notes, files] = await Promise.all([listNotes(j.customerId), listFiles(j.customerId)]);
+          if (this.currentProject && this.currentProject.id === id) {
+            this.projectNotes = notes.filter((n) => !n.projectId || n.projectId === id);
+            this.projectFiles = files.filter((f) => !f.projectName || f.projectName === j.name || (f.parent || '').startsWith('Projects/') && j.insightly && f.parent === 'Projects/' + j.insightly.projectId);
+          }
+        } catch (e) { console.error('project detail', e); }
+      }
+    },
+    async saveProjectDraft() {
+      const j = this.currentProject; const d = this.projectDraft;
+      if (!j || !d) return;
+      this.projectBusy = true;
+      try {
+        const fields = { name: d.name, details: d.details, quoteNumber: d.quoteNumber, projectStatus: d.projectStatus, owner: d.owner, installStart: d.installStart, installEnd: d.installEnd, installerName: d.installerName };
+        if (d.projectStatus === 'COMPLETED') fields.jobStatus = 'complete';
+        else if (d.projectStatus === 'CANCELLED' || d.projectStatus === 'ABANDONED') fields.jobStatus = 'cancelled';
+        else if (['complete', 'cancelled'].includes(j.jobStatus)) fields.jobStatus = (PIPELINE.find((p) => p.order === stageOf(j)) || PIPELINE[0]).status;
+        await updateProject(j.id, fields);
+        if (j.hasState && j.id === this.currentCloudId) { this.state.customer.number = d.quoteNumber; if (this.state.installer) { this.state.installer.startDate = d.installStart; this.state.installer.endDate = d.installEnd; this.state.installer.name = d.installerName; } }
+        await this.refreshCloudDesigns();
+        await this.selectProject(j.id);
+        this.projectStatus = 'Saved'; this.notify('Project saved');
+      } catch (e) { this.projectStatus = 'Save failed: ' + e.message; }
+      this.projectBusy = false;
+    },
+    async setProjectStage(order) {
+      const j = this.currentProject;
+      if (!j || order === stageOf(j)) return;
+      const st = PIPELINE.find((p) => p.order === order);
+      this.projectBusy = true;
+      try {
+        await updateProject(j.id, { stage: order, stageName: st.name, jobStatus: st.status, projectStatus: order >= 17 ? 'COMPLETED' : 'IN PROGRESS' });
+        if (j.customerId) await addNote(j.customerId, { body: `Project Pipeline stage changed to '${st.name}'`, title: `Project Pipeline stage changed to '${st.name}'`, kind: 'stage', projectId: j.id, projectName: j.name }, this.userName());
+        if (j.id === this.currentCloudId) this.state.jobStatus = st.status;
+        await this.refreshCloudDesigns();
+        await this.selectProject(j.id);
+      } catch (e) { this.projectStatus = 'Stage change failed: ' + e.message; }
+      this.projectBusy = false;
+    },
+    async addProjectNote() {
+      const j = this.currentProject; const body = (this.projectNote || '').trim();
+      if (!j || !body) return;
+      if (!j.customerId) { this.projectStatus = 'Link this project to a customer first (notes live on the customer)'; return; }
+      this.projectBusy = true;
+      try {
+        await addNote(j.customerId, { body, kind: this.projectNoteKind, projectId: j.id, projectName: j.name }, this.userName());
+        this.projectNote = '';
+        const notes = await listNotes(j.customerId);
+        this.projectNotes = notes.filter((n) => !n.projectId || n.projectId === j.id);
+      } catch (e) { this.projectStatus = 'Note failed: ' + e.message; }
+      this.projectBusy = false;
+    },
+    async removeProjectNote(n) {
+      const j = this.currentProject;
+      if (!j || !j.customerId || !confirm('Delete this note?')) return;
+      await deleteNote(j.customerId, n.id);
+      this.projectNotes = this.projectNotes.filter((x) => x.id !== n.id);
+    },
+    async uploadProjectFile(ev) {
+      const j = this.currentProject;
+      const files = Array.from((ev.target && ev.target.files) || []);
+      if (!j || !files.length) return;
+      if (!j.customerId) { this.projectStatus = 'Link this project to a customer first (documents live on the customer)'; return; }
+      this.projectBusy = true;
+      try {
+        for (const f of files) { const id = await uploadFile(j.customerId, f, this.userName()); await firebase.firestore().collection('customers').doc(j.customerId).collection('files').doc(id).update({ projectName: j.name, projectId: j.id }); }
+        await this.selectProject(j.id);
+        this.notify(`${files.length} file${files.length === 1 ? '' : 's'} uploaded`);
+      } catch (e) { this.projectStatus = 'Upload failed: ' + e.message; }
+      this.projectBusy = false;
+      if (ev.target) ev.target.value = '';
+    },
+    async linkProjectCustomer(c) {
+      const j = this.currentProject;
+      if (!j || !c) return;
+      await updateProject(j.id, { customerId: c.id, customer: j.customer || c.name });
+      this.newProjectQuery = '';
+      await this.refreshCloudDesigns();
+      await this.selectProject(j.id);
+    },
+    async createProjectFromForm() {
+      const f = this.newProject;
+      if (!f.name.trim()) { this.projectStatus = 'Give the project a name (e.g. 4500 - Smith - Bromley)'; return; }
+      const c = this.customers.find((x) => x.id === f.customerId);
+      this.projectBusy = true;
+      try {
+        const id = await createProject({ name: f.name.trim(), quoteNumber: f.quoteNumber.trim() || (f.name.match(/^\s*(\d{3,5})/) || [])[1] || '', customerId: c ? c.id : '', customerName: c ? c.name : '', address: c ? [c.address, c.postcode].filter(Boolean).join(', ') : '', details: f.details }, this.userName());
+        this.newProject = { name: '', quoteNumber: '', customerId: '', details: '' }; this.newProjectOpen = false;
+        await this.refreshCloudDesigns();
+        await this.selectProject(id);
+        this.notify('Project created');
+      } catch (e) { this.projectStatus = 'Create failed: ' + e.message; }
+      this.projectBusy = false;
+    },
+    async removeProject() {
+      const j = this.currentProject;
+      if (!j) return;
+      if (j.hasState) { this.projectStatus = 'This project has a drawing - delete it from Saved Projects in the designer if you really mean it'; return; }
+      if (!confirm(`Delete project "${j.name}"? Notes stay on the customer. This cannot be undone.`)) return;
+      await deleteProject(j.id);
+      this.currentProject = null; this.projectDraft = null;
+      await this.refreshCloudDesigns();
+      this.syncUrl();
+    },
+    async openProjectDesign(view = 'design') {
+      const j = this.currentProject;
+      if (!j) return;
+      if (j.customerId) this.currentCustomer = this.customers.find((c) => c.id === j.customerId) || this.currentCustomer;
+      this.projectsPage = false;
+      await this.openCustomerProject(j, view);
+    },
+    /** URL = ?job=<cloud id>&view=design|materials|installer|customers|projects - reload / back / share safe. */
     syncUrl() {
       const p = new URLSearchParams();
       if (this.currentCloudId) p.set('job', this.currentCloudId);
-      const view = this.customersPage ? 'customers' : this.installerPage ? 'installer' : this.materialsPage ? 'materials' : 'design';
+      const view = this.projectsPage ? 'projects' : this.customersPage ? 'customers' : this.installerPage ? 'installer' : this.materialsPage ? 'materials' : 'design';
       if (view !== 'design') p.set('view', view);
       if (view === 'customers') { p.delete('job'); if (this.currentCustomer && this.currentCustomer.id) p.set('customer', this.currentCustomer.id); }
+      if (view === 'projects') { p.delete('job'); if (this.currentProject && this.currentProject.id) p.set('project', this.currentProject.id); }
       const q = p.toString();
       const url = `${window.location.pathname}${q ? '?' + q : ''}`;
       if (window.location.search !== (q ? '?' + q : '')) window.history.pushState({ job: this.currentCloudId, view }, '', url);
     },
-    applyView(view, customerId) {
-      if (view === 'customers') this.openCustomersPage(customerId || null);
+    applyView(view, customerId, projectId) {
+      if (view === 'projects') this.openProjectsPage(projectId || null);
+      else if (view === 'customers') this.openCustomersPage(customerId || null);
       else if (view === 'materials') { this.customersPage = false; this.openMaterialsPage(); }
       else if (view === 'installer') { this.customersPage = false; this.openInstallerPage(); }
-      else { this.materialsPage = false; this.installerPage = false; this.customersPage = false; }
+      else { this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.projectsPage = false; }
     },
     async restoreFromUrlOrDraft() {
       const p = new URLSearchParams(window.location.search);
@@ -819,13 +1003,13 @@ createApp({
       } catch (e) { console.warn('restore failed', e); }
       finally { this._restoring = false; }
       if (p.get('print') === 'agreement') this.printMode = 'agreement';
-      this.applyView(view, p.get('customer'));
+      this.applyView(view, p.get('customer'), p.get('project'));
       window.addEventListener('popstate', (ev) => {
         const q = new URLSearchParams(window.location.search);
         const v = q.get('view') || 'design';
         const j = q.get('job');
-        if (j && j !== this.currentCloudId) this.loadFromCloud({ id: j, name: '' }).then(() => this.applyView(v, q.get('customer')));
-        else this.applyView(v, q.get('customer'));
+        if (j && j !== this.currentCloudId) this.loadFromCloud({ id: j, name: '' }).then(() => this.applyView(v, q.get('customer'), q.get('project')));
+        else this.applyView(v, q.get('customer'), q.get('project'));
       });
     },
     newJob() {
@@ -833,7 +1017,7 @@ createApp({
       this.currentCloudId = null; this.currentCloudName = ''; this.orderRef = ''; this.orderRefManual = false;
       this.bomLines = []; this.orders = [];
       try { localStorage.removeItem('gob-draft-v1'); } catch (e) { /* ignore */ }
-      this.materialsPage = false; this.installerPage = false; this.customersPage = false;
+      this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.projectsPage = false;
       this.syncUrl();
     },
     async openJob(job) {
@@ -841,7 +1025,7 @@ createApp({
       this.ensureLabourState();
       this.orderRefManual = false;
       await this.generateBom();
-      this.materialsPage = true; this.installerPage = false; this.customersPage = false;
+      this.materialsPage = true; this.installerPage = false; this.customersPage = false; this.projectsPage = false;
       window.scrollTo(0, 0);
     },
     async saveJob() {

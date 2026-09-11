@@ -141,3 +141,67 @@ export function matchScore(customer, { name = '', email = '', phone = '', postco
   }
   return s;
 }
+
+/* ───────────── PROJECTS (the Insightly "Projects" pipeline) ───────────── */
+// Stage names copied from the Insightly Project Pipeline so the team works the same way.
+export const PIPELINE = [
+  { order: 1, name: 'Quote sent', status: 'quote' },
+  { order: 2, name: 'Holding Deposit (Holding invoice + approx delivery date)', status: 'deposit' },
+  { order: 3, name: 'Guillaume 2nd Visit', status: 'deposit' },
+  { order: 4, name: 'Contractors (1. electrician, 2. landscaper, 3. air con, 4. tree surgeon) notified', status: 'deposit' },
+  { order: 5, name: 'Drawing sent to customer', status: 'deposit' },
+  { order: 6, name: 'Planning permission (Craig paid)', status: 'deposit' },
+  { order: 7, name: 'Specification', status: 'deposit' },
+  { order: 8, name: '1st Stage Invoice', status: 'deposit' },
+  { order: 9, name: 'Assign team', status: 'ordered' },
+  { order: 10, name: 'Registered installer form', status: 'ordered' },
+  { order: 11, name: "Jewsons' order", status: 'ordered' },
+  { order: 12, name: 'Checklist for other materials', status: 'ordered' },
+  { order: 13, name: 'Out for delivery', status: 'delivered' },
+  { order: 14, name: '2nd stage Invoice - 50% due on delivery', status: 'delivered' },
+  { order: 15, name: 'Half Way - 3rd stage Installer Team payment 1', status: 'installing' },
+  { order: 16, name: 'Complete - 3rd stage Installer Team payment 2', status: 'installing' },
+  { order: 17, name: 'Final Invoice', status: 'complete' },
+  { order: 18, name: 'Google Review', status: 'complete' },
+];
+export const PROJECT_STATUSES = [
+  { value: 'NOT STARTED', label: 'Not started' }, { value: 'IN PROGRESS', label: 'In progress' },
+  { value: 'COMPLETED', label: 'Completed' }, { value: 'CANCELLED', label: 'Cancelled' }, { value: 'ABANDONED', label: 'Abandoned' },
+];
+const STATUS_TO_STAGE = { quote: 1, deposit: 2, ordered: 11, delivered: 13, installing: 15, complete: 18, cancelled: 0 };
+/** Stage order for a project: stored value, else inferred from the job status. */
+export function stageOf(job) {
+  if (job && job.stage) return job.stage;
+  if (job && job.insightly && job.insightly.stageOrder) return job.insightly.stageOrder;
+  return STATUS_TO_STAGE[(job && job.jobStatus) || 'quote'] || 1;
+}
+export function stageName(order) { const s = PIPELINE.find((p) => p.order === order); return s ? s.name : ''; }
+export function projectStatusOf(job) {
+  if (job && job.projectStatus) return job.projectStatus;
+  if (job && job.insightly && job.insightly.status) return job.insightly.status;
+  if (job && job.jobStatus === 'complete') return 'COMPLETED';
+  if (job && job.jobStatus === 'cancelled') return 'CANCELLED';
+  return 'IN PROGRESS';
+}
+
+export async function updateProject(designId, fields) {
+  await db().collection('designs').doc(designId).update({ ...fields, updatedAt: ts() });
+}
+
+/** A project with no drawing yet (the Insightly way: name + details), linked to a customer. */
+export async function createProject({ name, customerId = '', customerName = '', address = '', details = '', quoteNumber = '' }, author) {
+  const surname = (customerName || name || '').trim().split(/\s+/).pop() || 'JOB';
+  const ref = await db().collection('designs').add({
+    name, customer: customerName, address, dimensions: '', tier: 'signature',
+    ref: `${surname.replace(/[^A-Za-z0-9-]/g, '').toUpperCase()}-${quoteNumber || 'NOQUOTENO'}`, quoteNumber,
+    jobStatus: 'quote', stage: 1, stageName: PIPELINE[0].name, projectStatus: 'IN PROGRESS', details,
+    installStart: '', installEnd: '', installerName: '', ordersOrdered: 0, ordersDelivered: 0, deliveries: [],
+    customerId, legacy: true, hasState: false, state: null, createdBy: author || '',
+    savedAt: ts(), updatedAt: ts(),
+  });
+  return ref.id;
+}
+
+export async function deleteProject(designId) {
+  await db().collection('designs').doc(designId).delete();
+}

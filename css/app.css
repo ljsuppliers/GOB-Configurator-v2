@@ -886,3 +886,20 @@ html, body {
 .crm-note-body { white-space: pre-wrap; color: #1e293b; }
 @media (max-width: 1100px) { .crm-grid { grid-template-columns: 1fr; } .crm-list { width: 260px; } }
 @media print { .crm-page { display: none !important; } }
+/* Projects page */
+.crm-sort select { font-size: 11px; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 4px; }
+.crm-stage-dot { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; flex: none; }
+.crm-stage-line { color: #0f766e !important; }
+.crm-row-icons { color: #94a3b8; font-size: 13px; }
+.crm-pipeline { list-style: none; margin: 0; padding: 0; }
+.crm-pipeline li { display: flex; align-items: flex-start; gap: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #64748b; border-left: 3px solid transparent; }
+.crm-pipeline li:hover { background: #f8fafc; }
+.crm-pipeline li.done { color: #0f766e; }
+.crm-pipeline li.done .crm-pipe-n { background: #0f766e; color: #fff; }
+.crm-pipeline li.current { background: #ecfeff; color: #0f172a; font-weight: 700; border-left-color: #0f766e; }
+.crm-pipeline li.current .crm-pipe-n { background: #0f172a; color: #fff; }
+.crm-pipe-n { width: 22px; height: 22px; border-radius: 50%; background: #e2e8f0; color: #475569; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex: none; }
+.crm-warn { color: #b45309; }
+.crm-inline-input { padding: 3px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; }
+.crm-picked { font-size: 13px; font-weight: 400; text-transform: none; letter-spacing: 0; }
+.crm-newproject { max-width: 760px; }
