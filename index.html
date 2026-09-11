@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOB CRM</title>
   <link rel="stylesheet" href="css/app.css?v=28">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
+  <link rel="stylesheet" href="css/theme.css?v=1">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
 <body>
@@ -39,17 +41,34 @@
   <!-- Main app -->
   <div v-else class="app">
 
-    <!-- ─── HEADER ─── -->
-    <header class="header">
-      <img src="assets/logo.png" alt="Garden Office Buildings" class="header-logo">
-      <span class="header-title">GOB CRM</span>
-      <div class="header-actions">
-        <button class="btn btn-crm" :class="{ active: homePage }" @click="homePage ? closeHome() : openHome()" title="Dashboard">{{ homePage ? '← Back to design' : 'Home' }}</button>
-        <button class="btn btn-crm" :class="{ active: projectsPage }" @click="projectsPage ? closeProjectsPage() : openProjectsPage()" title="Every project on the pipeline (replaces Insightly Projects)">{{ projectsPage ? '← Back to design' : 'Projects' }}</button>
-        <button class="btn btn-crm" :class="{ active: customersPage }" @click="customersPage ? closeCustomersPage() : openCustomersPage()" title="Customers, notes and documents (replaces Insightly Contacts)">{{ customersPage ? '← Back to design' : 'Customers' }}</button>
-        <button class="btn btn-materials" @click="(materialsPage || installerPage) ? (materialsPage = false, installerPage = false, customersPage = false) : openMaterialsPage()">{{ (materialsPage || installerPage) ? '← Back to design' : 'Materials & Orders' }}</button>
+    <!-- ─── SIDE NAV + TOP BAR ─── -->
+    <nav class="side-nav">
+      <a class="side-logo" href="#" @click.prevent="openHome"><img src="assets/logo.png" alt="Garden Office Buildings"></a>
+      <div class="nav-group">
+        <button class="nav-item" :class="{ on: homePage }" @click="openHome"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+        <button class="nav-item" :class="{ on: projectsPage }" @click="openProjectsPage()"><svg viewBox="0 0 24 24"><path d="M3 7h18v13H3zM8 7V4h8v3"/></svg>Projects</button>
+        <button class="nav-item" :class="{ on: customersPage }" @click="openCustomersPage()"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2M16 4a4 4 0 0 1 0 8M22 21v-2a5 5 0 0 0-3-4.6"/></svg>Contacts</button>
+      </div>
+      <div class="nav-label">This job</div>
+      <div class="nav-group">
+        <button class="nav-item" :class="{ on: designerView }" @click="showDesigner()"><svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3zM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5zM2 2l7.6 7.6"/></svg>Designer &amp; quote</button>
+        <button class="nav-item" :class="{ on: materialsPage }" @click="openMaterialsPage()"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></svg>Materials &amp; orders</button>
+        <button class="nav-item" :class="{ on: installerPage }" @click="openInstallerPage()"><svg viewBox="0 0 24 24"><path d="M9 4h6v3H9zM6 6H5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-1M8 12h8M8 16h5"/></svg>Installer pack</button>
+      </div>
+      <div class="nav-job" v-if="state && state.customer && state.customer.name"><small>Open job</small><strong>{{ state.customer.name }}</strong><span v-if="orderRef && !orderRef.endsWith('-NOQUOTENO')">{{ orderRef }}</span></div>
+      <div class="nav-spacer"></div>
+      <div class="nav-user" :title="user && user.email">
+        <span class="user-avatar">{{ (userName() || '?')[0].toUpperCase() }}</span>
+        <div class="nav-user-text"><strong>{{ userName() }}</strong><small>{{ user && user.email }}</small></div>
+        <button class="nav-signout" @click="logout" title="Sign out"><svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5M15 12H3M21 3v18"/></svg></button>
+      </div>
+    </nav>
+
+    <header class="topbar">
+      <div class="topbar-title">{{ pageTitle }}</div>
+      <div class="topbar-actions" v-if="designerView">
         <button class="btn" @click="newJob" title="Clear the screen and start a new design">New</button>
-        <button class="btn" @click="saveConfig">Save</button>
+        <button class="btn btn-primary" @click="saveConfig">Save</button>
         <button class="btn" @click="loadConfig">Load</button>
         <div class="export-wrapper">
           <button class="btn" @click="showExportMenu = !showExportMenu">Export &#9662;</button>
@@ -57,15 +76,13 @@
             <button @click="exportQuotePDF">Export Quote PDF</button>
             <button @click="exportDrawingPDF">Export Drawing PDF</button>
             <button @click="exportBothPDFs">Export Both (Quote + Drawing)</button>
-            <button @click="createGoogleSheet" style="background: #34a853; margin-left: 10px;">📊 Create Google Sheet</button>
+            <button @click="createGoogleSheet">Create Google Sheet</button>
             <button @click="printDrawing">Print Drawing</button>
           </div>
         </div>
-        <div class="user-chip" :title="user && user.email">
-          <span class="user-avatar">{{ (userName() || '?')[0].toUpperCase() }}</span>
-          <span class="user-name">{{ userName() }}</span>
-          <button class="btn btn-small" @click="logout" title="Sign out">Sign out</button>
-        </div>
+      </div>
+      <div class="topbar-actions" v-else-if="materialsPage || installerPage">
+        <button class="btn" @click="showDesigner()">← Back to design</button>
       </div>
     </header>
 
@@ -2475,7 +2492,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=129"></script>
+<script type="module" src="js/app.js?v=130"></script>
 
 </body>
 </html>

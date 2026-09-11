@@ -274,6 +274,15 @@ createApp({
       else sorted.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
       return sorted;
     },
+    designerView() { return !this.homePage && !this.projectsPage && !this.customersPage && !this.materialsPage && !this.installerPage; },
+    pageTitle() {
+      if (this.homePage) return 'Home';
+      if (this.projectsPage) return this.currentProject ? 'Projects · ' + this.projectTitle(this.currentProject) : 'Projects';
+      if (this.customersPage) return this.currentCustomer && this.currentCustomer.name ? 'Contacts · ' + this.currentCustomer.name : 'Contacts';
+      if (this.installerPage) return 'Installer pack · ' + (this.state.customer && this.state.customer.name || 'Unnamed job');
+      if (this.materialsPage) return 'Materials & orders · ' + (this.state.customer && this.state.customer.name || 'Unnamed job');
+      return 'Designer & quote' + (this.state.customer && this.state.customer.name ? ' · ' + this.state.customer.name : '');
+    },
     projectUpcoming() { return this.taskListFor('project').filter((t) => !t.done); },
     projectPast() { return this.activityRows(this.projectNotes, this.tasks.filter((t) => this.currentProject && t.projectId === this.currentProject.id)); },
     customerUpcoming() { return this.taskListFor('customer').filter((t) => !t.done); },
@@ -942,6 +951,7 @@ createApp({
       if (!id) return [];
       return this.tasks.filter((t) => (scope === 'project' ? t.projectId === id : t.customerId === id) && (this.showDoneTasks || !t.done)).sort((a, b) => (a.done - b.done) || (a.due || '9').localeCompare(b.due || '9'));
     },
+    showDesigner() { this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.projectsPage = false; this.homePage = false; this.syncUrl(); window.scrollTo(0, 0); },
     /* ───────────── HOME ───────────── */
     async openHome() {
       this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.projectsPage = false; this.homePage = true;
