@@ -15,7 +15,7 @@ import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=9';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
-import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject } from './crm.js?v=2';
+import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject } from './crm.js?v=3';
 
 const { createApp } = Vue;
 

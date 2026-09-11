@@ -91,7 +91,15 @@ export async function deleteNote(customerId, noteId) {
 
 export async function listFiles(customerId) {
   const snap = await db().collection('customers').doc(customerId).collection('files').orderBy('createdAt', 'desc').get();
-  return snap.docs.map(fromDoc);
+  const files = snap.docs.map(fromDoc);
+  // Imported files carry a storagePath but no public URL: resolve a signed
+  // download URL for the signed-in user (staff-only bucket rules).
+  if (firebase.storage) {
+    await Promise.all(files.filter((f) => f.storagePath && !f.url).map(async (f) => {
+      try { f.url = await firebase.storage().ref(f.storagePath).getDownloadURL(); } catch (e) { /* not uploaded yet */ }
+    }));
+  }
+  return files;
 }
 
 export async function addFileRecord(customerId, meta, author) {

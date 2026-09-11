@@ -1,0 +1,15 @@
+rules_version = '2';
+// GOB CRM documents. Staff only - same rule as firestore.rules.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function staff() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && (request.auth.token.email.lower().matches('.*@gardenofficebuildings[.]co[.]uk')
+            || request.auth.token.email.lower() in ['ljb4496@gmail.com']);
+    }
+    match /{allPaths=**} {
+      allow read, write: if staff();
+    }
+  }
+}
