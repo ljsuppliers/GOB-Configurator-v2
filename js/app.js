@@ -147,6 +147,8 @@ createApp({
       showStageNotes: false,
       customerPickerQuery: '',
       customerPickerOpen: false,
+      // Phone layout: which designer pane is showing
+      mobileTab: 'drawing',
       // Undo / redo (designer)
       undoCount: 0,
       redoCount: 0,

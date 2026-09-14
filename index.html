@@ -2,12 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1f33">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GOB CRM">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
   <title>GOB CRM</title>
   <link rel="stylesheet" href="css/app.css?v=28">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
-  <link rel="stylesheet" href="css/theme.css?v=4">
+  <link rel="stylesheet" href="css/theme.css?v=6">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
 <body>
@@ -64,6 +72,13 @@
       </div>
     </nav>
 
+    <nav class="bottom-nav">
+      <button :class="{ on: homePage }" @click="openHome"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+      <button :class="{ on: projectsPage }" @click="openProjectsPage()"><svg viewBox="0 0 24 24"><path d="M3 7h18v13H3zM8 7V4h8v3"/></svg>Projects</button>
+      <button :class="{ on: customersPage }" @click="openCustomersPage()"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2M16 4a4 4 0 0 1 0 8M22 21v-2a5 5 0 0 0-3-4.6"/></svg>Contacts</button>
+      <button :class="{ on: designerView }" @click="showDesigner()"><svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3zM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5zM2 2l7.6 7.6"/></svg>Design</button>
+      <button :class="{ on: materialsPage || installerPage }" @click="openMaterialsPage()"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></svg>Materials</button>
+    </nav>
     <header class="topbar">
       <div class="topbar-title">{{ pageTitle }}</div>
       <div class="topbar-actions" v-if="designerView">
@@ -90,7 +105,13 @@
     </header>
 
     <!-- ─── MAIN 3-PANEL LAYOUT ─── -->
-    <main class="main-content" v-show="!materialsPage && !installerPage && !customersPage && !projectsPage && !homePage">
+    <main class="main-content" :class="'mtab-' + mobileTab" v-show="!materialsPage && !installerPage && !customersPage && !projectsPage && !homePage">
+      <div class="mobile-tabs">
+        <button :class="{ on: mobileTab === 'options' }" @click="mobileTab = 'options'">Options</button>
+        <button :class="{ on: mobileTab === 'drawing' }" @click="mobileTab = 'drawing'">Drawing</button>
+        <button :class="{ on: mobileTab === 'price' }" @click="mobileTab = 'price'">Price</button>
+        <button :class="{ on: mobileTab === 'email' }" @click="mobileTab = 'email'">Email</button>
+      </div>
 
       <!-- LEFT: Config Panel -->
       <aside class="config-panel">
@@ -1145,7 +1166,8 @@
         </div>
       </aside>
 
-      <div class="crm-main">
+      <div class="crm-main" :class="{ 'm-open': currentProject || newProjectOpen }">
+        <button class="m-back" @click="currentProject = null; projectDraft = null; newProjectOpen = false; syncUrl()">← Projects</button>
         <div v-if="newProjectOpen" class="crm-card crm-newproject">
           <h3>New project</h3>
           <div class="crm-form">
@@ -1316,7 +1338,7 @@
 
               <div class="sec">
                 <div class="sec-head" @click="toggleSec('p-files')"><span class="sec-caret">{{ secOpen['p-files'] === false ? '⌄' : '⌃' }}</span> Files <em>{{ projectFiles.length }}</em>
-                  <span class="sec-tools" @click.stop><label class="crm-upload"><input type="file" multiple @change="uploadProjectFile" :disabled="projectBusy"><a>+ Add Files</a></label></span>
+                  <span class="sec-tools" @click.stop><label class="crm-upload"><input type="file" accept="image/*" capture="environment" @change="uploadProjectFile" :disabled="projectBusy"><a>📷 Photo</a></label><label class="crm-upload"><input type="file" multiple @change="uploadProjectFile" :disabled="projectBusy"><a>+ Add Files</a></label></span>
                 </div>
                 <div v-show="secOpen['p-files'] !== false" class="sec-body">
                   <div v-if="!projectFiles.length" class="crm-muted">No files.</div>
@@ -1420,7 +1442,8 @@
         </div>
       </aside>
 
-      <div class="crm-main">
+      <div class="crm-main" :class="{ 'm-open': !!customerDraft }">
+        <button class="m-back" @click="currentCustomer = null; customerDraft = null; syncUrl()">← Contacts</button>
         <div v-if="!customerDraft" class="crm-blank">
           <h2>Customers</h2>
           <p>Every customer in one place: contact details, every quote and project from the configurator, notes and documents. Pick a customer on the left or create a new one.</p>
@@ -1566,7 +1589,7 @@
               </div>
               <div class="sec">
                 <div class="sec-head" @click="toggleSec('c-files')"><span class="sec-caret">{{ secOpen['c-files'] === false ? '⌄' : '⌃' }}</span> Files <em>{{ customerFiles.length }}</em>
-                  <span class="sec-tools" @click.stop><label class="crm-upload"><input type="file" multiple @change="uploadCustomerFile" :disabled="customerBusy"><a>+ Add Files</a></label></span>
+                  <span class="sec-tools" @click.stop><label class="crm-upload"><input type="file" accept="image/*" capture="environment" @change="uploadCustomerFile" :disabled="customerBusy"><a>📷 Photo</a></label><label class="crm-upload"><input type="file" multiple @change="uploadCustomerFile" :disabled="customerBusy"><a>+ Add Files</a></label></span>
                 </div>
                 <div v-show="secOpen['c-files'] !== false" class="sec-body">
                   <div v-if="!customerFiles.length" class="crm-muted">No files.</div>
@@ -2546,7 +2569,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=133"></script>
+<script type="module" src="js/app.js?v=135"></script>
+<script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>
 </html>
