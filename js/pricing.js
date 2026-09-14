@@ -121,11 +121,23 @@ export function calculatePrice(state) {
   }
 
   if (se.secretDoor) addExtra(result, struct.secretDoor, 1);
-  if (se.additionalDecking > 0) {
+  // Extra decking: typed sqm wins; otherwise worked out from the drawing
+  // (decking deeper than the standard 400mm across the building width).
+  let deckSqm = Number(se.additionalDecking) || 0;
+  if (!deckSqm && state.tier !== 'classic' && state.hasDecking !== false && !state.deductions?.removeDecking && (state.deckingDepth || 400) > 400) {
+    deckSqm = Math.round((state.width / 1000) * (((state.deckingDepth || 400) - 400) / 1000) * 10) / 10;
+  }
+  if (deckSqm > 0) {
     result.extras.push({
-      label: `${struct.additionalDecking.label} (${se.additionalDecking} sqm)`,
-      price: struct.additionalDecking.price * se.additionalDecking
+      label: `${struct.additionalDecking.label} (${deckSqm} sqm${Number(se.additionalDecking) ? '' : ', from the drawing'})`,
+      price: struct.additionalDecking.price * deckSqm
     });
+  }
+  // Oak acoustic slat feature walls, priced per wall
+  const fwm = state.featureWalls || {};
+  const fwalls = ['front', 'left', 'right', 'rear'].filter((k) => fwm[k] || (k === 'rear' && state.featureWall === 'rear'));
+  if (fwalls.length && struct.featureWall) {
+    result.extras.push({ label: `${struct.featureWall.label} × ${fwalls.length} (${fwalls.join(', ')})${struct.featureWall.price ? '' : ' - PRICE TBC'}`, price: struct.featureWall.price * fwalls.length });
   }
   if (se.premiumFlooring) addExtra(result, struct.premiumFlooring, 1);
   if (se.bifoldUpgrade) addExtra(result, pricesData.extras.doors.bifoldUpgrade, 1);

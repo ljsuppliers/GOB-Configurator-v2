@@ -202,6 +202,10 @@
       "premiumFlooring": {
         "label": "Premium flooring upgrade",
         "price": 350
+      },
+      "featureWall": {
+        "label": "Oak acoustic slat feature wall (per wall)",
+        "price": 0
       }
     },
     "bathroom": {
@@ -292,7 +296,7 @@
   "vatRate": 0.2,
   "holdingDeposit": 250,
   "premiumMatrix": {
-    "note": "Liam 2026-09-05 matrix: customer price incl. installation + groundworks. Extras on top. Interpolated between points, extrapolated beyond; rounded to £50.",
+    "note": "Liam 2026-09-05 matrix: customer price incl. installation + groundworks. Extras on top. Interpolated between points, extrapolated beyond; rounded to \u00a350.",
     "widths": [
       4.0,
       4.5,

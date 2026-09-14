@@ -72,6 +72,9 @@ export function computeLabour(state, componentDefs) {
   // (the 'additional decking' structural extra is a £/sqm price input, not geometry).
   const extraDeckM = (state.hasDecking !== false && !state.deductions?.removeDecking) ? Math.max(0, ((state.deckingDepth || 400) - 400) / 1000) : 0;
   if (extraDeckM > 0.05) day('extra_decking', `Extra decking (${extraDeckM.toFixed(2)}m deeper than standard)`, 0.5, true);
+  const fwm = state.featureWalls || {};
+  const fwalls = ['front', 'left', 'right', 'rear'].filter((k) => fwm[k] || (k === 'rear' && state.featureWall === 'rear'));
+  if (fwalls.length) day('feature_wall', `Oak acoustic slat feature wall ×${fwalls.length} (${fwalls.join(', ')}; 0.5 day each)`, fwalls.length * 0.5, true);
   // Manual adjustment (± days) for anything else on this job
   const adj = Number(lab.extraDays || 0);
   if (adj) day('adjust', lab.extraDaysLabel || 'Job-specific adjustment', adj);

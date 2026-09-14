@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="css/app.css?v=28">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
-  <link rel="stylesheet" href="css/theme.css?v=2">
+  <link rel="stylesheet" href="css/theme.css?v=3">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
 <body>
@@ -802,9 +802,15 @@
             <label for="chk-secret-door">Secret cladded door</label>
             <span class="extra-price">&pound;1,750</span>
           </div>
-          <label style="display:block;margin:6px 0 4px">Feature wall
-            <select v-model="state.featureWall" style="width:100%;margin-top:3px"><option value="none">None (plastered + painted)</option><option value="rear">Oak acoustic slat wall on the REAR wall (over plasterboard, no skim)</option></select>
-          </label>
+          <div style="margin:6px 0 4px"><label style="display:block;">Oak acoustic slat feature walls <span class="extra-price">{{ appData.prices.extras.structural.featureWall.price ? '£' + appData.prices.extras.structural.featureWall.price.toLocaleString() + ' per wall' : 'price TBC' }}</span></label>
+            <div class="fw-grid">
+              <label><input type="checkbox" v-model="state.featureWalls.rear" @change="state.featureWall = state.featureWalls.rear ? 'rear' : 'none'"> Rear</label>
+              <label><input type="checkbox" v-model="state.featureWalls.left"> Left</label>
+              <label><input type="checkbox" v-model="state.featureWalls.right"> Right</label>
+              <label><input type="checkbox" v-model="state.featureWalls.front"> Front</label>
+            </div>
+            <div class="pack-small" style="color:#64748b">Fitted over plasterboard; that wall is not skimmed or painted.</div>
+          </div>
           <label style="display:block;margin:6px 0 4px">PIR in floor + roof
             <select v-model.number="state.pirFloorRoof" style="width:100%;margin-top:3px"><option :value="75">75mm (standard)</option><option :value="100">100mm</option></select>
           </label>
@@ -2001,7 +2007,7 @@
         <table class="pack-table">
           <tr><th>External size</th><td>{{ (state.width/1000).toFixed(2) }}m wide × {{ (state.depth/1000).toFixed(2) }}m deep × {{ (state.height/1000).toFixed(2) }}m high (excludes canopy/decking)</td></tr>
           <tr><th>Internal size</th><td>{{ ((state.width-300)/1000).toFixed(2) }}m × {{ ((state.depth-300)/1000).toFixed(2) }}m (150mm per wall)</td></tr>
-          <tr><th>Build system</th><td>PREMIUM: 5x2 C24 floor on {{ state.foundationType === 'ground-screw' || state.foundationType === 'hybrid' ? 'ground screws' : state.foundationType === 'concrete-pile' ? 'blocks + pedestals' : 'pedestals' }} + {{ state.pirFloorRoof === 100 ? '100' : '75' }}mm PIR + 22mm chipboard · 100mm Kingspan panels on unclad walls, double-battened inside · 4x2 tanalised stick walls (front + clad sides, 75mm PIR) · flat timber roof, {{ state.firringFrontMm || 70 }}mm firrings to the rear, {{ state.pirFloorRoof === 100 ? '100' : '75' }}mm PIR, 18mm T&amp;G OSB, EPDM · plastered &amp; decorated{{ state.featureWall === 'rear' ? ' · oak acoustic slat feature wall on the rear (no skim/paint behind it)' : '' }}</td></tr>
+          <tr><th>Build system</th><td>PREMIUM: 5x2 C24 floor on {{ state.foundationType === 'ground-screw' || state.foundationType === 'hybrid' ? 'ground screws' : state.foundationType === 'concrete-pile' ? 'blocks + pedestals' : 'pedestals' }} + {{ state.pirFloorRoof === 100 ? '100' : '75' }}mm PIR + 22mm chipboard · 100mm Kingspan panels on unclad walls, double-battened inside · 4x2 tanalised stick walls (front + clad sides, 75mm PIR) · flat timber roof, {{ state.firringFrontMm || 70 }}mm firrings to the rear, {{ state.pirFloorRoof === 100 ? '100' : '75' }}mm PIR, 18mm T&amp;G OSB, EPDM · plastered &amp; decorated{{ state.featureWalls && Object.values(state.featureWalls).some(Boolean) ? ' · oak acoustic slat feature wall on the ' + ['front','left','right','rear'].filter(k => state.featureWalls && state.featureWalls[k]).join(' + ') + ' (no skim/paint behind it)' : '' }}</td></tr>
           <tr><th>Foundation</th><td>{{ state.foundationType === 'ground-screw' || state.foundationType === 'hybrid' ? 'Radix ground screws' : state.foundationType === 'concrete-pile' ? 'Concrete blocks on Postcrete (2 bags per hole)' : 'Adjustable pedestals on the existing concrete base' }}</td></tr>
           <tr><th>Cladding</th><td>Front {{ (state.cladding.front||'').replace(/-/g,' ') }} · Left {{ (state.cladding.left||'').replace(/-/g,' ') }} · Right {{ (state.cladding.right||'').replace(/-/g,' ') }} · Rear {{ (state.cladding.rear||'').replace(/-/g,' ') }}</td></tr>
           <tr v-if="state.tier === 'signature'"><th>Canopy / decking</th><td>{{ state.hasCanopy !== false ? ((state.overhangDepth||400)) + 'mm canopy' : 'NO canopy' }}{{ state.hasDecking !== false ? ' · decking ' + (state.deckingDepth||400) + 'mm deep' + ((state.deckingDepth||400) > 400 ? ' = EXTRA DECKING ' + (((state.deckingDepth||400) - 400) / 1000).toFixed(2) + 'm beyond the standard 400mm, on its own 4x2 sub-frame and supports (see materials)' : '') : ' · NO decking' }} · corners left {{ state.cornerLeft || 'open' }}, right {{ state.cornerRight || 'open' }}<template v-if="state.hasCanopy !== false"> · canopy method: {{ state.height >= 2750 ? 'joists oversail 400mm + 2x2 layer under' : 'firrings overhang 400mm, 2x2 frame on the front wall top' }}</template></td></tr>
@@ -2010,6 +2016,8 @@
           <tr v-if="state.bathroom && state.bathroom.enabled"><th>Bathroom</th><td>{{ state.bathroom.type === 'wc' ? 'WC: toilet, basin, extractor, tiling' : 'Shower room: toilet, basin, shower, extractor, towel rail, tiling' }} · plumber to be arranged</td></tr>
           <tr><th>Electrics</th><td>Standard pack: consumer unit, 5 double sockets (1 USB), dimmable downlights, RJ45 point{{ state.tier === 'signature' && state.hasCanopy !== false ? ', canopy lights 1 per metre' : '' }}{{ (state.acUnits||[]).length ? ', air conditioning ×' + state.acUnits.length : '' }} · by the electrician, 1st fix after frame, 2nd fix after plaster</td></tr>
           <tr v-if="state.structuralExtras && (state.structuralExtras.secretDoor || state.structuralExtras.premiumFlooring || state.structuralExtras.heightUpgrade)"><th>Extras</th><td>{{ [state.structuralExtras.secretDoor ? 'secret cladded door' : '', state.structuralExtras.premiumFlooring ? 'premium flooring' : '', state.structuralExtras.heightUpgrade ? 'height upgrade +' + state.structuralExtras.heightUpgrade + 'mm' : ''].filter(Boolean).join(' · ') }}</td></tr>
+          <tr v-if="state.planning && state.planning.required"><th>Planning</th><td>Planning permission required{{ (state.planning.reasons || []).length ? ': ' + state.planning.reasons.join(', ') : '' }}{{ state.planning.customReason ? ' · ' + state.planning.customReason : '' }} · check the decision notice is on file before starting</td></tr>
+          <tr v-if="state.landscaping && state.landscaping.required"><th>Landscaper</th><td>Landscaper required{{ state.landscaping.reason ? ': ' + state.landscaping.reason : '' }}{{ state.landscaping.customReason ? ' · ' + state.landscaping.customReason : '' }} · separate contractor, arranged by the Company</td></tr>
           <tr v-if="state.customer && state.customer.notes"><th>Notes</th><td>{{ state.customer.notes }}</td></tr>
         </table>
 
@@ -2058,7 +2066,7 @@
           <tr v-if="state.tier === 'signature'"><th>Canopy</th><td>{{ state.hasCanopy !== false ? (state.overhangDepth||400) + 'mm integrated canopy with ' + Math.max(1, Math.floor(state.width/1000)) + ' canopy lights' : 'No canopy on this job' }}</td></tr>
           <tr v-if="state.tier === 'signature'"><th>Decking</th><td><template v-if="state.hasDecking !== false">{{ (state.deckingDepth||400) }}mm deep Trex decking across the front<template v-if="(state.deckingDepth||400) > 400"> · <strong>includes extra decking {{ (((state.deckingDepth||400) - 400) / 1000).toFixed(2) }}m beyond the standard 400mm</strong>, built on its own 4x2 sub-frame and supports (allowed for in the fee below)</template></template><template v-else>No decking on this job</template></td></tr>
           <tr><th>Cladding</th><td>Front {{ (state.cladding.front||'').replace(/-/g,' ') }} · Left {{ (state.cladding.left||'').replace(/-/g,' ') }} · Right {{ (state.cladding.right||'').replace(/-/g,' ') }} · Rear {{ (state.cladding.rear||'').replace(/-/g,' ') }}</td></tr>
-          <tr v-if="state.featureWall === 'rear'"><th>Feature wall</th><td>Oak acoustic slat panels on the rear wall (fitted over plasterboard, no skim or paint behind)</td></tr>
+          <tr v-if="state.featureWalls && Object.values(state.featureWalls).some(Boolean)"><th>Feature wall</th><td>Oak acoustic slat panels on the {{ ['front','left','right','rear'].filter(k => state.featureWalls && state.featureWalls[k]).join(' + ') }} wall{{ Object.values(state.featureWalls).filter(Boolean).length > 1 ? 's' : '' }} (fitted over plasterboard, no skim or paint behind)</td></tr>
           <tr v-if="state.partitionRoom && state.partitionRoom.enabled"><th>Partition</th><td>{{ state.partitionRoom.label || state.partitionRoom.type }} {{ state.partitionRoom.width }}×{{ state.partitionRoom.depth }}mm in the {{ state.partitionRoom.corner }} corner, with door</td></tr>
           <tr v-if="state.bathroom && state.bathroom.enabled"><th>Bathroom</th><td>{{ state.bathroom.type === 'wc' ? 'WC fit-out' : 'Shower room fit-out' }} (plumber separate)</td></tr>
           <tr v-if="labour.install.lines.some(l => !['build','delivery','groundworks'].includes(l.id))"><th>Extras in the fee</th><td><span v-for="l in labour.install.lines.filter(l => !['build','delivery','groundworks'].includes(l.id))" :key="l.id" class="pack-chip">{{ l.label }}</span></td></tr>
@@ -2504,7 +2512,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=131"></script>
+<script type="module" src="js/app.js?v=132"></script>
 
 </body>
 </html>

@@ -1,17 +1,17 @@
 // GOB Configurator v2 — Vue 3 App
 // Reactive state, live pricing, drawing preview, email drafting
 
-import { initPricing, calculatePrice, formatPrice } from './pricing.js?v=3';
+import { initPricing, calculatePrice, formatPrice } from './pricing.js?v=4';
 import { generateDrawing } from './drawing-engine.js?v=43';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=35';
+import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=36';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=34';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
-import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=10';
+import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=11';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
@@ -44,6 +44,8 @@ function ensureStateDefaults(state) {
   if (!state.jobStatus) state.jobStatus = 'quote';
   if (!state.flooring) state.flooring = 'natural-oak';
   if (!state.featureWall) state.featureWall = 'none';
+  if (!state.featureWalls) state.featureWalls = { front: false, left: false, right: false, rear: state.featureWall === 'rear' };
+  if (state.featureWalls.rear) state.featureWall = 'rear'; else if (state.featureWall === 'rear') state.featureWalls.rear = true;
   if (!state.pirFloorRoof) state.pirFloorRoof = 75;
   if (!state.firringFrontMm) state.firringFrontMm = 70;
   if (!state.acUnits) state.acUnits = [];

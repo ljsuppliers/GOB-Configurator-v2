@@ -164,6 +164,12 @@ export const USE_TAGS = {
   'IP65 weatherproof double socket': 'External socket', 'Air conditioning isolator switch': 'AC unit', '1.5kW electric radiator': 'Heating', 'Fuse spur': 'Radiator', 'CAT6 data cable (m)': 'Extra data points',
 };
 
+/** Which internal walls carry the oak acoustic slat feature panels. Accepts the
+ *  old single-value `featureWall: 'rear'` as well as the per-wall map. */
+export function featureWallsOf(state) {
+  const m = state.featureWalls || {};
+  return { front: !!m.front, left: !!m.left, right: !!m.right, rear: !!m.rear || state.featureWall === 'rear' };
+}
 export function wallPanelHeightFor(heightM) {
   const map = { 2.5: 2.14, 2.75: 2.35, 3.0: 2.5, 3.5: 2.85 };
   return map[heightM] ?? Math.max(0, heightM - 0.35);
@@ -233,8 +239,10 @@ export function buildPremiumBom(state, componentDefs) {
   // (pedestals on the slab). Legacy values map onto those three.
   const groundScrews = state.foundationType === 'ground-screw' || state.foundationType === 'hybrid';
   const blockBase = state.foundationType === 'concrete-pile';
-  const hasCanopy = !!state.hasCanopy && !state.deductions?.removeCanopy;
-  const hasDecking = !!state.hasDecking && !state.deductions?.removeDecking;
+  // Classic tier has no canopy or decking at all (the drawing shows a token 100mm overhang).
+  const isSig = state.tier !== 'classic';
+  const hasCanopy = isSig && !!state.hasCanopy && !state.deductions?.removeCanopy;
+  const hasDecking = isSig && !!state.hasDecking && !state.deductions?.removeDecking;
   // Signature canopy = 400mm. Classic = 100mm token overhang (Liam 2026-09-05).
   const canopyM = hasCanopy ? (state.overhangDepth || 400) / 1000 : 0.10;
   // How the canopy is formed depends on height (see header):
@@ -570,19 +578,24 @@ export function buildPremiumBom(state, componentDefs) {
   const boardM2 = (wallsNetM2 + ceilM2) * 1.10;
   // FEATURE WALL (Liam 2026-09-07): oak acoustic slat panels on the REAR wall,
   // fixed over the plasterboard - that wall is boarded but NOT skimmed/painted.
-  const featureRear = state.featureWall === 'rear';
-  const rearNetM2 = featureRear ? Math.max(0, (w - 0.3) * wallH - fhOn(rear).reduce((s2, o) => s2 + o.widthM * o.heightM, 0)) : 0;
+  // Feature walls can now be any of the four internal walls (Liam 2026-09-14).
+  const fw = featureWallsOf(state);
+  const wallRuns = { front: { run: w - 0.3, ops: front }, rear: { run: w - 0.3, ops: rear }, left: { run: d - 0.3, ops: left }, right: { run: d - 0.3, ops: right } };
+  const featureList = Object.keys(fw).filter((k) => fw[k]);
+  const featureRear = featureList.length > 0;
+  const rearNetM2 = featureList.reduce((t, k) => t + Math.max(0, wallRuns[k].run * wallH - fhOn(wallRuns[k].ops).reduce((s2, o) => s2 + o.widthM * o.heightM, 0)), 0);
+  const featureLabel = featureList.join(' + ');
   const skimM2 = (boardM2 - rearNetM2 * 1.10);
-  add('Plasterboard 12.5mm (1200x2400 sheet)', Math.ceil(boardM2 / PLASTERBOARD_M2), `Walls (${wallsNetM2.toFixed(1)}m2) + ceiling (${ceilM2.toFixed(1)}m2) + 10%${featureRear ? ' (rear wall boarded behind the feature wall)' : ''}`,
+  add('Plasterboard 12.5mm (1200x2400 sheet)', Math.ceil(boardM2 / PLASTERBOARD_M2), `Walls (${wallsNetM2.toFixed(1)}m2) + ceiling (${ceilM2.toFixed(1)}m2) + 10%${featureRear ? ` (${featureLabel} wall boarded behind the feature wall)` : ''}`,
     { orderText: `${Math.ceil(boardM2 / PLASTERBOARD_M2)} boards 2400 × 1200 × 12.5mm tapered-edge plasterboard` });
   add('Plasterboard scrim/jointing tape (90m roll)', Math.ceil(boardM2 / 45), `Board joints`);
   add('Plasterboard corner bead (2.4m)', 4 + [...front, ...rear, ...left, ...right].length, `Corners + reveals`);
-  add('Multi-finish plaster (25kg bag)', Math.ceil(skimM2 / 8) + 1, `Skim ${skimM2.toFixed(0)}m² at ~8m² per 25kg bag, rounded up + 1 spare${featureRear ? ' - rear wall NOT skimmed (feature wall)' : ''}`);
+  add('Multi-finish plaster (25kg bag)', Math.ceil(skimM2 / 8) + 1, `Skim ${skimM2.toFixed(0)}m² at ~8m² per 25kg bag, rounded up + 1 spare${featureRear ? ` - ${featureLabel} wall NOT skimmed (feature wall)` : ''}`);
   if (featureRear) {
-    const slatPanels = Math.ceil(Math.max(0, (w - 0.3) - fhWidth(rear)) / 0.6) + 1;
-    add('Oak acoustic slat wall panel (2400×600)', slatPanels, `OAK ACOUSTIC FEATURE WALL on the rear: internal width ${(w - 0.3).toFixed(2)}m ÷ 0.6m per panel, run vertically (2.4m covers the ${wallH.toFixed(2)}m wall), fixed to the plasterboard with grab adhesive + screws into the studs, + 1 spare`,
-      { orderText: `${slatPanels} × oak acoustic slat panels 2400 × 600mm (rear feature wall)` });
-    add('Grab adhesive / Gripfill (tube)', 2, `Feature wall panels to the plasterboard`);
+    const slatPanels = featureList.reduce((t, k) => t + Math.ceil(Math.max(0, wallRuns[k].run - fhWidth(wallRuns[k].ops)) / 0.6) + 1, 0);
+    add('Oak acoustic slat wall panel (2400×600)', slatPanels, `OAK ACOUSTIC FEATURE WALL on the ${featureLabel}: ${featureList.map((k) => `${k} ${(wallRuns[k].run - fhWidth(wallRuns[k].ops)).toFixed(2)}m`).join(', ')} ÷ 0.6m per panel, run vertically (2.4m covers the ${wallH.toFixed(2)}m wall), fixed to the plasterboard with grab adhesive + screws into the studs, + 1 spare per wall`,
+      { orderText: `${slatPanels} × oak acoustic slat panels 2400 × 600mm (${featureLabel} feature wall${featureList.length > 1 ? 's' : ''})` });
+    add('Grab adhesive / Gripfill (tube)', 2 * featureList.length, `Feature wall panels to the plasterboard`);
   }
   add('Skirting board', Math.ceil(Math.max(0, 2 * (w + d) - fhWidth(front) - fhWidth(rear) - fhWidth(left) - fhWidth(right))), `Perimeter minus full-height openings, linear m`);
   // FLOORING (Liam 2026-09-06): Wickes laminate, Natural Oak or Light Grey,
@@ -839,7 +852,7 @@ export function buildPremiumBom(state, componentDefs) {
   // -- Decorating (plastered + decorated standard) --
   add('Paint roller & tray set (large + small)', 1, `Per job`);
   add('Paint brushes (pack)', 2, `Cutting in + bitumen`);
-  add('White trade emulsion paint (10L)', Math.ceil((skimM2 * 3) / 120), `Mist coat + 2 coats over ${skimM2.toFixed(0)}m² of plaster; 10L covers ~120m² per coat${featureRear ? ' (rear feature wall not painted)' : ''}`);
+  add('White trade emulsion paint (10L)', Math.ceil((skimM2 * 3) / 120), `Mist coat + 2 coats over ${skimM2.toFixed(0)}m² of plaster; 10L covers ~120m² per coat${featureRear ? ` (${featureLabel} feature wall not painted)` : ''}`);
   add('Satin wood paint (750ml)', Math.ceil((perim * 0.12 * 2) / 12), `Skirting boards: ${perim.toFixed(1)}m x 120mm x 2 coats, ~12m² per tin`);
   if (hasDecking) add('Bitumen paint (1L)', 1, `Decking sub-frame protection`);
   // -- Site equipment (loaded from the factory, comes back) --
