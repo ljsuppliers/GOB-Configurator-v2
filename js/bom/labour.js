@@ -53,7 +53,9 @@ export function computeLabour(state, componentDefs) {
   const day = (id, label, days, est) => { if (days) lines.push({ id, label, days, amount: Math.round(days * dayRate), estimate: !!est }); };
 
   const base = buildDaysFor(externalArea);
-  day('build', `Build - ${base.model} band (${externalArea.toFixed(1)}m² external): floor, walls, roof, plaster & decorate (installer's plasterer), front cladding, canopy & decking, main door`, base.days, /ESTIMATE/.test(base.model));
+  const hasDeckingStd = state.tier === 'signature' && state.hasDecking !== false && !state.deductions?.removeDecking;
+  const frontBits = [hasCanopy ? 'canopy' : '', hasDeckingStd ? 'decking' : ''].filter(Boolean).join(' & ') || 'no canopy or decking';
+  day('build', `Build - ${base.model} band (${externalArea.toFixed(1)}m² external): floor, walls, roof, plaster & decorate (installer's plasterer), front cladding, ${frontBits}, main door`, base.days, /ESTIMATE/.test(base.model));
   day('delivery', 'Delivery (1 day)', DELIVERY_DAYS);
   day('groundworks', 'Groundworks - Ground Screw or Concrete Block System (2 days)', GROUNDWORKS_DAYS);
 
