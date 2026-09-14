@@ -72,6 +72,7 @@ export function computeLabour(state, componentDefs) {
   // (the 'additional decking' structural extra is a £/sqm price input, not geometry).
   const extraDeckM = (state.hasDecking !== false && !state.deductions?.removeDecking) ? Math.max(0, ((state.deckingDepth || 400) - 400) / 1000) : 0;
   if (extraDeckM > 0.05) day('extra_decking', `Extra decking (${extraDeckM.toFixed(2)}m deeper than standard)`, 0.5, true);
+  for (const [i, ce] of (state.customExtras || []).entries()) if (ce && ce.label && Number(ce.days) > 0) day('custom_' + i, `${ce.label} (custom extra)`, Number(ce.days), true);
   const fwm = state.featureWalls || {};
   const fwalls = ['front', 'left', 'right', 'rear'].filter((k) => fwm[k] || (k === 'rear' && state.featureWall === 'rear'));
   if (fwalls.length) day('feature_wall', `Oak acoustic slat feature wall ×${fwalls.length} (${fwalls.join(', ')}; 0.5 day each)`, fwalls.length * 0.5, true);

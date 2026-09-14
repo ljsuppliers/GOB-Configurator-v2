@@ -1,17 +1,17 @@
 // GOB Configurator v2 — Vue 3 App
 // Reactive state, live pricing, drawing preview, email drafting
 
-import { initPricing, calculatePrice, formatPrice } from './pricing.js?v=4';
+import { initPricing, calculatePrice, formatPrice } from './pricing.js?v=5';
 import { generateDrawing } from './drawing-engine.js?v=43';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
-import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign } from './cloud-storage.js';
+import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=2';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=36';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=34';
+import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=37';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=35';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
-import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=11';
+import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=12';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
@@ -62,6 +62,7 @@ function ensureStateDefaults(state) {
   if (!state.extras) state.extras = {};
   if (state.deckingDepth === undefined) state.deckingDepth = 400;
   if (state.customerId === undefined) state.customerId = '';
+  if (!Array.isArray(state.customExtras)) state.customExtras = [];
   if (state.rooms) {
     for (const room of state.rooms) {
       if (room.labelOffsetX === undefined) room.labelOffsetX = 0;
@@ -146,6 +147,12 @@ createApp({
       showStageNotes: false,
       customerPickerQuery: '',
       customerPickerOpen: false,
+      // Undo / redo (designer)
+      undoCount: 0,
+      redoCount: 0,
+      // Quote edit history (project record)
+      projectHistory: [],
+      historyOpen: {},
       // Insightly-style record blades
       projectTab: 'details',
       projectEdit: false,
@@ -615,6 +622,10 @@ createApp({
       deep: true,
       handler() {
         if (!this.state || this._restoring) return;
+        if (!this._applyingHistory) {
+          clearTimeout(this._undoTimer);
+          this._undoTimer = setTimeout(() => this.pushUndo(), 350);
+        }
         clearTimeout(this._draftTimer);
         this._draftTimer = setTimeout(() => {
           try { localStorage.setItem('gob-draft-v1', JSON.stringify({ state: this.state, cloudId: this.currentCloudId, cloudName: this.currentCloudName, orderRef: this.orderRef, at: Date.now() })); } catch (e) { /* ignore */ }
@@ -904,6 +915,42 @@ createApp({
       if (!this.orderRef.trim()) { this.orderRefManual = false; this.orderRef = this.defaultOrderRef(); }
       this.rebuildOrders();
     },
+    /* ───────────── UNDO / REDO ───────────── */
+    pushUndo() {
+      const snap = JSON.stringify(this.state);
+      if (!this._undo) { this._undo = []; this._redo = []; }
+      if (this._undo.length && this._undo[this._undo.length - 1] === snap) return;
+      this._undo.push(snap); if (this._undo.length > 60) this._undo.shift();
+      this._redo = [];
+      this.undoCount = Math.max(0, this._undo.length - 1); this.redoCount = 0;
+    },
+    resetUndo() { this._undo = [JSON.stringify(this.state)]; this._redo = []; this.undoCount = 0; this.redoCount = 0; },
+    applySnapshot(snap) {
+      this._applyingHistory = true;
+      clearTimeout(this._undoTimer);
+      this.state = ensureStateDefaults(JSON.parse(snap));
+      this.$nextTick(() => setTimeout(() => { this._applyingHistory = false; }, 400));
+    },
+    undo() {
+      if (!this._undo || this._undo.length < 2) return;
+      this._redo.push(this._undo.pop());
+      this.applySnapshot(this._undo[this._undo.length - 1]);
+      this.undoCount = this._undo.length - 1; this.redoCount = this._redo.length;
+    },
+    redo() {
+      if (!this._redo || !this._redo.length) return;
+      const snap = this._redo.pop(); this._undo.push(snap);
+      this.applySnapshot(snap);
+      this.undoCount = this._undo.length - 1; this.redoCount = this._redo.length;
+    },
+    /* ───────────── CUSTOM EXTRAS ───────────── */
+    addCustomExtra() { if (!this.state.customExtras) this.state.customExtras = []; this.state.customExtras.push({ id: Date.now(), label: '', price: 0, cost: 0, days: 0, supplier: '', materials: '', notes: '' }); },
+    removeCustomExtra(i) { this.state.customExtras.splice(i, 1); },
+    /* ───────────── QUOTE EDIT HISTORY ───────────── */
+    async loadProjectHistory(id) {
+      this.projectHistory = [];
+      try { this.projectHistory = await listHistory(id); } catch (e) { console.warn('history', e); }
+    },
     /* ───────────── BLADE HELPERS ───────────── */
     toggleSec(k) { this.secOpen[k] = this.secOpen[k] === false; },
     fmtDateOnly(d) { if (!d) return ''; const x = d instanceof Date ? d : new Date(d); return isNaN(x) ? String(d) : x.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }); },
@@ -986,6 +1033,7 @@ createApp({
       this.projectNotes = []; this.projectFiles = []; this.projectStatus = '';
       this.projectCustomer = j.customerId ? (this.customers.find((c) => c.id === j.customerId) || null) : null;
       this.syncUrl();
+      this.loadProjectHistory(id);
       if (j.customerId) {
         try {
           const [notes, files] = await Promise.all([listNotes(j.customerId), listFiles(j.customerId)]);
@@ -1175,6 +1223,7 @@ createApp({
       this.state = ensureStateDefaults(JSON.parse(JSON.stringify(this.appData.defaults || {})));
       this.currentCloudId = null; this.currentCloudName = ''; this.orderRef = ''; this.orderRefManual = false;
       this.bomLines = []; this.orders = [];
+      this.$nextTick(() => this.resetUndo());
       try { localStorage.removeItem('gob-draft-v1'); } catch (e) { /* ignore */ }
       this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.projectsPage = false; this.homePage = false;
       this.syncUrl();
@@ -2363,7 +2412,7 @@ createApp({
       this.cloudLoading = true;
       this.cloudError = null;
       try {
-        await updateDesign(this.currentCloudId, this.currentCloudName, this.state);
+        await updateDesign(this.currentCloudId, this.currentCloudName, this.state, this.userName(), this.price && typeof this.price.totalIncVat === 'number' ? this.price.totalIncVat : null);
         this.notify('Updated: ' + this.currentCloudName);
         await this.refreshCloudDesigns();
       } catch (err) {
@@ -2387,6 +2436,7 @@ createApp({
         this.nextFeatureId = 1000 + (this.state.externalFeatures?.length || 0);
         this.nextAcUnitId = 2000 + (this.state.acUnits?.length || 0);
         this.nextLabelId = 3000 + (this.state.drawingLabels?.length || 0);
+        this.$nextTick(() => this.resetUndo());
         this.notify('Loaded: ' + design.name);
       } catch (err) {
         console.error('Cloud load error:', err);
@@ -2642,6 +2692,15 @@ createApp({
   },
 
   mounted() {
+    // Undo / redo shortcuts in the designer (native text undo inside inputs is left alone)
+    document.addEventListener('keydown', (e) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z' && e.key.toLowerCase() !== 'y') return;
+      const t = e.target; const tag = (t && t.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || (t && t.isContentEditable)) return;
+      if (!this.designerView) return;
+      e.preventDefault();
+      if (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey)) this.redo(); else this.undo();
+    });
     // Close export menu on outside click
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.export-wrapper')) {

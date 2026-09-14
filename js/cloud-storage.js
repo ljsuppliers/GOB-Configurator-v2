@@ -86,15 +86,81 @@ export async function saveDesign(name, state) {
   return doc.id;
 }
 
-export async function updateDesign(docId, name, state) {
+export async function updateDesign(docId, name, state, author = '', quoteTotal = null) {
   if (!designsCollection) throw new Error('Firebase not initialised');
   const meta = extractMetadata(state);
-  await designsCollection.doc(docId).update({
+  const ref = designsCollection.doc(docId);
+  let changes = [];
+  try {
+    const prev = await ref.get();
+    const p = prev.exists ? prev.data() : null;
+    changes = describeChanges(p && p.state, state, p && p.quoteTotal, quoteTotal);
+  } catch (e) { changes = [{ path: 'state', text: 'Saved (previous version unreadable)' }]; }
+  await ref.update({
     name,
     ...meta,
+    quoteTotal: quoteTotal === null ? firebase.firestore.FieldValue.delete() : quoteTotal,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedBy: author || '',
     state: JSON.parse(JSON.stringify(state)),
   });
+  if (changes.length) {
+    await ref.collection('history').add({ at: firebase.firestore.FieldValue.serverTimestamp(), by: author || '', count: changes.length, changes: changes.slice(0, 60), quoteTotal: quoteTotal === null ? null : quoteTotal });
+  }
+}
+
+export async function listHistory(docId) {
+  if (!designsCollection) throw new Error('Firebase not initialised');
+  const snap = await designsCollection.doc(docId).collection('history').orderBy('at', 'desc').limit(200).get();
+  return snap.docs.map((d) => ({ id: d.id, ...d.data(), at: d.data().at?.toDate?.() || null }));
+}
+
+/* Human-readable diff of two design states for the edit history. */
+const LABELS = { width: 'External width', depth: 'External depth', height: 'Height', tier: 'Range', hasCanopy: 'Canopy', hasDecking: 'Decking', deckingDepth: 'Decking depth', overhangDepth: 'Canopy depth',
+  cornerLeft: 'Left corner', cornerRight: 'Right corner', foundationType: 'Foundation', flooring: 'Flooring', pirFloorRoof: 'PIR floor/roof', firringFrontMm: 'Firring height', jobStatus: 'Job status', customerId: 'Customer link' };
+function flat(obj, prefix, out) {
+  if (obj === null || obj === undefined) return out;
+  if (Array.isArray(obj)) {
+    if (prefix === 'components') obj.forEach((c) => { out[`components.${c.id}`] = `${c.label || c.type}${c.customWidth ? ' ' + c.customWidth + 'mm' : ''} on ${c.elevation} @ ${c.positionX}mm`; });
+    else if (prefix === 'customExtras') obj.forEach((c, i) => { out[`customExtras.${i}`] = `${c.label} £${c.price}`; });
+    else if (prefix === 'acUnits' || prefix === 'externalFeatures' || prefix === 'drawingLabels') obj.forEach((c, i) => { out[`${prefix}.${c.id || i}`] = JSON.stringify(c); });
+    else out[prefix] = JSON.stringify(obj);
+    return out;
+  }
+  if (typeof obj === 'object') { for (const k of Object.keys(obj)) flat(obj[k], prefix ? `${prefix}.${k}` : k, out); return out; }
+  out[prefix] = obj; return out;
+}
+const SKIP = /^(survey\.siteSketch|orderStatus|ordersSent|orderNotes|bomOverrides)/;
+function nice(path) {
+  if (LABELS[path]) return LABELS[path];
+  const p = path.split('.');
+  if (p[0] === 'components') return 'Door/window';
+  if (p[0] === 'customer') return 'Customer ' + p[1];
+  if (p[0] === 'cladding') return 'Cladding ' + p[1];
+  if (p[0] === 'extras') return 'Extra: ' + p[1].replace(/([A-Z])/g, ' $1').toLowerCase();
+  if (p[0] === 'structuralExtras') return 'Structural extra: ' + p[1].replace(/([A-Z])/g, ' $1').toLowerCase();
+  if (p[0] === 'featureWalls') return 'Feature wall ' + p[1];
+  if (p[0] === 'installer') return 'Installer ' + p[1];
+  if (p[0] === 'labour') return 'Labour ' + p[1];
+  if (p[0] === 'discount') return 'Discount ' + p[1];
+  if (p[0] === 'customExtras') return 'Custom extra';
+  return path.replace(/\./g, ' › ');
+}
+const show = (v) => v === undefined || v === null || v === '' ? '(blank)' : typeof v === 'boolean' ? (v ? 'yes' : 'no') : String(v).length > 60 ? String(v).slice(0, 57) + '…' : String(v);
+export function describeChanges(prevState, nextState, prevTotal, nextTotal) {
+  const out = [];
+  if (!prevState) return [{ path: 'state', text: 'First save' }];
+  const a = flat(prevState, '', {}), b = flat(nextState, '', {});
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const k of keys) {
+    if (SKIP.test(k)) continue;
+    const va = a[k], vb = b[k];
+    if (JSON.stringify(va) === JSON.stringify(vb)) continue;
+    if (k.startsWith('components.')) { out.push({ path: k, text: va === undefined ? `Added ${vb}` : vb === undefined ? `Removed ${va}` : `Moved/changed ${va} → ${vb}` }); continue; }
+    out.push({ path: k, text: `${nice(k)}: ${show(va)} → ${show(vb)}` });
+  }
+  if (prevTotal !== undefined && prevTotal !== null && nextTotal !== null && nextTotal !== undefined && Math.round(prevTotal) !== Math.round(nextTotal)) out.unshift({ path: 'quoteTotal', text: `Quote total: £${Math.round(prevTotal).toLocaleString()} → £${Math.round(nextTotal).toLocaleString()}` });
+  return out;
 }
 
 export async function listDesigns() {

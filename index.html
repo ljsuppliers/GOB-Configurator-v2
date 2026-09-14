@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="css/app.css?v=28">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
-  <link rel="stylesheet" href="css/theme.css?v=3">
+  <link rel="stylesheet" href="css/theme.css?v=4">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
 <body>
@@ -67,6 +67,9 @@
     <header class="topbar">
       <div class="topbar-title">{{ pageTitle }}</div>
       <div class="topbar-actions" v-if="designerView">
+        <button class="btn btn-icon" @click="undo" :disabled="!undoCount" title="Undo (⌘Z)">↶ Undo</button>
+        <button class="btn btn-icon" @click="redo" :disabled="!redoCount" title="Redo (⇧⌘Z)">↷ Redo</button>
+        <span class="topbar-sep"></span>
         <button class="btn" @click="newJob" title="Clear the screen and start a new design">New</button>
         <button class="btn btn-primary" @click="saveConfig">Save</button>
         <button class="btn" @click="loadConfig">Load</button>
@@ -811,6 +814,20 @@
             </div>
             <div class="pack-small" style="color:#64748b">Fitted over plasterboard; that wall is not skimmed or painted.</div>
           </div>
+          <div class="custom-extras">
+            <label style="display:block;margin:8px 0 4px">Custom extras <span class="pack-small" style="color:#64748b">anything agreed with the customer that is not an option above · goes on the quote, materials list, labour and installer pack</span></label>
+            <div v-for="(ce, i) in (state.customExtras || [])" :key="ce.id" class="custom-extra">
+              <input v-model.trim="ce.label" placeholder="Description, e.g. Extra step at the front of the building">
+              <div class="custom-extra-row">
+                <label>Customer price £<input type="number" min="0" step="10" v-model.number="ce.price"></label>
+                <label>Our material cost £<input type="number" min="0" step="10" v-model.number="ce.cost"></label>
+                <label>Labour days<input type="number" min="0" step="0.5" v-model.number="ce.days"></label>
+              </div>
+              <input v-model.trim="ce.materials" placeholder="Materials to order (optional), e.g. 2 × 4.8m 4x2 tanalised, 12 × Trex boards">
+              <div class="custom-extra-row"><input v-model.trim="ce.supplier" placeholder="Supplier (default Builders merchant)"><button type="button" class="btn-tiny" @click="removeCustomExtra(i)">remove</button></div>
+            </div>
+            <button type="button" class="btn btn-small" @click="addCustomExtra">+ Add custom extra</button>
+          </div>
           <label style="display:block;margin:6px 0 4px">PIR in floor + roof
             <select v-model.number="state.pirFloorRoof" style="width:100%;margin-top:3px"><option :value="75">75mm (standard)</option><option :value="100">100mm</option></select>
           </label>
@@ -1345,6 +1362,21 @@
                 <div v-show="secOpen['p-upcoming'] !== false" class="sec-body">
                   <div v-if="!projectUpcoming.length" class="crm-muted">Nothing scheduled.</div>
                   <div v-for="t in projectUpcoming" :key="t.id" class="crm-task" :class="taskDueClass(t)"><input type="checkbox" :checked="t.done" @change="toggleTask(t)"><span class="crm-task-main"><span class="crm-task-title">{{ t.title }}</span><small>{{ fmtDue(t.due) }}<template v-if="t.assignee"> · {{ t.assignee }}</template></small></span></div>
+                </div>
+              </div>
+              <div class="sec">
+                <div class="sec-head" @click="toggleSec('p-history')"><span class="sec-caret">{{ secOpen['p-history'] === false ? '⌄' : '⌃' }}</span> Quote &amp; design edits <em>{{ projectHistory.length }}</em></div>
+                <div v-show="secOpen['p-history'] !== false" class="sec-body">
+                  <div v-if="!projectHistory.length" class="crm-muted">No saved edits yet. Every Save in the designer records who changed what.</div>
+                  <div v-for="h in projectHistory" :key="h.id" class="hist-row">
+                    <div class="hist-head" @click="historyOpen[h.id] = !historyOpen[h.id]">
+                      <span class="act-date">{{ fmtDateTime(h.at) }}</span>
+                      <span class="hist-by">{{ h.by || 'unknown' }}</span>
+                      <span class="hist-sum">{{ h.count }} change{{ h.count === 1 ? '' : 's' }}<template v-if="h.changes && h.changes.length"> · {{ h.changes[0].text }}<template v-if="h.changes.length > 1">, …</template></template></span>
+                      <span class="crm-muted" v-if="h.quoteTotal">£{{ Math.round(h.quoteTotal).toLocaleString() }}</span>
+                    </div>
+                    <ul v-if="historyOpen[h.id]" class="hist-list"><li v-for="(c, i) in h.changes" :key="i">{{ c.text }}</li></ul>
+                  </div>
                 </div>
               </div>
               <div class="sec">
@@ -2016,6 +2048,7 @@
           <tr v-if="state.bathroom && state.bathroom.enabled"><th>Bathroom</th><td>{{ state.bathroom.type === 'wc' ? 'WC: toilet, basin, extractor, tiling' : 'Shower room: toilet, basin, shower, extractor, towel rail, tiling' }} · plumber to be arranged</td></tr>
           <tr><th>Electrics</th><td>Standard pack: consumer unit, 5 double sockets (1 USB), dimmable downlights, RJ45 point{{ state.tier === 'signature' && state.hasCanopy !== false ? ', canopy lights 1 per metre' : '' }}{{ (state.acUnits||[]).length ? ', air conditioning ×' + state.acUnits.length : '' }} · by the electrician, 1st fix after frame, 2nd fix after plaster</td></tr>
           <tr v-if="state.structuralExtras && (state.structuralExtras.secretDoor || state.structuralExtras.premiumFlooring || state.structuralExtras.heightUpgrade)"><th>Extras</th><td>{{ [state.structuralExtras.secretDoor ? 'secret cladded door' : '', state.structuralExtras.premiumFlooring ? 'premium flooring' : '', state.structuralExtras.heightUpgrade ? 'height upgrade +' + state.structuralExtras.heightUpgrade + 'mm' : ''].filter(Boolean).join(' · ') }}</td></tr>
+          <tr v-if="(state.customExtras || []).some(c => c.label)"><th>Custom extras</th><td><span v-for="ce in state.customExtras.filter(c => c.label)" :key="ce.id" class="pack-chip">{{ ce.label }}{{ ce.materials ? ' · ' + ce.materials : '' }}</span></td></tr>
           <tr v-if="state.planning && state.planning.required"><th>Planning</th><td>Planning permission required{{ (state.planning.reasons || []).length ? ': ' + state.planning.reasons.join(', ') : '' }}{{ state.planning.customReason ? ' · ' + state.planning.customReason : '' }} · check the decision notice is on file before starting</td></tr>
           <tr v-if="state.landscaping && state.landscaping.required"><th>Landscaper</th><td>Landscaper required{{ state.landscaping.reason ? ': ' + state.landscaping.reason : '' }}{{ state.landscaping.customReason ? ' · ' + state.landscaping.customReason : '' }} · separate contractor, arranged by the Company</td></tr>
           <tr v-if="state.customer && state.customer.notes"><th>Notes</th><td>{{ state.customer.notes }}</td></tr>
@@ -2069,6 +2102,7 @@
           <tr v-if="state.featureWalls && Object.values(state.featureWalls).some(Boolean)"><th>Feature wall</th><td>Oak acoustic slat panels on the {{ ['front','left','right','rear'].filter(k => state.featureWalls && state.featureWalls[k]).join(' + ') }} wall{{ Object.values(state.featureWalls).filter(Boolean).length > 1 ? 's' : '' }} (fitted over plasterboard, no skim or paint behind)</td></tr>
           <tr v-if="state.partitionRoom && state.partitionRoom.enabled"><th>Partition</th><td>{{ state.partitionRoom.label || state.partitionRoom.type }} {{ state.partitionRoom.width }}×{{ state.partitionRoom.depth }}mm in the {{ state.partitionRoom.corner }} corner, with door</td></tr>
           <tr v-if="state.bathroom && state.bathroom.enabled"><th>Bathroom</th><td>{{ state.bathroom.type === 'wc' ? 'WC fit-out' : 'Shower room fit-out' }} (plumber separate)</td></tr>
+          <tr v-if="(state.customExtras || []).some(c => c.label)"><th>Custom extras</th><td><span v-for="ce in state.customExtras.filter(c => c.label)" :key="ce.id" class="pack-chip">{{ ce.label }}</span></td></tr>
           <tr v-if="labour.install.lines.some(l => !['build','delivery','groundworks'].includes(l.id))"><th>Extras in the fee</th><td><span v-for="l in labour.install.lines.filter(l => !['build','delivery','groundworks'].includes(l.id))" :key="l.id" class="pack-chip">{{ l.label }}</span></td></tr>
           <tr><th>Not included</th><td>Electrical 1st and 2nd fix (Company's electrician){{ (state.acUnits||[]).length ? ', air conditioning install' : '' }}, materials supply, landscaping beyond the building footprint</td></tr>
         </table>
@@ -2512,7 +2546,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=132"></script>
+<script type="module" src="js/app.js?v=133"></script>
 
 </body>
 </html>

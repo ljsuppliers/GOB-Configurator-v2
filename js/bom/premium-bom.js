@@ -784,6 +784,13 @@ export function buildPremiumBom(state, componentDefs) {
   }
 
   add('Door mat', 1, `Complimentary with every job`);
+  // CUSTOM EXTRAS typed on the job: a line each so the materials list, packs
+  // and costings carry them. Cost/supplier come from the extra itself.
+  for (const ce of state.customExtras || []) {
+    if (!ce || !ce.label) continue;
+    add(`Custom extra: ${ce.label}`, 1, `CUSTOM EXTRA agreed with the customer${ce.notes ? ' - ' + ce.notes : ''}${ce.materials ? ' · materials: ' + ce.materials : ''}`,
+      { separate: 'CUSTOM', unitCost: Number(ce.cost) || 0, supplier: ce.supplier || 'Builders merchant', unit: 'each', orderText: ce.materials || ce.label });
+  }
 
   /* ======================================================================
      INSTALLATION KIT (factory stock, mostly Montravia / online fixings).

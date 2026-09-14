@@ -133,6 +133,10 @@ export function calculatePrice(state) {
       price: struct.additionalDecking.price * deckSqm
     });
   }
+  // Custom extras typed on the job (e.g. "Extra step at the front - £700")
+  for (const ce of state.customExtras || []) {
+    if (ce && ce.label) result.extras.push({ label: `${ce.label}`, price: Number(ce.price) || 0, custom: true });
+  }
   // Oak acoustic slat feature walls, priced per wall
   const fwm = state.featureWalls || {};
   const fwalls = ['front', 'left', 'right', 'rear'].filter((k) => fwm[k] || (k === 'rear' && state.featureWall === 'rear'));

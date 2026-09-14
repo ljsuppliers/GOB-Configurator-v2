@@ -289,7 +289,7 @@ export function joinBom(bomRows, catalogue, overrides = {}) {
     const packSize = mat && mat.packSize > 0 ? mat.packSize : 1;
     let orderQty = Math.max(0, Math.ceil(r.qty / packSize - 1e-9));
     let orderUnit = mat && mat.orderUnit ? mat.orderUnit : (mat ? mat.unit : '');
-    let lineCost = mat ? (mat.unitCost || 0) * (r.costQty > 0 ? r.costQty : r.qty) : 0;
+    let lineCost = mat ? (mat.unitCost || 0) * (r.costQty > 0 ? r.costQty : r.qty) : (r.unitCost || 0) * r.qty;
     let stockPlan = null;
     const orderText = r.orderText || '';
     const stockRule = r.cuts ? stockRuleFor(r.catalogueName || r.name) : null;
@@ -303,9 +303,9 @@ export function joinBom(bomRows, catalogue, overrides = {}) {
     return {
       ...r,
       material: mat,
-      supplier: mat ? mat.supplier || '' : '',
-      unit: mat ? mat.unit : '',
-      unitCost: mat ? mat.unitCost || 0 : 0,
+      supplier: mat ? mat.supplier || '' : (r.supplier || ''),
+      unit: mat ? mat.unit : (r.unit || ''),
+      unitCost: mat ? mat.unitCost || 0 : (r.unitCost || 0),
       lineCost,
       orderQty,
       orderUnit,
@@ -316,7 +316,7 @@ export function joinBom(bomRows, catalogue, overrides = {}) {
       // 'factory' orders are addressed to Biggin Hill
       destination: supplyFor(mat, ov) === 'factory' ? 'factory' : 'site',
       inStock: supplyFor(mat, ov) === 'stock',
-      inCatalogue: !!mat,
+      inCatalogue: !!mat || !!r.unitCost || !!r.supplier,
     };
   });
 }
