@@ -72,13 +72,14 @@ function extractMetadata(state) {
   };
 }
 
-export async function saveDesign(name, state) {
+export async function saveDesign(name, state, author = '') {
   if (!designsCollection) throw new Error('Firebase not initialised');
   const meta = extractMetadata(state);
   const now = firebase.firestore.FieldValue.serverTimestamp();
   const doc = await designsCollection.add({
     name,
     ...meta,
+    source: 'crm', stage: 1, stageName: 'Quote sent', projectStatus: 'IN PROGRESS', createdBy: author || '',
     savedAt: now,
     updatedAt: now,
     state: JSON.parse(JSON.stringify(state)),
@@ -185,6 +186,11 @@ export async function listDesigns() {
       ordersDelivered: d.ordersDelivered || 0,
       deliveries: d.deliveries || [],
       customerId: d.customerId || '',
+      source: d.source || (d.legacy ? 'insightly' : 'configurator'),
+      drawingSource: d.drawingSource || '',
+      legacyName: d.legacyName || '',
+      quoteTotal: typeof d.quoteTotal === 'number' ? d.quoteTotal : null,
+      updatedBy: d.updatedBy || '',
       stage: d.stage || 0,
       stageName: d.stageName || '',
       projectStatus: d.projectStatus || '',

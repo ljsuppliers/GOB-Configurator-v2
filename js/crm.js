@@ -236,6 +236,28 @@ export async function mergeDesignIntoProject(projectId, designId) {
   await dref.delete();
 }
 
+/* ───────────── PROJECT NAMING + SOURCE ───────────── */
+export const SOURCE_LABELS = { insightly: 'Insightly', configurator: 'Old configurator', crm: 'GOB CRM' };
+const QUOTE_RE = /^(QB)?\d{3,5}$/;
+const PC_RE = /\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/i;
+export function surnameOf(name) {
+  const n = String(name || '').replace(/\s*\(.*?\)\s*/g, '').replace(/\s+\d+$/, '').trim();
+  return n ? n.split(/\s+/).pop().replace(/,$/, '') : '';
+}
+export function townOf(address, customer) {
+  if (customer && customer.town) return customer.town;
+  const a = address || (customer ? [customer.address, customer.postcode].filter(Boolean).join(', ') : '') || '';
+  const parts = a.replace(PC_RE, '').split(/[,\n]/).map((p) => p.trim()).filter(Boolean);
+  return parts.length >= 2 ? parts[parts.length - 1] : '';
+}
+/** "4504 - Giles - Sundridge" (quote only when it is a real 3-5 digit number). */
+export function standardProjectName({ quoteNumber = '', customerName = '', address = '', customer = null, suffix = '' }) {
+  const q = String(quoteNumber || '').trim();
+  const parts = [QUOTE_RE.test(q) ? q : '', surnameOf(customerName || (customer && customer.name)), townOf(address, customer)].filter(Boolean);
+  return (parts.join(' - ') || customerName || 'New project') + (suffix ? ` (${suffix})` : '');
+}
+export function isStandardName(name) { return /^\s*\S+\s*-\s*\S/.test(name || ''); }
+
 /* ───────────── TASKS & REMINDERS ───────────── */
 //   tasks/{id}: { title, due (YYYY-MM-DD), assignee, done, doneAt, customerId, customerName, projectId, projectName, createdBy, createdAt }
 export async function listTasks() {

@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="css/app.css?v=28">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
-  <link rel="stylesheet" href="css/theme.css?v=7">
+  <link rel="stylesheet" href="css/theme.css?v=8">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
 <body>
@@ -1190,9 +1190,50 @@
           <p v-if="projectStatus" class="crm-status">{{ projectStatus }}</p>
         </div>
 
-        <div v-else-if="!projectDraft" class="crm-blank">
-          <h2>Projects</h2>
-          <p>Every quote and job on the pipeline, the same stages as before. Pick a project on the left, or start a new one with + New. Projects with a drawing open straight into the designer and materials list.</p>
+        <div v-else-if="!projectDraft" class="proj-overview">
+          <div class="proj-groups">
+            <button :class="{ on: !projectGroup }" @click="projectGroup = ''">All open <span>{{ projectCounts.open }}</span></button>
+            <button v-for="g in pipelineGroups" :key="g.key" :class="{ on: projectGroup === g.key }" @click="projectGroup = g.key; projectFilter = 'open'">{{ g.label }} <span>{{ g.count }}</span></button>
+          </div>
+          <div class="crm-card proj-table-card">
+            <table class="proj-table">
+              <thead><tr>
+                <th @click="sortTable('quoteNumber')">Quote</th>
+                <th @click="sortTable('name')">Project</th>
+                <th @click="sortTable('customer')">Customer</th>
+                <th @click="sortTable('dimensions')">Size</th>
+                <th @click="sortTable('stage')">Stage</th>
+                <th @click="sortTable('jobStatus')">Status</th>
+                <th @click="sortTable('owner')">Owner</th>
+                <th @click="sortTable('installStart')">Install</th>
+                <th @click="sortTable('quoteTotal')" class="num">Quote £</th>
+                <th @click="sortTable('source')">From</th>
+                <th @click="sortTable('updatedAt')">Updated</th>
+              </tr></thead>
+              <tbody>
+                <tr v-for="j in projectTable" :key="j.id" @click="selectProject(j.id)">
+                  <td class="mono">{{ j.quoteNumber || '' }}</td>
+                  <td><strong>{{ projectTitle(j) }}</strong><span v-if="j.hasState" class="proj-draw" title="Has a drawing">✎</span></td>
+                  <td>{{ j.customer }}</td>
+                  <td class="mono">{{ j.dimensions }}</td>
+                  <td><span class="crm-stage-dot sm" :class="'chip-job-' + j.jobStatus">{{ stageOf(j) }}</span> {{ stageName(stageOf(j)) }}</td>
+                  <td><span class="chip" :class="'chip-job-' + j.jobStatus">{{ statusMeta(j.jobStatus).label }}</span></td>
+                  <td>{{ j.owner || '' }}</td>
+                  <td class="mono">{{ j.installStart ? fmtDateOnly(j.installStart) : '' }}</td>
+                  <td class="num mono">{{ fmtMoney(j.quoteTotal) }}</td>
+                  <td><span class="src-tag" :class="'src-' + (j.source || 'configurator')">{{ sourceLabel(j) }}</span></td>
+                  <td class="mono">{{ j.updatedAt ? fmtDateOnly(j.updatedAt) : '' }}<small v-if="j.updatedBy"> · {{ j.updatedBy }}</small></td>
+                </tr>
+                <tr v-if="!projectTable.length"><td colspan="11" class="crm-muted">No projects match.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="crm-card tidy-card" v-if="tidyUp.length">
+            <h3>Needs tidying</h3>
+            <details v-for="t in tidyUp" :key="t.key"><summary>{{ t.label }}</summary>
+              <div class="tidy-items"><a v-for="it in t.items" :key="it.id + it.text" href="#" @click.prevent="t.customer ? openCustomersPage(it.id) : selectProject(it.id)">{{ it.text }}</a></div>
+            </details>
+          </div>
         </div>
 
         <template v-else>
@@ -1218,6 +1259,7 @@
               <div><small>Status</small><span>{{ (projectStatuses.find(x => x.value === projectStatusOf(currentProject)) || {}).label || projectStatusOf(currentProject) }}</span></div>
               <div><small>Contact</small><span><a v-if="projectCustomer" href="#" @click.prevent="openCustomersPage(projectCustomer.id)">{{ projectCustomer.name }}</a><span v-else class="crm-warn">not linked</span></span></div>
               <div class="blade-meta-right"><small>Project Owner</small><span>{{ currentProject.owner || '—' }}</span></div>
+              <div><small>From</small><span><span class="src-tag" :class="'src-' + (currentProject.source || 'configurator')">{{ sourceLabel(currentProject) }}</span><template v-if="currentProject.drawingSource"> + drawing from old configurator</template><template v-if="currentProject.legacyName"> · was "{{ currentProject.legacyName }}"</template></span></div>
             </div>
 
             <div class="pipe-head">
@@ -2569,7 +2611,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=135"></script>
+<script type="module" src="js/app.js?v=136"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

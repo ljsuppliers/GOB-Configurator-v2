@@ -6,7 +6,7 @@ import { generateDrawing } from './drawing-engine.js?v=43';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
-import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=2';
+import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=3';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=37';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=35';
@@ -15,7 +15,7 @@ import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=12';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
-import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject, mergeDesignIntoProject, listTasks, addTask, updateTask, deleteTask } from './crm.js?v=6';
+import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject, mergeDesignIntoProject, listTasks, addTask, updateTask, deleteTask, SOURCE_LABELS, standardProjectName, isStandardName } from './crm.js?v=7';
 
 const { createApp } = Vue;
 
@@ -147,6 +147,10 @@ createApp({
       showStageNotes: false,
       customerPickerQuery: '',
       customerPickerOpen: false,
+      // Projects table (desktop overview)
+      tableSort: { key: 'updatedAt', dir: 'desc' },
+      projectGroup: '',
+      sourceLabels: SOURCE_LABELS,
       // Phone layout: which designer pane is showing
       mobileTab: 'drawing',
       // Undo / redo (designer)
@@ -267,6 +271,29 @@ createApp({
       if (!q) return list;
       const terms = q.split(/\s+/).filter(Boolean);
       return list.filter((c) => { const b = c.searchBlob || ''; return terms.every((t) => b.includes(t)); });
+    },
+    projectTable() {
+      let list = this.filteredProjects;
+      if (this.projectGroup) { const g = this.pipelineGroups.find((x) => x.key === this.projectGroup); if (g) list = list.filter((j) => { const s = stageOf(j); return s >= g.from && s <= g.to; }); }
+      const { key, dir } = this.tableSort; const m = dir === 'asc' ? 1 : -1;
+      const val = (j) => key === 'stage' ? stageOf(j) : key === 'quoteNumber' ? String(j.quoteNumber || '') : key === 'updatedAt' ? (j.updatedAt || 0) : key === 'installStart' ? (j.installStart || '') : key === 'quoteTotal' ? (j.quoteTotal || 0) : String(j[key] || '');
+      return [...list].sort((a, b) => { const x = val(a), y = val(b); return (typeof x === 'number' && typeof y === 'number') ? (x - y) * m : String(x).localeCompare(String(y), undefined, { numeric: true }) * m; });
+    },
+    tidyUp() {
+      const out = [];
+      const noCust = this.cloudDesigns.filter((j) => !j.customerId);
+      if (noCust.length) out.push({ key: 'nocust', label: `${noCust.length} project${noCust.length === 1 ? '' : 's'} not linked to a contact`, items: noCust.map((j) => ({ id: j.id, text: this.projectTitle(j) })) });
+      const noQuote = this.cloudDesigns.filter((j) => !['complete', 'cancelled'].includes(j.jobStatus) && !/^(QB)?\d{3,5}$/.test(String(j.quoteNumber || '')));
+      if (noQuote.length) out.push({ key: 'noquote', label: `${noQuote.length} open project${noQuote.length === 1 ? '' : 's'} without a real quote number`, items: noQuote.map((j) => ({ id: j.id, text: this.projectTitle(j) })) });
+      const noDraw = this.cloudDesigns.filter((j) => !j.hasState && !['complete', 'cancelled'].includes(j.jobStatus));
+      if (noDraw.length) out.push({ key: 'nodraw', label: `${noDraw.length} open project${noDraw.length === 1 ? '' : 's'} with no drawing yet`, items: noDraw.map((j) => ({ id: j.id, text: this.projectTitle(j) })) });
+      const byC = {}; for (const j of this.cloudDesigns) if (j.customerId && j.hasState) (byC[j.customerId] = byC[j.customerId] || []).push(j);
+      const multi = Object.values(byC).filter((v) => v.length > 1);
+      if (multi.length) out.push({ key: 'multi', label: `${multi.length} contact${multi.length === 1 ? '' : 's'} with more than one drawing (revisions?)`, items: multi.map((v) => ({ id: v[0].id, text: v.map((j) => this.projectTitle(j)).join(' / ') })) });
+      const seen = {}; const dups = [];
+      for (const c of this.customers) for (const k of [c.email, (c.phone || '').replace(/\D/g, ''), (c.mobile || '').replace(/\D/g, '')].filter((x) => x && x.length > 5)) { if (seen[k] && seen[k].id !== c.id) dups.push({ id: c.id, text: `${seen[k].name} / ${c.name}` }); else seen[k] = c; }
+      if (dups.length) out.push({ key: 'dupcust', label: `${dups.length} possible duplicate contact${dups.length === 1 ? '' : 's'} (same email or phone)`, items: dups, customer: true });
+      return out;
     },
     filteredProjects() {
       const q = (this.projectSearch || '').trim().toLowerCase();
@@ -1013,6 +1040,13 @@ createApp({
     closeHome() { this.homePage = false; this.syncUrl(); },
     homeGo() { const r = this.homeResults[0]; if (r) (r.type === 'customer' ? this.openCustomersPage(r.id) : this.openProjectsPage(r.id)); },
     /* ───────────── CRM: PROJECTS ───────────── */
+    suggestedProjectName() {
+      const c = this.state.customerId ? this.customerById(this.state.customerId) : null;
+      return standardProjectName({ quoteNumber: this.state.customer && this.state.customer.number, customerName: this.state.customer && this.state.customer.name, address: this.state.customer && this.state.customer.address, customer: c });
+    },
+    sourceLabel(j) { return SOURCE_LABELS[j.source] || (j.legacy ? 'Insightly' : 'Old configurator'); },
+    sortTable(key) { if (this.tableSort.key === key) this.tableSort.dir = this.tableSort.dir === 'asc' ? 'desc' : 'asc'; else this.tableSort = { key, dir: key === 'updatedAt' || key === 'quoteTotal' ? 'desc' : 'asc' }; },
+    fmtMoney(n) { return typeof n === 'number' ? '£' + Math.round(n).toLocaleString() : ''; },
     stageOf(j) { return stageOf(j); },
     stageName(o) { return stageName(o); },
     projectStatusOf(j) { return projectStatusOf(j); },
@@ -1241,7 +1275,7 @@ createApp({
     async saveJob() {
       if (!this.cloudReady) { this.bomStatus = 'Cloud not ready - use Save in the header'; return; }
       if (this.currentCloudId) { await this.updateCloudSave(); }
-      else { this.cloudSaveName = this.orderRef || (this.state.customer?.name || 'Job'); await this.saveToCloud(); }
+      else { this.cloudSaveName = this.suggestedProjectName(); await this.saveToCloud(); }
       this.bomStatus = `Job saved (${this.currentCloudName})`;
     },
     setJobStatus(v) { this.state.jobStatus = v; if (this.currentCloudId) this.updateCloudSave(); },
@@ -2395,7 +2429,7 @@ createApp({
       this.cloudLoading = true;
       this.cloudError = null;
       try {
-        const docId = await saveDesign(name, this.state);
+        const docId = await saveDesign(name, this.state, this.userName());
         this.currentCloudId = docId;
         this.currentCloudName = name;
         this.cloudSaveName = '';
