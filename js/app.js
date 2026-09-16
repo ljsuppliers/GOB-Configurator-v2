@@ -6,7 +6,7 @@ import { generateDrawing } from './drawing-engine.js?v=43';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
-import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=3';
+import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=4';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=38';
 import { buildConstructionDrawings } from './construction.js?v=2';
@@ -148,6 +148,10 @@ createApp({
       showStageNotes: false,
       customerPickerQuery: '',
       customerPickerOpen: false,
+      // Save status (designer)
+      dirty: false,
+      lastSavedAt: null,
+      autoSaving: false,
       // Projects table (desktop overview)
       tableSort: { key: 'updatedAt', dir: 'desc' },
       projectGroup: '',
@@ -661,6 +665,11 @@ createApp({
           clearTimeout(this._undoTimer);
           this._undoTimer = setTimeout(() => this.pushUndo(), 350);
         }
+        if (!this._justSaved) this.dirty = true;
+        if (this.currentCloudId && this.cloudReady && !this._justSaved) {
+          clearTimeout(this._autosaveTimer);
+          this._autosaveTimer = setTimeout(() => this.autoSave(), 5000);
+        }
         clearTimeout(this._draftTimer);
         this._draftTimer = setTimeout(() => {
           try { localStorage.setItem('gob-draft-v1', JSON.stringify({ state: this.state, cloudId: this.currentCloudId, cloudName: this.currentCloudName, orderRef: this.orderRef, at: Date.now() })); } catch (e) { /* ignore */ }
@@ -949,6 +958,45 @@ createApp({
       this.orderRefManual = this.orderRef.trim() !== '' && this.orderRef !== this.defaultOrderRef();
       if (!this.orderRef.trim()) { this.orderRefManual = false; this.orderRef = this.defaultOrderRef(); }
       this.rebuildOrders();
+    },
+    /* ───────────── SAVING ───────────── */
+    /** One Save: creates the project on first save, updates it after that. */
+    async saveNow() {
+      if (!this.cloudReady) { this.notify('Not connected - check your internet and sign-in'); return; }
+      if (!this.currentCloudId && !(this.state.customer && this.state.customer.name)) { this.notify('Type the customer name (Customer & Project) before the first save'); return; }
+      clearTimeout(this._autosaveTimer);
+      await this.saveJob();
+      this.markSaved();
+    },
+    async autoSave() {
+      if (!this.currentCloudId || !this.cloudReady || this.cloudLoading || !this.dirty) return;
+      this.autoSaving = true;
+      try { await updateDesign(this.currentCloudId, this.currentCloudName, this.state, this.userName(), this.price && typeof this.price.totalIncVat === 'number' ? this.price.totalIncVat : null); this.markSaved(); this.refreshCloudDesigns(); }
+      catch (e) { console.warn('autosave', e); }
+      this.autoSaving = false;
+    },
+    markSaved() {
+      this.dirty = false; this.lastSavedAt = new Date();
+      this._justSaved = true; setTimeout(() => { this._justSaved = false; }, 800);
+    },
+    /** Keep the current design as a separate project (alternative size / revision). */
+    async saveAsNewVersion() {
+      if (!this.cloudReady) return;
+      const base = this.suggestedProjectName();
+      const taken = new Set(this.cloudDesigns.map((d) => d.name));
+      let name = base, n = 2; while (taken.has(name)) name = `${base} (${n++})`;
+      this.currentCloudId = null; this.currentCloudName = '';
+      this.cloudSaveName = name;
+      await this.saveToCloud();
+      this.markSaved();
+      this.notify('Saved as a new version: ' + name);
+    },
+    saveStatusText() {
+      if (!this.currentCloudId) return this.dirty ? 'Not saved to a project yet' : '';
+      if (this.autoSaving) return 'Saving…';
+      if (this.dirty) return 'Unsaved changes (auto-saves in a few seconds)';
+      if (this.lastSavedAt) { const s = Math.round((Date.now() - this.lastSavedAt) / 1000); return `Saved ${s < 60 ? 'just now' : Math.round(s / 60) + ' min ago'}`; }
+      return 'Saved';
     },
     /* ───────────── UNDO / REDO ───────────── */
     pushUndo() {
@@ -1265,6 +1313,7 @@ createApp({
       this.state = ensureStateDefaults(JSON.parse(JSON.stringify(this.appData.defaults || {})));
       this.currentCloudId = null; this.currentCloudName = ''; this.orderRef = ''; this.orderRefManual = false;
       this.bomLines = []; this.orders = [];
+      this.dirty = false; this.lastSavedAt = null;
       this.$nextTick(() => this.resetUndo());
       try { localStorage.removeItem('gob-draft-v1'); } catch (e) { /* ignore */ }
       this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.projectsPage = false; this.homePage = false;
@@ -2439,7 +2488,8 @@ createApp({
         this.currentCloudId = docId;
         this.currentCloudName = name;
         this.cloudSaveName = '';
-        this.notify('Saved to cloud: ' + name);
+        this.notify('Saved: ' + name);
+        this.markSaved();
         await this.refreshCloudDesigns();
       } catch (err) {
         console.error('Cloud save error:', err);
@@ -2455,7 +2505,8 @@ createApp({
       this.cloudError = null;
       try {
         await updateDesign(this.currentCloudId, this.currentCloudName, this.state, this.userName(), this.price && typeof this.price.totalIncVat === 'number' ? this.price.totalIncVat : null);
-        this.notify('Updated: ' + this.currentCloudName);
+        this.notify('Saved: ' + this.currentCloudName);
+        this.markSaved();
         await this.refreshCloudDesigns();
       } catch (err) {
         console.error('Cloud update error:', err);
@@ -2478,7 +2529,7 @@ createApp({
         this.nextFeatureId = 1000 + (this.state.externalFeatures?.length || 0);
         this.nextAcUnitId = 2000 + (this.state.acUnits?.length || 0);
         this.nextLabelId = 3000 + (this.state.drawingLabels?.length || 0);
-        this.$nextTick(() => this.resetUndo());
+        this.$nextTick(() => { this.resetUndo(); this.markSaved(); });
         this.notify('Loaded: ' + design.name);
       } catch (err) {
         console.error('Cloud load error:', err);

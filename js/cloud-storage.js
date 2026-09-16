@@ -106,7 +106,22 @@ export async function updateDesign(docId, name, state, author = '', quoteTotal =
     state: JSON.parse(JSON.stringify(state)),
   });
   if (changes.length) {
-    await ref.collection('history').add({ at: firebase.firestore.FieldValue.serverTimestamp(), by: author || '', count: changes.length, changes: changes.slice(0, 60), quoteTotal: quoteTotal === null ? null : quoteTotal });
+    const hist = ref.collection('history');
+    let merged = false;
+    try {
+      const last = await hist.orderBy('at', 'desc').limit(1).get();
+      if (!last.empty) {
+        const ld = last.docs[0].data(); const at = ld.at?.toDate?.();
+        if (ld.by === (author || '') && at && Date.now() - at.getTime() < 10 * 60 * 1000) {
+          const byPath = new Map((ld.changes || []).map((c) => [c.path, c]));
+          for (const c of changes) byPath.set(c.path, c);
+          const all = [...byPath.values()];
+          await last.docs[0].ref.update({ at: firebase.firestore.FieldValue.serverTimestamp(), count: all.length, changes: all.slice(0, 60), quoteTotal: quoteTotal === null ? null : quoteTotal });
+          merged = true;
+        }
+      }
+    } catch (e) { /* fall through to a new entry */ }
+    if (!merged) await hist.add({ at: firebase.firestore.FieldValue.serverTimestamp(), by: author || '', count: changes.length, changes: changes.slice(0, 60), quoteTotal: quoteTotal === null ? null : quoteTotal });
   }
 }
 

@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="css/app.css?v=29">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
-  <link rel="stylesheet" href="css/theme.css?v=8">
+  <link rel="stylesheet" href="css/theme.css?v=9">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
 <body>
@@ -85,17 +85,21 @@
         <button class="btn btn-icon" @click="undo" :disabled="!undoCount" title="Undo (⌘Z)">↶ Undo</button>
         <button class="btn btn-icon" @click="redo" :disabled="!redoCount" title="Redo (⇧⌘Z)">↷ Redo</button>
         <span class="topbar-sep"></span>
+        <span class="save-status" :class="{ dirty: dirty, unsaved: !currentCloudId }">{{ saveStatusText() }}</span>
         <button class="btn" @click="newJob" title="Clear the screen and start a new design">New</button>
-        <button class="btn btn-primary" @click="saveConfig">Save</button>
-        <button class="btn" @click="loadConfig">Load</button>
+        <button class="btn btn-primary" @click="saveNow" :disabled="cloudLoading" title="Save this design to its project (creates the project on the first save)">Save</button>
         <div class="export-wrapper">
-          <button class="btn" @click="showExportMenu = !showExportMenu">Export &#9662;</button>
+          <button class="btn" @click="showExportMenu = !showExportMenu">More &#9662;</button>
           <div id="export-menu" :class="{ show: showExportMenu }">
-            <button @click="exportQuotePDF">Export Quote PDF</button>
-            <button @click="exportDrawingPDF">Export Drawing PDF</button>
-            <button @click="exportBothPDFs">Export Both (Quote + Drawing)</button>
-            <button @click="createGoogleSheet">Create Google Sheet</button>
-            <button @click="printDrawing">Print Drawing</button>
+            <button @click="showExportMenu = false; exportQuotePDF()">Quote PDF</button>
+            <button @click="showExportMenu = false; exportDrawingPDF()">Drawing PDF</button>
+            <button @click="showExportMenu = false; exportBothPDFs()">Quote + Drawing PDF</button>
+            <button @click="showExportMenu = false; printDrawing()">Print drawing</button>
+            <button @click="showExportMenu = false; createGoogleSheet()">Create Google Sheet</button>
+            <button @click="showExportMenu = false; saveAsNewVersion()" :disabled="!cloudReady">Save as a new version (alternative design)</button>
+            <button v-if="currentCloudId" @click="showExportMenu = false; openProjectsPage(currentCloudId)">Open project record</button>
+            <button @click="showExportMenu = false; saveConfig()">Download backup file (.json)</button>
+            <button @click="showExportMenu = false; loadConfig()">Import backup file</button>
           </div>
         </div>
       </div>
@@ -119,7 +123,7 @@
         <!-- Cloud Saves -->
         <div class="config-section cloud-saves-section">
           <h4 @click="cloudPanelOpen = !cloudPanelOpen" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;">
-            Saved Projects
+            Projects
             <span style="font-size:11px;color:#888;">{{ cloudPanelOpen ? '&#9650;' : '&#9660;' }}</span>
           </h4>
           <div v-show="cloudPanelOpen">
@@ -131,17 +135,14 @@
 
             <template v-if="cloudReady">
 
-              <!-- Currently loaded indicator -->
-              <div v-if="currentCloudId" style="background:#e8f5e9;border-radius:4px;padding:6px 8px;margin-bottom:8px;font-size:12px;display:flex;align-items:center;gap:6px;">
-                <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" :title="currentCloudName">&#9729; {{ currentCloudName }}</span>
-                <button class="btn btn-sm" style="padding:2px 8px;font-size:11px;white-space:nowrap;" @click="updateCloudSave" :disabled="cloudLoading">Update</button>
-                <button class="btn btn-sm" style="padding:2px 8px;font-size:11px;white-space:nowrap;" @click="currentCloudId = null; currentCloudName = ''">Detach</button>
+              <!-- This design's project -->
+              <div v-if="currentCloudId" class="this-project">
+                <div class="this-project-name" :title="currentCloudName">{{ currentCloudName }}</div>
+                <div class="this-project-meta">{{ saveStatusText() }} <a href="#" @click.prevent="openProjectsPage(currentCloudId)">open project</a></div>
               </div>
-
-              <!-- Save bar -->
-              <div style="display:flex;gap:4px;margin-bottom:8px;">
-                <input type="text" v-model="cloudSaveName" placeholder="Design name..." style="flex:1;font-size:12px;padding:4px 6px;" @keyup.enter="saveToCloud">
-                <button class="btn btn-sm" style="padding:4px 10px;font-size:11px;white-space:nowrap;" @click="saveToCloud" :disabled="cloudLoading || !cloudSaveName.trim()">Save to Cloud</button>
+              <div v-else class="this-project new">
+                <div class="this-project-name">New design, not saved yet</div>
+                <div class="this-project-meta">Type the customer name, then press Save. The project is created as "{{ suggestedProjectName() }}".</div>
               </div>
 
               <!-- Error message -->
@@ -2619,7 +2620,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=137"></script>
+<script type="module" src="js/app.js?v=138"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>
