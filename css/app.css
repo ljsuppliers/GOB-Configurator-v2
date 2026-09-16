@@ -1004,3 +1004,12 @@ html, body {
 .act-body { flex: 1; white-space: pre-wrap; }
 .act-body small { color: #94a3b8; }
 .menu-link { display: block; padding: 8px 12px; color: inherit; text-decoration: none; font-size: 13px; }
+
+/* Construction drawings in the installer pack */
+.constr-sheet { break-inside: avoid; page-break-inside: avoid; margin: 0 0 22px; }
+.constr-title { font-size: 15px; margin: 14px 0 6px; color: #0f766e; }
+.constr-svg { border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; background: #fff; }
+.constr-svg svg { width: 100%; height: auto; max-height: 190mm; display: block; }
+.constr-notes { margin: 6px 0 0; padding-left: 18px; font-size: 11.5px; line-height: 1.45; }
+.constr-notes li { margin: 2px 0; }
+@media print { .constr-sheet { break-before: page; page-break-before: always; } .constr-sheet:first-of-type { break-before: auto; page-break-before: auto; } .constr-svg svg { max-height: 200mm; } }

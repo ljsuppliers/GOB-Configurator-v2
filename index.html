@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
   <title>GOB CRM</title>
-  <link rel="stylesheet" href="css/app.css?v=28">
+  <link rel="stylesheet" href="css/app.css?v=29">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/theme.css?v=8">
@@ -2137,7 +2137,15 @@
         <p class="pack-note">The install fee includes the plastering and decoration: the Installer arranges and pays the plasterer. Electrical work is by the Company's electrician and is not part of the install fee. Materials are supplied by the Company - check every delivery against the job pack checklist and report damage or shortages the same day.</p>
         </div><!-- /payment-part -->
 
-        <h2 class="pack-h2">2. Materials checklist (by supplier)</h2>
+        <h2 class="pack-h2 pack-break">2. Construction drawings</h2>
+        <p class="pack-note">Generated from this job: the base grid, panel layout, stud positions and joist ladder are the same ones the materials list was ordered from. Build to these; anything that differs on site goes back to the office before you carry on.</p>
+        <div v-for="c in constructionSheets" :key="c.key" class="constr-sheet">
+          <h3 class="constr-title">{{ c.title }}</h3>
+          <div class="constr-svg" v-html="c.svg"></div>
+          <ul class="constr-notes"><li v-for="(n, i) in c.notes" :key="i">{{ n }}</li></ul>
+        </div>
+
+        <h2 class="pack-h2 pack-break">3. Materials checklist (by supplier)</h2>
         <div v-for="sec in supplierSections" :key="'pk'+sec.name" class="pack-cat">
           <h3>{{ sec.name }}<span class="pack-small" v-if="sec.stockCount"> · {{ sec.stockCount }} from GOB stock</span></h3>
           <table class="pack-table pack-check">
@@ -2611,7 +2619,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=136"></script>
+<script type="module" src="js/app.js?v=137"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

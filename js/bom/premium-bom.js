@@ -183,6 +183,62 @@ export function premiumRoofLadder(spanM) {
 }
 
 const isSteel = (c) => c === 'anthracite-steel' || c === 'grey-steel';
+export const isSteelClad = isSteel;
+export const roofLadderFor = (spanM) => premiumRoofLadder(spanM);
+export function openingsOnWall(state, componentDefs, elevation) { return openingsOn(state, componentDefs, elevation); }
+
+/** BASE SUPPORT RULE (Liam 2026-09-16): joists front→back @400; DOUBLED joist
+ *  lines at 1.2m centres across the width + both outer joists; supports under
+ *  the doubled lines only, ≤1.3m apart along the depth. Same rule for ground
+ *  screws, blocks+pedestals and pedestals on a slab. */
+export function supportLayout(wM, dM) {
+  const lines = [0];
+  for (let x = 1.2; x < wM - 0.4; x += 1.2) lines.push(Math.round(x * 1000) / 1000);
+  lines.push(Math.round((wM - 0.047) * 1000) / 1000);
+  const nRows = Math.ceil(dM / 1.3) + 1;
+  const rowSpacing = (dM - 0.047) / (nRows - 1);
+  const rows = Array.from({ length: nRows }, (_, i) => Math.round(i * rowSpacing * 1000) / 1000);
+  return { lines, rows, count: lines.length * nRows, rowSpacingMm: Math.round(rowSpacing * 1000) };
+}
+
+/** KINGSPAN PANEL PLAN (Liam 2026-09-16): rear first, full width, cut at the
+ *  right end; steel-clad sides laid from the rear, cut at the front. A cut
+ *  panel gives a GROOVE-edge piece (fits rear-right / right-side-front) and a
+ *  TONGUE-edge piece (fits left-side-front), so one cut panel can serve the
+ *  rear and the left side when the two pieces fit in 1.1m. */
+export function panelPlan(state) {
+  const w = state.width / 1000, d = state.depth / 1000;
+  const isSig = state.tier !== 'classic';
+  const hasCanopy = isSig && state.hasCanopy !== false && !state.deductions?.removeCanopy;
+  const hasDecking = isSig && state.hasDecking !== false && !state.deductions?.removeDecking;
+  const closedL = hasCanopy && hasDecking && state.cornerLeft === 'closed';
+  const closedR = hasCanopy && hasDecking && state.cornerRight === 'closed';
+  const panelHeightM = wallPanelHeightFor(state.height / 1000);
+  const wall = (runM) => {
+    const full = Math.floor(runM / PANEL_W + 1e-6);
+    const rem = Math.round((runM - full * PANEL_W) * 1000) / 1000;
+    const pieces = Array.from({ length: full }, () => ({ width: PANEL_W, cut: false }));
+    if (rem > 0.03) pieces.push({ width: rem, cut: true });
+    return { runM, pieces, full, rem: rem > 0.03 ? rem : 0 };
+  };
+  const rear = wall(w);
+  const left = isSteel(state.cladding?.left) ? wall(d - 0.11 + (closedL ? 0.4 : 0)) : null;
+  const right = isSteel(state.cladding?.right) ? wall(d - 0.11 + (closedR ? 0.4 : 0)) : null;
+  // cut pieces: groove-edge needs = rear + right; tongue-edge need = left
+  const groove = [rear.rem, right ? right.rem : 0].filter((x) => x > 0);
+  const tongue = left && left.rem > 0 ? left.rem : 0;
+  let cutPanels = 0, cutNote = '';
+  const names = { [rear.rem]: 'rear right end', ...(right && right.rem ? { [right.rem]: 'right side front' } : {}) };
+  if (tongue > 0) {
+    const partner = groove.filter((g) => g + tongue <= PANEL_W + 1e-6).sort((a, b) => b - a)[0];
+    if (partner !== undefined) {
+      cutPanels = 1 + (groove.length - 1);
+      cutNote = `One panel is cut once: ${Math.round(partner * 1000)}mm (groove edge) goes to the ${names[partner]}, the ${Math.round(tongue * 1000)}mm offcut (tongue edge) goes to the left side front.${groove.length > 1 ? ' The other cut piece comes from its own panel.' : ''}`;
+    } else { cutPanels = 1 + groove.length; cutNote = 'Cut pieces are too wide to share a panel: one panel per cut piece.'; }
+  } else { cutPanels = groove.length; cutNote = groove.length ? 'One panel per cut piece (offcuts are the wrong edge to reuse unless the fitters turn a piece upside down).' : 'No cut pieces: every wall is a whole number of panels.'; }
+  const total = rear.full + (left ? left.full : 0) + (right ? right.full : 0) + cutPanels;
+  return { rear, left, right, total, cutPanels, cutNote, panelHeightM };
+}
 
 /** Openings on a given elevation from the 2D component list. */
 function openingsOn(state, componentDefs, elevation) {
@@ -260,18 +316,19 @@ export function buildPremiumBom(state, componentDefs) {
   const fhWidth = (ops) => fhOn(ops).reduce((s, o) => s + o.widthM, 0);
 
   /* ---------- FOUNDATIONS ---------- */
-  const cols = Math.ceil(w / 1.3) + 1;
-  const rowsN = Math.ceil(d / 1.3) + 1;
-  const pedestals = cols * rowsN;
+  const sl = supportLayout(w, d);
+  const cols = sl.lines.length;
+  const rowsN = sl.rows.length;
+  const pedestals = sl.count;
   if (groundScrews) {
-    add('Radix ground screw', pedestals, `${cols}x${rowsN} grid (max 1.3m spacing) under the 5x2 joist lines`);
+    add('Radix ground screw', pedestals, `${cols} doubled-joist lines (1.2m centres) × ${rowsN} rows (≤1.3m along the depth) - see construction drawing 1`);
   } else if (blockBase) {
-    add('Concrete block 440x215x100 medium density (7.3N)', pedestals, `CONCRETE BLOCK BASE: 1 block per support point, ${cols}x${rowsN} grid (max 1.3m spacing) under the 5x2 joist lines`);
+    add('Concrete block 440x215x100 medium density (7.3N)', pedestals, `CONCRETE BLOCK BASE: 1 block per support point, ${cols} doubled-joist lines × ${rowsN} rows (≤1.3m) - see construction drawing 1`);
     add('Postcrete (20kg bag)', pedestals * 2, `2 bags per hole × ${pedestals} holes`);
     add('Adjustable plastic pedestal', pedestals, `1 adjustable pedestal on each concrete block (Liam 2026-09-07) - frame builds on the pedestal heads`);
     add('DPM sheet', Math.ceil(w * d * 1.1), `Over the ground under the floor frame (${(w * d).toFixed(1)}m2 + 10% laps)`);
   } else {
-    add('Adjustable plastic pedestal', pedestals, `${cols}x${rowsN} grid (max 1.3m spacing), rows under the 5x2 joist lines - frame builds DIRECTLY on the heads (no bearers). Anchored to the slab`);
+    add('Adjustable plastic pedestal', pedestals, `${cols} doubled-joist lines × ${rowsN} rows (≤1.3m) - frame builds DIRECTLY on the heads (no bearers). Anchored to the slab - see construction drawing 1`);
     add('DPM sheet', Math.ceil(w * d * 1.1), `Over the slab under the pedestals (${(w * d).toFixed(1)}m2 + 10% laps)`);
   }
 
@@ -301,12 +358,16 @@ export function buildPremiumBom(state, componentDefs) {
   if (isSteel(state.cladding.right)) panelWalls.push({ label: 'right side', run: sideRun, openings: fhOn(right) });
   let panelCount = 0;
   const panelBits = [];
-  for (const pw of panelWalls) {
-    const net = Math.max(0, pw.run - pw.openings.reduce((s, o) => s + o.widthM, 0));
-    const n = Math.ceil(net / PANEL_W);
-    panelCount += n;
-    panelBits.push(`${pw.label}: ${n}`);
-  }
+  // Panel count follows the shared panel plan (construction drawing 2): rear
+  // first + steel sides from the rear; cut pieces share a panel where the
+  // tongue/groove edges allow. Panels over openings are cut from the panels
+  // that span them, so openings do not reduce the count.
+  const pp = panelPlan(state);
+  panelCount = pp.total;
+  panelBits.push(`rear ${pp.rear.pieces.length} pieces`);
+  if (pp.left) panelBits.push(`left ${pp.left.pieces.length} pieces`);
+  if (pp.right) panelBits.push(`right ${pp.right.pieces.length} pieces`);
+  panelBits.push(pp.cutNote);
   let liningStudsTotal = 0, liningRunTotal = 0;
   if (panelCount > 0) {
     add('Kingspan 100mm insulated wall panel (1.1m wide)', panelCount,
