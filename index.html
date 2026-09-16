@@ -95,7 +95,7 @@
             <button @click="showExportMenu = false; exportDrawingPDF()">Drawing PDF</button>
             <button @click="showExportMenu = false; exportBothPDFs()">Quote + Drawing PDF</button>
             <button @click="showExportMenu = false; printDrawing()">Print drawing</button>
-            <button @click="showExportMenu = false; createGoogleSheet()">Create Google Sheet</button>
+            <button @click="showExportMenu = false; createGoogleSheet()">Create Quote/Spec (Google Sheets)</button>
             <button @click="showExportMenu = false; saveAsNewVersion()" :disabled="!cloudReady">Save as a new version (alternative design)</button>
             <button v-if="currentCloudId" @click="showExportMenu = false; openProjectsPage(currentCloudId)">Open project record</button>
             <button @click="showExportMenu = false; saveConfig()">Download backup file (.json)</button>
