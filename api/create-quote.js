@@ -71,8 +71,9 @@ function formatComponentDesc(comp) {
 
 function getInternalDims(q) {
   const isSig = q.tier === 'signature';
+  // External sizes EXCLUDE the canopy/decking, so internal is 150mm off each wall on every tier.
   const intW = q.width - 300;
-  const intD = q.depth - (isSig ? 700 : 300);
+  const intD = q.depth - 300;
   let hReduction = 350;
   if (q.height > 2750) hReduction = 550;
   else if (q.height > 2500) hReduction = 450;
@@ -273,7 +274,12 @@ function buildQuoteData(q) {
   spacer(21);
 
   const hasDecking = isSig && q.hasDecking !== false;
-  const extDimNote = isSig ? ` (incl. integrated 400mm canopy${hasDecking ? ' & decking' : ''})` : '';
+  const hasCanopy = isSig && q.hasCanopy !== false;
+  const canopyMm = hasCanopy ? (q.canopyDepth || 400) : 0;
+  const deckMm = hasDecking ? (q.deckingDepth || 400) : 0;
+  const frontProj = Math.max(canopyMm, deckMm);
+  const extDimNote = ' (building only, excluding canopy/decking)';
+  const overallNote = frontProj > 0 ? `Overall footprint incl. ${[hasCanopy ? canopyMm + 'mm canopy' : '', hasDecking ? deckMm + 'mm decking' : ''].filter(Boolean).join(' & ')} \u2013 (W) ${q.width}mm x (D) ${q.depth + frontProj}mm (${(q.width / 1000).toFixed(1)}m x ${((q.depth + frontProj) / 1000).toFixed(1)}m)` : '';
 
   sectionBar(
     `Your Building: ${w}m x ${d}m x ${h}m ${q.buildingType || 'Garden Office Building'}`,
@@ -282,6 +288,7 @@ function buildQuoteData(q) {
   priceCells.push(rows.length); // row index (1-based for sheet = rows.length)
 
   contentRow(`External Dimensions \u2013 (W) ${q.width}mm x (D) ${q.depth}mm x (H) ${q.height}mm${extDimNote}`, { height: 31 });
+  if (overallNote) contentRow(overallNote, { height: 31 });
   contentRow(`Internal Dimensions \u2013 (W) ${intW}mm x (D) ${intD}mm x (H) ${intH}mm (approx)`, { height: 31 });
 
   const tierDesc = isSig

@@ -2,8 +2,8 @@
 // Reactive state, live pricing, drawing preview, email drafting
 
 import { initPricing, calculatePrice, formatPrice } from './pricing.js?v=5';
-import { generateDrawing } from './drawing-engine.js?v=43';
-import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js';
+import { generateDrawing } from './drawing-engine.js?v=44';
+import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=2';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=4';
@@ -2342,6 +2342,8 @@ createApp({
         cornerRight: this.state.cornerRight === 'closed' ? 'Closed' : 'Open',
         hasCanopy: this.state.hasCanopy !== false,
         hasDecking: this.state.hasDecking !== false,
+        canopyDepth: this.state.overhangDepth || 400,
+        deckingDepth: this.state.deckingDepth || 400,
         
         // Foundation
         foundationType: this.state.foundationType || 'ground-screw',

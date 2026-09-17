@@ -223,9 +223,15 @@ export function generateQuotePDF(state, price) {
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
 
+  const isSigQ = state.tier === 'signature';
+  const canopyMmQ = isSigQ && state.hasCanopy !== false ? (state.overhangDepth || 400) : 0;
+  const deckMmQ = isSigQ && state.hasDecking !== false ? (state.deckingDepth || 400) : 0;
+  const frontProjQ = Math.max(canopyMmQ, deckMmQ);
+  const hRed = state.height <= 2500 ? 350 : state.height <= 2750 ? 450 : 550;
   const specs = [
-    `External: ${state.width}mm × ${state.depth}mm × ${state.height}mm`,
-    `Internal: ~${state.width - 200}mm × ${state.depth - 200}mm × ${state.height - 125}mm`,
+    `External: ${state.width}mm × ${state.depth}mm × ${state.height}mm (building only, excl. canopy/decking)`,
+    ...(frontProjQ > 0 ? [`Overall incl. ${[canopyMmQ ? canopyMmQ + 'mm canopy' : '', deckMmQ ? deckMmQ + 'mm decking' : ''].filter(Boolean).join(' & ')}: ${state.width}mm × ${state.depth + frontProjQ}mm`] : []),
+    `Internal: ~${state.width - 300}mm × ${state.depth - 300}mm × ${state.height - hRed}mm`,
     `Range: ${tierName} Collection`,
   ];
 

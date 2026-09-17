@@ -1261,8 +1261,9 @@ function renderPlan(cfg) {
 
   // Internal dimensions
   const intColor = '#2288CC';
-  const canopyDeduction = (showCanopy && overhang > 0) ? overhang : 0;
-  const intDepthMeasure = depth - wt * 2 - canopyDeduction; // measurement shown on label
+  // External depth EXCLUDES the canopy (Liam 2026-09-05), so the internal
+  // depth is simply the building depth less two walls - no canopy deduction.
+  const intDepthMeasure = depth - wt * 2;
   const intDepthLine = depth - wt * 2; // line spans full building interior
   const intDimW = cfg.intDimWidthOffset || depth * 0.15;
   const intDimD = cfg.intDimDepthOffset || width * 0.15;
