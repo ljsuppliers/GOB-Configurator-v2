@@ -16,10 +16,11 @@
 //  - CANOPY METHOD (Liam 2026-09-05, corrects the earlier "joists always
 //    oversail" rule):
 //      * 2.5m building: joists STOP at the front wall (no height to spare).
-//        The firrings (tall 75mm end) run on over the joists and OVERHANG the
-//        front by 400mm - they form the canopy. A 2x2 frame is then built on
-//        the top-front of the front wall underneath them, fixed to the front
-//        top plate and to the flitch beam over the door.
+//        (Liam 2026-09-19) the flitch sits ON TOP of the front head plate and
+//        the joists hang off it level on jiffy hangers. The 2 OUTER joists
+//        oversail 400mm, a 6x2 tie joist runs across their ends, 6x2 noggings
+//        @400 between = the canopy ladder; firrings/deck run over it. ONE
+//        layer of 2x2 under + ply front/underside for the fascia + soffit.
 //      * 2.75m / 3.0m building: roof JOISTS oversail the front by 400mm,
 //        firrings on top, plus ONE layer of 2x2 under the oversailed joists to
 //        make a bigger overhang box.
@@ -302,9 +303,14 @@ export function buildPremiumBom(state, componentDefs) {
   // Signature canopy = 400mm. Classic = 100mm token overhang (Liam 2026-09-05).
   const canopyM = hasCanopy ? (state.overhangDepth || 400) / 1000 : 0.10;
   // How the canopy is formed depends on height (see header):
+  // 2.5m builds (Liam 2026-09-19): the two OUTER joists oversail the canopy
+  // depth, a 6x2 tie joist runs across their ends and 6x2 noggings @400 sit
+  // between (in line with the joists) so the firrings/deck are carried right
+  // out to the edge. Taller builds: EVERY joist oversails. Both get a 2x2
+  // layer under + ply for the fascia/soffit.
   const canopyMethod = !hasCanopy
     ? 'classic'
-    : tall ? 'joists-oversail' : 'firrings-overhang';
+    : tall ? 'joists-oversail' : 'edge-joists';
   const closedCorners = ['cornerLeft', 'cornerRight'].filter((k) => state[k] === 'closed').length;
   const openCorners = (hasCanopy && hasDecking) ? 2 - closedCorners : 0;
 
@@ -552,15 +558,25 @@ export function buildPremiumBom(state, componentDefs) {
   const roofLen = d + canopyM + REAR_OVERSAIL;
   const rJoists = Math.ceil(w / ladder.spacing) + 1;
   const canopyMm = (canopyM * 1000).toFixed(0);
-  add(ladder.sku, Math.ceil((rJoists * ladder.ply * joistLen + 2 * w) * 1.10),
-    `Roof: ${ladder.label} - ${rJoists}${ladder.ply === 2 ? ' pairs' : ''} x ${joistLen.toFixed(2)}m @${(ladder.spacing * 1000).toFixed(0)}mm + front/rear end joists, +10%. Bears on front top plate/flitch + rear wall plate, OVERSAILS THE REAR BY 100mm. ${
+  // EDGE joists are DOUBLED as standard (Liam 2026-09-19): extra timbers for
+  // the two edges when the ladder is single.
+  const edgePly = Math.max(2, ladder.ply), edgeExtra = 2 * (edgePly - ladder.ply);
+  add(ladder.sku, Math.ceil(((rJoists * ladder.ply + edgeExtra) * joistLen + 2 * w) * 1.10),
+    `Roof: ${ladder.label} - ${rJoists}${ladder.ply === 2 ? ' pairs' : ''} x ${joistLen.toFixed(2)}m @${(ladder.spacing * 1000).toFixed(0)}mm${edgeExtra ? ` + ${edgeExtra} extra to DOUBLE the two edge joists` : ' (edges already doubled)'} + front/rear end joists, +10%. Bears on front top plate/flitch + rear wall plate, OVERSAILS THE REAR BY 100mm. ${
       canopyMethod === 'joists-oversail'
         ? `${(h).toFixed(2)}m BUILD: joists also OVERSAIL the front by ${canopyMm}mm to form the canopy`
-        : canopyMethod === 'firrings-overhang'
-          ? `2.5m BUILD: joists STOP at the front wall (no height to oversail) - the canopy is formed by the firring overhang + 2x2 frame below`
+        : canopyMethod === 'edge-joists'
+          ? `2.5m BUILD: joists hang off the flitch (ON TOP of the front head plate) on jiffy hangers; only the 2 OUTER joists run on ${canopyMm}mm - the canopy ladder is listed separately below`
           : `CLASSIC: joists stop at the front wall, ${canopyMm}mm token overhang in the firrings/deck only`
     }`,
-    [{ len: joistLen, n: rJoists * ladder.ply, what: 'roof joists' }, { len: w, n: 2, what: 'front + rear END JOISTS of the roof (join over a joist if longer than stock)', join: true }]);
+    [{ len: joistLen, n: rJoists * ladder.ply + edgeExtra, what: 'roof joists (incl. doubled edges)' }, { len: w, n: 2, what: 'front + rear END JOISTS of the roof (join over a joist if longer than stock)', join: true }]);
+  if (canopyMethod === 'edge-joists') {
+    const nogs = Math.max(0, rJoists - 2), nogLen = Math.max(0.1, canopyM - 0.047);
+    const ladderLm = Math.ceil((2 * canopyM * edgePly + w + nogs * nogLen) * 1.10);
+    add('6x2 tanalised C24 timber', ladderLm,
+      `CANOPY LADDER (2.5m method): the 2 OUTER (doubled) roof joists are cut ${canopyMm}mm longer to sail forward, a 6x2 TIE JOIST x ${w.toFixed(2)}m across their ends, ${nogs} 6x2 NOGGINGS x ${(nogLen * 1000).toFixed(0)}mm @400mm between (in line with the joists), +10%`,
+      [{ len: w, n: 1, what: 'canopy tie joist (front)', join: true }, { len: nogLen, n: nogs, what: 'canopy noggings' }, { len: canopyM, n: 2 * edgePly, what: 'ADD to the outer (doubled) joist lengths' }]);
+  }
   add('4x2 tanalised C24 timber', Math.ceil((2 * sideRun + w) * 1.05), `Flat 4x2 wall plate on the panel wall tops (sides + rear)`,
     [{ len: sideRun, n: 2, what: 'side wall plates', join: true }, { len: w, n: 1, what: 'rear wall plate', join: true }]);
   if (ladder.web) add('18mm OSB3 board (2440x1220)', Math.ceil((rJoists * joistLen * ladder.depthM * 1.10) / PLY_SHEET_M2), `OSB webs glued+screwed between the doubled joist pairs, ripped from full sheets`,
@@ -572,8 +588,8 @@ export function buildPremiumBom(state, componentDefs) {
   const firrFallText = `1:${Math.round(roofLen / 0.07)}`;
   add('Tapered firring 47mm (custom cut)', rJoists + 2,
     `CUSTOM MADE FOR THIS JOB: ${rJoists} firrings x ${roofLen.toFixed(2)}m long, 47mm wide, tapering from ${firrFrontMm}mm at the FRONT to 0 at the REAR (${firrFallText} fall over ${roofLen.toFixed(2)}m), one per joist; PLUS 2 REVERSE firrings x ${roofLen.toFixed(2)}m (0 at the front rising to ${firrFrontMm}mm at the rear), one along each side edge, so the sides read level. Length = ${d.toFixed(2)}m building + ${canopyMm}mm front + 100mm rear oversail. ${
-      canopyMethod === 'firrings-overhang'
-        ? `THE TALL END OVERHANGS THE FRONT BY ${canopyMm}mm ON TOP OF THE JOISTS - this overhang IS the canopy (2.5m method)`
+      canopyMethod === 'edge-joists'
+        ? `They run on ${canopyMm}mm over the canopy ladder (outer joists + noggings) to the tie joist`
         : canopyMethod === 'joists-oversail'
           ? `They sit on top of the oversailed joists right out to the canopy edge`
           : `They run ${canopyMm}mm past the front wall (classic token overhang)`
@@ -594,9 +610,9 @@ export function buildPremiumBom(state, componentDefs) {
     const crossPieces = Math.ceil(w / 0.4) + 1;
     const canopy2x2Lm = Math.ceil((2 * w + crossPieces * canopyM) * 1.10);
     const canopyCuts = [{ len: w, n: 2, what: 'canopy 2x2 front + back rails' }, { len: canopyM, n: crossPieces, what: 'canopy 2x2 cross pieces' }];
-    if (canopyMethod === 'firrings-overhang') {
+    if (canopyMethod === 'edge-joists') {
       add('2x2 tanalised C16 timber', canopy2x2Lm,
-        `CANOPY FRAME (2.5m method): 2x2 frame on the TOP-FRONT of the front wall, UNDER the ${canopyMm}mm firring overhang - 2 runs x ${w.toFixed(2)}m + ${crossPieces} cross pieces @400mm x ${canopyMm}mm, +10%. Fixed to the front top plate AND to the flitch beam over the door opening`, canopyCuts);
+        `CANOPY BOX (2.5m method): ONE layer of 2x2 fixed UNDER the canopy ladder (outer joists, noggings, tie joist) - 2 runs x ${w.toFixed(2)}m + ${crossPieces} cross pieces @400mm x ${canopyMm}mm, +10%. Ply on the front + underside for the fascia and soffit`, canopyCuts);
     } else {
       add('2x2 tanalised C16 timber', canopy2x2Lm,
         `CANOPY BOX (${h.toFixed(2)}m method): ONE layer of 2x2 fixed UNDER the oversailed roof joists to deepen the overhang box - 2 runs x ${w.toFixed(2)}m + ${crossPieces} cross pieces @400mm x ${canopyMm}mm, +10%`, canopyCuts);
@@ -818,6 +834,23 @@ export function buildPremiumBom(state, componentDefs) {
     add('Trex Clam Shell composite decking board (140 × 4880mm)', deckBoards, `Front decking ${w.toFixed(2)}m x ${deckDepthM.toFixed(2)}m: ${deckRows} row${deckRows === 1 ? '' : 's'} × ${perRow} board${perRow === 1 ? '' : 's'} per row + 1 spare`,
       { orderText: `${deckBoards} × Trex Clam Shell 140mm × 4.88m (deck ${w.toFixed(2)} × ${deckDepthM.toFixed(2)}m, ${deckRows} rows)` });
     add('Decking screws - colour-headed (Winchester grey)', Math.ceil(w * deckDepthM * 25 * 1.25), `~25/m2 + 25% over-estimate (Liam: over on fixings)`);
+    // STANDARD 400mm DECKING FRAME (2026-09-19): 4x2 tanalised joists @400mm
+    // x 400mm off the base's front end joist (TimberLok 150s through the end
+    // joist) + a 4x2 front rim, one row of supports under the front rim on the
+    // same 1.3m grid as the extra decking. Boards run along the width.
+    {
+      const stdJ = Math.ceil(w / 0.4) + 1, stdCols = Math.ceil(w / 1.3) + 1;
+      add('4x2 tanalised C24 timber', Math.ceil((stdJ * 0.4 + w) * 1.10), `STANDARD DECKING FRAME (400mm): ${stdJ} joists x 400mm @400mm off the base front end joist + 1 front rim x ${w.toFixed(2)}m, +10%`,
+        { cuts: [{ len: 0.4, n: stdJ, what: 'decking joists' }, { len: w, n: 1, what: 'decking front rim', join: true }], separate: 'DECKING frame' });
+      if (groundScrews) add('Radix ground screw', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing)`, { separate: 'DECKING supports' });
+      else if (blockBase) {
+        add('Concrete block 440x215x100 medium density (7.3N)', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing), 1 block per support`, { separate: 'DECKING supports' });
+        add('Postcrete (20kg bag)', stdCols * 2, `DECKING: 2 bags per hole x ${stdCols} holes`, { separate: 'DECKING supports' });
+        add('Adjustable plastic pedestal', stdCols, `DECKING: 1 pedestal on each block`, { separate: 'DECKING supports' });
+      } else add('Adjustable plastic pedestal', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing)`, { separate: 'DECKING supports' });
+      add('TimberLok 150mm', Math.ceil(stdJ * 2 * 1.25), `DECKING frame: joists through the base front end joist (2 per joist), +25%`, { separate: 'DECKING fixings' });
+      add('TimberLok 100mm', Math.ceil((stdJ * 2 + stdCols * 2) * 1.25), `DECKING frame: joists to the front rim + rim to supports, +25%`, { separate: 'DECKING fixings' });
+    }
     // EXTRA DECKING (rows beyond the standard 400mm): its own sub-frame on its
     // own screws/pedestals - shown as SEPARATE lines in the same supplier
     // sections (Liam 2026-09-06). 4x2 tanalised joists @400mm running front to

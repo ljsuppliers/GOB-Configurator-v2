@@ -30,19 +30,32 @@
 //  CORNERS Closed corner (canopy + decking only) = that side wall carried
 //         400mm forward, same construction as the side. Open corner = built-up
 //         4x2 post (~200x200) cloaked by trims.
-//  ROOF   6x2 (doubled by span) joists front→back @400. ≤2.5m building: joists
+//  ROOF   6x2 (doubled by span) joists front→back @400; the two EDGE joists
+//         are always doubled. ≤2.5m building: joists
 //         stop at the front wall, hung off the flitch on jiffy hangers (level:
 //         rear end on the panel plate at 2189, front end on the flitch underside
-//         at 2189). Canopy, teams vary: EITHER the two outer joists oversail
-//         400 with a 6x2 tie joist across the front + noggings @400 between
-//         (drawn), OR a 2x2 frame 400 out; either way a 2x2 layer under.
-//         Taller: every joist oversails 400 over the flitch, plus 2x2 under.
-//         Rear oversail 100mm on every job.
+//         at 2189). Canopy = the two outer joists oversail 400, a 6x2 tie
+//         joist across their ends, 6x2 noggings @400 between (the "canopy
+//         ladder"), one layer of 2x2 under, ply front + underside, 300 fascia,
+//         400 soffit, steel top cap. Taller: every joist oversails 400 instead.
+//         Rear oversail 100mm on every job. (Some teams used a 2x2 frame with
+//         the firrings overhanging; the ladder is now the standard.)
+//  DECKING Standard 400: 4x2 joists @400 x 400 off the base front end joist +
+//         4x2 front rim, supports under the rim ≤1.3m. Extra depth = its own
+//         frame (see the BOM). Trex boards along the width.
+//  PANELS sit in the steel panel base trim (screwed through the chipboard into
+//         the joists), screwed to it from INSIDE; U-channel caps every exposed
+//         panel edge (tops, corners, opening reveals); flat 4x2 plate on the
+//         capped tops with bay-pole screws @400; panel-to-panel corners
+//         screwed through with bay-pole screws @400, 180x40 L trim outside,
+//         foil tape inside. Cut side panel meets the front stud wall at the
+//         built-up 4x2 corner post (~200x200): panel edge screws to the post,
+//         front wall end stud screws to the post, corner trims cloak it.
 //         Firrings on top tapering to the rear + 2 reverse firrings (side
 //         edges), 18mm T&G OSB, one-piece EPDM, 75/100mm PIR set 30mm down.
 //         Half-round gutter full width at the rear, downpipe one end (both ends
 //         from 6m wide).
-import { supportLayout, panelPlan, openingsOnWall, roofLadderFor, isSteelClad } from './bom/premium-bom.js?v=38';
+import { supportLayout, panelPlan, openingsOnWall, roofLadderFor, isSteelClad } from './bom/premium-bom.js?v=39';
 
 const F = 'font-family:Inter,Arial,sans-serif';
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -116,21 +129,21 @@ export function buildConstructionDrawings(state, componentDefs) {
   /* ── 2. Wall plan (top-down) with panel plan ── */
   {
     const W = mm(w), D = mm(d), ext = 400;
-    const SW = W + 2 * M + 1600, SH = D + 2 * M + ext + 1000;
+    const SW = W + 2 * M + 1600, SH = D + 2 * M + ext + 1200;
     let s = '';
     const y0 = M + ext; // rear wall at y0, front at y0+D
     // floor deck outline
     s += rc(M, y0, W, D, { sw: 6, stroke: '#94a3b8', dash: '40 30' });
     // rear panel wall (100mm)
     s += rc(M, y0, W, 100, { fill: '#334155', stroke: '#111', sw: 4 });
-    let x = 0; for (const p of plan.rear.pieces) { x += p.width; if (x < w - 0.01) s += ln(M + mm(x), y0 - 60, M + mm(x), y0 + 160, { sw: 5, stroke: '#f59e0b' }); }
+    { let x = 0; for (const p of plan.rear.pieces) { const X0 = M + mm(x); x += p.width; if (x < w - 0.01) s += ln(M + mm(x), y0 - 60, M + mm(x), y0 + 160, { sw: 5, stroke: '#f59e0b' }); s += tx(X0 + mm(p.width) / 2, y0 - 90, p.cut ? `CUT ${mm(p.width)}` : `${mm(p.width)}`, { size: 58, fill: p.cut ? '#b45309' : '#334155' }); } }
     // sides
     const side = (isLeft, isPanel, pieces, closed) => {
       const X = isLeft ? M : M + W - 100;
       const runTop = y0 + 100, runBot = y0 + D + (closed ? ext : 0);
       if (isPanel) {
         s += rc(X, runTop, 100, runBot - runTop, { fill: '#334155', stroke: '#111', sw: 4 });
-        let yy = 0; for (const p of pieces) { yy += p.width; const Y = runTop + mm(yy); if (Y < runBot - 10) s += ln(X - 60, Y, X + 160, Y, { sw: 5, stroke: '#f59e0b' }); }
+        let yy = 0; for (const p of pieces) { const Y0 = runTop + mm(yy); yy += p.width; const Y = runTop + mm(yy); if (Y < runBot - 10) s += ln(X - 60, Y, X + 160, Y, { sw: 5, stroke: '#f59e0b' }); s += tx(isLeft ? X - 110 : X + 210, Y0 + mm(p.width) / 2, p.cut ? `CUT ${mm(p.width)}` : `${mm(p.width)}`, { size: 58, rot: isLeft ? -90 : 90, fill: p.cut ? '#b45309' : '#334155' }); }
       } else {
         s += rc(X, runTop, 100, runBot - runTop, { fill: '#fde68a', stroke: '#92400e', sw: 4 });
         for (let yy = 0.4; yy < (runBot - runTop) / 1000; yy += 0.4) s += ln(X, runTop + mm(yy), X + 100, runTop + mm(yy), { sw: 3, stroke: '#92400e' });
@@ -141,6 +154,7 @@ export function buildConstructionDrawings(state, componentDefs) {
         const fromRear = isLeft ? o.posM : d - o.posM - o.widthM;
         const Y = y0 + mm(fromRear);
         s += rc(X - 20, Y, 140, mm(o.widthM), { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 4 });
+        s += tx(isLeft ? X - 110 : X + 210, Y + mm(o.widthM) / 2, `${mm(o.widthM)} ${o.type.includes('door') ? 'door' : 'window'}`, { size: 52, rot: isLeft ? -90 : 90, fill: '#1d4ed8' });
       }
     };
     side(true, leftPanel, plan.left ? plan.left.pieces : [], closedL);
@@ -149,10 +163,10 @@ export function buildConstructionDrawings(state, componentDefs) {
     const fy = y0 + D - 100;
     s += rc(M + 100, fy, W - 200, 100, { fill: '#fde68a', stroke: '#92400e', sw: 4 });
     for (let xx = 0.4; xx < w - 0.2; xx += 0.4) s += ln(M + mm(xx), fy, M + mm(xx), fy + 100, { sw: 3, stroke: '#92400e' });
-    for (const o of ops('front')) s += rc(M + mm(o.posM), fy - 20, mm(o.widthM), 140, { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 4 });
-    // open corner posts
-    if (!closedL) s += rc(M, fy - 100, 200, 200, { fill: '#92400e', stroke: '#111', sw: 4 });
-    if (!closedR) s += rc(M + W - 200, fy - 100, 200, 200, { fill: '#92400e', stroke: '#111', sw: 4 });
+    for (const o of ops('front')) { s += rc(M + mm(o.posM), fy - 20, mm(o.widthM), 140, { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 4 }); s += tx(M + mm(o.posM + o.widthM / 2), fy + 230, `${mm(o.widthM)} ${o.fullHeight ? (o.type.includes('window') ? 'FH window' : 'door') : 'window'}`, { size: 52, fill: '#1d4ed8' }); }
+    // open corner posts: built-up 4x2 (~200x200), in line with the front wall face, both sides
+    if (!closedL) s += rc(M, fy - 100, 200, 200, { fill: '#92400e', stroke: '#111', sw: 4 }) + tx(M + 100, fy - 140, 'post', { size: 50 });
+    if (!closedR) s += rc(M + W - 200, fy - 100, 200, 200, { fill: '#92400e', stroke: '#111', sw: 4 }) + tx(M + W - 100, fy - 140, 'post', { size: 50 });
     // canopy / decking line
     if (hasCanopy || hasDecking) s += rc(M, y0 + D, W, ext, { sw: 4, stroke: '#0f766e', dash: '60 40' }) + tx(M + W / 2, y0 + D + ext / 2 + 30, `${hasCanopy ? 'canopy' : ''}${hasCanopy && hasDecking ? ' + ' : ''}${hasDecking ? 'decking' : ''} ${ext}mm`, { size: 80, fill: '#0f766e' });
     s += dimH(M, M + W, y0 - 250, `${W}mm`);
@@ -167,6 +181,7 @@ export function buildConstructionDrawings(state, componentDefs) {
     s += rc(lx + 1500, ly, 160, 90, { fill: '#fde68a', stroke: '#92400e', sw: 2 }) + tx(lx + 1720, ly + 70, '4x2 stick frame', { size: 70, anchor: 'start' });
     s += rc(lx + 2900, ly, 160, 90, { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 2 }) + tx(lx + 3120, ly + 70, 'door / window', { size: 70, anchor: 'start' });
     s += ln(lx + 4200, ly, lx + 4200, ly + 90, { sw: 5, stroke: '#f59e0b' }) + tx(lx + 4280, ly + 70, 'panel joint', { size: 70, anchor: 'start' });
+    s += rc(lx, ly + 150, 160, 90, { fill: '#92400e', stroke: '#111', sw: 2 }) + tx(lx + 220, ly + 220, 'open-corner post (built-up 4x2, ~200x200, flush with the front wall face)', { size: 70, anchor: 'start' });
     const notes = [
       `Rear wall FIRST, full width: ${plan.rear.pieces.length} pieces (${plan.rear.pieces.map((p) => mm(p.width)).join(' + ')}mm). Cut piece at the RIGHT-hand end.`,
     ];
@@ -175,7 +190,7 @@ export function buildConstructionDrawings(state, componentDefs) {
     if (plan.right) notes.push(`Right side (from the rear): ${plan.right.pieces.map((p) => mm(p.width)).join(' + ')}mm${closedR ? ' incl. the 400mm closed-corner return' : ''}. Cut piece at the FRONT.`);
     else notes.push(`Right side: stick frame (4x2 @400), 75mm PIR, ply + Tyvek + battens + ${(state.cladding?.right || '').replace(/-/g, ' ')} cladding${closedR ? '; carried 400mm forward for the closed corner' : ''}.`);
     notes.push(`PANELS TO ORDER: ${plan.total} × 1100mm × ${mm(plan.panelHeightM)}mm. ${plan.cutNote}`);
-    notes.push(`Panels are anthracite OUTSIDE / white inside and tongue-and-groove: never flip a piece to put white out. Front corners: ${closedL ? 'left CLOSED (side wall carried 400mm forward)' : 'left OPEN (built-up 4x2 post, corner trims)'}, ${closedR ? 'right CLOSED' : 'right OPEN'}.`);
+    notes.push(`Panel widths are written on each piece (CUT = cut on site). Panels are anthracite OUTSIDE / white inside and tongue-and-groove: never flip a piece to put white out. Both front corner posts sit flush with the front wall face, in line with each other. Front corners: ${closedL ? 'left CLOSED (side wall carried 400mm forward)' : 'left OPEN (built-up 4x2 post, corner trims)'}, ${closedR ? 'right CLOSED' : 'right OPEN'}.`);
     out.push({ key: 'walls', title: '2. Wall plan & Kingspan panel layout (from above)', svg: sheet(SW, SH, s), notes });
   }
 
@@ -202,8 +217,8 @@ export function buildConstructionDrawings(state, componentDefs) {
     for (const o of fronts) {
       const X = M + mm(o.posM), OW = mm(o.widthM), OH = mm(o.heightM);
       const oy = o.fullHeight ? gy - PL - OH : gy - PL - 900 - OH; // standard windows cill 900
-      // kings each side
-      s += rc(X - 47, studTop, 47, studH, { fill: '#f59e0b', stroke: '#92400e', sw: 3 }) + rc(X + OW, studTop, 47, studH, { fill: '#f59e0b', stroke: '#92400e', sw: 3 });
+      // DOUBLED 4x2 each side of every opening (king + jack)
+      for (const k of [X - 94, X - 47, X + OW, X + OW + 47]) s += rc(k, studTop, 47, studH, { fill: '#f59e0b', stroke: '#92400e', sw: 3 });
       // opening
       const oTop = Math.max(oy, studTop);
       s += rc(X, oTop, OW, gy - PL - oTop, { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 4 });
@@ -222,7 +237,7 @@ export function buildConstructionDrawings(state, componentDefs) {
     out.push({
       key: 'front', title: '3. Front wall framing (elevation, viewed from outside)', svg: sheet(SW, SH, s),
       notes: [
-        `4x2 TANALISED C24 throughout: base plate on the chipboard, studs @400mm from the LEFT, head plate. Frame is ${H}mm to the top of the head plate = the panel walls (${mm(plan.panelHeightM)}mm panel + ${PL}mm flat 4x2 plate). King studs (orange) each side of every opening.`,
+        `4x2 TANALISED C24 throughout: base plate on the chipboard, studs @400mm from the LEFT, head plate. Frame is ${H}mm to the top of the head plate = the panel walls (${mm(plan.panelHeightM)}mm panel + ${PL}mm flat 4x2 plate). DOUBLED 4x2 uprights (orange) each side of every door and window.`,
         `DOUBLED 6x2 flitch (two 6x2 laminated with TimberLok 100s, NO OSB web) sits ON TOP of the head plate, over every opening as a minimum (drawn full width). Its top is level with the roof joist tops. ${tall ? 'Taller build: the roof joists run OVER the flitch and oversail to form the canopy.' : 'Standard 2.5m build: the roof joists hang off the flitch on jiffy hangers.'}`,
         `Doors and full-height windows (2050mm) sit on the base plate; a 4x2 packer under the head plate closes the gap to the door head (about ${H - 2 * PL - 2050}mm, trim to suit). Standard windows shown on a 900mm cill; check the drawing for the customer's positions.`,
         `Outside: 12mm ply, Tyvek, 18x38 battens @400, ${(state.cladding?.front || '').replace(/-/g, ' ')} cladding. Inside: 75mm PIR in every bay, VCL, 12.5mm plasterboard, skim.`,
@@ -232,8 +247,8 @@ export function buildConstructionDrawings(state, componentDefs) {
 
   /* ── 4. Rear + side elevations ── */
   {
-    const H = mm(plan.panelHeightM);
-    const elev = (label, runM, pieces, isPanel, openings, mirror, closed) => {
+    const H = mm(plan.panelHeightM), PL = 49;
+    const elev = (label, runM, pieces, isPanel, openings, mirror, closed, frontAtRight) => {
       const W = mm(runM), SW = W + 2 * M + 800, SH = H + 2 * M + 500;
       let s = '';
       const gy = M + H;
@@ -248,32 +263,43 @@ export function buildConstructionDrawings(state, componentDefs) {
         }
         s += rc(M, M - 49, W, 49, { fill: '#fde68a', stroke: '#92400e', sw: 3 }) + tx(M + W / 2, M - 80, '49mm flat 4x2 plate on the panel heads (bay-pole screws @400): 2189 to top', { size: 60 });
       } else {
-        s += rc(M, gy - 100, W, 100, { fill: '#fde68a', stroke: '#92400e', sw: 4 }) + rc(M, M, W, 100, { fill: '#fde68a', stroke: '#92400e', sw: 4 });
-        for (let x = 0; x <= runM + 0.001; x += 0.4) s += rc(M + mm(Math.min(x, runM - 0.047)), M + 100, 47, H - 200, { fill: '#fde68a', stroke: '#92400e', sw: 3 });
+        // stud wall: base plate + studs + head plate = panel height + 49 (2189), same top as the panel walls
+        const inOp = (x) => openings.some((o) => x > o.posM + 0.001 && x < o.posM + o.widthM - 0.001);
+        s += rc(M, gy - PL, W, PL, { fill: '#fde68a', stroke: '#92400e', sw: 4 }) + rc(M, M - PL, W, PL, { fill: '#fde68a', stroke: '#92400e', sw: 4 });
+        for (let x = 0; x <= runM + 0.001; x += 0.4) { const xx = Math.min(x, runM - 0.047); if (!inOp(xx + 0.02)) s += rc(M + mm(xx), M, 47, H - PL, { fill: '#fde68a', stroke: '#92400e', sw: 3 }); }
+        s += rc(M + W - 47, M, 47, H - PL, { fill: '#fde68a', stroke: '#92400e', sw: 3 });
+        s += tx(M + W / 2, M - 80, `49mm head plate: ${H + PL} to top, level with the panel walls`, { size: 60 });
       }
       for (const o of openings) {
-        const pos = mirror ? runM - o.posM - o.widthM : o.posM;
-        const X = M + mm(pos), OW = mm(o.widthM), OH = mm(o.heightM);
-        const oy = o.fullHeight ? gy - OH : gy - 900 - OH;
-        s += rc(X, Math.max(oy, M), OW, Math.min(OH, gy - Math.max(oy, M)), { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 4 });
-        if (!isPanel) s += rc(X - 150, Math.max(oy, M + 100) - 150, OW + 300, 150, { fill: '#7c2d12', stroke: '#111', sw: 4 });
+        const X = M + mm(o.posM), OW = mm(o.widthM), OH = mm(o.heightM);
+        const oy = o.fullHeight ? gy - PL - OH : gy - PL - 900 - OH;
+        const top = Math.max(oy, M);
+        s += rc(X, top, OW, gy - PL - top, { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 4 });
+        if (!isPanel) {
+          for (const k of [X - 94, X - 47, X + OW, X + OW + 47]) s += rc(k, M, 47, H - PL, { fill: '#f59e0b', stroke: '#92400e', sw: 3 });
+          if (top - M > 5) { s += rc(X, M, OW, top - M, { fill: '#fcd34d', stroke: '#92400e', sw: 3 }); s += tx(X + OW / 2, M + (top - M) / 2 + 18, `packer ${top - M}`, { size: 44 }); }
+        }
         s += dimH(X, X + OW, gy + 200, `${OW}mm`);
       }
-      if (closed) s += rc(mirror ? M : M + W - 400, M - 60, 400, 60, { fill: '#0f766e', sw: 2 }) + tx(mirror ? M + 200 : M + W - 200, M - 150, '400mm closed-corner return', { size: 60, fill: '#0f766e' });
+      if (closed) s += rc(frontAtRight ? M + W - 400 : M, M - 130, 400, 60, { fill: '#0f766e', sw: 2 }) + tx(frontAtRight ? M + W - 200 : M + 200, M - 200, '400mm closed-corner return', { size: 60, fill: '#0f766e' });
       s += dimH(M, M + W, M - 350, `${W}mm`);
-      s += dimV(M, gy, M - 300, `${H}mm`);
+      s += dimV(M - PL, gy, M - 300, `${H + PL}mm`);
+      if (label !== 'rear') { s += tx(frontAtRight ? M : M + W, gy + 380, 'REAR', { size: 90, bold: true }); s += tx(frontAtRight ? M + W : M, gy + 380, 'FRONT', { size: 90, bold: true }); }
       return sheet(SW, SH, s);
     };
     const rearOps = ops('rear');
-    out.push({ key: 'rear', title: '4. Rear wall (viewed from outside)', svg: elev('rear', w, plan.rear.pieces, true, rearOps, false, false),
+    out.push({ key: 'rear', title: '4. Rear wall (viewed from outside)', svg: elev('rear', w, plan.rear.pieces, true, rearOps, false, false, false),
       notes: [`Panels laid LEFT→RIGHT from outside; the cut piece is at the right-hand end (groove edge factory, cut edge into the corner trim). 180x40 L corner trims both rear corners.`, `Inside: double 18x38 battens (verticals @600 + rows @600), plasterboard, skim${state.featureWalls?.rear || state.featureWall === 'rear' ? ' — EXCEPT this wall carries the oak acoustic slat panels over the plasterboard (no skim/paint)' : ''}. Foil-tape the panel joints; no VCL needed on panel walls.`] });
-    // left: from outside, the REAR is on the RIGHT, so mirror the run (pieces start at the rear)
+    // LEFT wall seen from outside (standing to the left of the building, looking at it): the REAR is on the LEFT,
+    // the front on the right. Panel pieces start at the rear (left); left-wall positions are measured from the rear.
     const leftRun = plan.left ? plan.left.runM : d - 0.11 + (closedL ? 0.4 : 0);
-    out.push({ key: 'left', title: '5. Left side wall (viewed from outside; rear on the right)', svg: elev('left', leftRun, plan.left ? plan.left.pieces : [], leftPanel, ops('left'), true, closedL),
-      notes: [leftPanel ? `Panels start at the REAR (right of this view) and run to the front; the cut piece is at the FRONT against the stick wall's U-channel (tongue edge factory).` : `Stick wall: 4x2 @400 from the rear, 75mm PIR, VCL, plasterboard; outside ply + Tyvek + battens + ${(state.cladding?.left || '').replace(/-/g, ' ')} cladding.`, closedL ? 'Closed corner: this wall is carried 400mm forward, same construction, inside return clad in the front cladding, 200x40x40 U trim on the corner.' : 'Open front corner: built-up 4x2 post, 50x50 L trim over cladding (or 180 L + U where glazing meets glazing).'] });
+    out.push({ key: 'left', title: '5. Left side wall (viewed from outside; rear on the left, front on the right)', svg: elev('left', leftRun, plan.left ? plan.left.pieces : [], leftPanel, ops('left'), false, closedL, true),
+      notes: [leftPanel ? `Panels start at the REAR (left of this view) and run to the front; the cut piece is at the FRONT against the stick wall's U-channel (tongue edge factory).` : `Stick wall: 4x2 @400 from the rear, 75mm PIR, VCL, plasterboard; outside ply + Tyvek + battens + ${(state.cladding?.left || '').replace(/-/g, ' ')} cladding.`, closedL ? 'Closed corner: this wall is carried 400mm forward, same construction, inside return clad in the front cladding, 200x40x40 U trim on the corner.' : 'Open front corner: built-up 4x2 post, 50x50 L trim over cladding (or 180 L + U where glazing meets glazing).'] });
+    // RIGHT wall seen from outside: the FRONT is on the LEFT, the rear on the right. Panel pieces start at the
+    // rear (right, so mirrored); right-wall positions are measured from the front, which is the left of this view.
     const rightRun = plan.right ? plan.right.runM : d - 0.11 + (closedR ? 0.4 : 0);
-    out.push({ key: 'right', title: '6. Right side wall (viewed from outside; rear on the left)', svg: elev('right', rightRun, plan.right ? plan.right.pieces : [], rightPanel, ops('right').map((o) => ({ ...o, posM: d - o.posM - o.widthM })), false, closedR),
-      notes: [rightPanel ? `Panels start at the REAR (left of this view) and run to the front; the cut piece is at the FRONT (groove edge factory).` : `Stick wall: 4x2 @400 from the rear, 75mm PIR, VCL, plasterboard; outside ply + Tyvek + battens + ${(state.cladding?.right || '').replace(/-/g, ' ')} cladding.`, closedR ? 'Closed corner: carried 400mm forward, same construction, 200x40x40 U trim.' : 'Open front corner: built-up 4x2 post, 50x50 L trim (or 180 L + U where glazing meets glazing).'] });
+    out.push({ key: 'right', title: '6. Right side wall (viewed from outside; front on the left, rear on the right)', svg: elev('right', rightRun, plan.right ? plan.right.pieces : [], rightPanel, ops('right'), true, closedR, false),
+      notes: [rightPanel ? `Panels start at the REAR (right of this view) and run to the front; the cut piece is at the FRONT (groove edge factory).` : `Stick wall: 4x2 @400 from the rear, 75mm PIR, VCL, plasterboard; outside ply + Tyvek + battens + ${(state.cladding?.right || '').replace(/-/g, ' ')} cladding.`, closedR ? 'Closed corner: carried 400mm forward, same construction, 200x40x40 U trim.' : 'Open front corner: built-up 4x2 post, 50x50 L trim (or 180 L + U where glazing meets glazing).'] });
   }
 
   /* ── 7. Roof framing (plan) ── */
@@ -287,12 +313,17 @@ export function buildConstructionDrawings(state, componentDefs) {
     // tall: joists oversail over the flitch; standard: joists stop at the flitch's rear face (hangers)
     const jTop = y0 - RO, jBot = tall ? y0 + D + C : y0 + D - 150;
     const n = Math.ceil(w / ladder.spacing) + 1;
+    const edgePly = Math.max(2, ladder.ply); // edge joists DOUBLED as standard (Liam 2026-09-19)
     for (let i = 0; i < n; i++) {
-      const x = Math.min(i * ladder.spacing, w - 0.047);
-      s += rc(M + mm(x), jTop, 47 * ladder.ply, jBot - jTop, { fill: '#e2e8f0', stroke: '#334155', sw: 4 });
+      const edge = i === 0 || i === n - 1;
+      const ply = edge ? edgePly : ladder.ply;
+      const x = i === n - 1 ? w - 0.047 * ply : Math.min(i * ladder.spacing, w - 0.047 * ply);
+      const bot = edge && canopy > 0 ? y0 + D + C : jBot; // outer pair sails forward to form the canopy
+      s += rc(M + mm(x), jTop, 47 * ply, bot - jTop, { fill: edge ? '#cbd5e1' : '#e2e8f0', stroke: '#334155', sw: 4 });
       // firring on top (dashed centre line)
-      s += ln(M + mm(x) + 23, jTop, M + mm(x) + 23, y0 + D + C, { sw: 3, stroke: '#0f766e', dash: '50 30' });
+      s += ln(M + mm(x) + 23 * ply, jTop, M + mm(x) + 23 * ply, y0 + D + C, { sw: 3, stroke: '#0f766e', dash: '50 30' });
     }
+    s += tx(M + 47 * edgePly + 60, jTop + 200, `edge joists DOUBLED (${edgePly} × 6x2)${canopy > 0 ? `, sail forward ${C}mm` : ''}`, { size: 56, anchor: 'start', rot: 90 });
     // flitch band on the front wall (drawn over the joists so it reads)
     s += rc(M, y0 + D - 150, W, 150, { fill: '#7c2d12', stroke: '#111', sw: 4, op: tall ? 0.85 : 1 }) + tx(M + W / 2, y0 + D - 50, tall ? 'front wall: 2×6x2 flitch ON TOP of the head plate, joists run over it' : 'front wall: 2×6x2 flitch ON TOP of the head plate, joists hang off it (tops level)', { size: 60, fill: '#fff' });
     // reverse firrings along the side edges
@@ -303,10 +334,9 @@ export function buildConstructionDrawings(state, componentDefs) {
         s += rc(M, y0 + D, W, C, { sw: 5, stroke: '#0f766e' }) + tx(M + W / 2, y0 + D + C + 120, `joists oversail ${C}mm + one layer of 2x2 under (canopy box, ply front + underside)`, { size: 70, fill: '#0f766e' });
       } else {
         // outer joists oversail, 6x2 tie across the front, noggings @400 between
-        s += rc(M, y0 + D, 47 * ladder.ply, C, { fill: '#e2e8f0', stroke: '#334155', sw: 4 }) + rc(M + W - 47 * ladder.ply, y0 + D, 47 * ladder.ply, C, { fill: '#e2e8f0', stroke: '#334155', sw: 4 });
         s += rc(M, y0 + D + C - 47, W, 47, { fill: '#e2e8f0', stroke: '#334155', sw: 4 });
         for (let x = 0.4; x < w - 0.1; x += 0.4) s += rc(M + mm(x), y0 + D, 47, C - 47, { fill: '#f1f5f9', stroke: '#64748b', sw: 3 });
-        s += tx(M + W / 2, y0 + D + C + 120, `outer joists oversail ${C}mm, 6x2 tie joist across the front, noggings @400 between, 2x2 layer under (or a 2x2 frame ${C}mm out, teams vary)`, { size: 70, fill: '#0f766e' });
+        s += tx(M + W / 2, y0 + D + C + 120, `canopy ladder: the DOUBLED outer joists sail forward ${C}mm, 6x2 tie joist across the front, 6x2 noggings @400 between, 2x2 layer under`, { size: 70, fill: '#0f766e' });
       }
     }
     // gutter
@@ -322,7 +352,7 @@ export function buildConstructionDrawings(state, componentDefs) {
     out.push({
       key: 'roof', title: '7. Roof framing (plan, from above)', svg: sheet(SW, SH, s),
       notes: [
-        `${n} roof joists (${ladder.label}) run FRONT→BACK at ${mm(ladder.spacing)}mm centres from the LEFT. ${tall ? `Taller build (${hM.toFixed(2)}m): joists run OVER the front flitch/top plate and oversail ${C}mm to form the canopy; one layer of 2x2 fixed under the oversail deepens the canopy box.` : `Standard 2.5m build: joists STOP at the front wall and hang off the flitch on jiffy hangers (twist nails). The flitch sits ON TOP of the front head plate, so the joists run LEVEL: rear end on the 49mm plate over the panels (2189), front end in the hangers with the underside at 2189. The ${C}mm canopy: the two outer joists oversail, a 6x2 tie joist across the front, noggings @400 between, one layer of 2x2 under (some teams build a 2x2 frame instead; both are fine).`} Every job: joists and firrings oversail the REAR by ${RO}mm.`,
+        `${n} roof joists (${ladder.label}) run FRONT→BACK at ${mm(ladder.spacing)}mm centres from the LEFT; the two EDGE joists are DOUBLED as standard. ${tall ? `Taller build (${hM.toFixed(2)}m): joists run OVER the front flitch/top plate and oversail ${C}mm to form the canopy; one layer of 2x2 fixed under the oversail deepens the canopy box.` : `Standard 2.5m build: joists STOP at the front wall and hang off the flitch on jiffy hangers (twist nails). The flitch sits ON TOP of the front head plate, so the joists run LEVEL: rear end on the 49mm plate over the panels (2189), front end in the hangers with the underside at 2189. The ${C}mm canopy ladder: the two OUTER (doubled) joists are cut ${C}mm longer and sail forward, a 6x2 tie joist runs across their ends, 6x2 noggings @400 sit between in line with the joists, then one layer of 2x2 under and ply on the front + underside. See sheet 9 for the section.`} Every job: joists and firrings oversail the REAR by ${RO}mm.`,
         `Firrings (green dashed) on top of every joist, ${firr}mm at the front tapering to 0 at the rear so the water runs to the rear gutter; the 2 reverse firrings (side edges) square the sides. 18mm T&G OSB across the joists, one-piece EPDM with adhesive, edge trim. ${pir}mm PIR between joists set 30mm below the joist tops (vented cold roof), plasterboard ceiling.`,
         `Half-round black gutter across the full rear width, downpipe at ${w >= 6 ? 'BOTH ends (building over 6m)' : 'one end'}. Steel top cap over the fascia + roof edge on the FRONT and SIDES only. Ply on the front face + underside of the canopy for the fascia and soffit.`,
       ],
@@ -342,9 +372,9 @@ export function buildConstructionDrawings(state, componentDefs) {
     };
     const SW = 4 * 2100 + 600, SH = 3200;
     let s = '';
-    s += col(300, 'FLOOR (outside → in)', [
-      [foundation.split(' (')[0], 260, '#e2e8f0'], ['5x2 C24 joists @400 (doubled lines @1200)', 300, '#fde68a', '#92400e'],
-      [`${pir}mm PIR on 18x38 battens`, 260, '#fef3c7'], ['22mm P5 T&G moisture-resistant chipboard', 160, '#d6d3d1'], ['underlay + laminate (Wickes)', 140, '#f5f5f4'],
+    s += col(300, 'FLOOR (top → ground)', [
+      ['underlay + laminate (Wickes)', 140, '#f5f5f4'], ['22mm P5 T&G moisture-resistant chipboard', 160, '#d6d3d1'],
+      [`${pir}mm PIR on 18x38 battens`, 260, '#fef3c7'], ['5x2 C24 joists @400 (doubled lines @1200)', 300, '#fde68a', '#92400e'], [foundation.split(' (')[0], 260, '#e2e8f0'],
     ]);
     s += col(2400, 'STICK WALL (outside → in)', [
       [`${(state.cladding?.front || 'cladding').replace(/-/g, ' ')}`, 200, '#a16207', '#78350f'], ['18x38 battens @400 (ventilated cavity)', 160, '#fde68a', '#92400e'], ['Tyvek breather membrane', 90, '#fff'],
@@ -354,7 +384,7 @@ export function buildConstructionDrawings(state, componentDefs) {
       ['100mm Kingspan panel, anthracite out', 460, '#334155'], ['foil tape on joints (panel = vapour barrier)', 90, '#e2e8f0'],
       ['double 18x38 battens (vertical @600 + rows @600)', 300, '#fde68a', '#92400e'], ['12.5mm plasterboard + skim + paint', 160, '#f5f5f4'],
     ]);
-    s += col(6600, 'ROOF (outside → in)', [
+    s += col(6600, 'ROOF (top → ceiling)', [
       ['one-piece EPDM, fully adhered, edge trim', 100, '#111'], ['18mm T&G OSB', 140, '#d6d3d1'], [`firrings ${firr}mm → 0 (fall to rear)`, 180, '#ccfbf1', '#0f766e'],
       [`${ladder.label} joists @${mm(ladder.spacing)}`, 300, '#fde68a', '#92400e'], [`${pir}mm PIR set 30mm down (vented)`, 260, '#fef3c7'], ['12.5mm plasterboard + skim + paint', 160, '#f5f5f4'],
     ]);
@@ -363,6 +393,90 @@ export function buildConstructionDrawings(state, componentDefs) {
       notes: [
         'Stick walls carry a VCL on the warm side (behind the plasterboard). Panel walls do not: the Kingspan panel is the vapour barrier, so tape the inside joints with foil tape instead.',
         'Fixings: TimberLok 150 for floor doubling, TimberLok 100 for studs to plates, joists to plates, canopy frame; jiffy hangers + twist nails for joists to the flitch on 2.5m builds; bay-pole screws for the 4x2 top plate into the panel heads; 5.0×70 wood screws for battens and firrings.',
+      ],
+    });
+  }
+
+  /* ── 9. Section through the front wall + canopy (side view) ── */
+  {
+    const PL = 49, FL = 145, PH = mm(plan.panelHeightM), TOP = PH + PL; // 2140 + 49 = 2189
+    const C = hasCanopy ? mm(canopy) : 100;
+    const x0 = 1500, base = 3200; // outside face of the stud frame at x0; deck top at y=base
+    const X = (x) => x0 + x, Y = (y) => base - y;
+    const box = (x, y, wd, ht, o) => rc(X(x), Y(y + ht), wd, ht, o);
+    const SW = 3400, SH = 3600;
+    let s = '';
+    const T = '#fde68a', TS = '#92400e';
+    // base
+    box(0, 0, 0, 0);
+    s += box(0, -147, 1700, 125, { fill: T, stroke: TS, sw: 3 }) + tx(X(850), Y(-85), '5x2 floor joists (front end joist doubled)', { size: 44 });
+    s += box(0, -22, 1700, 22, { fill: '#d6d3d1', stroke: '#444', sw: 2 }) + tx(X(1100), Y(-8), '22mm P5 chipboard', { size: 40 });
+    if (hasDecking) {
+      s += box(-400, -117, 400, 95, { fill: T, stroke: TS, sw: 3 }) + tx(X(-200), Y(-70), '4x2 deck joist', { size: 40 });
+      s += box(-400, -22, 400, 25, { fill: '#78716c', stroke: '#292524', sw: 2 }) + tx(X(-200), Y(-40), 'Trex boards', { size: 40, fill: '#fff' });
+    }
+    // wall frame
+    s += box(0, 0, 95, PL, { fill: T, stroke: TS, sw: 3 }) + tx(X(230), Y(20), 'base plate 4x2 flat', { size: 40, anchor: 'start' });
+    s += box(0, PL, 95, PH - PL, { fill: '#fef3c7', stroke: TS, sw: 3, dash: '20 14' });
+    s += box(0, PH, 95, PL, { fill: T, stroke: TS, sw: 3 }) + tx(X(230), Y(PH + 16), 'head plate 4x2 flat', { size: 40, anchor: 'start' });
+    // door
+    s += box(12, PL, 70, 2050, { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 3 }) + tx(X(47), Y(1000), '2050 door', { size: 44, rot: -90 });
+    s += box(0, PL + 2050, 95, PH - PL - 2050, { fill: '#fcd34d', stroke: TS, sw: 3 }) + tx(X(230), Y(PL + 2050 + 12), `4x2 packer ${PH - PL - 2050}mm`, { size: 40, anchor: 'start' });
+    s += box(-12, -22, 12, 40, { fill: '#334155', stroke: '#111', sw: 2 }) + tx(X(-30), Y(60), 'door base trim', { size: 36, anchor: 'end' });
+    // inside lining
+    s += box(95, 0, 13, TOP, { fill: '#f5f5f4', stroke: '#444', sw: 2 }) + tx(X(120), Y(1400), 'plasterboard (75mm PIR + VCL in the bays)', { size: 40, anchor: 'start', rot: -90 });
+    // flitch on top of the head plate
+    s += box(0, TOP, 94, FL, { fill: '#7c2d12', stroke: '#111', sw: 3 }) + tx(X(47), Y(TOP + 60), '2×6x2', { size: 34, fill: '#fff' });
+    s += tx(X(120), Y(TOP + 100), 'flitch ON TOP of the head plate', { size: 40, anchor: 'start' });
+    // roof joist hanging off the flitch (2.5m) or running over it (tall)
+    if (tall) {
+      s += box(-C, TOP, C + 1700, FL, { fill: '#e2e8f0', stroke: '#334155', sw: 3 }) + tx(X(800), Y(TOP + 60), '6x2 roof joist oversails the flitch', { size: 40 });
+    } else {
+      s += box(94, TOP, 1600, FL, { fill: '#e2e8f0', stroke: '#334155', sw: 3 }) + tx(X(800), Y(TOP + 60), '6x2 roof joist in a jiffy hanger off the flitch (level)', { size: 40 });
+      s += box(-C, TOP, C, FL, { fill: '#e2e8f0', stroke: '#334155', sw: 3, dash: '16 10' }) + tx(X(-C / 2), Y(TOP + 60), 'outer joist / nogging', { size: 34 });
+      s += box(-C, TOP, 47, FL, { fill: '#cbd5e1', stroke: '#334155', sw: 3 });
+      s += tx(X(-C - 20), Y(TOP + 200), 'tie joist', { size: 34, anchor: 'end' });
+    }
+    // 2x2 under the canopy, ply, soffit, fascia
+    s += box(-C, TOP - 47, C, 47, { fill: T, stroke: TS, sw: 2 }) + tx(X(-C / 2), Y(TOP - 30), '2x2', { size: 32 });
+    s += box(-C - 12, TOP - 59, C + 12, 12, { fill: '#d6d3d1', stroke: '#444', sw: 2 });
+    s += box(-C - 24, TOP - 69, C + 24, 10, { fill: '#fff', stroke: '#111', sw: 2 }) + tx(X(-C / 2), Y(TOP - 110), '12mm ply + 400 soffit (vented)', { size: 36 });
+    // roof build-up on top: firring, OSB, EPDM
+    const F = firr;
+    s += `<polygon points="${X(-C)},${Y(TOP + FL)} ${X(1700)},${Y(TOP + FL)} ${X(1700)},${Y(TOP + FL + Math.max(10, F - 40))} ${X(-C)},${Y(TOP + FL + F)}" fill="#ccfbf1" stroke="#0f766e" stroke-width="3"/>`;
+    s += tx(X(700), Y(TOP + FL + 25), `firring ${F}mm → 0 at the rear`, { size: 36 });
+    s += `<polygon points="${X(-C)},${Y(TOP + FL + F)} ${X(1700)},${Y(TOP + FL + Math.max(10, F - 40))} ${X(1700)},${Y(TOP + FL + Math.max(10, F - 40) + 18)} ${X(-C)},${Y(TOP + FL + F + 18)}" fill="#d6d3d1" stroke="#444" stroke-width="2"/>`;
+    s += `<polygon points="${X(-C - 24)},${Y(TOP + FL + F + 18)} ${X(1700)},${Y(TOP + FL + Math.max(10, F - 40) + 18)} ${X(1700)},${Y(TOP + FL + Math.max(10, F - 40) + 22)} ${X(-C - 24)},${Y(TOP + FL + F + 22)}" fill="#111" stroke="#111" stroke-width="2"/>`;
+    s += tx(X(700), Y(TOP + FL + F + 60), '18mm OSB + EPDM (wraps over the fascia under the steel top cap)', { size: 36 });
+    // ply on the front face + fascia 300 + top cap
+    const fasciaTop = TOP + FL + F + 22, fasciaBot = fasciaTop - 300;
+    s += box(-C - 12, fasciaBot, 12, 300, { fill: '#d6d3d1', stroke: '#444', sw: 2 });
+    s += box(-C - 22, fasciaBot, 10, 300, { fill: '#fff', stroke: '#111', sw: 2 });
+    s += box(-C - 30, fasciaTop - 4, 40, 8, { fill: '#334155', stroke: '#111', sw: 2 });
+    s += tx(X(-C - 40), Y(fasciaBot + 150), '300 fascia on 12mm ply, steel top cap', { size: 36, anchor: 'end' });
+    // cladding outside the stud wall up to the soffit
+    s += box(-12, -22, 12, TOP - 47 - 22 + 22, { fill: '#d6d3d1', stroke: '#444', sw: 2 });
+    s += box(-50, -22, 38, TOP - 47, { fill: '#fef3c7', stroke: TS, sw: 2 });
+    s += box(-70, -22, 20, TOP - 47, { fill: '#a16207', stroke: '#78350f', sw: 2 });
+    s += tx(X(-90), Y(1500), 'cladding / battens / Tyvek / 12mm ply', { size: 36, anchor: 'end', rot: -90 });
+    // ceiling + roof PIR
+    s += box(108, TOP - 13, 1592, 13, { fill: '#f5f5f4', stroke: '#444', sw: 2 }) + tx(X(900), Y(TOP - 60), 'plasterboard ceiling on the joist undersides', { size: 36 });
+    // dims
+    s += dimV(Y(TOP), Y(0), X(-C - 250), `${TOP} to top of plate`);
+    s += dimV(Y(TOP + FL), Y(TOP), X(-C - 250), `${FL}`);
+    s += dimH(X(-C), X(0), Y(-300), `${C} canopy`);
+    if (hasDecking) s += dimH(X(-400), X(0), Y(-420), `400 decking`);
+    s += ln(X(-C - 600), Y(0), X(1800), Y(0), { sw: 2, stroke: '#94a3b8', dash: '30 20' }) + tx(X(1780), Y(-40), 'deck top = 0', { size: 36, anchor: 'end' });
+    s += tx(X(-C - 400), Y(TOP + 500), 'OUTSIDE', { size: 90, bold: true }) + tx(X(1400), Y(TOP + 500), 'INSIDE', { size: 90, bold: true });
+    out.push({
+      key: 'section', title: '9. Section through the front wall + canopy (side view, at a door)', svg: sheet(SW, SH, s),
+      notes: [
+        `Heights: ${PH}mm panel + ${PL}mm flat 4x2 plate = ${TOP}mm to the top of every wall (panel walls and stud walls alike). The doubled 6x2 flitch sits ON TOP of the front head plate (${TOP} to ${TOP + FL}); no second head plate. ${tall ? 'Taller build: the roof joists run over the flitch and oversail to form the canopy.' : 'Roof joists hang off the flitch on jiffy hangers so they run level, rear ends on the 4x2 plate over the panels.'}`,
+        `Door head: 2050mm door on the ${PL}mm base plate = ${PL + 2050}; head plate underside at ${PH}; fill the ${PH - PL - 2050}mm with a 4x2 packer (trim to suit). Fit frames to a rough opening 10mm bigger each way, pack, foam and silicone. Door base trim under every door; panel base trim under full-height windows.`,
+        `Canopy: ${tall ? 'every joist oversails' : 'the two outer joists oversail, a 6x2 tie joist across their ends, 6x2 noggings @400 between'}; one layer of 2x2 under; 12mm ply on the front face and underside; 300mm fascia front and sides (200mm rear), 400mm soffit with vent strip, EPDM up and over under the steel top cap.`,
+        `Panels: sit in the steel panel base trim (screwed through the chipboard into the joists), screwed to the trim from INSIDE. U-channel caps every exposed panel edge (tops, corners, opening reveals). Flat 4x2 plate on the capped tops, bay-pole screws @400. Panel-to-panel corners screwed through @400, 180x40 L trim outside, foil tape inside. Cut side panel meets the front stud wall at the built-up 4x2 corner post (~200x200): panel edge and end stud both screw to the post; corner trims cloak it.`,
+        `Roof bearing: joists sit on the 4x2 plate over the side and rear panels, skew-fixed with TimberLok 100s; 6x2 end joists close the front (tie joist) and rear (100mm oversail). Roof PIR set 30mm below the joist tops; VCL under the joists; plasterboard ceiling.`,
+        ...(hasDecking ? [`Standard 400mm decking: 4x2 joists @400 x 400mm off the base front end joist (TimberLok 150s through the end joist), 4x2 front rim, supports under the rim at max 1.3m. Extra decking is its own frame on its own supports (see the BOM). Trex boards run along the width.`] : []),
       ],
     });
   }
