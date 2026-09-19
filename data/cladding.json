@@ -7,16 +7,16 @@
       "sidePattern": "horizontal",
       "default": true,
       "premium": false,
-      "colour": "#5C4A48"
+      "colour": "#5E4B45"
     },
     "composite-latte": {
-      "label": "Composite Slatted (Latte, light silver)",
+      "label": "Composite Slatted (Latte, grey)",
       "category": "composite",
       "elevationPattern": "horizontal",
       "sidePattern": "horizontal",
       "default": false,
       "premium": false,
-      "colour": "#B9BDC1"
+      "colour": "#A3A6A9"
     },
     "western-red-cedar": {
       "label": "Western Red Cedar",

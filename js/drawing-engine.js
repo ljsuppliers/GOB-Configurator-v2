@@ -46,12 +46,12 @@ const COL = {
   cedarLight:    '#D4995F',
   cedarDark:     '#8B5E30',
   cedarPlank:    '#C4874E',
-  composite:     '#8B7355',
-  compositeLt:   '#A08060',
-  compositeDk:   '#6B5545',
-  latte:         '#B9BDC1',
-  latteLt:       '#D6D9DC',
-  latteDk:       '#8E9397',
+  composite:     '#5E4B45', // coffee slats
+  compositeLt:   '#7A655D',
+  compositeDk:   '#2F2522', // grooves between slats
+  latte:         '#A3A6A9', // latte = a soft mid grey
+  latteLt:       '#BDBFC2',
+  latteDk:       '#5F6367',
   glass:         '#6B9AAD',
   glassDark:     '#5888A0',
   glassReflect:  '#B0D0DD',
@@ -146,19 +146,29 @@ function svgDefs() {
       <rect x="33" y="0" width="2" height="200" fill="${COL.anthraciteDk}" opacity="0.35"/>
       <rect x="15" y="0" width="1" height="200" fill="${COL.anthraciteLt}" opacity="0.12"/>
     </pattern>
-    <pattern id="compositeClad" x="0" y="0" width="40" height="200" patternUnits="userSpaceOnUse">
-      <rect width="40" height="200" fill="${COL.composite}"/>
-      <line x1="0" y1="0" x2="0" y2="200" stroke="${COL.compositeDk}" stroke-width="2.5"/>
-      <line x1="1.5" y1="0" x2="1.5" y2="200" stroke="${COL.compositeLt}" stroke-width="0.8" opacity="0.4"/>
-      <line x1="39" y1="0" x2="39" y2="200" stroke="${COL.compositeDk}" stroke-width="1.2"/>
-      <rect x="6" y="0" width="16" height="200" fill="${COL.compositeLt}" opacity="0.07"/>
+    <pattern id="compositeClad" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+      <rect width="200" height="200" fill="${COL.compositeDk}"/>
+      <rect x="6" y="0" width="52" height="200" fill="${COL.composite}"/>
+      <rect x="72" y="0" width="52" height="200" fill="${COL.composite}"/>
+      <rect x="138" y="0" width="52" height="200" fill="${COL.composite}"/>
+      <rect x="6" y="0" width="6" height="200" fill="${COL.compositeLt}" opacity="0.55"/>
+      <rect x="72" y="0" width="6" height="200" fill="${COL.compositeLt}" opacity="0.55"/>
+      <rect x="138" y="0" width="6" height="200" fill="${COL.compositeLt}" opacity="0.55"/>
+      <rect x="52" y="0" width="6" height="200" fill="${COL.compositeDk}" opacity="0.35"/>
+      <rect x="118" y="0" width="6" height="200" fill="${COL.compositeDk}" opacity="0.35"/>
+      <rect x="184" y="0" width="6" height="200" fill="${COL.compositeDk}" opacity="0.35"/>
     </pattern>
-    <pattern id="compositeLatteClad" x="0" y="0" width="40" height="200" patternUnits="userSpaceOnUse">
-      <rect width="40" height="200" fill="${COL.latte}"/>
-      <line x1="0" y1="0" x2="0" y2="200" stroke="${COL.latteDk}" stroke-width="2.5"/>
-      <line x1="1.5" y1="0" x2="1.5" y2="200" stroke="${COL.latteLt}" stroke-width="0.8" opacity="0.5"/>
-      <line x1="39" y1="0" x2="39" y2="200" stroke="${COL.latteDk}" stroke-width="1.2"/>
-      <rect x="6" y="0" width="16" height="200" fill="${COL.latteLt}" opacity="0.18"/>
+    <pattern id="compositeLatteClad" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+      <rect width="200" height="200" fill="${COL.latteDk}"/>
+      <rect x="6" y="0" width="52" height="200" fill="${COL.latte}"/>
+      <rect x="72" y="0" width="52" height="200" fill="${COL.latte}"/>
+      <rect x="138" y="0" width="52" height="200" fill="${COL.latte}"/>
+      <rect x="6" y="0" width="6" height="200" fill="${COL.latteLt}" opacity="0.55"/>
+      <rect x="72" y="0" width="6" height="200" fill="${COL.latteLt}" opacity="0.55"/>
+      <rect x="138" y="0" width="6" height="200" fill="${COL.latteLt}" opacity="0.55"/>
+      <rect x="52" y="0" width="6" height="200" fill="${COL.latteDk}" opacity="0.35"/>
+      <rect x="118" y="0" width="6" height="200" fill="${COL.latteDk}" opacity="0.35"/>
+      <rect x="184" y="0" width="6" height="200" fill="${COL.latteDk}" opacity="0.35"/>
     </pattern>
     <pattern id="deckPat" x="0" y="0" width="130" height="400" patternUnits="userSpaceOnUse">
       <rect width="130" height="400" fill="${COL.decking}"/>
