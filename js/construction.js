@@ -54,7 +54,7 @@
 //         edges), 18mm T&G OSB, one-piece EPDM, 75/100mm PIR set 30mm down.
 //         Half-round gutter full width at the rear, downpipe one end (both ends
 //         from 6m wide).
-import { supportLayout, panelPlan, openingsOnWall, roofLadderFor, isSteelClad } from './bom/premium-bom.js?v=39';
+import { supportLayout, panelPlan, openingsOnWall, roofLadderFor, isSteelClad } from './bom/premium-bom.js?v=40';
 
 const F = 'font-family:Inter,Arial,sans-serif';
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -247,7 +247,7 @@ export function buildConstructionDrawings(state, componentDefs) {
   /* ── 4. Rear + side elevations ── */
   {
     const H = mm(plan.panelHeightM), PL = 49;
-    const elev = (label, runM, pieces, isPanel, openings, mirror, closed, frontAtRight) => {
+    const elev = (label, runM, pieces, isPanel, openings, mirror, closed, frontAtRight, mirrorOps = false) => {
       const W = mm(runM), SW = W + 2 * M + 800, SH = H + 2 * M + 500;
       let s = '';
       const gy = M + H;
@@ -270,7 +270,8 @@ export function buildConstructionDrawings(state, componentDefs) {
         s += tx(M + W / 2, M - 80, `49mm head plate: ${H + PL} to top, level with the panel walls`, { size: 60 });
       }
       for (const o of openings) {
-        const X = M + mm(o.posM), OW = mm(o.widthM), OH = mm(o.heightM);
+        const pos = mirrorOps ? runM - o.posM - o.widthM : o.posM;
+        const X = M + mm(pos), OW = mm(o.widthM), OH = mm(o.heightM);
         const oy = o.fullHeight ? gy - PL - OH : gy - PL - 900 - OH;
         const top = Math.max(oy, M);
         s += rc(X, top, OW, gy - PL - top, { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 4 });
@@ -284,11 +285,14 @@ export function buildConstructionDrawings(state, componentDefs) {
       s += dimH(M, M + W, M - 350, `${W}mm`);
       s += dimV(M - PL, gy, M - 300, `${H + PL}mm`);
       if (label !== 'rear') { s += tx(frontAtRight ? M : M + W, gy + 380, 'REAR', { size: 90, bold: true }); s += tx(frontAtRight ? M + W : M, gy + 380, 'FRONT', { size: 90, bold: true }); }
+      else { s += tx(M, gy + 380, "BUILDING'S RIGHT", { size: 80, bold: true }); s += tx(M + W, gy + 380, "BUILDING'S LEFT", { size: 80, bold: true }); }
       return sheet(SW, SH, s);
     };
     const rearOps = ops('rear');
-    out.push({ key: 'rear', title: '4. Rear wall (viewed from outside)', svg: elev('rear', w, plan.rear.pieces, true, rearOps, false, false, false),
-      notes: [`Panels laid LEFT→RIGHT from outside; the cut piece is at the right-hand end (groove edge factory, cut edge into the corner trim). 180x40 L corner trims both rear corners.`, `Inside: double 18x38 battens (verticals @600 + rows @600), plasterboard, skim${state.featureWalls?.rear || state.featureWall === 'rear' ? ' — EXCEPT this wall carries the oak acoustic slat panels over the plasterboard (no skim/paint)' : ''}. No VCL needed on panel walls.`] });
+    // Standing BEHIND the building looking at the rear wall, the building's left (as on the
+    // plan, seen from the front) is on your RIGHT - so this view is the plan mirrored.
+    out.push({ key: 'rear', title: '4. Rear wall (viewed from outside, standing behind the building)', svg: elev('rear', w, plan.rear.pieces, true, rearOps, true, false, false, true),
+      notes: [`This view is the plan MIRRORED: the building's left-hand end (plan) is on the RIGHT here. Panels are laid from the building's LEFT (right of this view) across to the right; the CUT piece is at the building's right-hand end, which is the LEFT of this view (groove edge factory, cut edge into the corner trim). 180x40 L corner trims both rear corners.`, `Inside: double 18x38 battens (verticals @600 + rows @600), plasterboard, skim${state.featureWalls?.rear || state.featureWall === 'rear' ? ' — EXCEPT this wall carries the oak acoustic slat panels over the plasterboard (no skim/paint)' : ''}. No VCL needed on panel walls.`] });
     // LEFT wall seen from outside (standing to the left of the building, looking at it): the REAR is on the LEFT,
     // the front on the right. Panel pieces start at the rear (left); left-wall positions are measured from the rear.
     const leftRun = plan.left ? plan.left.runM : d - 0.11 + (closedL ? 0.4 : 0);

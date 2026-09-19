@@ -635,8 +635,13 @@ export function buildPremiumBom(state, componentDefs) {
   // PLUS one spare of each size on every job (Liam 2026-09-06: "even at 5m
   // wide, include 1 just in case").
   const joins = (run) => Math.max(0, Math.ceil(run / 5) - 1);
-  const joins300 = joins(w) + 2 * joins(roofLen);
-  add('Fascia connector (500mm plastic, 300mm)', joins300 + 1, `300mm fascia joins: front ${joins(w)} + sides ${2 * joins(roofLen)} + 1 spare`);
+  // Joins come from two places: a run longer than a 5m board, AND offcuts joined
+  // to finish a run (e.g. 3.8 front + 3.0 + 3.0 sides = 9.8m from 2 boards leaves
+  // one side made of two pieces). Boards - 1 is the most joins the cutting plan
+  // can need; take the larger of the two, + 1 spare (Liam query, Patel 19 Sep 2026).
+  const boards300 = Math.ceil((w + 2 * roofLen) / 5);
+  const joins300 = Math.max(joins(w) + 2 * joins(roofLen), boards300 - 1);
+  add('Fascia connector (500mm plastic, 300mm)', joins300 + 1, `300mm fascia: ${boards300} x 5m boards over front ${w.toFixed(2)}m + sides 2 x ${roofLen.toFixed(2)}m = up to ${joins300} join${joins300 === 1 ? '' : 's'} (runs over 5m + offcuts joined) + 1 spare. Corners use the fascia corner pieces, not connectors`);
   add('Fascia connector (200mm plastic)', joins(w) + 1, `200mm rear fascia joins: ${joins(w)} + 1 spare`);
   add('Steel top cap', Math.ceil((w + 2 * roofLen) / 3), `Over the top of the fascia + roof edge, EPDM underneath - FRONT + SIDES only (not the rear) / 3m lengths`);
   add('Half-Round Gutter 4 Mtr (Black)', Math.ceil(w / 4), `Rear gutter`);

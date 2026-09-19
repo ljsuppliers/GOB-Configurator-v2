@@ -326,7 +326,7 @@ export function joinBom(bomRows, catalogue, overrides = {}) {
  *  build, once the shell is watertight) so they aren't damaged on site. */
 export const WEEK2_ITEMS = new Set([
   'Plasterboard 12.5mm (1200x2400 sheet)', 'Plasterboard scrim/jointing tape (90m roll)', 'Plasterboard corner bead (2.4m)',
-  'Multi-finish plaster (25kg bag)', 'Decorators caulk (tube)', 'White trade emulsion paint (10L)', 'Skirting board',
+  'Multi-finish plaster (25kg bag)', 'White trade emulsion paint (10L)', 'Skirting board', // caulk comes in the Montravia kit (Liam 19 Sep 2026)
 ]);
 export function stageFor(line) {
   return WEEK2_ITEMS.has(line.catalogueName || line.name) ? 'week2' : '';

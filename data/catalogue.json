@@ -1,5 +1,5 @@
 {
-  "version": 23,
+  "version": 24,
   "updated": "2026-09-19",
   "suppliers": [
     {
@@ -1086,17 +1086,17 @@
     },
     {
       "name": "Decorators caulk (tube)",
-      "category": "Internal lining",
+      "category": "Installation kit",
       "sku": "",
       "unit": "tube",
       "unitCost": 1.5,
-      "supplier": "Builders merchant",
-      "packSize": null,
-      "orderUnit": "",
+      "supplier": "Montravia",
+      "packSize": 12,
+      "orderUnit": "box of 12",
       "destination": "site",
-      "inStock": false,
-      "notes": "CLAUDE ESTIMATE \u00a31.50. Internal junction/gap filling before finishing - used on plastered AND pre-finished builds (Liam 2026-07-26).",
-      "supply": "site"
+      "inStock": true,
+      "notes": "CLAUDE ESTIMATE \u00a31.50. Internal junction/gap filling before finishing - used on plastered AND pre-finished builds (Liam 2026-07-26). Moved to the Montravia kit list (Liam 19 Sep 2026) - not a builders merchant / week-2 item.",
+      "supply": "stock"
     },
     {
       "name": "Multi-finish plaster (25kg bag)",
