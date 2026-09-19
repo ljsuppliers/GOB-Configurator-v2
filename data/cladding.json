@@ -1,11 +1,29 @@
 {
   "types": {
+    "composite-coffee": {
+      "label": "Composite Slatted (Coffee)",
+      "category": "composite",
+      "elevationPattern": "horizontal",
+      "sidePattern": "horizontal",
+      "default": true,
+      "premium": false,
+      "colour": "#5C4A48"
+    },
+    "composite-latte": {
+      "label": "Composite Slatted (Latte, light silver)",
+      "category": "composite",
+      "elevationPattern": "horizontal",
+      "sidePattern": "horizontal",
+      "default": false,
+      "premium": false,
+      "colour": "#B9BDC1"
+    },
     "western-red-cedar": {
       "label": "Western Red Cedar",
       "category": "timber",
       "elevationPattern": "diagonal",
       "sidePattern": "vertical",
-      "default": true,
+      "default": false,
       "premium": true,
       "colour": "#8B4513"
     },
@@ -26,24 +44,6 @@
       "default": false,
       "premium": false,
       "colour": "#7F7F7F"
-    },
-    "composite-latte": {
-      "label": "Composite Slatted (Latte)",
-      "category": "composite",
-      "elevationPattern": "horizontal",
-      "sidePattern": "horizontal",
-      "default": false,
-      "premium": false,
-      "colour": "#C4A882"
-    },
-    "composite-coffee": {
-      "label": "Composite Slatted (Coffee)",
-      "category": "composite",
-      "elevationPattern": "horizontal",
-      "sidePattern": "horizontal",
-      "default": false,
-      "premium": false,
-      "colour": "#5C4A48"
     },
     "composite-grey": {
       "label": "Composite Slatted (Grey)",

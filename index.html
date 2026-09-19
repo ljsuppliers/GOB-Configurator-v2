@@ -431,6 +431,7 @@
               <option value="concrete-existing">Existing concrete base (pedestals on the slab)</option>
               <option value="concrete-base">Existing concrete base - poured by our team</option>
               <option value="concrete-landscaper">Existing concrete base - via our landscaper (customer pays direct)</option>
+              <option value="concrete-others">Existing concrete base - to be installed by others</option>
               <option value="hybrid">Hybrid: existing base + ground screws</option>
             </select>
           </label>
@@ -795,6 +796,11 @@
             <span class="extra-price">&pound;265</span>
           </div>
           <div class="checkbox-row">
+            <input type="checkbox" v-model="state.extras.doubleQuineticSwitch" id="chk-quinetic-double">
+            <label for="chk-quinetic-double">Double Quinetic switch</label>
+            <span class="extra-price">&pound;235</span>
+          </div>
+          <div class="checkbox-row">
             <input type="checkbox" v-model="state.extras.hdmiCables" id="chk-hdmi">
             <label for="chk-hdmi">HDMI cables for TV</label>
             <span class="extra-price">&pound;30</span>
@@ -846,9 +852,20 @@
                 <label>Labour days<input type="number" min="0" step="0.5" v-model.number="ce.days"></label>
               </div>
               <input v-model.trim="ce.materials" placeholder="Materials to order (optional), e.g. 2 × 4.8m 4x2 tanalised, 12 × Trex boards">
-              <div class="custom-extra-row"><input v-model.trim="ce.supplier" placeholder="Supplier (default Builders merchant)"><button type="button" class="btn-tiny" @click="removeCustomExtra(i)">remove</button></div>
+              <div class="custom-extra-row"><input v-model.trim="ce.supplier" placeholder="Supplier (default Builders merchant)"><select v-model="ce.section" title="Which section of the quote it prints in"><option :value="undefined" disabled>Quote section…</option><option value="internal">Internal finish</option><option value="external">External finish</option><option value="electrical">Electrical</option><option value="doors">Doors &amp; windows</option><option value="groundworks">Groundworks</option></select><button type="button" class="btn-tiny" @click="removeCustomExtra(i)">remove</button></div>
             </div>
             <button type="button" class="btn btn-small" @click="addCustomExtra">+ Add custom extra</button>
+          </div>
+          <div class="custom-extras">
+            <label style="display:block;margin:8px 0 4px">Custom deductions <span class="pack-small" style="color:#64748b">something the customer supplies or does themselves, e.g. their own flooring · comes off the quote total</span></label>
+            <div v-for="(cd, i) in (state.customDeductions || [])" :key="cd.id" class="custom-extra">
+              <input v-model.trim="cd.label" placeholder="Description, e.g. Customer supplies and fits own flooring">
+              <div class="custom-extra-row">
+                <label>Deduct £<input type="number" min="0" step="10" v-model.number="cd.price"></label>
+                <button type="button" class="btn-tiny" @click="removeCustomDeduction(i)">remove</button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-small" @click="addCustomDeduction">+ Add custom deduction</button>
           </div>
           <label style="display:block;margin:6px 0 4px">PIR in floor + roof
             <select v-model.number="state.pirFloorRoof" style="width:100%;margin-top:3px"><option :value="75">75mm (standard)</option><option :value="100">100mm</option></select>
@@ -868,6 +885,11 @@
             <input type="checkbox" v-model="state.structuralExtras.bifoldUpgrade" id="chk-bifold-upgrade">
             <label for="chk-bifold-upgrade">Bi-fold door upgrade from sliding</label>
             <span class="extra-price">&pound;850</span>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" v-model="state.structuralExtras.epdmUpgrade" id="chk-epdm-upgrade">
+            <label for="chk-epdm-upgrade">EPDM roof upgrade to 1.2mm</label>
+            <span class="extra-price" title="Price to be confirmed">&pound;TBC</span>
           </div>
           <label>Additional Decking (sqm)
             <input type="number" v-model.number="state.structuralExtras.additionalDecking" min="0" max="50" step="1">
@@ -2127,6 +2149,7 @@
           <tr><th>Electrics</th><td>Standard pack: consumer unit, 5 double sockets (1 USB), dimmable downlights, RJ45 point{{ state.tier === 'signature' && state.hasCanopy !== false ? ', canopy lights 1 per metre' : '' }}{{ (state.acUnits||[]).length ? ', air conditioning ×' + state.acUnits.length : '' }} · by the electrician, 1st fix after frame, 2nd fix after plaster</td></tr>
           <tr v-if="state.structuralExtras && (state.structuralExtras.secretDoor || state.structuralExtras.premiumFlooring || state.structuralExtras.heightUpgrade)"><th>Extras</th><td>{{ [state.structuralExtras.secretDoor ? 'secret cladded door' : '', state.structuralExtras.premiumFlooring ? 'premium flooring' : '', state.structuralExtras.heightUpgrade ? 'height upgrade +' + state.structuralExtras.heightUpgrade + 'mm' : ''].filter(Boolean).join(' · ') }}</td></tr>
           <tr v-if="(state.customExtras || []).some(c => c.label)"><th>Custom extras</th><td><span v-for="ce in state.customExtras.filter(c => c.label)" :key="ce.id" class="pack-chip">{{ ce.label }}{{ ce.materials ? ' · ' + ce.materials : '' }}</span></td></tr>
+          <tr v-if="(state.customDeductions || []).some(c => c.label)"><th>Customer supplies / not by us</th><td><span v-for="cd in state.customDeductions.filter(c => c.label)" :key="cd.id" class="pack-chip">{{ cd.label }}</span></td></tr>
           <tr v-if="state.planning && state.planning.required"><th>Planning</th><td>Planning permission required{{ (state.planning.reasons || []).length ? ': ' + state.planning.reasons.join(', ') : '' }}{{ state.planning.customReason ? ' · ' + state.planning.customReason : '' }} · check the decision notice is on file before starting</td></tr>
           <tr v-if="state.landscaping && state.landscaping.required"><th>Landscaper</th><td>Landscaper required{{ state.landscaping.reason ? ': ' + state.landscaping.reason : '' }}{{ state.landscaping.customReason ? ' · ' + state.landscaping.customReason : '' }} · separate contractor, arranged by the Company</td></tr>
           <tr v-if="state.customer && state.customer.notes"><th>Notes</th><td>{{ state.customer.notes }}</td></tr>
@@ -2189,6 +2212,7 @@
           <tr v-if="state.partitionRoom && state.partitionRoom.enabled"><th>Partition</th><td>{{ state.partitionRoom.label || state.partitionRoom.type }} {{ state.partitionRoom.width }}×{{ state.partitionRoom.depth }}mm in the {{ state.partitionRoom.corner }} corner, with door</td></tr>
           <tr v-if="state.bathroom && state.bathroom.enabled"><th>Bathroom</th><td>{{ state.bathroom.type === 'wc' ? 'WC fit-out' : 'Shower room fit-out' }} (plumber separate)</td></tr>
           <tr v-if="(state.customExtras || []).some(c => c.label)"><th>Custom extras</th><td><span v-for="ce in state.customExtras.filter(c => c.label)" :key="ce.id" class="pack-chip">{{ ce.label }}</span></td></tr>
+          <tr v-if="(state.customDeductions || []).some(c => c.label)"><th>Customer supplies / not by us</th><td><span v-for="cd in state.customDeductions.filter(c => c.label)" :key="cd.id" class="pack-chip">{{ cd.label }}</span></td></tr>
           <tr v-if="labour.install.lines.some(l => !['build','delivery','groundworks'].includes(l.id))"><th>Extras in the fee</th><td><span v-for="l in labour.install.lines.filter(l => !['build','delivery','groundworks'].includes(l.id))" :key="l.id" class="pack-chip">{{ l.label }}</span></td></tr>
           <tr><th>Not included</th><td>Electrical 1st and 2nd fix (Company's electrician){{ (state.acUnits||[]).length ? ', air conditioning install' : '' }}, materials supply, landscaping beyond the building footprint</td></tr>
         </table>
@@ -2632,7 +2656,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=150"></script>
+<script type="module" src="js/app.js?v=151"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

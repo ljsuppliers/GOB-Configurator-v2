@@ -100,8 +100,11 @@ export function calculatePrice(state) {
   if (ex.additionalSocketUsb > 0) addExtra(result, elec.additionalSocketUsb, ex.additionalSocketUsb);
   if (ex.additionalLightingZone > 0) addExtra(result, elec.additionalLightingZone, ex.additionalLightingZone);
   if (ex.quineticSwitch) addExtra(result, elec.quineticSwitch, 1);
-  if (ex.acUnit === 'standard') addExtra(result, elec.acUnitStandard, 1);
-  if (ex.acUnit === 'premium') addExtra(result, elec.acUnitPremium, 1);
+  if (ex.doubleQuineticSwitch) addExtra(result, elec.doubleQuineticSwitch, 1);
+  // Air con is listed on the quote but PAID DIRECTLY to the air con installer, so it
+  // never goes into the building total (Liam 19 Sep 2026).
+  if (ex.acUnit === 'standard') addExtra(result, elec.acUnitStandard, 1, 'electrical', { paidSeparately: true, paidTo: 'air con installer' });
+  if (ex.acUnit === 'premium') addExtra(result, elec.acUnitPremium, 1, 'electrical', { paidSeparately: true, paidTo: 'air con installer' });
   if (ex.cat6Point > 0) addExtra(result, elec.cat6Point, ex.cat6Point);
   if (ex.hdmiCables) addExtra(result, elec.hdmiCables, 1);
   if (ex.floodlightCabling) addExtra(result, elec.floodlightCabling, 1);
@@ -117,10 +120,11 @@ export function calculatePrice(state) {
     const partitionLabel = state.straightPartition.hasDoor
       ? 'Internal partition wall with interior door'
       : 'Internal partition wall';
-    result.extras.push({ label: partitionLabel, price: partitionPrice });
+    result.extras.push({ label: partitionLabel, baseLabel: partitionLabel, qty: 1, unitPrice: partitionPrice, price: partitionPrice, section: 'internal' });
   }
 
-  if (se.secretDoor) addExtra(result, struct.secretDoor, 1);
+  if (se.secretDoor) addExtra(result, struct.secretDoor, 1, 'doors');
+  if (se.epdmUpgrade && struct.epdmUpgrade) addExtra(result, { ...struct.epdmUpgrade, label: struct.epdmUpgrade.price ? struct.epdmUpgrade.label : `${struct.epdmUpgrade.label} - PRICE TBC` }, 1, 'external');
   // Extra decking: typed sqm wins; otherwise worked out from the drawing
   // (decking deeper than the standard 400mm across the building width).
   let deckSqm = Number(se.additionalDecking) || 0;
@@ -130,21 +134,23 @@ export function calculatePrice(state) {
   if (deckSqm > 0) {
     result.extras.push({
       label: `${struct.additionalDecking.label} (${deckSqm} sqm${Number(se.additionalDecking) ? '' : ', from the drawing'})`,
-      price: struct.additionalDecking.price * deckSqm
+      baseLabel: struct.additionalDecking.label, qty: deckSqm, unitPrice: struct.additionalDecking.price,
+      price: struct.additionalDecking.price * deckSqm, section: 'external'
     });
   }
-  // Custom extras typed on the job (e.g. "Extra step at the front - £700")
+  // Custom extras typed on the job (e.g. "Extra step at the front - £700"); the
+  // section picker on the extra decides where it prints on the quote sheet.
   for (const ce of state.customExtras || []) {
-    if (ce && ce.label) result.extras.push({ label: `${ce.label}`, price: Number(ce.price) || 0, custom: true });
+    if (ce && ce.label) result.extras.push({ label: `${ce.label}`, baseLabel: ce.label, qty: 1, unitPrice: Number(ce.price) || 0, price: Number(ce.price) || 0, custom: true, section: ce.section || 'internal' });
   }
   // Oak acoustic slat feature walls, priced per wall
   const fwm = state.featureWalls || {};
   const fwalls = ['front', 'left', 'right', 'rear'].filter((k) => fwm[k] || (k === 'rear' && state.featureWall === 'rear'));
   if (fwalls.length && struct.featureWall) {
-    result.extras.push({ label: `${struct.featureWall.label} × ${fwalls.length} (${fwalls.join(', ')})${struct.featureWall.price ? '' : ' - PRICE TBC'}`, price: struct.featureWall.price * fwalls.length });
+    result.extras.push({ label: `${struct.featureWall.label} × ${fwalls.length} (${fwalls.join(', ')})${struct.featureWall.price ? '' : ' - PRICE TBC'}`, baseLabel: struct.featureWall.label, qty: fwalls.length, unitPrice: struct.featureWall.price, price: struct.featureWall.price * fwalls.length, section: 'internal' });
   }
-  if (se.premiumFlooring) addExtra(result, struct.premiumFlooring, 1);
-  if (se.bifoldUpgrade) addExtra(result, pricesData.extras.doors.bifoldUpgrade, 1);
+  if (se.premiumFlooring) addExtra(result, struct.premiumFlooring, 1, 'internal');
+  if (se.bifoldUpgrade) addExtra(result, pricesData.extras.doors.bifoldUpgrade, 1, 'doors');
 
   // 4c. Deductions
   const ded = state.deductions || {};
@@ -178,9 +184,16 @@ export function calculatePrice(state) {
     const reason = state.site?.accessChargeReason || 'Site access';
     result.extras.push({
       label: `Site access charge (${reason})`,
-      price: siteAccess
+      baseLabel: 'Site access charge', qty: 1, unitPrice: siteAccess,
+      price: siteAccess, section: 'groundworks'
     });
   }
+  // Custom deductions typed on the job, e.g. "Customer supplies own flooring"
+  // (Liam 19 Sep 2026). Always stored as a negative amount.
+  for (const cd of state.customDeductions || []) {
+    if (cd && cd.label) result.deductions.push({ label: cd.label, price: -Math.abs(Number(cd.price) || 0), custom: true });
+  }
+
 
   // 4b. Partition room (corner room)
   const pr = state.partitionRoom;
@@ -227,7 +240,8 @@ export function calculatePrice(state) {
   result.installation = calculateInstallation(state);
 
   // 8. Sum up
-  const extrasTotal = result.extras.reduce((sum, e) => sum + e.price, 0);
+  const extrasTotal = result.extras.reduce((sum, e) => sum + (e.paidSeparately ? 0 : e.price), 0);
+  result.paidSeparatelyTotal = result.extras.reduce((sum, e) => sum + (e.paidSeparately ? e.price : 0), 0);
   const claddingTotal = result.claddingUpgrades.reduce((sum, c) => sum + c.price, 0);
   const componentTotal = result.componentUpgrades.reduce((sum, c) => sum + c.price, 0);
   const deductionsTotal = result.deductions.reduce((sum, d) => sum + d.price, 0); // negative values
@@ -257,11 +271,16 @@ export function calculatePrice(state) {
   return result;
 }
 
-function addExtra(result, extraDef, qty) {
+function addExtra(result, extraDef, qty, section = 'electrical', opts = {}) {
   if (!extraDef) return;
   result.extras.push({
     label: qty > 1 ? `${extraDef.label} x${qty}` : extraDef.label,
-    price: extraDef.price * qty
+    baseLabel: extraDef.label,
+    qty,
+    unitPrice: extraDef.price,
+    price: extraDef.price * qty,
+    section, // electrical | internal | external | groundworks | doors: where it prints on the quote sheet
+    ...opts,
   });
 }
 
@@ -389,7 +408,7 @@ function calculateCladdingUpgrades(state) {
   // Default cladding per tier
   const defaults = state.tier === 'classic'
     ? { front: 'composite-coffee', left: 'anthracite-steel', right: 'anthracite-steel', rear: 'anthracite-steel' }
-    : { front: 'western-red-cedar', left: 'anthracite-steel', right: 'anthracite-steel', rear: 'anthracite-steel' };
+    : { front: 'composite-coffee', left: 'anthracite-steel', right: 'anthracite-steel', rear: 'anthracite-steel' };
 
   const sides = {
     left: { widthM: state.depth / 1000, label: 'Left side' },

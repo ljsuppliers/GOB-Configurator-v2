@@ -15,7 +15,7 @@
     }
   ],
   "cladding": {
-    "front": "western-red-cedar",
+    "front": "composite-coffee",
     "left": "anthracite-steel",
     "right": "anthracite-steel",
     "rear": "anthracite-steel",
@@ -29,10 +29,10 @@
   "components": [
     {
       "id": "comp-1",
-      "type": "sliding-door-2500",
+      "type": "sliding-door-2200",
       "elevation": "front",
-      "positionX": 1250,
-      "label": "2.5m UPVC Sliding Door"
+      "positionX": 1400,
+      "label": "2.2m UPVC Sliding Door"
     }
   ],
   "externalFeatures": [],
@@ -50,14 +50,16 @@
     "cat6Point": 0,
     "hdmiCables": false,
     "floodlightCabling": false,
-    "tvMountingPrep": false
+    "tvMountingPrep": false,
+    "doubleQuineticSwitch": false
   },
   "structuralExtras": {
     "heightUpgrade": 0,
     "additionalDecking": 0,
     "secretDoor": false,
     "premiumFlooring": false,
-    "bifoldUpgrade": false
+    "bifoldUpgrade": false,
+    "epdmUpgrade": false
   },
   "hasCanopy": true,
   "hasDecking": true,
@@ -176,5 +178,6 @@
   "flooring": "natural-oak",
   "featureWall": "none",
   "pirFloorRoof": 75,
-  "firringFrontMm": 70
+  "firringFrontMm": 70,
+  "customDeductions": []
 }

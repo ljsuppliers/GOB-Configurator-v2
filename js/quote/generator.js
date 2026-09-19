@@ -424,10 +424,10 @@ export function generateQuotePDF(state, price) {
     doc.setFont('helvetica', 'normal');
 
     price.extras.forEach(extra => {
-      doc.text(`• ${extra.label}`, margins.left + 3, y);
+      doc.text(`• ${extra.label}${extra.paidSeparately ? ` (paid directly to ${extra.paidTo || 'the installer'}, not in the total)` : ''}`, margins.left + 3, y);
       setColor(colors.primary);
       doc.setFont('helvetica', 'bold');
-      doc.text(formatCurrency(extra.price), headerRight, y, { align: 'right' });
+      doc.text(extra.paidSeparately ? `(${formatCurrency(extra.price)})` : formatCurrency(extra.price), headerRight, y, { align: 'right' });
       doc.setFont('helvetica', 'normal');
       setColor(colors.dark);
       y += 4.5;

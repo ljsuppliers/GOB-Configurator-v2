@@ -305,6 +305,7 @@ function handleMouseMove(e) {
     if (!def) return;
     
     let mmDelta, maxW;
+    const compW = dragState.comp.customWidth > 0 ? dragState.comp.customWidth : def.width;
     
     if (dragState.comp.elevation === 'front' || dragState.comp.elevation === 'rear') {
       // Front/rear wall: drag horizontally (X delta)
@@ -312,22 +313,23 @@ function handleMouseMove(e) {
       mmDelta = dx * dragState.scaleX;
       maxW = vueApp.state.width;
     } else {
-      // Side walls: drag vertically (Y delta)
+      // Side walls: drag vertically (Y delta). Plan Y runs rear -> front on BOTH
+      // side walls, so the delta is never inverted (the old right-wall inversion
+      // made the opening move the opposite way - Liam 19 Sep 2026).
       const dy = e.clientY - dragState.startY;
       mmDelta = dy * dragState.scaleY;
       maxW = vueApp.state.depth;
-      // For right wall, invert the delta (dragging up should increase positionX)
-      if (dragState.comp.elevation === 'right') {
-        mmDelta = -mmDelta;
-      }
     }
     
     let newPos = dragState.startPosX + mmDelta;
     newPos = Math.round(newPos / 50) * 50; // Snap to 50mm grid
-    newPos = Math.max(0, Math.min(newPos, maxW - def.width));
+    newPos = Math.max(0, Math.min(newPos, maxW - compW));
 
-    // Update planPositionX independently of elevation positionX
+    // Plan position (measured from the rear on side walls) + keep the elevation
+    // in step: left/front/rear elevations measure from the same end, the right
+    // elevation measures from the FRONT.
     dragState.comp.planPositionX = newPos;
+    dragState.comp.positionX = dragState.comp.elevation === 'right' ? Math.max(0, maxW - newPos - compW) : newPos;
   } else {
     // Component dragging on elevation
     // Get component definition for bounds checking
@@ -339,14 +341,17 @@ function handleMouseMove(e) {
     const maxW = dragState.elevation === 'front' 
       ? vueApp.state.width 
       : vueApp.state.depth;
+    const compW = dragState.comp.customWidth > 0 ? dragState.comp.customWidth : def.width;
     
-    // Calculate new position with bounds
+    // Calculate new position with bounds (custom widths respected, so a narrowed
+    // opening can reach the end of the wall)
     let newPos = dragState.startPosX + mmDelta;
     newPos = Math.round(newPos / 50) * 50; // Snap to 50mm grid
-    newPos = Math.max(0, Math.min(newPos, maxW - def.width));
+    newPos = Math.max(0, Math.min(newPos, maxW - compW));
     
-    // Update Vue state directly
+    // Update Vue state directly; the plan follows the elevation again
     dragState.comp.positionX = newPos;
+    if (dragState.comp.planPositionX !== undefined) delete dragState.comp.planPositionX;
   }
 }
 

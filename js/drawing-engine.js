@@ -49,6 +49,9 @@ const COL = {
   composite:     '#8B7355',
   compositeLt:   '#A08060',
   compositeDk:   '#6B5545',
+  latte:         '#B9BDC1',
+  latteLt:       '#D6D9DC',
+  latteDk:       '#8E9397',
   glass:         '#6B9AAD',
   glassDark:     '#5888A0',
   glassReflect:  '#B0D0DD',
@@ -149,6 +152,13 @@ function svgDefs() {
       <line x1="1.5" y1="0" x2="1.5" y2="200" stroke="${COL.compositeLt}" stroke-width="0.8" opacity="0.4"/>
       <line x1="39" y1="0" x2="39" y2="200" stroke="${COL.compositeDk}" stroke-width="1.2"/>
       <rect x="6" y="0" width="16" height="200" fill="${COL.compositeLt}" opacity="0.07"/>
+    </pattern>
+    <pattern id="compositeLatteClad" x="0" y="0" width="40" height="200" patternUnits="userSpaceOnUse">
+      <rect width="40" height="200" fill="${COL.latte}"/>
+      <line x1="0" y1="0" x2="0" y2="200" stroke="${COL.latteDk}" stroke-width="2.5"/>
+      <line x1="1.5" y1="0" x2="1.5" y2="200" stroke="${COL.latteLt}" stroke-width="0.8" opacity="0.5"/>
+      <line x1="39" y1="0" x2="39" y2="200" stroke="${COL.latteDk}" stroke-width="1.2"/>
+      <rect x="6" y="0" width="16" height="200" fill="${COL.latteLt}" opacity="0.18"/>
     </pattern>
     <pattern id="deckPat" x="0" y="0" width="130" height="400" patternUnits="userSpaceOnUse">
       <rect width="130" height="400" fill="${COL.decking}"/>
@@ -624,7 +634,8 @@ function cladFill(t) {
   if (!t) return 'url(#steelClad)';
   // Cedar/timber types
   if (t==='western-red-cedar'||t==='cedar'||t==='diagonal'||t==='larch') return 'url(#cedarClad)';
-  // Composite types
+  // Composite types (latte is the light silver one)
+  if (t==='composite-latte') return 'url(#compositeLatteClad)';
   if (t.startsWith('composite')||t==='horizontal') return 'url(#compositeClad)';
   // Steel types (anthracite, grey, etc.)
   return 'url(#steelClad)';
@@ -813,8 +824,10 @@ function renderSide(cfg) {
       const scCid = 'ssc'+Math.random().toString(36).substr(2,5);
       const feStart = canopyStart;
       const feEnd = canopyEnd;
-      s += `<defs><clipPath id="${scCid}"><rect x="${feStart}" y="${wallTop}" width="${canopyProj}" height="${wallH}"/></clipPath></defs>`;
-      s += rc(feStart, wallTop, canopyProj, wallH, { fill: cladFill(claddingType || 'steel'), clip: `url(#${scCid})` });
+      // Overlap the main wall by 12mm so the two clipped fills meet with no hairline (Liam 19 Sep 2026)
+      const ovStart = frontRight ? feStart - 12 : feStart, ovW = canopyProj + 12;
+      s += `<defs><clipPath id="${scCid}"><rect x="${ovStart}" y="${wallTop}" width="${ovW}" height="${wallH}"/></clipPath></defs>`;
+      s += rc(ovStart, wallTop, ovW, wallH, { fill: cladFill(claddingType || 'steel'), clip: `url(#${scCid})`, sw: 0 });
       s += ln(feEnd, ROOF_ZONE, feEnd, height, 3, '#222');
       s += ln(feStart, height, feEnd, height, 3, '#222');
       const uX = frontRight ? feEnd - 180 : feStart;
@@ -1348,8 +1361,10 @@ function renderBoundaries(boundaries, buildingWidth, buildingDepth, canopyProj) 
     s += tag('line', { x1: lx, y1: startY, x2: lx, y2: frontY, ...dashStyle });
     // "Approximate boundary" label at top
     s += tx(lx, startY - 60, 'Approximate boundary', 110, { color: '#555', anchor: 'middle', bold: true });
-    // Distance label - centred between boundary and building
-    const midY = (startY + frontY) / 2;
+    // Distance label - just below the front edge, clear of the vertical depth
+    // dimension that runs down the side of the building (was at mid-depth and
+    // sat on top of it - Liam 19 Sep 2026)
+    const midY = frontY + 260;
     s += tx(lx / 2, midY, `${left}mm`, 120, { color: '#333', anchor: 'middle', bold: true });
     // Dimension lines
     s += ln(lx + 30, midY - 80, -30, midY - 80, 2, '#777');
@@ -1364,8 +1379,8 @@ function renderBoundaries(boundaries, buildingWidth, buildingDepth, canopyProj) 
     s += tag('line', { x1: rx, y1: startY, x2: rx, y2: frontY, ...dashStyle });
     // "Approximate boundary" label at top
     s += tx(rx, startY - 60, 'Approximate boundary', 110, { color: '#555', anchor: 'middle', bold: true });
-    // Distance label
-    const midY = (startY + frontY) / 2;
+    // Distance label (below the front edge, see the left boundary note)
+    const midY = frontY + 260;
     s += tx(buildingWidth + right / 2, midY, `${right}mm`, 120, { color: '#333', anchor: 'middle', bold: true });
     // Dimension lines
     s += ln(buildingWidth + 30, midY - 80, rx - 30, midY - 80, 2, '#777');
@@ -1731,8 +1746,8 @@ export function generateDrawing(state, componentsData, claddingData) {
         // positionY is mm from ground, convert to y coordinate (from top)
         y = state.height - comp.positionY - h;
       } else if (def.category === 'slot') {
-        // Default: slot windows near top of wall
-        y = ROOF_ZONE + 100;
+        // Default: slot windows with the cill 1400mm off the ground (Liam 19 Sep 2026)
+        y = state.height - 1400 - h;
       } else {
         // Default: standard windows at desk height (centred)
         const wallTop = ROOF_ZONE;
@@ -1743,7 +1758,10 @@ export function generateDrawing(state, componentsData, claddingData) {
     // else: full-height doors/windows default to ground level (y undefined → height - h)
 
     const elevEntry = { type: comp.type, x, w, h, y, id: comp.id, handleSide: comp.handleSide || 'right' };
-    const planX = comp.planPositionX ?? x;
+    // Plan Y on the side walls runs rear -> front. The RIGHT elevation measures
+    // positionX from the FRONT, so convert unless the plan has its own position.
+    const compW = comp.customWidth && comp.customWidth > 0 ? comp.customWidth : w;
+    const planX = comp.planPositionX ?? (comp.elevation === 'right' ? Math.max(0, state.depth - x - compW) : x);
     const planEntry = { wall: comp.elevation, type: comp.type, x: planX, w, h, id: comp.id };
 
     // Use custom width if specified
@@ -1768,20 +1786,21 @@ export function generateDrawing(state, componentsData, claddingData) {
   }
 
   // Map cladding type
+  const compositeKey = (key) => (key === 'composite-latte' ? 'composite-latte' : 'composite');
   const frontClad = claddingData?.types?.[state.cladding?.front];
   let frontCladding = 'cedar';
   if (frontClad?.category === 'steel') frontCladding = 'steel';
-  else if (frontClad?.category === 'composite') frontCladding = 'composite';
+  else if (frontClad?.category === 'composite') frontCladding = compositeKey(state.cladding?.front);
 
   const leftClad = claddingData?.types?.[state.cladding?.left];
   let leftCladding = 'steel';
   if (leftClad?.category === 'timber') leftCladding = 'cedar';
-  else if (leftClad?.category === 'composite') leftCladding = 'composite';
+  else if (leftClad?.category === 'composite') leftCladding = compositeKey(state.cladding?.left);
 
   const rightClad = claddingData?.types?.[state.cladding?.right];
   let rightCladding = 'steel';
   if (rightClad?.category === 'timber') rightCladding = 'cedar';
-  else if (rightClad?.category === 'composite') rightCladding = 'composite';
+  else if (rightClad?.category === 'composite') rightCladding = compositeKey(state.cladding?.right);
 
   // Rooms
   const rooms = (state.rooms || [{ label: 'Office', widthMm: state.width }]).map(r => ({

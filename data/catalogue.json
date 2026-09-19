@@ -1,6 +1,6 @@
 {
-  "version": 22,
-  "updated": "2026-09-05",
+  "version": 23,
+  "updated": "2026-09-19",
   "suppliers": [
     {
       "name": "Advanced Sealed Units",
@@ -66,7 +66,7 @@
       "name": "Montravia",
       "email": "",
       "phone": "",
-      "notes": "Fixings supplier — screws, bolts, brackets, fasteners"
+      "notes": "Fixings supplier \u2014 screws, bolts, brackets, fasteners"
     },
     {
       "name": "Morland",
@@ -108,7 +108,7 @@
       "name": "Wickes",
       "email": "",
       "phone": "",
-      "notes": "Laminate flooring (Natural Oak / Light Grey, 1.48m² packs) + underlay (10.03m² packs). Trade counter / online."
+      "notes": "Laminate flooring (Natural Oak / Light Grey, 1.48m\u00b2 packs) + underlay (10.03m\u00b2 packs). Trade counter / online."
     },
     {
       "name": "Easypanels",
@@ -119,7 +119,7 @@
   ],
   "materials": [
     {
-      "name": "Composite slatted cladding (Coffee) 200×2500mm",
+      "name": "Composite slatted cladding (Coffee) 200\u00d72500mm",
       "category": "Cladding",
       "sku": "",
       "unit": "length",
@@ -129,11 +129,11 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "200mm wide × 2500mm length, sold per length",
+      "notes": "200mm wide \u00d7 2500mm length, sold per length",
       "supply": "stock"
     },
     {
-      "name": "Composite slatted cladding (Latte) 200×2500mm",
+      "name": "Composite slatted cladding (Latte) 200\u00d72500mm",
       "category": "Cladding",
       "sku": "",
       "unit": "length",
@@ -143,7 +143,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "200mm wide × 2500mm length, sold per length",
+      "notes": "200mm wide \u00d7 2500mm length, sold per length",
       "supply": "stock"
     },
     {
@@ -171,7 +171,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Frame seal / weather strip per opening | 1 per opening. Cost included in the Spectral frame price — listed here so installers see it on the materials list.",
+      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Frame seal / weather strip per opening | 1 per opening. Cost included in the Spectral frame price \u2014 listed here so installers see it on the materials list.",
       "supply": "site"
     },
     {
@@ -465,7 +465,7 @@
       "orderUnit": "100m drum",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. 6242Y 1.5mm T&E 100m drum ~£45 ex.",
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. 6242Y 1.5mm T&E 100m drum ~\u00a345 ex.",
       "supply": "stock"
     },
     {
@@ -479,12 +479,12 @@
       "orderUnit": "50m drum",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. 6242Y 2.5mm T&E 50m drum ~£40 ex (100m drums also common).",
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. 6242Y 2.5mm T&E 50m drum ~\u00a340 ex (100m drums also common).",
       "supply": "stock"
     },
     {
       "name": "Armoured cable (electrical connection)",
-      "category": "Electrics — 1st fix",
+      "category": "Electrics \u2014 1st fix",
       "sku": "",
       "unit": "each",
       "unitCost": 1250.0,
@@ -507,12 +507,12 @@
       "orderUnit": "box of 100",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Round/flat T&E cable clips, box 100 ~£3 ex.",
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Round/flat T&E cable clips, box 100 ~\u00a33 ex.",
       "supply": "stock"
     },
     {
       "name": "CAT6A data cable",
-      "category": "Electrics — 1st fix",
+      "category": "Electrics \u2014 1st fix",
       "sku": "",
       "unit": "each",
       "unitCost": 550.0,
@@ -535,7 +535,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: FuseBox F3004M 4-way RCBO ~£65-80 ex trade.",
+      "notes": "Web-checked 19 Sep 2026, ex VAT: FuseBox F3004M 4-way RCBO ~\u00a365-80 ex trade.",
       "supply": "stock"
     },
     {
@@ -549,7 +549,7 @@
       "orderUnit": "pack of 10",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. 2-gang dry-lining box 47mm, ~£1.20 ex.",
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. 2-gang dry-lining box 47mm, ~\u00a31.20 ex.",
       "supply": "stock"
     },
     {
@@ -577,7 +577,7 @@
       "orderUnit": "pack of 10",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. 1-gang dry-lining box 35mm, ~£0.90 ex.",
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. 1-gang dry-lining box 35mm, ~\u00a30.90 ex.",
       "supply": "stock"
     },
     {
@@ -605,12 +605,12 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. LAP/BG screwless flat plate 2-gang 13A switched, ~£9 ex (Screwfix). LINK: https://www.screwfix.com/c/electrical-lighting/sockets/cat831088",
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. LAP/BG screwless flat plate 2-gang 13A switched, ~\u00a39 ex (Screwfix). LINK: https://www.screwfix.com/c/electrical-lighting/sockets/cat831088",
       "supply": "stock"
     },
     {
       "name": "Air Conditioning",
-      "category": "Electrics — 2nd fix",
+      "category": "Electrics \u2014 2nd fix",
       "sku": "",
       "unit": "each",
       "unitCost": 850.0,
@@ -647,7 +647,7 @@
       "orderUnit": "pack of 10",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. LAP/Luceco fire-rated IP65 dimmable LED downlight, white/matt black bezel, 10-pack ~£90 ex (Screwfix). LINK: https://www.screwfix.com/c/electrical-lighting/downlights/cat830990?firerated=true",
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. LAP/Luceco fire-rated IP65 dimmable LED downlight, white/matt black bezel, 10-pack ~\u00a390 ex (Screwfix). LINK: https://www.screwfix.com/c/electrical-lighting/downlights/cat830990?firerated=true",
       "supply": "stock"
     },
     {
@@ -661,7 +661,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Varilight V-Pro trailing-edge LED dimmer + switch gangs on one screwless plate, ~£22 ex. LINK: https://www.screwfix.com/c/electrical-lighting/dimmer-switches/cat831046",
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Varilight V-Pro trailing-edge LED dimmer + switch gangs on one screwless plate, ~\u00a322 ex. LINK: https://www.screwfix.com/c/electrical-lighting/dimmer-switches/cat831046",
       "supply": "stock"
     },
     {
@@ -675,7 +675,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. GU10 up/down wall light anthracite IP44 ~£28 ex incl. lamps (Screwfix/Toolstation). LINK: https://www.screwfix.com/c/electrical-lighting/outdoor-wall-lights/cat831430",
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. GU10 up/down wall light anthracite IP44 ~\u00a328 ex incl. lamps (Screwfix/Toolstation). LINK: https://www.screwfix.com/c/electrical-lighting/outdoor-wall-lights/cat831430",
       "supply": "stock"
     },
     {
@@ -703,7 +703,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. BG IP66 2-gang RCD outdoor socket ~£18-30 ex.",
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. BG IP66 2-gang RCD outdoor socket ~\u00a318-30 ex.",
       "supply": "stock"
     },
     {
@@ -717,7 +717,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. RJ45 CAT6 module + 1-gang white plate, ~£6 ex.",
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. RJ45 CAT6 module + 1-gang white plate, ~\u00a36 ex.",
       "supply": "stock"
     },
     {
@@ -731,7 +731,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE £9. RAL 7016 scratch repair for panels and trims - 1 per job.",
+      "notes": "CLAUDE ESTIMATE \u00a39. RAL 7016 scratch repair for panels and trims - 1 per job.",
       "supply": "stock"
     },
     {
@@ -773,7 +773,7 @@
       "orderUnit": "box of 200",
       "destination": "site",
       "inStock": true,
-      "notes": "Stainless steel composite decking screw with grey-painted head, colour-matched to grey/anthracite composite deck boards. ~£14/100 pack (Assured Composite). Colour-headed composite decking screws (Winchester grey), box 200.",
+      "notes": "Stainless steel composite decking screw with grey-painted head, colour-matched to grey/anthracite composite deck boards. ~\u00a314/100 pack (Assured Composite). Colour-headed composite decking screws (Winchester grey), box 200.",
       "supply": "stock"
     },
     {
@@ -787,7 +787,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE £6. Superglue + activator for skirting and trim mitres - 1 per job.",
+      "notes": "CLAUDE ESTIMATE \u00a36. Superglue + activator for skirting and trim mitres - 1 per job.",
       "supply": "stock"
     },
     {
@@ -801,7 +801,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE £8. Mixed plastic packers for levelling/plumbing door + window frames (~10mm opening tolerance, ~5mm per side). 1 box per build.",
+      "notes": "CLAUDE ESTIMATE \u00a38. Mixed plastic packers for levelling/plumbing door + window frames (~10mm opening tolerance, ~5mm per side). 1 box per build.",
       "supply": "stock"
     },
     {
@@ -815,7 +815,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: Trade Timber £15.12 ex, Fulham £20.21 ex; merchant trade ~£15.50.",
+      "notes": "Web-checked 19 Sep 2026, ex VAT: Trade Timber \u00a315.12 ex, Fulham \u00a320.21 ex; merchant trade ~\u00a315.50.",
       "supply": "site"
     },
     {
@@ -829,7 +829,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: Ovaeda Tectonic £3.59 inc = £2.99 ex.",
+      "notes": "Web-checked 19 Sep 2026, ex VAT: Ovaeda Tectonic \u00a33.59 inc = \u00a32.99 ex.",
       "supply": "site"
     },
     {
@@ -843,7 +843,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE £6. Tapes the DPM sheet overlaps. 1 roll per build (2 on floors over 20m²).",
+      "notes": "CLAUDE ESTIMATE \u00a36. Tapes the DPM sheet overlaps. 1 roll per build (2 on floors over 20m\u00b2).",
       "supply": "stock"
     },
     {
@@ -899,7 +899,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "GAP. Joins adjacent 4m gutter sections. Only needed on builds wider than 4m: 4.4–8m wide = 1 joiner, 8.05–8.8m wide = 2 joiners.",
+      "notes": "GAP. Joins adjacent 4m gutter sections. Only needed on builds wider than 4m: 4.4\u20138m wide = 1 joiner, 8.05\u20138.8m wide = 2 joiners.",
       "supply": "site"
     },
     {
@@ -941,7 +941,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "GAP. 2 per build — used as an S-curve to offset the downpipe from the fascia outlet to vertical drop.",
+      "notes": "GAP. 2 per build \u2014 used as an S-curve to offset the downpipe from the fascia outlet to vertical drop.",
       "supply": "site"
     },
     {
@@ -990,14 +990,14 @@
       "name": "50mm PIR insulation board",
       "category": "Insulation",
       "sku": "",
-      "unit": "m²",
+      "unit": "m\u00b2",
       "unitCost": 7.5,
       "supplier": "Builders merchant",
       "packSize": null,
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE £7.50/m². HYBRID floor - between the joists.",
+      "notes": "CLAUDE ESTIMATE \u00a37.50/m\u00b2. HYBRID floor - between the joists.",
       "supply": "site"
     },
     {
@@ -1025,11 +1025,11 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "£56 per m² (Liam 2026-09-06); line shows PANEL COUNT and length, cost = panels × 1.1m × length. DELIVERY: straight to site OR from factory - decide per job (Liam 2026-09-07).",
+      "notes": "\u00a356 per m\u00b2 (Liam 2026-09-06); line shows PANEL COUNT and length, cost = panels \u00d7 1.1m \u00d7 length. DELIVERY: straight to site OR from factory - decide per job (Liam 2026-09-07).",
       "supply": "site"
     },
     {
-      "name": "12mm Plywood (1220×2440 sheet)",
+      "name": "12mm Plywood (1220\u00d72440 sheet)",
       "category": "Sheet materials",
       "sku": "",
       "unit": "sheet",
@@ -1053,14 +1053,14 @@
       "orderUnit": "4.8m length",
       "destination": "site",
       "inStock": false,
-      "notes": "Selhurst 19x38 4.8m treated roofing batten (1B01903848), £2.16/length",
+      "notes": "Selhurst 19x38 4.8m treated roofing batten (1B01903848), \u00a32.16/length",
       "supply": "site"
     },
     {
       "name": "Acoustic insulation roll (100mm)",
       "category": "Internal lining",
       "sku": "",
-      "unit": "m²",
+      "unit": "m\u00b2",
       "unitCost": 4.8,
       "supplier": "Builders merchant",
       "packSize": null,
@@ -1071,7 +1071,7 @@
       "supply": "site"
     },
     {
-      "name": "Oak acoustic slat wall panel (2400×600)",
+      "name": "Oak acoustic slat wall panel (2400\u00d7600)",
       "category": "Feature wall",
       "sku": "",
       "unit": "each",
@@ -1081,7 +1081,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: Easypanels natural oak 240x60cm £19.90 (sale, was £80; incl. VAT at checkout so ~£16.60 ex). Was £42 est.",
+      "notes": "Web-checked 19 Sep 2026, ex VAT: Easypanels natural oak 240x60cm \u00a319.90 (sale, was \u00a380; incl. VAT at checkout so ~\u00a316.60 ex). Was \u00a342 est.",
       "supply": "site"
     },
     {
@@ -1095,7 +1095,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE £1.50. Internal junction/gap filling before finishing - used on plastered AND pre-finished builds (Liam 2026-07-26).",
+      "notes": "CLAUDE ESTIMATE \u00a31.50. Internal junction/gap filling before finishing - used on plastered AND pre-finished builds (Liam 2026-07-26).",
       "supply": "site"
     },
     {
@@ -1137,7 +1137,7 @@
       "orderUnit": "2.4m length",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE £2. Thin-coat angle bead for external corners and door/window reveals - plastered builds only.",
+      "notes": "CLAUDE ESTIMATE \u00a32. Thin-coat angle bead for external corners and door/window reveals - plastered builds only.",
       "supply": "site"
     },
     {
@@ -1186,7 +1186,7 @@
       "name": "DPM sheet",
       "category": "Membranes",
       "sku": "",
-      "unit": "m²",
+      "unit": "m\u00b2",
       "unitCost": 1.5,
       "supplier": "Montravia",
       "packSize": 100,
@@ -1200,14 +1200,14 @@
       "name": "Tyvek breather membrane",
       "category": "Membranes",
       "sku": "",
-      "unit": "m²",
+      "unit": "m\u00b2",
       "unitCost": 0.75,
       "supplier": "Montravia",
       "packSize": 70,
       "orderUnit": "roll (1.4m x 50m)",
       "destination": "site",
       "inStock": true,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: DuPont Housewrap 1.4x100m £104.17 ex (Roofing Superstore) = £0.74/m².",
+      "notes": "Web-checked 19 Sep 2026, ex VAT: DuPont Housewrap 1.4x100m \u00a3104.17 ex (Roofing Superstore) = \u00a30.74/m\u00b2.",
       "supply": "stock"
     },
     {
@@ -1235,35 +1235,35 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE £15. Complimentary with every job - 1 per build.",
+      "notes": "CLAUDE ESTIMATE \u00a315. Complimentary with every job - 1 per build.",
       "supply": "site"
     },
     {
       "name": "Rockwool insulation 100mm",
       "category": "Other",
       "sku": "",
-      "unit": "m²",
+      "unit": "m\u00b2",
       "unitCost": 5.0,
       "supplier": "Builders merchant",
       "packSize": 5.76,
       "orderUnit": "pack (8 slabs)",
       "destination": "site",
       "inStock": false,
-      "notes": "ESTIMATE (Claude, ~£4-6/m2 trade for 100mm slab) - replace with real invoice price. Between the 4x2 studs of the stick-built front wall",
+      "notes": "ESTIMATE (Claude, ~\u00a34-6/m2 trade for 100mm slab) - replace with real invoice price. Between the 4x2 studs of the stick-built front wall",
       "supply": "site"
     },
     {
       "name": "Rockwool insulation 50mm (acoustic)",
       "category": "Insulation",
       "sku": "",
-      "unit": "m²",
+      "unit": "m\u00b2",
       "unitCost": 3.0,
       "supplier": "Builders merchant",
       "packSize": null,
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE £3.00/m2, get quote. THE single wall wool SKU building-wide (Liam 2026-08-04): panel walls 50mm MAX (condensation one-third rule behind the 60mm panel, fitted against the panel, 45mm services gap in front) and clad walls same 50mm.",
+      "notes": "CLAUDE ESTIMATE \u00a33.00/m2, get quote. THE single wall wool SKU building-wide (Liam 2026-08-04): panel walls 50mm MAX (condensation one-third rule behind the 60mm panel, fitted against the panel, 45mm services gap in front) and clad walls same 50mm.",
       "supply": "site"
     },
     {
@@ -1333,21 +1333,21 @@
       "orderUnit": "2.5m length",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE £4.50 per 2.5m length, confirm product/supplier. PREMIUM vented cold roof: continuous front soffit vent + rear rim vent slots (mesh) behind the fascia.",
+      "notes": "CLAUDE ESTIMATE \u00a34.50 per 2.5m length, confirm product/supplier. PREMIUM vented cold roof: continuous front soffit vent + rear rim vent slots (mesh) behind the fascia.",
       "supply": "site"
     },
     {
       "name": "EPDM roof kit (membrane, adhesive, edge trims)",
       "category": "Roofing",
       "sku": "",
-      "unit": "m²",
+      "unit": "m\u00b2",
       "unitCost": 16,
       "supplier": "Rubber Roofing Direct",
       "packSize": null,
       "orderUnit": "one-piece sheet",
       "destination": "site",
       "inStock": false,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: 1.14mm membrane £9.49-10.56/m² + adhesive £110/5L (~15m²) + trims → ~£16/m² as a one-piece kit. Unchanged.",
+      "notes": "Web-checked 19 Sep 2026, ex VAT: 1.14mm membrane \u00a39.49-10.56/m\u00b2 + adhesive \u00a3110/5L (~15m\u00b2) + trims \u2192 ~\u00a316/m\u00b2 as a one-piece kit. Unchanged.",
       "supply": "site"
     },
     {
@@ -1361,7 +1361,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE £25. HYBRID roof - warm-side VCL under the joists.",
+      "notes": "CLAUDE ESTIMATE \u00a325. HYBRID roof - warm-side VCL under the joists.",
       "supply": "stock"
     },
     {
@@ -1473,7 +1473,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE £26. HYBRID roof deck.",
+      "notes": "CLAUDE ESTIMATE \u00a326. HYBRID roof deck.",
       "supply": "site"
     },
     {
@@ -1487,7 +1487,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: S&D Timber £12.50 ex (£15 inc).",
+      "notes": "Web-checked 19 Sep 2026, ex VAT: S&D Timber \u00a312.50 ex (\u00a315 inc).",
       "supply": "site"
     },
     {
@@ -1529,7 +1529,7 @@
       "orderUnit": "4.2m length",
       "destination": "site",
       "inStock": false,
-      "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 5x2 spec used on builds with width up to 4.05m (i.e. 3.3m, 3.85m). Source: Selhurst C24 47x125 4.8m treated regularised (1BC2404712548) at £11.59/length = £2.41/m.",
+      "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 5x2 spec used on builds with width up to 4.05m (i.e. 3.3m, 3.85m). Source: Selhurst C24 47x125 4.8m treated regularised (1BC2404712548) at \u00a311.59/length = \u00a32.41/m.",
       "supply": "site"
     },
     {
@@ -1543,7 +1543,7 @@
       "orderUnit": "4.2m length",
       "destination": "site",
       "inStock": false,
-      "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 6x2 spec required on builds with width >4.05m (i.e. 4.4m and above) to handle the extra span. Not in current Selhurst invoices — interpolated price between 47x125 (£2.41/m) and 47x175 (£3.28/m). Confirm with a Selhurst quote when you next order.",
+      "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 6x2 spec required on builds with width >4.05m (i.e. 4.4m and above) to handle the extra span. Not in current Selhurst invoices \u2014 interpolated price between 47x125 (\u00a32.41/m) and 47x175 (\u00a33.28/m). Confirm with a Selhurst quote when you next order.",
       "supply": "site"
     },
     {
@@ -1557,7 +1557,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE £3.90/m (47x170 C24). HYBRID build roof joists @400mm.",
+      "notes": "CLAUDE ESTIMATE \u00a33.90/m (47x170 C24). HYBRID build roof joists @400mm.",
       "supply": "site"
     },
     {
@@ -1585,7 +1585,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CUSTOM CUT per job by the timber merchant: 47mm wide tapers, 70mm at the front to 0 at the rear on EVERY building (Liam 2026-09-06), length per the order text; priced ~£3 per linear metre.",
+      "notes": "CUSTOM CUT per job by the timber merchant: 47mm wide tapers, 70mm at the front to 0 at the rear on EVERY building (Liam 2026-09-06), length per the order text; priced ~\u00a33 per linear metre.",
       "supply": "site"
     },
     {
@@ -1594,7 +1594,7 @@
       "unit": "each",
       "unitCost": 14,
       "supplier": "Regent Electrical",
-      "notes": "Web-checked 19 Sep 2026, ex VAT: IP65 soffit downlights £7-23 (Lighting Direct/Electrical2Go) → £14 ex trade.",
+      "notes": "Web-checked 19 Sep 2026, ex VAT: IP65 soffit downlights \u00a37-23 (Lighting Direct/Electrical2Go) \u2192 \u00a314 ex trade.",
       "sku": "",
       "packSize": null,
       "orderUnit": "",
@@ -1613,7 +1613,21 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: Climadoor retail 2100mm £1,249 inc (£1,041 ex); trade/frame-only ~£900. Unchanged - confirm with Spectral.",
+      "notes": "Web-checked 19 Sep 2026, ex VAT: Climadoor retail 2100mm \u00a31,249 inc (\u00a31,041 ex); trade/frame-only ~\u00a3900. Unchanged - confirm with Spectral.",
+      "supply": "site"
+    },
+    {
+      "name": "2.2m UPVC Sliding Door",
+      "category": "Doors & Windows",
+      "sku": "SL22",
+      "unit": "each",
+      "unitCost": 1000,
+      "supplier": "Spectral",
+      "packSize": null,
+      "orderUnit": "",
+      "destination": "site",
+      "inStock": false,
+      "notes": "Web-checked 19 Sep 2026, ex VAT: Climadoor retail 2400mm \u00a31,289 inc (\u00a31,074 ex), 2700mm \u00a31,449 inc. Unchanged - confirm with Spectral. Added 19 Sep 2026 as the standard slider; cost estimated between the 2.0m (\u00a3900) and 2.5m (\u00a31100), confirm with Spectral.",
       "supply": "site"
     },
     {
@@ -1627,7 +1641,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: Climadoor retail 2400mm £1,289 inc (£1,074 ex), 2700mm £1,449 inc. Unchanged - confirm with Spectral.",
+      "notes": "Web-checked 19 Sep 2026, ex VAT: Climadoor retail 2400mm \u00a31,289 inc (\u00a31,074 ex), 2700mm \u00a31,449 inc. Unchanged - confirm with Spectral.",
       "supply": "site"
     },
     {
@@ -1641,7 +1655,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: Climadoor retail 3000mm 4-panel £1,979 inc (£1,649 ex). Unchanged - confirm with Spectral.",
+      "notes": "Web-checked 19 Sep 2026, ex VAT: Climadoor retail 3000mm 4-panel \u00a31,979 inc (\u00a31,649 ex). Unchanged - confirm with Spectral.",
       "supply": "site"
     },
     {
@@ -1655,7 +1669,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: Climadoor/Express Doors 2700 3-leaf £2,199 inc (£1,833 ex retail). Unchanged - confirm with Spectral.",
+      "notes": "Web-checked 19 Sep 2026, ex VAT: Climadoor/Express Doors 2700 3-leaf \u00a32,199 inc (\u00a31,833 ex retail). Unchanged - confirm with Spectral.",
       "supply": "site"
     },
     {
@@ -1669,7 +1683,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite alu bifold 3500x2100 4-leaf; 3.6m stock bifold £2,090 inc (eBay), Home Build Doors Smart 3500 | From 2D configurator components - SET COST + SUPPLIER",
+      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite alu bifold 3500x2100 4-leaf; 3.6m stock bifold \u00a32,090 inc (eBay), Home Build Doors Smart 3500 | From 2D configurator components - SET COST + SUPPLIER",
       "supply": "site"
     },
     {
@@ -1683,7 +1697,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite alu bifold 4500x2100 5-leaf; extrapolated from 4-leaf pricing (+~£600 per leaf) | From 2D configurator components - SET COST + SUPPLIER",
+      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite alu bifold 4500x2100 5-leaf; extrapolated from 4-leaf pricing (+~\u00a3600 per leaf) | From 2D configurator components - SET COST + SUPPLIER",
       "supply": "site"
     },
     {
@@ -1697,7 +1711,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC full-glass single door 900x2100; Glass Openings £510-550 inc, Solomons £456-480 | From 2D configurator components - SET COST + SUPPLIER",
+      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC full-glass single door 900x2100; Glass Openings \u00a3510-550 inc, Solomons \u00a3456-480 | From 2D configurator components - SET COST + SUPPLIER",
       "supply": "site"
     },
     {
@@ -1725,7 +1739,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed 400x2050; small fixed frames from ~£92-112 + VAT base, tall size + anthracite uplift | From 2D configurator components - SET COST + SUPPLIER",
+      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Anthracite uPVC fixed 400x2050; small fixed frames from ~\u00a392-112 + VAT base, tall size + anthracite uplift | From 2D configurator components - SET COST + SUPPLIER",
       "supply": "site"
     },
     {
@@ -1879,7 +1893,7 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Knightsbridge/BG screwless 2G 13A with USB A+C, £14-18 (IronmongeryDirect). LINK: https://www.ironmongerydirect.co.uk/product/knightsbridge-13a-2-gang-screwless-type-ac-usb-socket-with-2-x-usb-4a-matt-whitewhite-706715",
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Knightsbridge/BG screwless 2G 13A with USB A+C, \u00a314-18 (IronmongeryDirect). LINK: https://www.ironmongerydirect.co.uk/product/knightsbridge-13a-2-gang-screwless-type-ac-usb-socket-with-2-x-usb-4a-matt-whitewhite-706715",
       "supply": "stock"
     },
     {
@@ -1897,7 +1911,7 @@
       "supply": "site"
     },
     {
-      "name": "Larch slatted cladding 140×2500mm",
+      "name": "Larch slatted cladding 140\u00d72500mm",
       "category": "Cladding",
       "sku": "",
       "unit": "each",
@@ -1907,11 +1921,11 @@
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Siberian larch 20x145 ~£4.50-5.10/m ex x 2.5m length | SET COST + SUPPLIER if offered",
+      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Siberian larch 20x145 ~\u00a34.50-5.10/m ex x 2.5m length | SET COST + SUPPLIER if offered",
       "supply": "site"
     },
     {
-      "name": "Western Red Cedar slatted cladding 140×2500mm",
+      "name": "Western Red Cedar slatted cladding 140\u00d72500mm",
       "category": "Cladding",
       "sku": "",
       "unit": "length",
@@ -1921,7 +1935,7 @@
       "orderUnit": "2.5m length",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. WRC 18x144 shadow-gap/slat board ~£11.55/m ex (£13.86 inc, Timber Living) x 2.5m length | SET COST + SUPPLIER (missing from designer catalogue too)",
+      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. WRC 18x144 shadow-gap/slat board ~\u00a311.55/m ex (\u00a313.86 inc, Timber Living) x 2.5m length | SET COST + SUPPLIER (missing from designer catalogue too)",
       "supply": "site"
     },
     {
@@ -1936,7 +1950,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: Selco box of 50 £34.10 ex = £0.68 each."
+      "notes": "Web-checked 19 Sep 2026, ex VAT: Selco box of 50 \u00a334.10 ex = \u00a30.68 each."
     },
     {
       "name": "TimberLok 100mm",
@@ -1950,7 +1964,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. FastenMaster TimberLok 6.3x100 hex, 50 pack £44.89 inc (Screwfix 56926). Roof joists to plates, wall plates. LINK: https://www.screwfix.com/p/fastenmaster-timberlok-hex-double-countersunk-structural-timber-screws-6-3-x-100mm-50-pack/56926"
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. FastenMaster TimberLok 6.3x100 hex, 50 pack \u00a344.89 inc (Screwfix 56926). Roof joists to plates, wall plates. LINK: https://www.screwfix.com/p/fastenmaster-timberlok-hex-double-countersunk-structural-timber-screws-6-3-x-100mm-50-pack/56926"
     },
     {
       "name": "TimberLok 89mm",
@@ -1992,7 +2006,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Timco C2 Strong-Fix 5.0x100 PZ double-csk, box 100 ~£14 ex. Stick framing. LINK: https://www.fencingandlandscapesupplies.co.uk/screw-fixings/premium-woodscrews/c2-strong-fix"
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Timco C2 Strong-Fix 5.0x100 PZ double-csk, box 100 ~\u00a314 ex. Stick framing. LINK: https://www.fencingandlandscapesupplies.co.uk/screw-fixings/premium-woodscrews/c2-strong-fix"
     },
     {
       "name": "Wood screw 5.0 x 70mm",
@@ -2006,7 +2020,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Timco C2 Strong-Fix 5.0x70, box 200 ~£15 ex. Battens, noggins, firrings. LINK: https://www.fencingandlandscapesupplies.co.uk/screw-fixings/premium-woodscrews/c2-strong-fix"
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Timco C2 Strong-Fix 5.0x70, box 200 ~\u00a315 ex. Battens, noggins, firrings. LINK: https://www.fencingandlandscapesupplies.co.uk/screw-fixings/premium-woodscrews/c2-strong-fix"
     },
     {
       "name": "Wood screw 5.0 x 50mm",
@@ -2020,7 +2034,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Timco C2 Strong-Fix 5.0x50, box 200 ~£10 ex. Ply, decks, pedestal heads. LINK: https://www.fencingandlandscapesupplies.co.uk/screw-fixings/premium-woodscrews/c2-strong-fix"
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Timco C2 Strong-Fix 5.0x50, box 200 ~\u00a310 ex. Ply, decks, pedestal heads. LINK: https://www.fencingandlandscapesupplies.co.uk/screw-fixings/premium-woodscrews/c2-strong-fix"
     },
     {
       "name": "Drywall screw 3.5 x 38mm black (coarse)",
@@ -2034,7 +2048,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. ForgeFix/F&F 3.5x38 black phosphate coarse, box 1000 ~£9 ex (Toolstation p28800). LINK: https://www.toolstation.com/drywall-black-phosphate-phillips-screw/p28800"
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. ForgeFix/F&F 3.5x38 black phosphate coarse, box 1000 ~\u00a39 ex (Toolstation p28800). LINK: https://www.toolstation.com/drywall-black-phosphate-phillips-screw/p28800"
     },
     {
       "name": "Grey RAL 7016 self-drilling trim screw 25mm",
@@ -2048,7 +2062,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. RAL 7016 anthracite painted 4.2x25 wafer/flange head self-drilling, box 100 ~£9 ex (RALfixings / Coloured Screws). Steel trims onto the building. LINK: https://ralfixings.com/ral-7016-anthracite-grey-13mm-x-4-2mm-painted-wafer-head-self-drilling-screws-bzp-steel/"
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. RAL 7016 anthracite painted 4.2x25 wafer/flange head self-drilling, box 100 ~\u00a39 ex (RALfixings / Coloured Screws). Steel trims onto the building. LINK: https://ralfixings.com/ral-7016-anthracite-grey-13mm-x-4-2mm-painted-wafer-head-self-drilling-screws-bzp-steel/"
     },
     {
       "name": "Bay pole self-drilling screw 70mm (timber to panel)",
@@ -2062,7 +2076,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Self-drilling wood-to-steel (winged) 5.5x70, box 100 ~£15 ex. Timber plates into panel steel."
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Self-drilling wood-to-steel (winged) 5.5x70, box 100 ~\u00a315 ex. Timber plates into panel steel."
     },
     {
       "name": "Concrete screw 100mm (Ammo)",
@@ -2076,7 +2090,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Ammo/Timco concrete frame screw 7.5x100, box 100 ~£22 ex. Pedestals to slab."
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Ammo/Timco concrete frame screw 7.5x100, box 100 ~\u00a322 ex. Pedestals to slab."
     },
     {
       "name": "Stainless self-drilling screw 40mm (gutters/fascia)",
@@ -2090,7 +2104,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. A2 stainless No.12 x 40 self-drilling csk, box 100 ~£20 ex (Westfield / RS 4833006). LINK: https://www.westfieldfasteners.co.uk/Self-Drilling-Screws/Self-Drilling-Screw-Pozi-Countersunk-No.12x40-A2-Stainless.html"
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. A2 stainless No.12 x 40 self-drilling csk, box 100 ~\u00a320 ex (Westfield / RS 4833006). LINK: https://www.westfieldfasteners.co.uk/Self-Drilling-Screws/Self-Drilling-Screw-Pozi-Countersunk-No.12x40-A2-Stainless.html"
     },
     {
       "name": "Polytop pins 40mm anthracite",
@@ -2104,7 +2118,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Anthracite grey 40mm polytop pins, box 250 ~£12 ex (MGN / National Plastics). Fascia. LINK: https://www.nationalplastics.co.uk/40mm-plastic-top-pins-anthracite-grey-250-per-box.html"
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Anthracite grey 40mm polytop pins, box 250 ~\u00a312 ex (MGN / National Plastics). Fascia. LINK: https://www.nationalplastics.co.uk/40mm-plastic-top-pins-anthracite-grey-250-per-box.html"
     },
     {
       "name": "Polytop pins 65mm anthracite",
@@ -2118,7 +2132,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Eurocell Europin 65mm anthracite A4 stainless, box 100 ~£9 ex. Soffits. LINK: https://www.eurocell.co.uk/tools-fixings-and-accessories/fixings/enail65gy1-anthracite-grey-europin-polytop-stainless-steel-fixing-pins-length-65mm-x-box-of-100"
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Eurocell Europin 65mm anthracite A4 stainless, box 100 ~\u00a39 ex. Soffits. LINK: https://www.eurocell.co.uk/tools-fixings-and-accessories/fixings/enail65gy1-anthracite-grey-europin-polytop-stainless-steel-fixing-pins-length-65mm-x-box-of-100"
     },
     {
       "name": "Stainless angled brad 16g x 38mm",
@@ -2132,7 +2146,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. FirmaHold/Fischer 16g A2 stainless angled brads 38mm, box 2000 ~£45 ex (Paslode compatible). Cedar/larch cladding. LINK: https://www.tradecounteronline.co.uk/firmahold-16-gauge-stainless-steel-angled-brad-nails/"
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. FirmaHold/Fischer 16g A2 stainless angled brads 38mm, box 2000 ~\u00a345 ex (Paslode compatible). Cedar/larch cladding. LINK: https://www.tradecounteronline.co.uk/firmahold-16-gauge-stainless-steel-angled-brad-nails/"
     },
     {
       "name": "Jiffy hanger 47mm (mini joist hanger)",
@@ -2146,7 +2160,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: Lawsons £1.19 inc, Foxhills £0.99 inc, eDecks £1.47 → ~£0.95 ex."
+      "notes": "Web-checked 19 Sep 2026, ex VAT: Lawsons \u00a31.19 inc, Foxhills \u00a30.99 inc, eDecks \u00a31.47 \u2192 ~\u00a30.95 ex."
     },
     {
       "name": "Square twist nails 30mm (1kg bag)",
@@ -2160,7 +2174,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. 30x3.75 galvanised square twist nails 1kg ~£4.50 ex (Builders Metalwork). Jiffy hangers. LINK: https://www.buildersmetalwork.com/30x3.75mm_galvanised_square_twist_nails.html"
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. 30x3.75 galvanised square twist nails 1kg ~\u00a34.50 ex (Builders Metalwork). Jiffy hangers. LINK: https://www.buildersmetalwork.com/30x3.75mm_galvanised_square_twist_nails.html"
     },
     {
       "name": "Silicone - anthracite grey RAL 7016 (310ml)",
@@ -2174,7 +2188,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Soudal Silirub / Parasilico RAL 7016 neutral cure 310ml; £12.99 single retail, ~£5 ex by the box of 12-24 (Sealants & Tools Direct). LINK: https://www.sealantsandtoolsdirect.co.uk/soudal-silirub-lmn-silicone-sealant-300ml-ral-7016-anthracite-box-of-24"
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Soudal Silirub / Parasilico RAL 7016 neutral cure 310ml; \u00a312.99 single retail, ~\u00a35 ex by the box of 12-24 (Sealants & Tools Direct). LINK: https://www.sealantsandtoolsdirect.co.uk/soudal-silirub-lmn-silicone-sealant-300ml-ral-7016-anthracite-box-of-24"
     },
     {
       "name": "Silicone - clear (310ml)",
@@ -2188,7 +2202,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Neutral cure clear silicone 310ml, box of 12 ~£42 ex."
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Neutral cure clear silicone 310ml, box of 12 ~\u00a342 ex."
     },
     {
       "name": "Silicone - white (310ml)",
@@ -2230,7 +2244,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Evo-Stik Resin W / Everbuild D4 exterior wood adhesive 1L ~£5 ex."
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. Evo-Stik Resin W / Everbuild D4 exterior wood adhesive 1L ~\u00a35 ex."
     },
     {
       "name": "Gun foam (can)",
@@ -2552,7 +2566,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (ex VAT): plain zinc 4.2x25 wafer/flange self-drilling screws, box 200 ~£6. U-channel + hidden trims where colour does not matter (Liam 2026-09-05)."
+      "notes": "CLAUDE ESTIMATE (ex VAT): plain zinc 4.2x25 wafer/flange self-drilling screws, box 200 ~\u00a36. U-channel + hidden trims where colour does not matter (Liam 2026-09-05)."
     },
     {
       "name": "CAT6 data cable (m)",
@@ -2561,7 +2575,7 @@
       "unit": "linear m",
       "supplier": "Regent Electrical",
       "destination": "site",
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. CAT6 UTP LSZH 100m box ~£35 ex.",
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. CAT6 UTP LSZH 100m box ~\u00a335 ex.",
       "unitCost": 0.35,
       "packSize": 100,
       "orderUnit": "100m box",
@@ -2580,7 +2594,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "£15 per 3m length (Liam 2026-09-06). U-shape 200x40x40, cut on site. Closed corner (covers the protruding side wall) and, with the 180x40 L, forms a glazed open corner."
+      "notes": "\u00a315 per 3m length (Liam 2026-09-06). U-shape 200x40x40, cut on site. Closed corner (covers the protruding side wall) and, with the 180x40 L, forms a glazed open corner."
     },
     {
       "name": "Toughened double glazed unit 28mm (made to size)",
@@ -2594,10 +2608,10 @@
       "supply": "site",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE £110 per m² ex VAT (line cost uses pane area); 4-16-4 or 4-20-4 toughened DGU, argon, low-E. Sizes on the order line are APPROXIMATE (frame less ~60mm per edge) - confirm against the frame maker's glazing list."
+      "notes": "CLAUDE ESTIMATE \u00a3110 per m\u00b2 ex VAT (line cost uses pane area); 4-16-4 or 4-20-4 toughened DGU, argon, low-E. Sizes on the order line are APPROXIMATE (frame less ~60mm per edge) - confirm against the frame maker's glazing list."
     },
     {
-      "name": "Wickes laminate flooring - Natural Oak (1.48m² pack)",
+      "name": "Wickes laminate flooring - Natural Oak (1.48m\u00b2 pack)",
       "category": "Flooring",
       "sku": "",
       "unit": "pack",
@@ -2608,10 +2622,10 @@
       "supply": "site",
       "destination": "site",
       "inStock": false,
-      "notes": "Wickes laminate, Natural Oak, 1.48m² per pack (Liam 2026-09-06). Round up + spare pack."
+      "notes": "Wickes laminate, Natural Oak, 1.48m\u00b2 per pack (Liam 2026-09-06). Round up + spare pack."
     },
     {
-      "name": "Wickes laminate flooring - Light Grey (1.48m² pack)",
+      "name": "Wickes laminate flooring - Light Grey (1.48m\u00b2 pack)",
       "category": "Flooring",
       "sku": "",
       "unit": "pack",
@@ -2622,10 +2636,10 @@
       "supply": "site",
       "destination": "site",
       "inStock": false,
-      "notes": "Wickes laminate, Light Grey, 1.48m² per pack (Liam 2026-09-06). Round up + spare pack."
+      "notes": "Wickes laminate, Light Grey, 1.48m\u00b2 per pack (Liam 2026-09-06). Round up + spare pack."
     },
     {
-      "name": "Wickes laminate underlay (10.03m² pack)",
+      "name": "Wickes laminate underlay (10.03m\u00b2 pack)",
       "category": "Flooring",
       "sku": "",
       "unit": "pack",
@@ -2636,7 +2650,7 @@
       "supply": "site",
       "destination": "site",
       "inStock": false,
-      "notes": "Wickes laminate underlay, 10.03m² per pack, £28 (Liam 2026-09-06)."
+      "notes": "Wickes laminate underlay, 10.03m\u00b2 per pack, \u00a328 (Liam 2026-09-06)."
     },
     {
       "name": "Fascia connector (500mm plastic, 300mm)",
@@ -2667,7 +2681,7 @@
       "notes": "CLAUDE ESTIMATE ex VAT - GAP fascia joint trim; 1 per join + 1 spare per job (Liam 2026-09-06)."
     },
     {
-      "name": "Trex Clam Shell composite decking board (140 × 4880mm)",
+      "name": "Trex Clam Shell composite decking board (140 \u00d7 4880mm)",
       "category": "Decking",
       "sku": "",
       "unit": "each",
@@ -2678,13 +2692,13 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "Trex Enhance Clam Shell, 140mm × 25mm × 4.88m. £32 per board confirmed by Liam 2026-09-06."
+      "notes": "Trex Enhance Clam Shell, 140mm \u00d7 25mm \u00d7 4.88m. \u00a332 per board confirmed by Liam 2026-09-06."
     },
     {
       "name": "100mm PIR insulation board",
       "category": "Insulation",
       "sku": "",
-      "unit": "m²",
+      "unit": "m\u00b2",
       "unitCost": 12,
       "supplier": "Builders merchant",
       "packSize": 2.88,
@@ -2706,7 +2720,7 @@
       "supply": "site",
       "destination": "site",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE £2.20 ex VAT - confirm. Concrete block base: 1 per support point (Liam 2026-09-07)."
+      "notes": "CLAUDE ESTIMATE \u00a32.20 ex VAT - confirm. Concrete block base: 1 per support point (Liam 2026-09-07)."
     },
     {
       "name": "Postcrete (20kg bag)",
@@ -2720,7 +2734,7 @@
       "supply": "site",
       "destination": "site",
       "inStock": false,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: Travis Perkins trade £4.50-4.80 ex, Wickes £6.25 ex; merchant ~£5.50."
+      "notes": "Web-checked 19 Sep 2026, ex VAT: Travis Perkins trade \u00a34.50-4.80 ex, Wickes \u00a36.25 ex; merchant ~\u00a35.50."
     },
     {
       "name": "Quinetic wireless switch kit (receiver + 2 switches)",

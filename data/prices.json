@@ -172,6 +172,10 @@
       "tvMountingPrep": {
         "label": "TV mounting preparation (HDMI cables + brush plates)",
         "price": 95
+      },
+      "doubleQuineticSwitch": {
+        "label": "Double Quinetic switch",
+        "price": 235
       }
     },
     "structural": {
@@ -206,7 +210,12 @@
       "featureWall": {
         "label": "Oak acoustic slat feature wall (per wall)",
         "price": 950,
-        "note": "PROPOSED 19 Sep 2026: ~9 panels x £20 + adhesive + 0.5 day = ~£390 cost per 5m wall; £950 sell = ~59% margin. Liam to confirm."
+        "note": "PROPOSED 19 Sep 2026: ~9 panels x \u00a320 + adhesive + 0.5 day = ~\u00a3390 cost per 5m wall; \u00a3950 sell = ~59% margin. Liam to confirm."
+      },
+      "epdmUpgrade": {
+        "label": "EPDM roof upgrade to 1.2mm",
+        "price": 0,
+        "note": "PRICE TBC - Liam to confirm (19 Sep 2026)"
       }
     },
     "bathroom": {
@@ -297,7 +306,7 @@
   "vatRate": 0.2,
   "holdingDeposit": 250,
   "premiumMatrix": {
-    "note": "Liam 2026-09-05 matrix: customer price incl. installation + groundworks. Extras on top. Interpolated between points, extrapolated beyond; rounded to £50.",
+    "note": "Liam 2026-09-05 matrix: customer price incl. installation + groundworks. Extras on top. Interpolated between points, extrapolated beyond; rounded to \u00a350.",
     "widths": [
       4.0,
       4.5,

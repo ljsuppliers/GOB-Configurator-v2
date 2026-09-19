@@ -9,6 +9,15 @@
       "included": true,
       "upgradePrice": 0
     },
+    "sliding-door-2200": {
+      "label": "2.2m UPVC Sliding Door",
+      "width": 2200,
+      "height": 2050,
+      "category": "sliding",
+      "code": "SL22",
+      "included": true,
+      "upgradePrice": 0
+    },
     "sliding-door-2500": {
       "label": "2.5m UPVC Sliding Door",
       "width": 2500,
@@ -132,7 +141,8 @@
       "hasOpener": false,
       "code": "SF9",
       "included": true,
-      "upgradePrice": 0
+      "upgradePrice": 0,
+      "hidden": true
     },
     "window-0.9m-standard-opener": {
       "label": "0.9m Standard Window w/ Opener",
@@ -142,7 +152,8 @@
       "hasOpener": true,
       "code": "SO9",
       "included": true,
-      "upgradePrice": 0
+      "upgradePrice": 0,
+      "hidden": true
     },
     "window-1.0m-square": {
       "label": "1.0m x 1.0m Window",

@@ -315,9 +315,29 @@ function buildQuoteData(q) {
     'concrete-base': 'Concrete base foundation (installed by our team)',
     'concrete-pile': 'Concrete pile foundation system (installed by our team)',
     'concrete-existing': 'Existing concrete base foundation',
+    'concrete-landscaper': 'Concrete base foundation to be installed by our landscaper (paid directly to the landscaper)',
+    'concrete-others': 'Existing concrete base foundation to be installed by others',
     'hybrid': 'Hybrid foundation: existing concrete base + ground screws'
   };
   contentRow(foundationLabels[q.foundationType] || 'Ground screw foundation system');
+
+  // Extras print INSIDE the section they belong to, with quantity + price, instead
+  // of a separate "extras" block (Liam 19 Sep 2026). Air con is listed but paid
+  // directly to the air con installer, so it carries no price cell.
+  const allExtras = (q.extras || []);
+  const isBathroomExtra = (e) => e.label && (e.label.toLowerCase().includes('wc suite') || e.label.toLowerCase().includes('bathroom suite'));
+  const extraRows = (section) => {
+    for (const e of allExtras.filter((x) => !isBathroomExtra(x) && (x.section || 'internal') === section)) {
+      const qty = e.qty && e.qty !== 1 ? String(e.qty) : '1';
+      if (e.paidSeparately) {
+        contentRow(`${e.baseLabel || e.label} (${fmtCurrency(e.price)}, paid directly to ${e.paidTo || 'the installer'} - not in the total)`, { detail: qty });
+      } else {
+        contentRow(e.baseLabel && e.qty > 1 ? `${e.baseLabel} (${e.qty} x ${fmtCurrency(e.unitPrice)})` : (e.baseLabel || e.label), { detail: qty, price: e.price });
+        priceCells.push(rows.length);
+      }
+      if (e.description) contentRow(e.description, { fontSize: 10 });
+    }
+  };
 
   greySpacer(28);
 
@@ -343,14 +363,16 @@ function buildQuoteData(q) {
   if (isSig && q.hasDecking !== false) {
     contentRow('Integrated composite decking: dark grey');
   }
+  extraRows('external');
 
   greySpacer(28);
 
-  sectionBar('Internal Finish');
+  sectionBar('Internal Finish', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
 
-  contentRow('Flooring: TBC (Natural Oak or Light Grey)');
+  contentRow(`Flooring: ${q.flooring || 'Natural Oak'} laminate`);
   contentRow('Internal wall finish: plasterboarded, plastered and decorated white');
   contentRow('Skirting board: white');
+  extraRows('internal');
 
   greySpacer(28);
 
@@ -367,6 +389,7 @@ function buildQuoteData(q) {
     }
   }
   contentRow('4mm double glazed toughened glass throughout');
+  extraRows('doors');
 
   if (q.heightUpgrade && q.heightUpgrade.price > 0) {
     contentRow(q.heightUpgrade.label, { detail: '1', price: q.heightUpgrade.price });
@@ -375,7 +398,7 @@ function buildQuoteData(q) {
 
   greySpacer(28);
 
-  sectionBar('Standard Electrical Features');
+  sectionBar('Electrical Features', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
 
   contentRow(`${numDownlights} x dimmable LED downlights`);
   let lightingZones = 1;
@@ -393,6 +416,7 @@ function buildQuoteData(q) {
   contentRow('1 x single dimmable light switch in brushed steel');
   contentRow('1 x network connection port for WiFi connectivity');
   contentRow('Consumer unit');
+  extraRows('electrical');
 
   greySpacer(28);
 
@@ -417,23 +441,22 @@ function buildQuoteData(q) {
     greySpacer(28);
   }
 
-  const hasExtras = (nonBathroomExtras.length > 0) || (q.deductions && q.deductions.length > 0);
-  if (hasExtras) {
-    sectionBar('Selected Extras & Upgrades', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
-    if (nonBathroomExtras.length > 0) {
-      for (const extra of nonBathroomExtras) {
-        contentRow(extra.label, { detail: '1', price: extra.price });
-        priceCells.push(rows.length);
-        if (extra.description) {
-          contentRow(extra.description, { fontSize: 10 });
-        }
-      }
+  // Anything tagged with a section we do not print (safety net) goes here
+  const knownSections = new Set(['external', 'internal', 'doors', 'electrical', 'groundworks']);
+  const strays = nonBathroomExtras.filter((e) => !knownSections.has(e.section || 'internal'));
+  if (strays.length > 0) {
+    sectionBar('Other Extras', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
+    for (const extra of strays) {
+      contentRow(extra.label, { detail: '1', price: extra.price });
+      priceCells.push(rows.length);
     }
-    if (q.deductions && q.deductions.length > 0) {
-      for (const ded of q.deductions) {
-        contentRow(ded.label, { detail: '1', fg: GREEN, price: ded.price, priceFg: GREEN });
-        priceCells.push(rows.length);
-      }
+    greySpacer(28);
+  }
+  if (q.deductions && q.deductions.length > 0) {
+    sectionBar('Deductions', { detailLabel: 'Details/Quantity', amountLabel: 'Amount (\u00a3)' });
+    for (const ded of q.deductions) {
+      contentRow(ded.label, { detail: '1', fg: GREEN, price: ded.price, priceFg: GREEN });
+      priceCells.push(rows.length);
     }
     greySpacer(28);
   }
@@ -464,6 +487,7 @@ function buildQuoteData(q) {
   contentRow('To be conducted by our team', { price: q.installationPrice });
   const installRowNum = rows.length; // track for payment schedule formulas
   priceCells.push(rows.length);
+  extraRows('groundworks');
 
   greySpacer(28);
 
@@ -861,8 +885,19 @@ module.exports = async (req, res) => {
       });
     }
 
+    // 5. Share with the staff member who created it (the file lives in Liam's
+    //    Drive, so without this only Liam could open it - Guillaume 19 Sep 2026)
+    let sharedWith = '';
+    const requester = String(q.requesterEmail || '').trim().toLowerCase();
+    if (/^[^@\s]+@gardenofficebuildings\.co\.uk$/.test(requester) && requester !== 'liam@gardenofficebuildings.co.uk') {
+      try {
+        await driveApi.permissions.create({ fileId: spreadsheetId, sendNotificationEmail: false, requestBody: { type: 'user', role: 'writer', emailAddress: requester } });
+        sharedWith = requester;
+      } catch (e) { console.error('share failed', e.message); }
+    }
+
     const sheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
-    res.json({ success: true, spreadsheetId, url: sheetUrl, title });
+    res.json({ success: true, spreadsheetId, url: sheetUrl, title, sharedWith });
 
   } catch (error) {
     console.error('Error creating quote:', error);

@@ -1,11 +1,11 @@
 // GOB Configurator v2 — Vue 3 App
 // Reactive state, live pricing, drawing preview, email drafting
 
-import { initPricing, calculatePrice, formatPrice } from './pricing.js?v=5';
-import { generateDrawing } from './drawing-engine.js?v=44';
-import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=2';
+import { initPricing, calculatePrice, formatPrice } from './pricing.js?v=6';
+import { generateDrawing } from './drawing-engine.js?v=45';
+import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=3';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
-import { initComponentDrag } from './ui/component-drag.js';
+import { initComponentDrag } from './ui/component-drag.js?v=2';
 import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=5';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=39';
@@ -61,9 +61,13 @@ function ensureStateDefaults(state) {
   if (!state.survey) state.survey = {};
   if (!state.discount) state.discount = { type: 'none', amount: 0, description: '' };
   if (!state.extras) state.extras = {};
+  if (state.extras.doubleQuineticSwitch === undefined) state.extras.doubleQuineticSwitch = false;
   if (state.deckingDepth === undefined) state.deckingDepth = 400;
   if (state.customerId === undefined) state.customerId = '';
   if (!Array.isArray(state.customExtras)) state.customExtras = [];
+  if (!Array.isArray(state.customDeductions)) state.customDeductions = [];
+  if (!state.structuralExtras) state.structuralExtras = {};
+  if (state.structuralExtras.epdmUpgrade === undefined) state.structuralExtras.epdmUpgrade = false;
   if (state.rooms) {
     for (const room of state.rooms) {
       if (room.labelOffsetX === undefined) room.labelOffsetX = 0;
@@ -626,11 +630,11 @@ createApp({
     },
 
     doorTypes() {
-      return this.appData.components?.doors || {};
+      return Object.fromEntries(Object.entries(this.appData.components?.doors || {}).filter(([, d]) => !d.hidden));
     },
 
     windowTypes() {
-      return this.appData.components?.windows || {};
+      return Object.fromEntries(Object.entries(this.appData.components?.windows || {}).filter(([, d]) => !d.hidden));
     },
 
     claddingTypes() {
@@ -1060,6 +1064,8 @@ createApp({
     /* ───────────── CUSTOM EXTRAS ───────────── */
     addCustomExtra() { if (!this.state.customExtras) this.state.customExtras = []; this.state.customExtras.push({ id: Date.now(), label: '', price: 0, cost: 0, days: 0, supplier: '', materials: '', notes: '' }); },
     removeCustomExtra(i) { this.state.customExtras.splice(i, 1); },
+    addCustomDeduction() { if (!this.state.customDeductions) this.state.customDeductions = []; this.state.customDeductions.push({ id: Date.now() + Math.random(), label: '', price: 0 }); },
+    removeCustomDeduction(i) { this.state.customDeductions.splice(i, 1); },
     /* ───────────── QUOTE EDIT HISTORY ───────────── */
     async loadProjectHistory(id) {
       this.projectHistory = [];
@@ -1683,7 +1689,7 @@ createApp({
       }
 
       // Default Y positions: lights near top of wall, sockets lower
-      const defaultY = type === 'upDownLight' ? 1800 : 800; // mm from ground
+      const defaultY = type === 'upDownLight' ? 1600 : 800; // mm from ground (lights 1600, Liam 19 Sep 2026: 1800 was too high)
 
       this.state.externalFeatures.push({
         id: 'feat-' + (this.nextFeatureId++),
@@ -1772,12 +1778,12 @@ createApp({
       const s = this.state;
       const price = this.price;
       const isSig = s.tier === 'signature';
-      const firstName = (s.customer?.name || 'Customer').split(' ')[0];
+      const firstName = (s.customer?.name || 'Customer').trim(); // full given name in the greeting (Liam 19 Sep 2026)
       // External sizes EXCLUDE the canopy/decking (Liam 2026-09-05); say so on
       // Signature builds so the customer reads the footprint correctly.
       const hasCanopyOrDeck = isSig && (s.hasCanopy !== false || s.hasDecking !== false);
       const dims = `${(s.width/1000).toFixed(1)}m x ${(s.depth/1000).toFixed(1)}m x ${(s.height/1000).toFixed(2).replace(/0$/, '')}m`
-        + (hasCanopyOrDeck ? ` (external building size, plus the ${((s.overhangDepth || 400)/1000).toFixed(1)}m canopy and decking to the front)` : ' (external)');
+        + (hasCanopyOrDeck ? ` (plus the ${((s.overhangDepth || 400)/1000).toFixed(1)}m canopy and decking to the front)` : '');
       const buildingTypeLower = (s.buildingType || 'garden office building').toLowerCase();
 
       // Handle custom paragraph
@@ -1837,6 +1843,9 @@ createApp({
       }
       if (s.foundationType === 'concrete-landscaper') {
         exclusionBullets.push('* Concrete base foundation, which is subject to a visit from our landscaper (£2k to £4k on average). The landscaper can also assist with any preparation works or post-build landscaping.');
+      }
+      if (s.foundationType === 'concrete-others') {
+        exclusionBullets.push('* Concrete base foundation, which is to be installed by others before we arrive (level, to the size on the drawing)');
       }
       exclusionBullets.push(hasBathroom
         ? '* We also ask that customers provide a 6-yard skip whilst we are on site, to keep everything clean and tidy'
@@ -1927,8 +1936,17 @@ createApp({
         if (!cladGroups[type]) cladGroups[type] = [];
         cladGroups[type].push(label);
       }
+      const sidesPhrase = (list) => {
+        const set = new Set(list);
+        const both = set.has('left side') && set.has('right side');
+        if (both && set.has('rear') && set.has('front')) return 'all sides';
+        if (both && set.has('rear')) return 'sides and rear';
+        if (both && set.has('front')) return 'front and sides';
+        if (both) return 'sides';
+        return list.join(' and ');
+      };
       for (const [type, sideList] of Object.entries(cladGroups)) {
-        buildFeatures.push(`${getCladdingLabel(type)} on ${sideList.join(' and ')}`);
+        buildFeatures.push(`${getCladdingLabel(type)} on ${sidesPhrase(sideList)}`);
       }
 
       // Component definitions — needed by the corner line and the
@@ -2019,9 +2037,11 @@ createApp({
           else if (comp.type.includes('single-cladded')) desc = 'secret cladded door';
           else if (comp.type.includes('single')) desc = 'single opening door';
           compDoors.push(`${widthM}m wide ${desc}`);
+        } else if (cat === 'slot') {
+          compWindows.push(`${widthM}m x 0.45m slot window${def?.hasOpener ? ' (opening)' : ' (fixed)'}`);
         } else {
           const opener = def?.hasOpener ? ' (with top opening window)' : '';
-          compWindows.push(`${widthM}m wide window${opener}`);
+          compWindows.push(`${widthM}m wide ${cat === 'fullHeight' ? 'full height ' : ''}window${opener}`);
         }
       }
       const doorWindowParts = [];
@@ -2038,6 +2058,7 @@ createApp({
         'concrete-base': 'Concrete base foundation (installed by our team)',
         'concrete-pile': 'Concrete pile foundation system (installed by our team)',
         'concrete-existing': 'Existing concrete base foundation',
+        'concrete-others': 'Existing concrete base foundation (to be installed by others)',
         'hybrid': 'Hybrid foundation: existing concrete base + ground screws'
       };
       if (s.foundationType !== 'concrete-landscaper') {
@@ -2066,9 +2087,9 @@ createApp({
 
       // AC
       if (s.extras?.acUnit && s.extras.acUnit !== 'none') {
-        buildFeatures.push(s.extras.acUnit === 'premium'
+        buildFeatures.push((s.extras.acUnit === 'premium'
           ? 'Premium air conditioning unit with app control (heating and cooling)'
-          : 'Standard air conditioning unit (heating and cooling)');
+          : 'Standard air conditioning unit (heating and cooling)') + ' - not included in the total, paid directly to our air con installer');
       }
 
       const buildingIncludes = 'Your building includes:\n\n' + buildFeatures.map(f => `   - ${f}`).join('\n');
@@ -2338,7 +2359,13 @@ createApp({
       // Build extras list
       const extrasList = (this.price.extras || []).map(e => ({
         label: e.label,
+        baseLabel: e.baseLabel || e.label,
+        qty: e.qty || 1,
+        unitPrice: e.unitPrice !== undefined ? e.unitPrice : e.price,
         price: e.price,
+        section: e.section || 'internal',
+        paidSeparately: !!e.paidSeparately,
+        paidTo: e.paidTo || '',
         description: e.description || ''
       }));
       
@@ -2382,6 +2409,10 @@ createApp({
         canopyDepth: this.state.overhangDepth || 400,
         deckingDepth: this.state.deckingDepth || 400,
         
+        // Who asked for it (the sheet is shared with them so it opens for Guillaume too)
+        requesterEmail: (this.user && this.user.email) || '',
+        // Flooring as chosen on the design
+        flooring: this.state.flooring === 'light-grey' ? 'Light Grey' : 'Natural Oak',
         // Foundation
         foundationType: this.state.foundationType || 'ground-screw',
         foundationPrice: this.state.foundationType === 'ground-screw' ? 1200 : 0,
