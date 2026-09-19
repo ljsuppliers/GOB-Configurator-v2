@@ -205,7 +205,8 @@
       },
       "featureWall": {
         "label": "Oak acoustic slat feature wall (per wall)",
-        "price": 0
+        "price": 950,
+        "note": "PROPOSED 19 Sep 2026: ~9 panels x £20 + adhesive + 0.5 day = ~£390 cost per 5m wall; £950 sell = ~59% margin. Liam to confirm."
       }
     },
     "bathroom": {
@@ -296,7 +297,7 @@
   "vatRate": 0.2,
   "holdingDeposit": 250,
   "premiumMatrix": {
-    "note": "Liam 2026-09-05 matrix: customer price incl. installation + groundworks. Extras on top. Interpolated between points, extrapolated beyond; rounded to \u00a350.",
+    "note": "Liam 2026-09-05 matrix: customer price incl. installation + groundworks. Extras on top. Interpolated between points, extrapolated beyond; rounded to £50.",
     "widths": [
       4.0,
       4.5,
