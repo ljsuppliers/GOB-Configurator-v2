@@ -123,6 +123,7 @@ createApp({
       jobFilter: 'active',
       stockOpen: false,
       materialsPage: false,
+      blankDesign: false,
       installerPage: false,
       // Staff login (Firebase Auth) - the app is hidden until a staff account is signed in
       user: null,
@@ -473,17 +474,23 @@ createApp({
     supplierSections() {
       const groups = new Map();
       for (const l of this.bomLines || []) {
-        const key = l.inCatalogue ? (l.supplier || 'NO SUPPLIER SET') : 'NOT IN CATALOGUE';
-        if (!groups.has(key)) groups.set(key, []);
-        groups.get(key).push(l);
+        const supplier = l.inCatalogue ? (l.supplier || 'NO SUPPLIER SET') : 'NOT IN CATALOGUE';
+        const stage = l.stage === 'week2' ? 'week2' : '';
+        const key = supplier + (stage ? '\u0000' + stage : '');
+        if (!groups.has(key)) groups.set(key, { supplier, stage, lines: [] });
+        groups.get(key).lines.push(l);
       }
+      // A supplier with a 2nd delivery (week 2: plastering + decorating) is shown as
+      // two sections, "1st delivery" and "2nd delivery", each with its own order (Liam 19 Sep).
+      const split = new Set([...groups.values()].filter((g) => g.stage).map((g) => g.supplier));
       const supByName = new Map((this.catalogue?.suppliers || []).map((sp) => [sp.name.toLowerCase(), sp]));
-      const secs = [...groups.entries()].map(([name, lines]) => {
+      const secs = [...groups.values()].map(({ supplier, stage, lines }) => {
         lines.sort((a, b) => (a.material?.category || '').localeCompare(b.material?.category || '') || a.name.localeCompare(b.name));
-        const sup = supByName.get(name.toLowerCase()) || null;
-        const orders = (this.orders || []).filter((o) => o.supplierName === name);
+        const sup = supByName.get(supplier.toLowerCase()) || null;
+        const orders = (this.orders || []).filter((o) => o.supplierName === supplier && (o.stage || '') === stage);
+        const name = stage ? `${supplier} · 2nd delivery (week 2: plastering + decorating)` : split.has(supplier) ? `${supplier} · 1st delivery` : supplier;
         return {
-          name, lines, supplier: sup, email: sup?.email || '',
+          name, supplierName: supplier, stage, lines, supplier: sup, email: sup?.email || '',
           subtotal: lines.reduce((t, l) => t + (l.lineCost || 0), 0),
           destinations: [...new Set(lines.map((l) => l.destination))],
           orders,
@@ -498,7 +505,7 @@ createApp({
       // no-supplier / not-in-catalogue buckets last.
       const PRIORITY = ['Kingspan', 'Builders merchant', 'Local timber merchant', 'GAP', 'Montravia', 'Spectral', 'Advanced Sealed Units'];
       const rank = (n) => (n === 'NOT IN CATALOGUE' ? 200 : n === 'NO SUPPLIER SET' ? 100 : PRIORITY.indexOf(n) >= 0 ? PRIORITY.indexOf(n) : 50);
-      return secs.sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name));
+      return secs.sort((a, b) => rank(a.supplierName) - rank(b.supplierName) || a.supplierName.localeCompare(b.supplierName) || (a.stage ? 1 : 0) - (b.stage ? 1 : 0));
     },
     /** Logistics split for the printed pack: straight-to-site deliveries by
      *  supplier vs what the factory must load (factory deliveries + stock). */
@@ -557,12 +564,14 @@ createApp({
       const lines = this.bomLines || [];
       const bySup = (arr) => {
         const m = new Map();
-        for (const l of arr) { const k = l.inCatalogue ? (l.supplier || 'No supplier set') : 'Not in catalogue'; if (!m.has(k)) m.set(k, []); m.get(k).push(l); }
-        // Designer job-pack order: Kingspan, builders merchant, GAP, Montravia, Spectral, ASU, then alphabetical
+        for (const l of arr) { const sup = l.inCatalogue ? (l.supplier || 'No supplier set') : 'Not in catalogue'; const k = sup + (l.stage === 'week2' ? '\u0000week2' : ''); if (!m.has(k)) m.set(k, { sup, stage: l.stage === 'week2' ? 'week2' : '', lines: [] }); m.get(k).lines.push(l); }
+        const split = new Set([...m.values()].filter((g) => g.stage).map((g) => g.sup));
+        // Designer job-pack order: Kingspan, builders merchant, GAP, Montravia, Spectral, ASU, then alphabetical;
+        // a supplier with a week-2 delivery is listed as two deliveries (1st / 2nd).
         const PRIORITY = ['Kingspan', 'Builders merchant', 'Local timber merchant', 'GAP', 'Montravia', 'Spectral', 'Advanced Sealed Units'];
         const rank = (n) => (PRIORITY.indexOf(n) >= 0 ? PRIORITY.indexOf(n) : 50);
-        return [...m.entries()].map(([name, ls]) => ({ name, lines: ls.sort((a, b) => (a.material?.category || '').localeCompare(b.material?.category || '')) }))
-          .sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name));
+        return [...m.values()].map(({ sup, stage, lines: ls }) => ({ name: stage ? `${sup} · 2nd delivery (week 2)` : split.has(sup) ? `${sup} · 1st delivery` : sup, sup, stage, lines: ls.sort((a, b) => (a.material?.category || '').localeCompare(b.material?.category || '')) }))
+          .sort((a, b) => rank(a.sup) - rank(b.sup) || a.sup.localeCompare(b.sup) || (a.stage ? 1 : 0) - (b.stage ? 1 : 0));
       };
       const toSite = lines.filter((l) => !l.inStock && l.destination !== 'factory');
       const factory = lines.filter((l) => l.inStock || l.destination === 'factory');
@@ -850,13 +859,29 @@ createApp({
     async openCustomerProject(job, view = 'design') {
       if (job.legacy && !job.hasState) {
         const c = this.currentCustomer || {};
+        // A drawing saved as its own project for the same customer (e.g. "Currer" drawn by
+        // Guillaume while the Insightly project "4554 - Currer - East Grinstead" sat empty)?
+        const sn = (x) => String(x || '').trim().toLowerCase().split(/\s+/).pop();
+        const want = sn(c.name || job.customer);
+        const match = want && want.length > 2 ? (this.cloudDesigns || []).find((d) => d.id !== job.id && d.hasState && !d.legacy && (d.customerId && d.customerId === job.customerId || sn(d.customer) === want || sn(d.name) === want)) : null;
+        if (match && confirm(`This project has no drawing of its own.\n\nThe drawing "${match.name}"${match.updatedBy ? ' (' + match.updatedBy + ')' : ''} looks like the same customer. Attach it to this project?\n\nOK = attach it (the separate "${match.name}" entry is merged into this project)\nCancel = start a blank design`)) {
+          try {
+            await mergeDesignIntoProject(job.id, match.id);
+            await this.refreshCloudDesigns();
+            const merged = (this.cloudDesigns || []).find((d) => d.id === job.id) || { ...job, hasState: true };
+            this.notify(`Attached "${match.name}" to ${job.name}`);
+            return this.openCustomerProject(merged, view);
+          } catch (e) { this.notify('Could not attach: ' + e.message); }
+        }
         this.state = ensureStateDefaults(JSON.parse(JSON.stringify(this.appData.defaults || {})));
+        this.blankDesign = true;
+        this.bomLines = []; this.orders = [];
         this.state.customer = { ...(this.state.customer || {}), name: c.name || job.customer || '', address: [c.address, c.postcode].filter(Boolean).join(', ') || job.address || '', email: c.email || '', phone: c.phone || c.mobile || '', number: job.quoteNumber || '' };
         this.state.customerId = c.id || job.customerId || '';
         this.currentCloudId = job.id; this.currentCloudName = job.name;
         this.customersPage = false; this.materialsPage = false; this.installerPage = false;
         this.syncUrl();
-        this.notify('Started a design for ' + job.name + ' - Save keeps it on this project');
+        this.notify('Started a BLANK design for ' + job.name + ' (default building, nothing drawn yet) - Save keeps it on this project');
         return;
       }
       await this.loadFromCloud(job);
@@ -959,6 +984,7 @@ createApp({
     /* ───────────── SAVING ───────────── */
     /** One Save: creates the project on first save, updates it after that. */
     async saveNow() {
+      this.blankDesign = false;
       if (!this.cloudReady) { this.notify('Not connected - check your internet and sign-in'); return; }
       if (!this.currentCloudId && !(this.state.customer && this.state.customer.name)) { this.notify('Type the customer name (Customer & Project) before the first save'); return; }
       clearTimeout(this._autosaveTimer);
@@ -1309,6 +1335,7 @@ createApp({
     newJob() {
       this.state = ensureStateDefaults(JSON.parse(JSON.stringify(this.appData.defaults || {})));
       this.currentCloudId = null; this.currentCloudName = ''; this.orderRef = ''; this.orderRefManual = false;
+      this.blankDesign = false;
       this.bomLines = []; this.orders = [];
       this.dirty = false; this.lastSavedAt = null;
       this.$nextTick(() => this.resetUndo());
@@ -1362,7 +1389,7 @@ createApp({
       if (this.cloudReady && !this.cloudDesigns.length) this.refreshCloudDesigns();
       this.catalogueOpen = false; this.suppliersOpen = false;
       await this.ensureCatalogue();
-      if (!this.bomLines.length) await this.generateBom();
+      await this.generateBom(); // always rebuilt for the design that is loaded NOW (stale-list bug, Ed Currer 19 Sep)
       window.scrollTo(0, 0);
     },
     toggleCollapse(key) { this.collapsed[key] = !this.collapsed[key]; },
@@ -1382,7 +1409,7 @@ createApp({
       this.ensureLabourState();
       await this.ensureCatalogue();
       await this.ensureInstallers();
-      if (!this.bomLines.length) await this.generateBom();
+      await this.generateBom();
       this.materialsPage = false;
       this.installerPage = true;
       window.scrollTo(0, 0);
@@ -2523,6 +2550,8 @@ createApp({
         this.state = ensureStateDefaults(loadedState);
         this.currentCloudId = design.id;
         this.currentCloudName = design.name;
+        this.blankDesign = false;
+        this.bomLines = []; this.orders = []; // never show another job's materials
         // Reset ID counters
         this.nextCompId = 100 + (this.state.components?.length || 0);
         this.nextFeatureId = 1000 + (this.state.externalFeatures?.length || 0);

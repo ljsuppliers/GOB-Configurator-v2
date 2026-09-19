@@ -1937,6 +1937,10 @@
           <button class="btn btn-sm" @click="collapseAll(false)">Expand all</button>
         </div>
 
+        <!-- Blank-design warning: the project had no drawing, so this list is for the DEFAULT building -->
+        <div v-if="blankDesign" class="mp-warn">
+          <strong>No drawing on this project yet.</strong> This list is for a blank default building (cedar front, steel sides, default size), NOT the customer's design. Draw the building first, or open the project record and attach the customer's saved drawing.
+        </div>
         <!-- Not-in-catalogue warning -->
         <div v-if="bomSummary.notInCatalogue" class="mp-warn">
           <strong>{{ bomSummary.notInCatalogue }} line{{ bomSummary.notInCatalogue === 1 ? '' : 's' }} not in the catalogue</strong> (no supplier, no cost, will not appear on any order):
@@ -2620,7 +2624,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=145"></script>
+<script type="module" src="js/app.js?v=146"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>
