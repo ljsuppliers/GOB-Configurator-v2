@@ -10,7 +10,7 @@ import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, l
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=39';
 import { buildConstructionDrawings } from './construction.js?v=6';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=35';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=36';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=12';
 import { emptyInstaller } from './bom/installers.js?v=2';

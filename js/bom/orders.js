@@ -317,6 +317,7 @@ export function joinBom(bomRows, catalogue, overrides = {}) {
       destination: supplyFor(mat, ov) === 'factory' ? 'factory' : 'site',
       inStock: supplyFor(mat, ov) === 'stock',
       inCatalogue: !!mat || !!r.unitCost || !!r.supplier,
+      stage: WEEK2_ITEMS.has(r.catalogueName || r.name) ? 'week2' : '', // 2nd delivery (week 2) - drives the 1st/2nd sections
     };
   });
 }
