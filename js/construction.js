@@ -20,13 +20,24 @@
 //         + cladding outside, 75mm PIR + VCL + plasterboard inside. Panel walls:
 //         double 18x38 battens + plasterboard inside (no PIR, no VCL: the panel
 //         is the vapour barrier; foil-tape the joints).
+//  HEIGHTS (Liam 2026-09-19) Panel walls = 2140 panel + 49 flat 4x2 plate =
+//         2189 to the top of the plate. The front stud wall (base plate, studs,
+//         head plate) tops out at the SAME 2189. The doubled 6x2 flitch sits ON
+//         TOP of the front wall head plate (over every opening as a minimum),
+//         so its top is ~2334, level with the roof joist tops. Doors (2050) on
+//         the 49 base plate reach 2099; the head plate underside is 2140, so a
+//         4x2 packer under the head plate closes the ~40mm gap at each door.
 //  CORNERS Closed corner (canopy + decking only) = that side wall carried
 //         400mm forward, same construction as the side. Open corner = built-up
 //         4x2 post (~200x200) cloaked by trims.
 //  ROOF   6x2 (doubled by span) joists front→back @400. ≤2.5m building: joists
-//         stop at the front wall, hung off the flitch on jiffy hangers; 2x2
-//         frame 400mm out forms the canopy. Taller: joists oversail 400mm over
-//         the flitch, plus a 2x2 layer under. Rear oversail 100mm on every job.
+//         stop at the front wall, hung off the flitch on jiffy hangers (level:
+//         rear end on the panel plate at 2189, front end on the flitch underside
+//         at 2189). Canopy, teams vary: EITHER the two outer joists oversail
+//         400 with a 6x2 tie joist across the front + noggings @400 between
+//         (drawn), OR a 2x2 frame 400 out; either way a 2x2 layer under.
+//         Taller: every joist oversails 400 over the flitch, plus 2x2 under.
+//         Rear oversail 100mm on every job.
 //         Firrings on top tapering to the rear + 2 reverse firrings (side
 //         edges), 18mm T&G OSB, one-piece EPDM, 75/100mm PIR set 30mm down.
 //         Half-round gutter full width at the rear, downpipe one end (both ends
@@ -170,45 +181,51 @@ export function buildConstructionDrawings(state, componentDefs) {
 
   /* ── 3. Front wall framing (elevation from outside) ── */
   {
-    const W = mm(w), H = mm(plan.panelHeightM);
-    const SW = W + 2 * M + 800, SH = H + 2 * M + 700;
+    const PL = 49, FL = 145; // flat 4x2 plate, 6x2 flitch depth
+    const W = mm(w), H = mm(plan.panelHeightM) + PL; // 2140 + 49 = 2189 to the top of the head plate
+    const SW = W + 2 * M + 800, SH = H + FL + 2 * M + 700;
     let s = '';
-    const gy = M + H; // ground line (top of chipboard)
+    const gy = M + FL + H; // ground line (top of chipboard)
+    const top = M + FL;    // top of the head plate
     s += ln(M - 200, gy, M + W + 200, gy, { sw: 8 });
-    // base + top plates
-    s += rc(M, gy - 100, W, 100, { fill: '#fde68a', stroke: '#92400e', sw: 4 });
-    s += rc(M, M, W, 100, { fill: '#fde68a', stroke: '#92400e', sw: 4 });
+    // base + head plates
+    s += rc(M, gy - PL, W, PL, { fill: '#fde68a', stroke: '#92400e', sw: 4 });
+    s += rc(M, top, W, PL, { fill: '#fde68a', stroke: '#92400e', sw: 4 });
+    // flitch ON TOP of the head plate, full width
+    s += rc(M, M, W, FL, { fill: '#7c2d12', stroke: '#111', sw: 4 });
+    s += tx(M + W / 2, M + FL / 2 + 25, `2 × 6x2 flitch ON TOP of the head plate (${W}mm, over every opening as a minimum)`, { size: 60, fill: '#fff' });
     const fronts = ops('front').sort((a, b) => a.posM - b.posM);
-    let headClash = false;
     const inOpening = (x) => fronts.some((o) => x > o.posM + 0.001 && x < o.posM + o.widthM - 0.001);
-    for (let x = 0; x <= w + 0.001; x += 0.4) { const xx = Math.min(x, w - 0.047); if (!inOpening(xx + 0.02)) s += rc(M + mm(xx), M + 100, 47, H - 200, { fill: '#fde68a', stroke: '#92400e', sw: 3 }); }
-    s += rc(M + W - 47, M + 100, 47, H - 200, { fill: '#fde68a', stroke: '#92400e', sw: 3 });
+    const studTop = top + PL, studH = H - 2 * PL;
+    for (let x = 0; x <= w + 0.001; x += 0.4) { const xx = Math.min(x, w - 0.047); if (!inOpening(xx + 0.02)) s += rc(M + mm(xx), studTop, 47, studH, { fill: '#fde68a', stroke: '#92400e', sw: 3 }); }
+    s += rc(M + W - 47, studTop, 47, studH, { fill: '#fde68a', stroke: '#92400e', sw: 3 });
     for (const o of fronts) {
       const X = M + mm(o.posM), OW = mm(o.widthM), OH = mm(o.heightM);
-      const oy = o.fullHeight ? gy - 100 - OH : gy - 100 - 900 - OH; // standard windows cill 900
+      const oy = o.fullHeight ? gy - PL - OH : gy - PL - 900 - OH; // standard windows cill 900
       // kings each side
-      s += rc(X - 47, M + 100, 47, H - 200, { fill: '#f59e0b', stroke: '#92400e', sw: 3 }) + rc(X + OW, M + 100, 47, H - 200, { fill: '#f59e0b', stroke: '#92400e', sw: 3 });
+      s += rc(X - 47, studTop, 47, studH, { fill: '#f59e0b', stroke: '#92400e', sw: 3 }) + rc(X + OW, studTop, 47, studH, { fill: '#f59e0b', stroke: '#92400e', sw: 3 });
       // opening
-      s += rc(X, Math.max(oy, M + 100), OW, Math.min(OH, gy - 100 - Math.max(oy, M + 100)), { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 4 });
-      // flitch: doubled 6x2 over the opening, bearing 150 each side. It sits
-      // directly under the top plate (the joists hang off it on 2.5m builds).
-      const fTop = Math.max(oy - 150, M + 100);
-      s += rc(X - 150, fTop, OW + 300, 150, { fill: '#7c2d12', stroke: '#111', sw: 4 });
-      s += tx(X + OW / 2, fTop + 105, `2 × 6x2 flitch (${mm(o.widthM + 0.3)}mm)`, { size: 60, fill: '#fff' });
-      if (oy - 150 < M + 100) headClash = true;
+      const oTop = Math.max(oy, studTop);
+      s += rc(X, oTop, OW, gy - PL - oTop, { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 4 });
+      // packer between the opening head and the head plate
+      const gap = oTop - studTop;
+      if (gap > 5) {
+        s += rc(X, studTop, OW, gap, { fill: '#fcd34d', stroke: '#92400e', sw: 3 });
+        s += tx(X + OW / 2, studTop + gap / 2 + 20, `4x2 packer ${gap}mm`, { size: 52 });
+      }
       s += dimH(X, X + OW, gy + 200, `${OW}mm`);
-      if (!o.fullHeight) s += rc(X, gy - 100 - 900, OW, 47, { fill: '#fde68a', stroke: '#92400e', sw: 3 });
+      if (!o.fullHeight) s += rc(X, gy - PL - 900, OW, 47, { fill: '#fde68a', stroke: '#92400e', sw: 3 });
     }
     s += dimH(M, M + W, M - 250, `${W}mm`);
-    s += dimV(M, gy, M - 300, `${H}mm frame`);
+    s += dimV(top, gy, M - 300, `${H}mm to top of plate`);
+    s += dimV(M, top, M - 300, `${FL}`);
     out.push({
       key: 'front', title: '3. Front wall framing (elevation, viewed from outside)', svg: sheet(SW, SH, s),
       notes: [
-        `4x2 TANALISED C24 throughout: base plate on the chipboard, studs @400mm from the LEFT, top plate. King studs (orange) each side of every opening. ${tall ? 'Taller build: the roof joists run OVER the flitch and top plate to form the canopy.' : 'Standard 2.5m build: the roof joists hang off the flitch on jiffy hangers.'}`,
-        `DOUBLED 6x2 flitch (two 6x2 laminated with TimberLok 100s, NO OSB web) over EVERY door and window, bearing 150mm onto the kings each side.`,
+        `4x2 TANALISED C24 throughout: base plate on the chipboard, studs @400mm from the LEFT, head plate. Frame is ${H}mm to the top of the head plate = the panel walls (${mm(plan.panelHeightM)}mm panel + ${PL}mm flat 4x2 plate). King studs (orange) each side of every opening.`,
+        `DOUBLED 6x2 flitch (two 6x2 laminated with TimberLok 100s, NO OSB web) sits ON TOP of the head plate, over every opening as a minimum (drawn full width). Its top is level with the roof joist tops. ${tall ? 'Taller build: the roof joists run OVER the flitch and oversail to form the canopy.' : 'Standard 2.5m build: the roof joists hang off the flitch on jiffy hangers.'}`,
+        `Doors and full-height windows (2050mm) sit on the base plate; a 4x2 packer under the head plate closes the gap to the door head (about ${H - 2 * PL - 2050}mm, trim to suit). Standard windows shown on a 900mm cill; check the drawing for the customer's positions.`,
         `Outside: 12mm ply, Tyvek, 18x38 battens @400, ${(state.cladding?.front || '').replace(/-/g, ' ')} cladding. Inside: 75mm PIR in every bay, VCL, 12.5mm plasterboard, skim.`,
-        `Full-height openings (doors, FH windows) sit on the base plate at 2050mm high. Standard windows shown on a 900mm cill; check the drawing for the customer's positions.`,
-        ...(headClash ? [`CHECK WITH THE OFFICE: a 2050mm opening + 150mm doubled 6x2 flitch needs a frame of at least ${2050 + 150 + 47}mm; this frame is drawn at ${mm(plan.panelHeightM)}mm (the Kingspan panel length). Confirm the front frame height / head detail before cutting.`] : []),
       ],
     });
   }
@@ -229,7 +246,7 @@ export function buildConstructionDrawings(state, componentDefs) {
           s += tx(M + mm(px + p.width / 2), M + H / 2, p.cut ? `CUT ${mm(p.width)}` : `${mm(p.width)}`, { size: 70, fill: '#fff' });
           x += p.width;
         }
-        s += rc(M, M - 100, W, 100, { fill: '#fde68a', stroke: '#92400e', sw: 3 }) + tx(M + W / 2, M - 130, '4x2 flat top plate (bay-pole screws @400)', { size: 60 });
+        s += rc(M, M - 49, W, 49, { fill: '#fde68a', stroke: '#92400e', sw: 3 }) + tx(M + W / 2, M - 80, '49mm flat 4x2 plate on the panel heads (bay-pole screws @400): 2189 to top', { size: 60 });
       } else {
         s += rc(M, gy - 100, W, 100, { fill: '#fde68a', stroke: '#92400e', sw: 4 }) + rc(M, M, W, 100, { fill: '#fde68a', stroke: '#92400e', sw: 4 });
         for (let x = 0; x <= runM + 0.001; x += 0.4) s += rc(M + mm(Math.min(x, runM - 0.047)), M + 100, 47, H - 200, { fill: '#fde68a', stroke: '#92400e', sw: 3 });
@@ -266,11 +283,9 @@ export function buildConstructionDrawings(state, componentDefs) {
     let s = '';
     const y0 = M + RO; // rear wall line at y0 (rear oversail above it), front wall at y0 + D
     s += rc(M, y0, W, D, { sw: 8, stroke: '#94a3b8', dash: '40 30' }); // walls
-    // flitch / front top plate line
-    s += rc(M, y0 + D - 150, W, 150, { fill: '#7c2d12', stroke: '#111', sw: 4 }) + tx(M + W / 2, y0 + D - 50, 'front wall: top plate + 2×6x2 flitch over openings', { size: 60, fill: '#fff' });
     s += rc(M, y0, W, 100, { fill: '#fde68a', stroke: '#92400e', sw: 3 });
-    const joistLen = tall ? D + C + RO : D + RO; // tall: oversail; else stop at front wall
-    const jTop = y0 - RO, jBot = tall ? y0 + D + C : y0 + D;
+    // tall: joists oversail over the flitch; standard: joists stop at the flitch's rear face (hangers)
+    const jTop = y0 - RO, jBot = tall ? y0 + D + C : y0 + D - 150;
     const n = Math.ceil(w / ladder.spacing) + 1;
     for (let i = 0; i < n; i++) {
       const x = Math.min(i * ladder.spacing, w - 0.047);
@@ -278,6 +293,8 @@ export function buildConstructionDrawings(state, componentDefs) {
       // firring on top (dashed centre line)
       s += ln(M + mm(x) + 23, jTop, M + mm(x) + 23, y0 + D + C, { sw: 3, stroke: '#0f766e', dash: '50 30' });
     }
+    // flitch band on the front wall (drawn over the joists so it reads)
+    s += rc(M, y0 + D - 150, W, 150, { fill: '#7c2d12', stroke: '#111', sw: 4, op: tall ? 0.85 : 1 }) + tx(M + W / 2, y0 + D - 50, tall ? 'front wall: 2×6x2 flitch ON TOP of the head plate, joists run over it' : 'front wall: 2×6x2 flitch ON TOP of the head plate, joists hang off it (tops level)', { size: 60, fill: '#fff' });
     // reverse firrings along the side edges
     s += rc(M - 47, jTop, 47, y0 + D + C - jTop, { fill: '#ccfbf1', stroke: '#0f766e', sw: 3 }) + rc(M + W, jTop, 47, y0 + D + C - jTop, { fill: '#ccfbf1', stroke: '#0f766e', sw: 3 });
     // canopy structure
@@ -285,9 +302,11 @@ export function buildConstructionDrawings(state, componentDefs) {
       if (tall) {
         s += rc(M, y0 + D, W, C, { sw: 5, stroke: '#0f766e' }) + tx(M + W / 2, y0 + D + C + 120, `joists oversail ${C}mm + one layer of 2x2 under (canopy box, ply front + underside)`, { size: 70, fill: '#0f766e' });
       } else {
-        s += rc(M, y0 + D, W, C, { fill: '#ccfbf1', stroke: '#0f766e', sw: 5 });
-        for (let x = 0.4; x < w; x += 0.4) s += ln(M + mm(x), y0 + D, M + mm(x), y0 + D + C, { sw: 3, stroke: '#0f766e' });
-        s += tx(M + W / 2, y0 + D + C + 120, `2x2 canopy frame ${C}mm out (cross pieces @400), fixed to the top plate + flitch; ply on front + underside`, { size: 70, fill: '#0f766e' });
+        // outer joists oversail, 6x2 tie across the front, noggings @400 between
+        s += rc(M, y0 + D, 47 * ladder.ply, C, { fill: '#e2e8f0', stroke: '#334155', sw: 4 }) + rc(M + W - 47 * ladder.ply, y0 + D, 47 * ladder.ply, C, { fill: '#e2e8f0', stroke: '#334155', sw: 4 });
+        s += rc(M, y0 + D + C - 47, W, 47, { fill: '#e2e8f0', stroke: '#334155', sw: 4 });
+        for (let x = 0.4; x < w - 0.1; x += 0.4) s += rc(M + mm(x), y0 + D, 47, C - 47, { fill: '#f1f5f9', stroke: '#64748b', sw: 3 });
+        s += tx(M + W / 2, y0 + D + C + 120, `outer joists oversail ${C}mm, 6x2 tie joist across the front, noggings @400 between, 2x2 layer under (or a 2x2 frame ${C}mm out, teams vary)`, { size: 70, fill: '#0f766e' });
       }
     }
     // gutter
@@ -296,14 +315,14 @@ export function buildConstructionDrawings(state, componentDefs) {
     for (const X of dps) s += dot(X, y0 - RO - 70, 70, { fill: '#111', stroke: '#111' });
     s += dimH(M, M + W, M - 400, `${W}mm`);
     s += dimV(y0, y0 + D, M - 300, `${D}mm`);
-    if (tall) s += dimV(y0 + D, y0 + D + C, M + W + 300, `${C}`); else if (canopy > 0) s += dimV(y0 + D, y0 + D + C, M + W + 300, `${C} (2x2)`);
+    if (canopy > 0) s += dimV(y0 + D, y0 + D + C, M + W + 300, `${C}`);
     s += dimV(y0 - RO, y0, M + W + 300, `${RO}`);
     s += tx(M + W / 2, y0 + D + C + 450, 'FRONT', { size: 110, bold: true });
     s += tx(M + W / 2, M - 550, 'REAR', { size: 110, bold: true });
     out.push({
       key: 'roof', title: '7. Roof framing (plan, from above)', svg: sheet(SW, SH, s),
       notes: [
-        `${n} roof joists (${ladder.label}) run FRONT→BACK at ${mm(ladder.spacing)}mm centres from the LEFT. ${tall ? `Taller build (${hM.toFixed(2)}m): joists run OVER the front flitch/top plate and oversail ${C}mm to form the canopy; one layer of 2x2 fixed under the oversail deepens the canopy box.` : `Standard 2.5m build: joists STOP at the front wall and hang off the flitch on jiffy hangers (twist nails); the ${C}mm canopy is a 2x2 frame built off the top plate and flitch.`} Every job: joists and firrings oversail the REAR by ${RO}mm. Joists sit on the 4x2 flat top plate on the rear panels.`,
+        `${n} roof joists (${ladder.label}) run FRONT→BACK at ${mm(ladder.spacing)}mm centres from the LEFT. ${tall ? `Taller build (${hM.toFixed(2)}m): joists run OVER the front flitch/top plate and oversail ${C}mm to form the canopy; one layer of 2x2 fixed under the oversail deepens the canopy box.` : `Standard 2.5m build: joists STOP at the front wall and hang off the flitch on jiffy hangers (twist nails). The flitch sits ON TOP of the front head plate, so the joists run LEVEL: rear end on the 49mm plate over the panels (2189), front end in the hangers with the underside at 2189. The ${C}mm canopy: the two outer joists oversail, a 6x2 tie joist across the front, noggings @400 between, one layer of 2x2 under (some teams build a 2x2 frame instead; both are fine).`} Every job: joists and firrings oversail the REAR by ${RO}mm.`,
         `Firrings (green dashed) on top of every joist, ${firr}mm at the front tapering to 0 at the rear so the water runs to the rear gutter; the 2 reverse firrings (side edges) square the sides. 18mm T&G OSB across the joists, one-piece EPDM with adhesive, edge trim. ${pir}mm PIR between joists set 30mm below the joist tops (vented cold roof), plasterboard ceiling.`,
         `Half-round black gutter across the full rear width, downpipe at ${w >= 6 ? 'BOTH ends (building over 6m)' : 'one end'}. Steel top cap over the fascia + roof edge on the FRONT and SIDES only. Ply on the front face + underside of the canopy for the fascia and soffit.`,
       ],
