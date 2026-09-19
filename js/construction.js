@@ -19,7 +19,7 @@
 //         (no OSB web) over EVERY door and window, 12mm ply + Tyvek + battens
 //         + cladding outside, 75mm PIR + VCL + plasterboard inside. Panel walls:
 //         double 18x38 battens + plasterboard inside (no PIR, no VCL: the panel
-//         is the vapour barrier; foil-tape the joints).
+//         is the vapour barrier; no tape on the joints).
 //  HEIGHTS (Liam 2026-09-19) Panel walls = 2140 panel + 49 flat 4x2 plate =
 //         2189 to the top of the plate. The front stud wall (base plate, studs,
 //         head plate) tops out at the SAME 2189. The doubled 6x2 flitch sits ON
@@ -47,8 +47,7 @@
 //         the joists), screwed to it from INSIDE; U-channel caps every exposed
 //         panel edge (tops, corners, opening reveals); flat 4x2 plate on the
 //         capped tops with bay-pole screws @400; panel-to-panel corners
-//         screwed through with bay-pole screws @400, 180x40 L trim outside,
-//         foil tape inside. Cut side panel meets the front stud wall at the
+//         screwed through with bay-pole screws @400, 180x40 L trim outside. Cut side panel meets the front stud wall at the
 //         built-up 4x2 corner post (~200x200): panel edge screws to the post,
 //         front wall end stud screws to the post, corner trims cloak it.
 //         Firrings on top tapering to the rear + 2 reverse firrings (side
@@ -289,7 +288,7 @@ export function buildConstructionDrawings(state, componentDefs) {
     };
     const rearOps = ops('rear');
     out.push({ key: 'rear', title: '4. Rear wall (viewed from outside)', svg: elev('rear', w, plan.rear.pieces, true, rearOps, false, false, false),
-      notes: [`Panels laid LEFT→RIGHT from outside; the cut piece is at the right-hand end (groove edge factory, cut edge into the corner trim). 180x40 L corner trims both rear corners.`, `Inside: double 18x38 battens (verticals @600 + rows @600), plasterboard, skim${state.featureWalls?.rear || state.featureWall === 'rear' ? ' — EXCEPT this wall carries the oak acoustic slat panels over the plasterboard (no skim/paint)' : ''}. Foil-tape the panel joints; no VCL needed on panel walls.`] });
+      notes: [`Panels laid LEFT→RIGHT from outside; the cut piece is at the right-hand end (groove edge factory, cut edge into the corner trim). 180x40 L corner trims both rear corners.`, `Inside: double 18x38 battens (verticals @600 + rows @600), plasterboard, skim${state.featureWalls?.rear || state.featureWall === 'rear' ? ' — EXCEPT this wall carries the oak acoustic slat panels over the plasterboard (no skim/paint)' : ''}. No VCL needed on panel walls.`] });
     // LEFT wall seen from outside (standing to the left of the building, looking at it): the REAR is on the LEFT,
     // the front on the right. Panel pieces start at the rear (left); left-wall positions are measured from the rear.
     const leftRun = plan.left ? plan.left.runM : d - 0.11 + (closedL ? 0.4 : 0);
@@ -381,7 +380,7 @@ export function buildConstructionDrawings(state, componentDefs) {
       ['12mm ply sheathing', 130, '#d6d3d1'], ['4x2 tanalised studs @400 centres + 75mm PIR', 340, '#fef3c7'], ['VCL (vapour control, taped)', 90, '#bfdbfe'], ['12.5mm plasterboard + skim + paint', 160, '#f5f5f4'],
     ]);
     s += col(4500, 'PANEL WALL (outside → in)', [
-      ['100mm Kingspan panel, anthracite out', 460, '#334155'], ['foil tape on joints (panel = vapour barrier)', 90, '#e2e8f0'],
+      ['100mm Kingspan panel, anthracite out (panel = vapour barrier)', 460, '#334155'],
       ['double 18x38 battens (vertical @600 centres + rows @600 centres)', 300, '#fde68a', '#92400e'], ['12.5mm plasterboard + skim + paint', 160, '#f5f5f4'],
     ]);
     s += col(6600, 'ROOF (top → ceiling)', [
@@ -391,7 +390,7 @@ export function buildConstructionDrawings(state, componentDefs) {
     out.push({
       key: 'sections', title: '8. Build-up of floor, walls and roof (layers, outside to inside)', svg: sheet(SW, SH, s),
       notes: [
-        'Stick walls carry a VCL on the warm side (behind the plasterboard). Panel walls do not: the Kingspan panel is the vapour barrier, so tape the inside joints with foil tape instead.',
+        'Stick walls carry a VCL on the warm side (behind the plasterboard). Panel walls do not: the Kingspan panel is the vapour barrier.',
         'Fixings: TimberLok 150 for floor doubling, TimberLok 100 for studs to plates, joists to plates, canopy frame; jiffy hangers + twist nails for joists to the flitch on 2.5m builds; bay-pole screws for the 4x2 top plate into the panel heads; 5.0×70 wood screws for battens and firrings.',
       ],
     });
@@ -474,7 +473,7 @@ export function buildConstructionDrawings(state, componentDefs) {
         `Heights: ${PH}mm panel + ${PL}mm flat 4x2 plate = ${TOP}mm to the top of every wall (panel walls and stud walls alike). The doubled 6x2 flitch sits ON TOP of the front head plate (${TOP} to ${TOP + FL}); no second head plate. ${tall ? 'Taller build: the roof joists run over the flitch and oversail to form the canopy.' : 'Roof joists hang off the flitch on jiffy hangers so they run level, rear ends on the 4x2 plate over the panels.'}`,
         `Door head: 2050mm door on the ${PL}mm base plate = ${PL + 2050}; head plate underside at ${PH}; fill the ${PH - PL - 2050}mm with a 4x2 packer (trim to suit). Fit frames to a rough opening 10mm bigger each way, pack, foam and silicone. Door base trim under every door; panel base trim under full-height windows.`,
         `Canopy: ${tall ? 'every joist oversails' : 'the two outer joists oversail, a 6x2 tie joist across their ends, 6x2 noggings @400 between'}; one layer of 2x2 under; 12mm ply on the front face and underside; 300mm fascia front and sides (200mm rear), 400mm soffit with vent strip, EPDM up and over under the steel top cap.`,
-        `Panels: sit in the steel panel base trim (screwed through the chipboard into the joists), screwed to the trim from INSIDE. U-channel caps every exposed panel edge (tops, corners, opening reveals). Flat 4x2 plate on the capped tops, bay-pole screws @400. Panel-to-panel corners screwed through @400, 180x40 L trim outside, foil tape inside. Cut side panel meets the front stud wall at the built-up 4x2 corner post (~200x200): panel edge and end stud both screw to the post; corner trims cloak it.`,
+        `Panels: sit in the steel panel base trim (screwed through the chipboard into the joists), screwed to the trim from INSIDE. U-channel caps every exposed panel edge (tops, corners, opening reveals). Flat 4x2 plate on the capped tops, bay-pole screws @400. Panel-to-panel corners screwed through @400, 180x40 L trim outside. Cut side panel meets the front stud wall at the built-up 4x2 corner post (~200x200): panel edge and end stud both screw to the post; corner trims cloak it.`,
         `Roof bearing: joists sit on the 4x2 plate over the side and rear panels, skew-fixed with TimberLok 100s; 6x2 end joists close the front (tie joist) and rear (100mm oversail). Roof PIR set 30mm below the joist tops; VCL under the joists; plasterboard ceiling.`,
         ...(hasDecking ? [`Standard 400mm decking: 4x2 joists @400 x 400mm off the base front end joist (TimberLok 150s through the end joist), 4x2 front rim, supports under the rim at max 1.3m. Extra decking is its own frame on its own supports (see the BOM). Trex boards run along the width.`] : []),
       ],
