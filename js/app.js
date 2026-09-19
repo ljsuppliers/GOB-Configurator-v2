@@ -295,9 +295,6 @@ createApp({
       const byC = {}; for (const j of this.cloudDesigns) if (j.customerId && j.hasState) (byC[j.customerId] = byC[j.customerId] || []).push(j);
       const multi = Object.values(byC).filter((v) => v.length > 1);
       if (multi.length) out.push({ key: 'multi', label: `${multi.length} contact${multi.length === 1 ? '' : 's'} with more than one drawing (revisions?)`, items: multi.map((v) => ({ id: v[0].id, text: v.map((j) => this.projectTitle(j)).join(' / ') })) });
-      const seen = {}; const dups = [];
-      for (const c of this.customers) for (const k of [c.email, (c.phone || '').replace(/\D/g, ''), (c.mobile || '').replace(/\D/g, '')].filter((x) => x && x.length > 5)) { if (seen[k] && seen[k].id !== c.id) dups.push({ id: c.id, text: `${seen[k].name} / ${c.name}` }); else seen[k] = c; }
-      if (dups.length) out.push({ key: 'dupcust', label: `${dups.length} possible duplicate contact${dups.length === 1 ? '' : 's'} (same email or phone)`, items: dups, customer: true });
       return out;
     },
     filteredProjects() {
