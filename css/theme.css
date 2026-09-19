@@ -251,6 +251,11 @@ h1, h2, h3, h4 { letter-spacing: -0.01em; }
 .src-tag.src-insightly { background: #fef3c7; color: #92400e; }
 .src-tag.src-configurator { background: #e0f2fe; color: #0369a1; }
 .src-tag.src-crm { background: #dcfce7; color: #166534; }
+.brand-tag { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: #e0f2fe; color: #0369a1; }
+.brand-tag.brand-grannexe { background: #f3e8ff; color: #6b21a8; }
+.crm-brands { background: #f8fafc; }
+.crm-brands button { font-weight: 700; }
+.crm-brands button.brand-grannexe.on { background: #6b21a8; }
 .tidy-card details { margin: 4px 0; }
 .tidy-card summary { cursor: pointer; font-size: 13px; font-weight: 600; color: #b45309; padding: 4px 0; }
 .tidy-items { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 0 8px 16px; }

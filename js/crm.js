@@ -197,14 +197,14 @@ export async function updateProject(designId, fields) {
 }
 
 /** A project with no drawing yet (the Insightly way: name + details), linked to a customer. */
-export async function createProject({ name, customerId = '', customerName = '', address = '', details = '', quoteNumber = '' }, author) {
+export async function createProject({ name, customerId = '', customerName = '', address = '', details = '', quoteNumber = '', brand = 'gob' }, author) {
   const surname = (customerName || name || '').trim().split(/\s+/).pop() || 'JOB';
   const ref = await db().collection('designs').add({
     name, customer: customerName, address, dimensions: '', tier: 'signature',
     ref: `${surname.replace(/[^A-Za-z0-9-]/g, '').toUpperCase()}-${quoteNumber || 'NOQUOTENO'}`, quoteNumber,
     jobStatus: 'quote', stage: 1, stageName: PIPELINE[0].name, projectStatus: 'IN PROGRESS', details,
     installStart: '', installEnd: '', installerName: '', ordersOrdered: 0, ordersDelivered: 0, deliveries: [],
-    customerId, legacy: true, hasState: false, state: null, createdBy: author || '',
+    customerId, legacy: true, hasState: false, state: null, createdBy: author || '', brand: brand === 'grannexe' ? 'grannexe' : 'gob',
     savedAt: ts(), updatedAt: ts(),
   });
   return ref.id;
@@ -237,6 +237,7 @@ export async function mergeDesignIntoProject(projectId, designId) {
 }
 
 /* ───────────── PROJECT NAMING + SOURCE ───────────── */
+export const BRANDS = [{ value: 'gob', label: 'Garden Office Buildings', short: 'GOB' }, { value: 'grannexe', label: 'Grannexe', short: 'Grannexe' }];
 export const SOURCE_LABELS = { insightly: 'Insightly', configurator: 'Old configurator', crm: 'GOB CRM' };
 const QUOTE_RE = /^(QB)?\d{3,5}$/;
 const PC_RE = /\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/i;

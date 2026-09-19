@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="css/app.css?v=29">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
-  <link rel="stylesheet" href="css/theme.css?v=9">
+  <link rel="stylesheet" href="css/theme.css?v=10">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
 <body>
@@ -1145,6 +1145,9 @@
           <input type="search" v-model="projectSearch" placeholder="Search projects… (quote no, name, address)" class="crm-search">
           <button class="btn btn-primary btn-small" @click="newProjectOpen = !newProjectOpen; currentProject = null; projectDraft = null">+ New</button>
         </div>
+        <div class="crm-filters crm-brands">
+          <button v-for="b in brands" :key="b.value" :class="{ on: projectBrand === b.value, 'brand-grannexe': b.value === 'grannexe' }" @click="projectBrand = b.value; currentProject = null; projectDraft = null; newProjectOpen = false">{{ b.label }} <span>{{ projectCounts[b.value] }}</span></button>
+        </div>
         <div class="crm-filters">
           <button :class="{ on: projectFilter === 'open' }" @click="projectFilter = 'open'" title="Holding deposit received onwards (stage 2+)">Open <span>{{ projectCounts.open }}</span></button>
           <button :class="{ on: projectFilter === 'quotes' }" @click="projectFilter = 'quotes'" title="Quote sent, no deposit yet (stage 1) - not a project until the holding deposit">Quotes <span>{{ projectCounts.quotes }}</span></button>
@@ -1163,7 +1166,7 @@
           <div v-for="j in filteredProjects" :key="j.id" class="crm-row" :class="{ current: currentProject && currentProject.id === j.id }" @click="newProjectOpen = false; selectProject(j.id)">
             <span class="crm-stage-dot" :class="'chip-job-' + j.jobStatus" :title="stageName(stageOf(j))">{{ stageOf(j) || '–' }}</span>
             <span class="crm-row-main"><strong>{{ projectTitle(j) }}</strong><small>{{ [j.customer, j.dimensions].filter(Boolean).join(' · ') }}</small><small class="crm-stage-line">{{ stageName(stageOf(j)) }}</small></span>
-            <span class="crm-row-icons"><span v-if="j.hasState" title="Has a drawing">✎</span></span>
+            <span class="crm-row-icons"><span v-if="isGrannexe(j)" class="brand-tag brand-grannexe">Grannexe</span><span v-if="j.hasState" title="Has a drawing">✎</span></span>
           </div>
         </div>
       </aside>
@@ -1173,6 +1176,7 @@
         <div v-if="newProjectOpen" class="crm-card crm-newproject">
           <h3>New project</h3>
           <div class="crm-form">
+            <label class="wide">Brand <select v-model="newProject.brand"><option v-for="b in brands" :key="b.value" :value="b.value">{{ b.label }}</option></select><small class="crm-muted" v-if="newProject.brand === 'grannexe'">Grannexe projects are CRM only: contact, pipeline, notes, files and tasks. No configurator, quote or materials.</small></label>
             <label class="wide">Project name <input v-model.trim="newProject.name" placeholder="4500 - Smith - Bromley"></label>
             <label>Quote number <input v-model.trim="newProject.quoteNumber" placeholder="4500"></label>
             <label>Customer
@@ -1242,14 +1246,14 @@
           <div class="blade">
             <div class="blade-head">
               <span class="blade-icon">🔨</span>
-              <div class="blade-title"><small>Project</small><h2>{{ projectTitle(currentProject) }}</h2></div>
+              <div class="blade-title"><small>Project · <span class="brand-tag" :class="'brand-' + brandOf(currentProject)">{{ brandLabel(currentProject) }}</span></small><h2>{{ projectTitle(currentProject) }}</h2></div>
               <button class="blade-pencil" :class="{ on: projectEdit }" @click="projectEdit = !projectEdit; projectTab = 'details'" title="Edit">✎</button>
               <div class="export-wrapper">
                 <button class="btn blade-actions" @click="showExportMenu = !showExportMenu">Actions &#9662;</button>
                 <div id="export-menu" :class="{ show: showExportMenu }">
-                  <button @click="showExportMenu = false; openProjectDesign('design')">{{ currentProject.hasState ? 'Open design / quote' : 'Start design / quote' }}</button>
-                  <button v-if="currentProject.hasState" @click="showExportMenu = false; openProjectDesign('materials')">Materials &amp; orders</button>
-                  <button v-for="d in attachableDesigns" :key="d.id" @click="showExportMenu = false; attachDesignToProject(d)">Attach drawing: {{ d.name }} · {{ d.dimensions }}</button>
+                  <button v-if="!isGrannexe(currentProject)" @click="showExportMenu = false; openProjectDesign('design')">{{ currentProject.hasState ? 'Open design / quote' : 'Start design / quote' }}</button>
+                  <button v-if="!isGrannexe(currentProject) && currentProject.hasState" @click="showExportMenu = false; openProjectDesign('materials')">Materials &amp; orders</button>
+                  <template v-if="!isGrannexe(currentProject)"><button v-for="d in attachableDesigns" :key="d.id" @click="showExportMenu = false; attachDesignToProject(d)">Attach drawing: {{ d.name }} · {{ d.dimensions }}</button></template>
                   <button v-if="projectCustomer" @click="showExportMenu = false; openCustomersPage(projectCustomer.id)">Open contact: {{ projectCustomer.name }}</button>
                   <button v-if="!currentProject.hasState" @click="showExportMenu = false; removeProject()">Delete project</button>
                 </div>
@@ -1301,10 +1305,11 @@
                     <div class="kv"><label>Project Created</label><span>{{ currentProject.insightly && currentProject.insightly.created ? fmtDateOnly(currentProject.insightly.created) : (currentProject.savedAt ? fmtDateOnly(currentProject.savedAt) : '') }}</span></div>
                     <div class="kv"><label>Date of Next Activity</label><span>{{ projectUpcoming.length ? fmtDue(projectUpcoming[0].due) + ' · ' + projectUpcoming[0].title : '' }}</span></div>
                     <div class="kv"><label>Date of Last Activity</label><span>{{ projectPast.length ? fmtDateTime(projectPast[0].when) : '' }}</span></div>
-                    <div class="kv"><label>Drawing / Quote</label><span><template v-if="currentProject.hasState"><a href="#" @click.prevent="openProjectDesign('design')">Open design</a> · <a href="#" @click.prevent="openProjectDesign('materials')">Materials &amp; orders</a></template><template v-else>None yet · <a href="#" @click.prevent="openProjectDesign('design')">start one</a></template></span></div>
+                    <div class="kv" v-if="!isGrannexe(currentProject)"><label>Drawing / Quote</label><span><template v-if="currentProject.hasState"><a href="#" @click.prevent="openProjectDesign('design')">Open design</a> · <a href="#" @click.prevent="openProjectDesign('materials')">Materials &amp; orders</a></template><template v-else>None yet · <a href="#" @click.prevent="openProjectDesign('design')">start one</a></template></span></div>
                   </template>
                   <template v-else>
                     <div class="kv"><label>Project Name</label><span><input v-model.trim="projectDraft.name"></span></div>
+                    <div class="kv"><label>Brand</label><span><select v-model="projectDraft.brand"><option v-for="b in brands" :key="b.value" :value="b.value">{{ b.label }}</option></select></span></div>
                     <div class="kv"><label>Status</label><span><select v-model="projectDraft.projectStatus"><option v-for="ps in projectStatuses" :value="ps.value">{{ ps.label }}</option></select></span></div>
                     <div class="kv"><label>User Responsible</label><span><select v-model="projectDraft.owner"><option value="">—</option><option v-for="a in taskAssignees" :value="a">{{ a }}</option></select></span></div>
                     <div class="kv"><label>Quote Number</label><span><input v-model.trim="projectDraft.quoteNumber"></span></div>
@@ -1411,8 +1416,10 @@
               </div>
 
               <div class="sec">
-                <div class="sec-head" @click="toggleSec('p-design')"><span class="sec-caret">{{ secOpen['p-design'] === false ? '⌄' : '⌃' }}</span> Drawing, Quote &amp; Materials <em>{{ currentProject.hasState ? 1 : 0 }}</em></div>
-                <div v-show="secOpen['p-design'] !== false" class="sec-body">
+                <div class="sec-head" v-if="!isGrannexe(currentProject)" @click="toggleSec('p-design')"><span class="sec-caret">{{ secOpen['p-design'] === false ? '⌄' : '⌃' }}</span> Drawing, Quote &amp; Materials <em>{{ currentProject.hasState ? 1 : 0 }}</em></div>
+                <div v-if="isGrannexe(currentProject)" class="sec-head"><span class="sec-caret"></span> Grannexe project <em>CRM only</em></div>
+                <div v-if="isGrannexe(currentProject)" class="sec-body"><p class="crm-muted">Grannexe uses a different building system. This record is contact, pipeline, notes, files and tasks only. No configurator, quote or materials here (for now).</p></div>
+                <div v-show="secOpen['p-design'] !== false" v-if="!isGrannexe(currentProject)" class="sec-body">
                   <div v-if="currentProject.hasState" class="btn-row"><button class="btn btn-primary" @click="openProjectDesign('design')">Open design &amp; quote</button><button class="btn" @click="openProjectDesign('materials')">Materials, costings &amp; orders</button></div>
                   <div v-else class="btn-row"><button class="btn btn-primary" @click="openProjectDesign('design')">Start design &amp; quote</button><button v-for="d in attachableDesigns" :key="d.id" class="btn" @click="attachDesignToProject(d)">Attach "{{ d.name }}"</button></div>
                 </div>
@@ -2625,7 +2632,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=149"></script>
+<script type="module" src="js/app.js?v=150"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

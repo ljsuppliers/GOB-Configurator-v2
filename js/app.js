@@ -6,7 +6,7 @@ import { generateDrawing } from './drawing-engine.js?v=44';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=2';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js';
-import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=4';
+import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=5';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=39';
 import { buildConstructionDrawings } from './construction.js?v=6';
@@ -16,7 +16,7 @@ import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=12';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
-import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject, mergeDesignIntoProject, listTasks, addTask, updateTask, deleteTask, SOURCE_LABELS, standardProjectName, isStandardName } from './crm.js?v=7';
+import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject, mergeDesignIntoProject, listTasks, addTask, updateTask, deleteTask, SOURCE_LABELS, BRANDS, standardProjectName, isStandardName } from './crm.js?v=8';
 
 const { createApp } = Vue;
 
@@ -188,6 +188,8 @@ createApp({
       projectStatuses: PROJECT_STATUSES,
       projectSearch: '',
       projectFilter: 'open',
+      projectBrand: 'gob', // Projects page shows one brand at a time: GOB (default) or Grannexe
+      brands: BRANDS,
       projectSort: 'updated',
       currentProject: null,
       projectDraft: null,
@@ -199,7 +201,7 @@ createApp({
       projectNote: '',
       projectNoteKind: 'note',
       newProjectOpen: false,
-      newProject: { name: '', quoteNumber: '', customerId: '', details: '' },
+      newProject: { name: '', quoteNumber: '', customerId: '', details: '', brand: 'gob' },
       newProjectQuery: '',
       printMode: 'pack',
       orderRefManual: false,
@@ -301,7 +303,7 @@ createApp({
     },
     filteredProjects() {
       const q = (this.projectSearch || '').trim().toLowerCase();
-      let list = this.cloudDesigns;
+      let list = this.cloudDesigns.filter((j) => this.brandOf(j) === this.projectBrand);
       const live = (j) => !['complete', 'cancelled'].includes(j.jobStatus);
       if (this.projectFilter === 'open') list = list.filter((j) => live(j) && stageOf(j) >= 2);
       else if (this.projectFilter === 'quotes') list = list.filter((j) => live(j) && stageOf(j) <= 1);
@@ -387,8 +389,10 @@ createApp({
     },
     /** A PROJECT starts when the holding deposit is received (stage 2). Stage 1 is a quote, not a project (Liam 19 Sep). */
     projectCounts() {
-      const c = { all: this.cloudDesigns.length, open: 0, quotes: 0, complete: 0, cancelled: 0 };
-      for (const j of this.cloudDesigns) { if (j.jobStatus === 'complete') c.complete++; else if (j.jobStatus === 'cancelled') c.cancelled++; else if (stageOf(j) <= 1) c.quotes++; else c.open++; }
+      const mine = this.cloudDesigns.filter((j) => this.brandOf(j) === this.projectBrand);
+      const c = { all: mine.length, open: 0, quotes: 0, complete: 0, cancelled: 0, gob: 0, grannexe: 0 };
+      for (const j of this.cloudDesigns) c[this.brandOf(j)]++;
+      for (const j of mine) { if (j.jobStatus === 'complete') c.complete++; else if (j.jobStatus === 'cancelled') c.cancelled++; else if (stageOf(j) <= 1) c.quotes++; else c.open++; }
       return c;
     },
     newProjectCustomerResults() {
@@ -1141,12 +1145,16 @@ createApp({
       window.scrollTo(0, 0);
     },
     closeProjectsPage() { this.projectsPage = false; this.syncUrl(); },
+    brandOf(j) { return j && j.brand === 'grannexe' ? 'grannexe' : 'gob'; },
+    brandLabel(j) { return (BRANDS.find((b) => b.value === this.brandOf(j)) || BRANDS[0]).label; },
+    isGrannexe(j) { return this.brandOf(j) === 'grannexe'; },
     async selectProject(id) {
       const j = this.cloudDesigns.find((x) => x.id === id);
       if (!j) { this.projectStatus = 'Project not found'; return; }
+      this.projectBrand = this.brandOf(j);
       this.currentProject = j;
       this.projectEdit = false; this.projectDescExpanded = false; this.newNoteOpen = false;
-      this.projectDraft = { name: j.name || '', details: j.details || '', quoteNumber: j.quoteNumber || '', projectStatus: projectStatusOf(j), owner: j.owner || '', installStart: j.installStart || '', installEnd: j.installEnd || '', installerName: j.installerName || '' };
+      this.projectDraft = { name: j.name || '', details: j.details || '', quoteNumber: j.quoteNumber || '', projectStatus: projectStatusOf(j), owner: j.owner || '', installStart: j.installStart || '', installEnd: j.installEnd || '', installerName: j.installerName || '', brand: this.brandOf(j) };
       this.projectNotes = []; this.projectFiles = []; this.projectStatus = '';
       this.projectCustomer = j.customerId ? (this.customers.find((c) => c.id === j.customerId) || null) : null;
       this.syncUrl();
@@ -1166,7 +1174,7 @@ createApp({
       if (!j || !d) return;
       this.projectBusy = true;
       try {
-        const fields = { name: d.name, details: d.details, quoteNumber: d.quoteNumber, projectStatus: d.projectStatus, owner: d.owner, installStart: d.installStart, installEnd: d.installEnd, installerName: d.installerName };
+        const fields = { name: d.name, details: d.details, quoteNumber: d.quoteNumber, projectStatus: d.projectStatus, owner: d.owner, installStart: d.installStart, installEnd: d.installEnd, installerName: d.installerName, brand: d.brand === 'grannexe' ? 'grannexe' : 'gob' };
         if (d.projectStatus === 'COMPLETED') fields.jobStatus = 'complete';
         else if (d.projectStatus === 'CANCELLED' || d.projectStatus === 'ABANDONED') fields.jobStatus = 'cancelled';
         else if (['complete', 'cancelled'].includes(j.jobStatus)) fields.jobStatus = (PIPELINE.find((p) => p.order === stageOf(j)) || PIPELINE[0]).status;
@@ -1239,8 +1247,9 @@ createApp({
       const c = this.customers.find((x) => x.id === f.customerId);
       this.projectBusy = true;
       try {
-        const id = await createProject({ name: f.name.trim(), quoteNumber: f.quoteNumber.trim() || (f.name.match(/^\s*(\d{3,5})/) || [])[1] || '', customerId: c ? c.id : '', customerName: c ? c.name : '', address: c ? [c.address, c.postcode].filter(Boolean).join(', ') : '', details: f.details }, this.userName());
-        this.newProject = { name: '', quoteNumber: '', customerId: '', details: '' }; this.newProjectOpen = false;
+        const id = await createProject({ name: f.name.trim(), quoteNumber: f.quoteNumber.trim() || (f.name.match(/^\s*(\d{3,5})/) || [])[1] || '', customerId: c ? c.id : '', customerName: c ? c.name : '', address: c ? [c.address, c.postcode].filter(Boolean).join(', ') : '', details: f.details, brand: f.brand }, this.userName());
+        this.projectBrand = f.brand === 'grannexe' ? 'grannexe' : 'gob';
+        this.newProject = { name: '', quoteNumber: '', customerId: '', details: '', brand: this.projectBrand }; this.newProjectOpen = false;
         await this.refreshCloudDesigns();
         await this.selectProject(id);
         this.notify('Project created');

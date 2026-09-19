@@ -212,6 +212,7 @@ export async function listDesigns() {
       details: d.details || (d.insightly && d.insightly.details) || '',
       owner: d.owner || (d.insightly && d.insightly.owner) || '',
       legacy: !!d.legacy,
+      brand: d.brand === 'grannexe' ? 'grannexe' : 'gob', // GOB unless marked Grannexe (CRM-only projects)
       hasState: d.hasState !== undefined ? !!d.hasState : !!(d.state && d.state.width),
       insightly: d.insightly || null,
       savedAt: d.savedAt?.toDate?.() || null,
