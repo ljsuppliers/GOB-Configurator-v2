@@ -374,19 +374,19 @@ export function buildConstructionDrawings(state, componentDefs) {
     let s = '';
     s += col(300, 'FLOOR (top → ground)', [
       ['underlay + laminate (Wickes)', 140, '#f5f5f4'], ['22mm P5 T&G moisture-resistant chipboard', 160, '#d6d3d1'],
-      [`${pir}mm PIR on 18x38 battens`, 260, '#fef3c7'], ['5x2 C24 joists @400 (doubled lines @1200)', 300, '#fde68a', '#92400e'], [foundation.split(' (')[0], 260, '#e2e8f0'],
+      [`${pir}mm PIR on 18x38 battens`, 260, '#fef3c7'], ['5x2 C24 joists @400 centres (doubled lines @1200 centres)', 300, '#fde68a', '#92400e'], [foundation.split(' (')[0], 260, '#e2e8f0'],
     ]);
     s += col(2400, 'STICK WALL (outside → in)', [
-      [`${(state.cladding?.front || 'cladding').replace(/-/g, ' ')}`, 200, '#a16207', '#78350f'], ['18x38 battens @400 (ventilated cavity)', 160, '#fde68a', '#92400e'], ['Tyvek breather membrane', 90, '#fff'],
-      ['12mm ply sheathing', 130, '#d6d3d1'], ['4x2 tanalised studs @400 + 75mm PIR', 340, '#fef3c7'], ['VCL (vapour control, taped)', 90, '#bfdbfe'], ['12.5mm plasterboard + skim + paint', 160, '#f5f5f4'],
+      [`${(state.cladding?.front || 'cladding').replace(/-/g, ' ')}`, 200, '#a16207', '#78350f'], ['18x38 battens @400 centres (ventilated cavity)', 160, '#fde68a', '#92400e'], ['Tyvek breather membrane', 90, '#fff'],
+      ['12mm ply sheathing', 130, '#d6d3d1'], ['4x2 tanalised studs @400 centres + 75mm PIR', 340, '#fef3c7'], ['VCL (vapour control, taped)', 90, '#bfdbfe'], ['12.5mm plasterboard + skim + paint', 160, '#f5f5f4'],
     ]);
     s += col(4500, 'PANEL WALL (outside → in)', [
       ['100mm Kingspan panel, anthracite out', 460, '#334155'], ['foil tape on joints (panel = vapour barrier)', 90, '#e2e8f0'],
-      ['double 18x38 battens (vertical @600 + rows @600)', 300, '#fde68a', '#92400e'], ['12.5mm plasterboard + skim + paint', 160, '#f5f5f4'],
+      ['double 18x38 battens (vertical @600 centres + rows @600 centres)', 300, '#fde68a', '#92400e'], ['12.5mm plasterboard + skim + paint', 160, '#f5f5f4'],
     ]);
     s += col(6600, 'ROOF (top → ceiling)', [
       ['one-piece EPDM, fully adhered, edge trim', 100, '#111'], ['18mm T&G OSB', 140, '#d6d3d1'], [`firrings ${firr}mm → 0 (fall to rear)`, 180, '#ccfbf1', '#0f766e'],
-      [`${ladder.label} joists @${mm(ladder.spacing)}`, 300, '#fde68a', '#92400e'], [`${pir}mm PIR set 30mm down (vented)`, 260, '#fef3c7'], ['12.5mm plasterboard + skim + paint', 160, '#f5f5f4'],
+      [`${ladder.label} joists @${mm(ladder.spacing)} centres (edges doubled)`, 300, '#fde68a', '#92400e'], [`${pir}mm PIR set 30mm down (vented)`, 260, '#fef3c7'], ['12.5mm plasterboard + skim + paint', 160, '#f5f5f4'],
     ]);
     out.push({
       key: 'sections', title: '8. Build-up of floor, walls and roof (layers, outside to inside)', svg: sheet(SW, SH, s),
