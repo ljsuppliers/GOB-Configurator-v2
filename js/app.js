@@ -2677,7 +2677,7 @@ createApp({
           this.state.cladding.rear = 'western-red-cedar';
           applied.push('Cladding (cedar all round)');
         } else if (pref === 'composite') {
-          this.state.cladding.front = 'composite-slatted';
+          this.state.cladding.front = 'composite-coffee';
           applied.push('Cladding (composite front)');
         }
       }

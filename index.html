@@ -337,25 +337,25 @@
             <div>
               <label>Front</label>
               <select v-model="state.cladding.front">
-                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}</option>
+                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}{{ cd.default ? ' (standard)' : '' }}</option>
               </select>
             </div>
             <div>
               <label>Left</label>
               <select v-model="state.cladding.left">
-                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}</option>
+                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}{{ cd.default ? ' (standard)' : '' }}</option>
               </select>
             </div>
             <div>
               <label>Right</label>
               <select v-model="state.cladding.right">
-                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}</option>
+                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}{{ cd.default ? ' (standard)' : '' }}</option>
               </select>
             </div>
             <div>
               <label>Rear</label>
               <select v-model="state.cladding.rear">
-                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}</option>
+                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}{{ cd.default ? ' (standard)' : '' }}</option>
               </select>
             </div>
           </div>
@@ -2656,7 +2656,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=153"></script>
+<script type="module" src="js/app.js?v=154"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>
