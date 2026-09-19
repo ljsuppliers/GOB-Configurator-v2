@@ -1069,7 +1069,7 @@
       <div class="home-head">
         <div>
           <h2>Good {{ new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening' }}, {{ userName() }}</h2>
-          <p class="crm-muted">{{ new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }} · {{ projectCounts.open }} open projects · {{ customers.length }} customers</p>
+          <p class="crm-muted">{{ new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }} · {{ projectCounts.open }} open projects (deposit received) · {{ projectCounts.quotes }} quotes out · {{ customers.length }} customers</p>
         </div>
         <div class="home-actions">
           <input type="search" v-model="homeSearch" placeholder="Find a customer or project…" class="crm-search home-search" @keydown.enter="homeGo">
@@ -1086,7 +1086,7 @@
         <div class="crm-card home-pipeline">
           <h3>Pipeline</h3>
           <div class="home-stages">
-            <button v-for="g in pipelineGroups" :key="g.key" class="home-stage" @click="projectFilter = 'open'; projectSort = 'stage'; projectSearch = ''; openProjectsPage()">
+            <button v-for="g in pipelineGroups" :key="g.key" class="home-stage" @click="projectFilter = g.key === 'quote' ? 'quotes' : 'open'; projectSort = 'stage'; projectSearch = ''; openProjectsPage()">
               <span class="home-stage-n">{{ g.count }}</span><span class="home-stage-label">{{ g.label }}</span><small>{{ g.stages }}</small>
             </button>
           </div>
@@ -1146,7 +1146,8 @@
           <button class="btn btn-primary btn-small" @click="newProjectOpen = !newProjectOpen; currentProject = null; projectDraft = null">+ New</button>
         </div>
         <div class="crm-filters">
-          <button :class="{ on: projectFilter === 'open' }" @click="projectFilter = 'open'">Open <span>{{ projectCounts.open }}</span></button>
+          <button :class="{ on: projectFilter === 'open' }" @click="projectFilter = 'open'" title="Holding deposit received onwards (stage 2+)">Open <span>{{ projectCounts.open }}</span></button>
+          <button :class="{ on: projectFilter === 'quotes' }" @click="projectFilter = 'quotes'" title="Quote sent, no deposit yet (stage 1) - not a project until the holding deposit">Quotes <span>{{ projectCounts.quotes }}</span></button>
           <button :class="{ on: projectFilter === 'complete' }" @click="projectFilter = 'complete'">Completed <span>{{ projectCounts.complete }}</span></button>
           <button :class="{ on: projectFilter === 'cancelled' }" @click="projectFilter = 'cancelled'">Cancelled</button>
           <button :class="{ on: projectFilter === 'all' }" @click="projectFilter = 'all'">All <span>{{ projectCounts.all }}</span></button>
@@ -1194,7 +1195,7 @@
         <div v-else-if="!projectDraft" class="proj-overview">
           <div class="proj-groups">
             <button :class="{ on: !projectGroup }" @click="projectGroup = ''">All open <span>{{ projectCounts.open }}</span></button>
-            <button v-for="g in pipelineGroups" :key="g.key" :class="{ on: projectGroup === g.key }" @click="projectGroup = g.key; projectFilter = 'open'">{{ g.label }} <span>{{ g.count }}</span></button>
+            <button v-for="g in pipelineGroups" :key="g.key" :class="{ on: projectGroup === g.key }" @click="projectGroup = g.key; projectFilter = g.key === 'quote' ? 'quotes' : 'open'">{{ g.label }} <span>{{ g.count }}</span></button>
           </div>
           <div class="crm-card proj-table-card">
             <table class="proj-table">
@@ -2624,7 +2625,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=147"></script>
+<script type="module" src="js/app.js?v=148"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

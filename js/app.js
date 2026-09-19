@@ -289,9 +289,10 @@ createApp({
       const out = [];
       const noCust = this.cloudDesigns.filter((j) => !j.customerId);
       if (noCust.length) out.push({ key: 'nocust', label: `${noCust.length} project${noCust.length === 1 ? '' : 's'} not linked to a contact`, items: noCust.map((j) => ({ id: j.id, text: this.projectTitle(j) })) });
-      const noQuote = this.cloudDesigns.filter((j) => !['complete', 'cancelled'].includes(j.jobStatus) && !/^(QB)?\d{3,5}$/.test(String(j.quoteNumber || '')));
+      const isOpen = (j) => !['complete', 'cancelled'].includes(j.jobStatus) && stageOf(j) >= 2; // projects only, not quotes
+      const noQuote = this.cloudDesigns.filter((j) => isOpen(j) && !/^(QB)?\d{3,5}$/.test(String(j.quoteNumber || '')));
       if (noQuote.length) out.push({ key: 'noquote', label: `${noQuote.length} open project${noQuote.length === 1 ? '' : 's'} without a real quote number`, items: noQuote.map((j) => ({ id: j.id, text: this.projectTitle(j) })) });
-      const noDraw = this.cloudDesigns.filter((j) => !j.hasState && !['complete', 'cancelled'].includes(j.jobStatus));
+      const noDraw = this.cloudDesigns.filter((j) => !j.hasState && isOpen(j));
       if (noDraw.length) out.push({ key: 'nodraw', label: `${noDraw.length} open project${noDraw.length === 1 ? '' : 's'} with no drawing yet`, items: noDraw.map((j) => ({ id: j.id, text: this.projectTitle(j) })) });
       const byC = {}; for (const j of this.cloudDesigns) if (j.customerId && j.hasState) (byC[j.customerId] = byC[j.customerId] || []).push(j);
       const multi = Object.values(byC).filter((v) => v.length > 1);
@@ -301,7 +302,9 @@ createApp({
     filteredProjects() {
       const q = (this.projectSearch || '').trim().toLowerCase();
       let list = this.cloudDesigns;
-      if (this.projectFilter === 'open') list = list.filter((j) => !['complete', 'cancelled'].includes(j.jobStatus));
+      const live = (j) => !['complete', 'cancelled'].includes(j.jobStatus);
+      if (this.projectFilter === 'open') list = list.filter((j) => live(j) && stageOf(j) >= 2);
+      else if (this.projectFilter === 'quotes') list = list.filter((j) => live(j) && stageOf(j) <= 1);
       else if (this.projectFilter === 'complete') list = list.filter((j) => j.jobStatus === 'complete');
       else if (this.projectFilter === 'cancelled') list = list.filter((j) => j.jobStatus === 'cancelled');
       if (q) {
@@ -382,9 +385,10 @@ createApp({
       if (!j || j.hasState || !j.customerId) return [];
       return this.cloudDesigns.filter((d) => d.id !== j.id && d.hasState && d.customerId === j.customerId);
     },
+    /** A PROJECT starts when the holding deposit is received (stage 2). Stage 1 is a quote, not a project (Liam 19 Sep). */
     projectCounts() {
-      const c = { all: this.cloudDesigns.length, open: 0, complete: 0, cancelled: 0 };
-      for (const j of this.cloudDesigns) { if (j.jobStatus === 'complete') c.complete++; else if (j.jobStatus === 'cancelled') c.cancelled++; else c.open++; }
+      const c = { all: this.cloudDesigns.length, open: 0, quotes: 0, complete: 0, cancelled: 0 };
+      for (const j of this.cloudDesigns) { if (j.jobStatus === 'complete') c.complete++; else if (j.jobStatus === 'cancelled') c.cancelled++; else if (stageOf(j) <= 1) c.quotes++; else c.open++; }
       return c;
     },
     newProjectCustomerResults() {
