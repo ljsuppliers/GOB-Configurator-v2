@@ -6,7 +6,7 @@ import { generateDrawing } from './drawing-engine.js?v=47';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=3';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
-import { initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=5';
+import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=6';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=41';
 import { buildConstructionDrawings } from './construction.js?v=8';
@@ -194,6 +194,10 @@ createApp({
       projectFilter: 'open',
       cfgOpenState: {}, // design sidebar sections: key -> open? (missing = open)
       surveyPhotoBusy: false,
+      // OFFLINE OUTBOX: saves made with no signal wait here (localStorage) and upload when the connection is back.
+      outbox: [],
+      outboxSyncing: false,
+      online: typeof navigator !== 'undefined' ? navigator.onLine !== false : true,
       surveyPhotoCount: 0,
       projectBrand: 'gob', // Projects page shows one brand at a time: GOB (default) or Grannexe
       brands: BRANDS,
@@ -738,6 +742,7 @@ createApp({
       if (this.cloudReady) await this.refreshCloudDesigns();
       await this.restoreFromUrlOrDraft();
       if (this.cloudReady) { this.loadCustomers(); this.loadTasks(); }
+      this.flushOutbox();
     },
     async loginGoogle() {
       this.loginBusy = true; this.loginError = '';
@@ -901,7 +906,7 @@ createApp({
         this.state = ensureStateDefaults(JSON.parse(JSON.stringify(this.appData.defaults || {})));
         this.blankDesign = true;
         this.bomLines = []; this.orders = [];
-        this.state.customer = { ...(this.state.customer || {}), name: c.name || job.customer || '', address: [c.address, c.postcode].filter(Boolean).join(', ') || job.address || '', email: c.email || '', phone: c.phone || c.mobile || '', number: job.quoteNumber || '' };
+        this.state.customer = { ...(this.state.customer || {}), name: c.name || job.customer || '', address: [c.address, c.town, c.postcode].filter(Boolean).join(', ') || job.address || '', email: c.email || '', phone: c.phone || c.mobile || '', number: job.quoteNumber || '' };
         this.state.customerId = c.id || job.customerId || '';
         this.currentCloudId = job.id; this.currentCloudName = job.name;
         this.customersPage = false; this.materialsPage = false; this.installerPage = false;
@@ -920,7 +925,7 @@ createApp({
       const c = this.currentCustomer;
       if (!c || !c.id) return;
       this.newJob();
-      this.state.customer = { ...(this.state.customer || {}), name: c.name || '', address: [c.address, c.postcode].filter(Boolean).join(', '), email: c.email || '', phone: c.phone || c.mobile || '' };
+      this.state.customer = { ...(this.state.customer || {}), name: c.name || '', address: [c.address, c.town, c.postcode].filter(Boolean).join(', '), email: c.email || '', phone: c.phone || c.mobile || '' };
       this.state.customerId = c.id;
       this.customersPage = false;
       this.syncUrl();
@@ -1013,15 +1018,69 @@ createApp({
       if (!this.cloudReady) { this.notify('Not connected - check your internet and sign-in'); return; }
       if (!this.currentCloudId && !(this.state.customer && this.state.customer.name)) { this.notify('Type the customer name (Customer & Project) before the first save'); return; }
       clearTimeout(this._autosaveTimer);
+      if (!this.online) { this.queueOutbox(); this.markSaved(); return; }
       await this.saveJob();
       this.markSaved();
     },
     async autoSave() {
       if (!this.currentCloudId || !this.cloudReady || this.cloudLoading || !this.dirty) return;
+      if (!this.online || this.outbox.some((o) => o.id === this.currentCloudId)) { this.queueOutbox(); this.markSaved(); return; }
       this.autoSaving = true;
-      try { await updateDesign(this.currentCloudId, this.currentCloudName, this.state, this.userName(), this.price && typeof this.price.totalIncVat === 'number' ? this.price.totalIncVat : null); this.markSaved(); this.refreshCloudDesigns(); }
-      catch (e) { console.warn('autosave', e); }
+      try { await this.withTimeout(updateDesign(this.currentCloudId, this.currentCloudName, this.state, this.userName(), this.price && typeof this.price.totalIncVat === 'number' ? this.price.totalIncVat : null), 10000); this.markSaved(); this.refreshCloudDesigns(); }
+      catch (e) { console.warn('autosave', e); if (this.isNetworkError(e)) { this.queueOutbox(); this.markSaved(); } }
       this.autoSaving = false;
+    },
+    /* ── OFFLINE OUTBOX (Liam 20 Sep 2026: the survey must work in a garden with no signal) ── */
+    withTimeout(promise, ms) {
+      return Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('No connection (timed out)'), { code: 'unavailable' })), ms))]);
+    },
+    isNetworkError(e) {
+      const msg = String((e && e.message) || e || '').toLowerCase();
+      return !this.online || (e && (e.code === 'unavailable' || e.code === 'deadline-exceeded')) || /network|offline|timed out|unavailable|failed to fetch/.test(msg);
+    },
+    loadOutbox() {
+      try { this.outbox = JSON.parse(localStorage.getItem('gob-outbox-v1') || '[]'); } catch (e) { this.outbox = []; }
+    },
+    persistOutbox() {
+      try { localStorage.setItem('gob-outbox-v1', JSON.stringify(this.outbox)); } catch (e) { this.notify('Outbox could not be stored on this device (storage full?)'); }
+    },
+    /** Put the current design in the outbox (replacing an earlier entry for the same design). */
+    queueOutbox() {
+      if (!this.currentCloudId) { this.currentCloudId = newDesignId(); this.currentCloudName = this.currentCloudName || this.suggestedProjectName(); this.syncUrl(); }
+      const entry = { id: this.currentCloudId, name: this.currentCloudName || this.suggestedProjectName(), isNew: !(this.cloudDesigns || []).some((d) => d.id === this.currentCloudId), state: JSON.parse(JSON.stringify(this.state)), author: this.userName(), quoteTotal: this.price && typeof this.price.totalIncVat === 'number' ? this.price.totalIncVat : null, at: Date.now() };
+      const i = this.outbox.findIndex((o) => o.id === entry.id);
+      if (i >= 0) { entry.isNew = this.outbox[i].isNew; this.outbox.splice(i, 1, entry); } else this.outbox.push(entry);
+      this.persistOutbox();
+      this.notify(this.online ? 'Saved to the outbox, uploading when the connection allows' : 'No signal: saved on this device, uploads when you are back online');
+    },
+    outboxTitle() { return this.outbox.map((o) => `${o.name} (${new Date(o.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })})`).join('\n'); },
+    /** Upload everything in the outbox, oldest first. Stops at the first failure and tries again later. */
+    async flushOutbox(manual = false) {
+      if (this.outboxSyncing || !this.outbox.length) return;
+      if (!this.online) { if (manual) this.notify('Still no signal'); return; }
+      if (!this.cloudReady || !this.user || this.user.email === 'offline') { if (manual) this.notify('Sign in first'); return; }
+      this.outboxSyncing = true;
+      let done = 0;
+      try {
+        for (const o of [...this.outbox].sort((a, b) => a.at - b.at)) {
+          if (o.isNew) await this.withTimeout(saveDesign(o.name, o.state, o.author, o.id), 20000);
+          else await this.withTimeout(updateDesign(o.id, o.name, o.state, o.author, o.quoteTotal), 20000);
+          this.outbox = this.outbox.filter((x) => x.id !== o.id); this.persistOutbox(); done++;
+        }
+        this.notify(`Uploaded ${done} saved design${done === 1 ? '' : 's'} from the outbox`);
+        this.refreshCloudDesigns();
+      } catch (e) {
+        console.warn('outbox', e);
+        if (done) this.notify(`Uploaded ${done}, ${this.outbox.length} still waiting (${e.message})`);
+        else if (manual) this.notify('Upload failed: ' + e.message);
+      }
+      this.outboxSyncing = false;
+    },
+    initOffline() {
+      this.loadOutbox();
+      window.addEventListener('online', () => { this.online = true; this.flushOutbox(); });
+      window.addEventListener('offline', () => { this.online = false; });
+      setInterval(() => { if (this.online && this.outbox.length) this.flushOutbox(); }, 60000);
     },
     markSaved() {
       this.dirty = false; this.lastSavedAt = new Date();
@@ -1040,6 +1099,7 @@ createApp({
       this.notify('Saved as a new version: ' + name);
     },
     saveStatusText() {
+      if (this.currentCloudId && this.outbox.some((o) => o.id === this.currentCloudId)) return 'Saved on this device (outbox)';
       if (!this.currentCloudId) return this.dirty ? 'Not saved to a project yet' : '';
       if (this.autoSaving) return 'Saving…';
       if (this.dirty) return 'Unsaved changes (auto-saves in a few seconds)';
@@ -1105,6 +1165,22 @@ createApp({
         case 'visit': return !!(sv.visitDate || sv.referralSource || sv.useCase || sv.budgetRange || sv.competitorQuotes || sv.siteSketch || sv.completed || site.notes);
         default: return false;
       }
+    },
+    /** Address as three lines for the quote sheet: first line, town, postcode (Liam 20 Sep 2026).
+     *  Uses the linked contact's fields when there is one, otherwise splits the typed address. */
+    addressLines() {
+      const c = this.designCustomer;
+      if (c && (c.address || c.town || c.postcode)) return [c.address || '', c.town || '', c.postcode || ''].map((x) => String(x).trim());
+      const raw = String((this.state.customer && this.state.customer.address) || '').trim();
+      if (!raw) return ['', '', ''];
+      let parts = raw.split(/\n|,/).map((x) => x.trim()).filter(Boolean);
+      const PC = /\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/i;
+      let postcode = '';
+      const last = parts[parts.length - 1] || '';
+      const m = last.match(PC);
+      if (m) { postcode = (m[1] + ' ' + m[2]).toUpperCase(); const rest = last.replace(PC, '').trim(); parts.pop(); if (rest) parts.push(rest); }
+      const town = parts.length > 1 ? parts.pop() : '';
+      return [parts.join(', '), town, postcode];
     },
     /** Site photos taken from the survey section: filed under the linked contact and tagged with this project. */
     async uploadSurveyPhotos(ev) {
@@ -2441,6 +2517,7 @@ createApp({
         customerNumber: this.state.customer?.number || '',
         date: formatDateUK(this.state.customer?.date || new Date().toISOString().split('T')[0]),
         address: this.state.customer?.address || '',
+        addressLines: this.addressLines(),
         
         // Building
         width: this.state.width,
@@ -2613,7 +2690,7 @@ createApp({
       this.cloudLoading = true;
       this.cloudError = null;
       try {
-        const docId = await saveDesign(name, this.state, this.userName());
+        const docId = await this.withTimeout(saveDesign(name, this.state, this.userName(), this.currentCloudId || ''), 15000);
         this.currentCloudId = docId;
         this.currentCloudName = name;
         this.cloudSaveName = '';
@@ -2622,7 +2699,8 @@ createApp({
         await this.refreshCloudDesigns();
       } catch (err) {
         console.error('Cloud save error:', err);
-        this.cloudError = 'Failed to save: ' + err.message;
+        if (this.isNetworkError(err)) { this.currentCloudName = name; this.queueOutbox(); }
+        else this.cloudError = 'Failed to save: ' + err.message;
       } finally {
         this.cloudLoading = false;
       }
@@ -2633,13 +2711,15 @@ createApp({
       this.cloudLoading = true;
       this.cloudError = null;
       try {
-        await updateDesign(this.currentCloudId, this.currentCloudName, this.state, this.userName(), this.price && typeof this.price.totalIncVat === 'number' ? this.price.totalIncVat : null);
+        if (this.outbox.some((o) => o.id === this.currentCloudId)) throw Object.assign(new Error('Waiting in the outbox'), { code: 'unavailable' });
+        await this.withTimeout(updateDesign(this.currentCloudId, this.currentCloudName, this.state, this.userName(), this.price && typeof this.price.totalIncVat === 'number' ? this.price.totalIncVat : null), 15000);
         this.notify('Saved: ' + this.currentCloudName);
         this.markSaved();
         await this.refreshCloudDesigns();
       } catch (err) {
         console.error('Cloud update error:', err);
-        this.cloudError = 'Failed to update: ' + err.message;
+        if (this.isNetworkError(err)) this.queueOutbox();
+        else this.cloudError = 'Failed to update: ' + err.message;
       } finally {
         this.cloudLoading = false;
       }
@@ -2958,6 +3038,7 @@ createApp({
       this.appData = { prices, components, cladding, emailTemplates };
       this.state = ensureStateDefaults(JSON.parse(JSON.stringify(defaults)));
       this.appData.defaults = defaults;
+      this.initOffline();
       // URL + draft restore runs once a staff user is signed in (see afterLogin)
       
       // Ensure survey and site objects exist

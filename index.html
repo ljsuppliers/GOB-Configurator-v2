@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="css/app.css?v=29">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
-  <link rel="stylesheet" href="css/theme.css?v=12">
+  <link rel="stylesheet" href="css/theme.css?v=13">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
 <body>
@@ -86,6 +86,8 @@
         <button class="btn btn-icon" @click="redo" :disabled="!redoCount" title="Redo (⇧⌘Z)">↷ Redo</button>
         <span class="topbar-sep"></span>
         <span class="save-status" :class="{ dirty: dirty, unsaved: !currentCloudId }">{{ saveStatusText() }}</span>
+        <span v-if="outbox.length" class="outbox-chip" :class="{ syncing: outboxSyncing }" :title="outboxTitle()"><span class="outbox-dot"></span>{{ outbox.length }} waiting to upload<a href="#" @click.prevent="flushOutbox(true)"> · {{ outboxSyncing ? 'uploading…' : (online ? 'upload now' : 'no signal') }}</a></span>
+        <span v-else-if="!online" class="outbox-chip offline" title="No internet connection. Keep working: saves go into the outbox and upload when the signal is back."><span class="outbox-dot"></span>offline</span>
         <button class="btn" @click="newJob" title="Clear the screen and start a new design">New</button>
         <button class="btn btn-primary" @click="saveNow" :disabled="cloudLoading" title="Save this design to its project (creates the project on the first save)">Save</button>
         <div class="export-wrapper">
@@ -2587,13 +2589,13 @@
 <script src="lib/jspdf.min.js"></script>
 
 <!-- Firebase (compat SDK for cloud saves) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="lib/firebase/firebase-app-compat.js"></script>
+<script src="lib/firebase/firebase-firestore-compat.js"></script>
+<script src="lib/firebase/firebase-auth-compat.js"></script>
+<script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=159"></script>
+<script type="module" src="js/app.js?v=161"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

@@ -28,6 +28,9 @@ export function initFirebase() {
   return true;
 }
 
+/** A fresh Firestore document id, minted locally (works offline). */
+export function newDesignId() { return designsCollection ? designsCollection.doc().id : ('local-' + Date.now()); }
+
 export function isFirebaseReady() {
   return db !== null && firebaseConfig.apiKey !== "";
 }
@@ -72,11 +75,13 @@ function extractMetadata(state) {
   };
 }
 
-export async function saveDesign(name, state, author = '') {
+export async function saveDesign(name, state, author = '', docId = '') {
   if (!designsCollection) throw new Error('Firebase not initialised');
   const meta = extractMetadata(state);
   const now = firebase.firestore.FieldValue.serverTimestamp();
-  const doc = await designsCollection.add({
+  // A caller-supplied id makes the write idempotent (the offline outbox retries it).
+  const ref = docId ? designsCollection.doc(docId) : designsCollection.doc();
+  await ref.set({
     name,
     ...meta,
     source: 'crm', stage: 1, stageName: 'Quote sent', projectStatus: 'IN PROGRESS', createdBy: author || '',
@@ -84,7 +89,7 @@ export async function saveDesign(name, state, author = '') {
     updatedAt: now,
     state: JSON.parse(JSON.stringify(state)),
   });
-  return doc.id;
+  return ref.id;
 }
 
 export async function updateDesign(docId, name, state, author = '', quoteTotal = null) {

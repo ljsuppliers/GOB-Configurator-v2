@@ -266,7 +266,10 @@ function buildQuoteData(q) {
   if (q.customerName) custRow('Name', q.customerName);
   if (q.drawingNumber) custRow('Drawing #', q.drawingNumber);
   custRow('Quote Date', fmtDate(q.date || new Date()));
-  if (q.address) custRow('Address', q.address, 74);
+  // Address on three lines (first line / town / postcode) in the same 74px box (Liam 20 Sep 2026)
+  const addrLines = Array.isArray(q.addressLines) && q.addressLines.some(Boolean) ? q.addressLines.map((x) => String(x || '').trim()).filter(Boolean) : null;
+  if (addrLines) custRow('Address', addrLines.join('\n'), 74);
+  else if (q.address) custRow('Address', q.address, 74);
 
   spacer(22);
 
