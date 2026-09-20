@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="css/app.css?v=29">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
-  <link rel="stylesheet" href="css/theme.css?v=10">
+  <link rel="stylesheet" href="css/theme.css?v=12">
   <link rel="stylesheet" href="css/drawing.css">
 </head>
 <body>
@@ -189,8 +189,10 @@
         </div>
 
         <!-- Customer & Project -->
-        <div class="config-section">
-          <h4>Customer & Project</h4>
+        <div class="cfg-toolbar"><span class="cfg-toolbar-label">Sections</span><button type="button" class="btn-tiny" @click="cfgPreset('visit')" title="Open just the sections you fill in on a site visit">Site visit</button><button type="button" class="btn-tiny" @click="cfgPreset('all')">Expand all</button><button type="button" class="btn-tiny" @click="cfgPreset('none')">Collapse all</button></div>
+        <div class="config-section cfg" :class="{ 'cfg-closed': !cfgOpen('customer'), 'cfg-done': cfgDone('customer') }">
+          <h4 class="cfg-head" @click="toggleCfg('customer')"><span class="cfg-tick">&#10003;</span><span class="cfg-title">1. Customer &amp; project</span><span class="cfg-caret">{{ cfgOpen('customer') ? '&#8963;' : '&#8964;' }}</span></h4>
+          <div class="cfg-body" v-show="cfgOpen('customer')">
           <div class="cust-link" v-if="cloudReady">
             <template v-if="designCustomer">
               <span class="cust-link-label">Customer record</span>
@@ -305,11 +307,160 @@
               </label>
             </div>
           </div>
+          </div>
         </div>
-
-        <!-- Building Design -->
-        <div class="config-section">
-          <h4>Building Design</h4>
+        <div class="config-section cfg" :class="{ 'cfg-closed': !cfgOpen('site'), 'cfg-done': cfgDone('site') }">
+          <h4 class="cfg-head" @click="toggleCfg('site')"><span class="cfg-tick">&#10003;</span><span class="cfg-title">2. Site</span><span class="cfg-caret">{{ cfgOpen('site') ? '&#8963;' : '&#8964;' }}</span></h4>
+          <div class="cfg-body" v-show="cfgOpen('site')">
+          <h5 class="cfg-sub">Boundaries</h5>
+          <div class="checkbox-row" style="margin-bottom:8px;">
+            <input type="checkbox" v-model="state.showBoundaries" id="chk-show-boundaries">
+            <label for="chk-show-boundaries">Show boundaries on plan view</label>
+          </div>
+          <div class="dim-row">
+            <div>
+              <label>Left (mm)</label>
+              <input type="number" v-model.number="state.site.boundaryLeft" placeholder="1500" step="50">
+            </div>
+            <div>
+              <label>Right (mm)</label>
+              <input type="number" v-model.number="state.site.boundaryRight" placeholder="2000" step="50">
+            </div>
+            <div>
+              <label>Rear (mm)</label>
+              <input type="number" v-model.number="state.site.boundaryRear" placeholder="3000" step="50">
+            </div>
+          </div>
+          <div class="survey-sub">
+            <h5 class="cfg-sub">Site Location & Access</h5>
+            <label>Location in Garden
+              <input type="text" v-model="state.site.location" placeholder="e.g. Bottom left, facing house">
+            </label>
+            <label>Garden Access
+              <select v-model="state.site.access">
+                <option value="">Select...</option>
+                <option value="side-gate">Side gate</option>
+                <option value="through-house">Through house only</option>
+                <option value="rear-alley">Rear alley/access</option>
+                <option value="wide-access">Wide side access (vehicle)</option>
+                <option value="difficult">Difficult access</option>
+              </select>
+            </label>
+            <div class="survey-row-2col" style="margin-top:6px;">
+              <label>Access Charge (£)
+                <input type="number" v-model.number="state.site.accessCharge" min="0" step="50" placeholder="0">
+              </label>
+              <label>Reason
+                <input type="text" v-model="state.site.accessChargeReason" placeholder="e.g. Through house">
+              </label>
+            </div>
+            <label>Parking
+              <input type="text" v-model="state.site.parking" placeholder="e.g. Driveway, on-street">
+            </label>
+          </div>
+          <div class="survey-sub">
+            <h5 class="cfg-sub">Ground Conditions</h5>
+            <label>Slope
+              <select v-model="state.site.slope">
+                <option value="">Select...</option>
+                <option value="level">Level</option>
+                <option value="slight-slope">Slight slope</option>
+                <option value="significant-slope">Significant slope</option>
+              </select>
+            </label>
+            <label>Soil Type
+              <select v-model="state.site.soilType">
+                <option value="">Select...</option>
+                <option value="normal">Normal soil</option>
+                <option value="clay">Clay</option>
+                <option value="sandy">Sandy</option>
+                <option value="rocky">Rocky</option>
+              </select>
+            </label>
+            <label>Proposed Foundation
+              <select v-model="state.site.proposedFoundation">
+                <option value="">Select...</option>
+                <option value="ground-screws">Ground screws</option>
+                <option value="concrete-new">Concrete base (new)</option>
+                <option value="concrete-existing">Concrete base (existing)</option>
+              </select>
+            </label>
+            <label>Ground Notes
+              <input type="text" v-model="state.site.groundNotes" placeholder="Any relevant ground info...">
+            </label>
+          </div>
+          <div class="survey-sub">
+            <h5 class="cfg-sub">Existing Structures</h5>
+            <label>Structure in build area?
+              <select v-model="state.site.existingStructure">
+                <option value="">None</option>
+                <option value="shed">Shed</option>
+                <option value="summerhouse">Summerhouse</option>
+                <option value="old-building">Old building</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label>Removal
+              <select v-model="state.site.structureRemoval">
+                <option value="">N/A</option>
+                <option value="customer">Customer will remove</option>
+                <option value="gob">GOB to remove</option>
+              </select>
+            </label>
+            <label>Notes
+              <input type="text" v-model="state.site.structureNotes" placeholder="Size, condition, etc.">
+            </label>
+          </div>
+          <div class="survey-sub">
+            <h5 class="cfg-sub">Adjacent Structures</h5>
+            <textarea v-model="state.site.structures" rows="2" placeholder="e.g. Shed to left, fence at rear..."></textarea>
+          </div>
+          <div class="survey-sub">
+            <h5 class="cfg-sub">Landscaping / Prep Works</h5>
+            <label>Prep works required?
+              <select v-model="state.site.prepWorks">
+                <option value="">Select...</option>
+                <option value="none">No prep needed</option>
+                <option value="customer">Customer will prepare</option>
+                <option value="gob">GOB / landscaper to prepare</option>
+                <option value="visit-needed">Landscaper visit needed</option>
+              </select>
+            </label>
+            <label>Prep Notes
+              <textarea v-model="state.site.prepNotes" rows="2" placeholder="Levelling, tree removal, fence move..."></textarea>
+            </label>
+          </div>
+          <div class="survey-sub">
+            <h5 class="cfg-sub">Electrics / Power Source</h5>
+            <label>Consumer Unit Location
+              <select v-model="state.site.powerSource">
+                <option value="">Select...</option>
+                <option value="consumer-unit">Consumer unit</option>
+                <option value="existing-cable">Existing cable</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label>Location Details
+              <input type="text" v-model="state.site.powerLocation" placeholder="e.g. Kitchen, 15m away">
+            </label>
+            <label>Distance to Building (approx)
+              <input type="text" v-model="state.site.powerDistance" placeholder="e.g. 20m">
+            </label>
+          </div>
+          <div class="survey-sub">
+            <h5 class="cfg-sub">Planning</h5>
+            <label class="checkbox-row">
+              <input type="checkbox" v-model="state.site.permittedDevelopment"> Within permitted development
+            </label>
+            <label>Planning Notes
+              <textarea v-model="state.site.planningNotes" rows="2" placeholder="Height > 2.5m, conservation area, Article 4, listed building..."></textarea>
+            </label>
+          </div>
+          </div>
+        </div>
+        <div class="config-section cfg" :class="{ 'cfg-closed': !cfgOpen('building'), 'cfg-done': cfgDone('building') }">
+          <h4 class="cfg-head" @click="toggleCfg('building')"><span class="cfg-tick">&#10003;</span><span class="cfg-title">3. Building &amp; foundation</span><span class="cfg-caret">{{ cfgOpen('building') ? '&#8963;' : '&#8964;' }}</span></h4>
+          <div class="cfg-body" v-show="cfgOpen('building')">
           <div class="dim-row">
             <div>
               <label>External width (mm)</label>
@@ -328,48 +479,8 @@
             <label><input type="radio" v-model="state.tier" value="signature"> Signature</label>
             <label><input type="radio" v-model="state.tier" value="classic"> Classic</label>
           </div>
-        </div>
-
-        <!-- Cladding -->
-        <div class="config-section">
-          <h4>Cladding</h4>
-          <div class="cladding-grid">
-            <div>
-              <label>Front</label>
-              <select v-model="state.cladding.front">
-                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}{{ cd.default ? ' (standard)' : '' }}</option>
-              </select>
-            </div>
-            <div>
-              <label>Left</label>
-              <select v-model="state.cladding.left">
-                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}{{ cd.default ? ' (standard)' : '' }}</option>
-              </select>
-            </div>
-            <div>
-              <label>Right</label>
-              <select v-model="state.cladding.right">
-                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}{{ cd.default ? ' (standard)' : '' }}</option>
-              </select>
-            </div>
-            <div>
-              <label>Rear</label>
-              <select v-model="state.cladding.rear">
-                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}{{ cd.default ? ' (standard)' : '' }}</option>
-              </select>
-            </div>
-          </div>
-          <div v-if="state.cladding.front === 'other' || state.cladding.left === 'other' || state.cladding.right === 'other' || state.cladding.rear === 'other'" style="margin-top:8px;">
-            <label>Custom Cladding Description
-              <input type="text" v-model="state.cladding.otherDescription" placeholder="e.g. Millboard Lasta-Grip Enhanced Grain">
-            </label>
-          </div>
-        </div>
-
-        <!-- Corners, Canopy & Decking -->
-        <div class="config-section">
-          <h4 v-if="state.tier === 'signature'">Corners, Canopy & Decking</h4>
-          <h4 v-else>Decking</h4>
+          <h5 class="cfg-sub" v-if="state.tier === 'signature'">Corners, Canopy & Decking</h5>
+          <h5 class="cfg-sub" v-else>Decking</h5>
           <div v-if="state.tier === 'signature'" class="corner-row">
             <div>
               <label class="corner-label">Left Corner</label>
@@ -419,11 +530,7 @@
               </label>
             </div>
           </div>
-        </div>
-
-        <!-- Foundation / Groundworks -->
-        <div class="config-section">
-          <h4>Foundation / Groundworks</h4>
+          <h5 class="cfg-sub">Foundation / groundworks</h5>
           <label>Foundation Type
             <select v-model="state.foundationType">
               <option value="ground-screw">Ground screws (installed by our team)</option>
@@ -435,11 +542,109 @@
               <option value="hybrid">Hybrid: existing base + ground screws</option>
             </select>
           </label>
+          </div>
         </div>
-
-        <!-- Layout & Rooms -->
-        <div class="config-section">
-          <h4>Rooms</h4>
+        <div class="config-section cfg" :class="{ 'cfg-closed': !cfgOpen('cladding'), 'cfg-done': cfgDone('cladding') }">
+          <h4 class="cfg-head" @click="toggleCfg('cladding')"><span class="cfg-tick">&#10003;</span><span class="cfg-title">4. Cladding</span><span class="cfg-caret">{{ cfgOpen('cladding') ? '&#8963;' : '&#8964;' }}</span></h4>
+          <div class="cfg-body" v-show="cfgOpen('cladding')">
+          <div class="cladding-grid">
+            <div>
+              <label>Front</label>
+              <select v-model="state.cladding.front">
+                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}{{ cd.default ? ' (standard)' : '' }}</option>
+              </select>
+            </div>
+            <div>
+              <label>Left</label>
+              <select v-model="state.cladding.left">
+                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}{{ cd.default ? ' (standard)' : '' }}</option>
+              </select>
+            </div>
+            <div>
+              <label>Right</label>
+              <select v-model="state.cladding.right">
+                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}{{ cd.default ? ' (standard)' : '' }}</option>
+              </select>
+            </div>
+            <div>
+              <label>Rear</label>
+              <select v-model="state.cladding.rear">
+                <option v-for="(cd, key) in sortedCladdingTypes" :key="key" :value="key">{{ cd.label }}{{ cd.default ? ' (standard)' : '' }}</option>
+              </select>
+            </div>
+          </div>
+          <div v-if="state.cladding.front === 'other' || state.cladding.left === 'other' || state.cladding.right === 'other' || state.cladding.rear === 'other'" style="margin-top:8px;">
+            <label>Custom Cladding Description
+              <input type="text" v-model="state.cladding.otherDescription" placeholder="e.g. Millboard Lasta-Grip Enhanced Grain">
+            </label>
+          </div>
+          </div>
+        </div>
+        <div class="config-section cfg" :class="{ 'cfg-closed': !cfgOpen('doors'), 'cfg-done': cfgDone('doors') }">
+          <h4 class="cfg-head" @click="toggleCfg('doors')"><span class="cfg-tick">&#10003;</span><span class="cfg-title">5. Doors &amp; windows</span><span class="cfg-caret">{{ cfgOpen('doors') ? '&#8963;' : '&#8964;' }}</span></h4>
+          <div class="cfg-body" v-show="cfgOpen('doors')">
+          <h5 class="cfg-sub">Doors</h5>
+          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;">Double-click to add to front elevation</p>
+          <div class="palette">
+            <div v-for="(def, key) in doorTypes" :key="key"
+                 class="palette-item" @dblclick="addComponent(key)">
+              <span class="palette-label">{{ def.label }}</span>
+              <span class="palette-size">{{ def.width }}mm</span>
+              <span v-if="def.upgradePrice > 0" class="palette-price">+{{ fmt(def.upgradePrice) }}</span>
+            </div>
+          </div>
+          <h5 class="cfg-sub">Windows</h5>
+          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;">Double-click to add to front elevation</p>
+          <div class="palette">
+            <div v-for="(def, key) in windowTypes" :key="key"
+                 class="palette-item" @dblclick="addComponent(key)">
+              <span class="palette-label">{{ def.label }}</span>
+              <span class="palette-size">{{ def.width }}mm</span>
+            </div>
+          </div>
+          <h5 class="cfg-sub">Placed Components</h5>
+          <p v-if="!state.components.length" class="empty-msg">Double-click doors/windows above to add.</p>
+          <div v-for="comp in state.components" :key="comp.id" class="placed-component" style="flex-wrap:wrap;gap:4px;">
+            <div style="display:flex;align-items:center;gap:4px;width:100%;">
+              <span class="comp-label" style="flex:1;min-width:80px;">{{ comp.label }}</span>
+              <select v-model="comp.elevation" class="input-sm" style="width:55px;">
+                <option value="front">Front</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+                <option value="rear">Rear</option>
+              </select>
+              <select v-if="comp.type.includes('sliding') || comp.type.includes('single')" v-model="comp.handleSide" @change="$forceUpdate()" class="input-sm" style="width:50px;" title="Handle side / opening direction">
+                <option value="left">L</option>
+                <option value="right">R</option>
+              </select>
+              <button class="comp-delete" @click="removeComponent(comp.id)">&#215;</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;width:100%;font-size:11px;">
+              <span style="color:#888;width:50px;">Position</span>
+              <button @click="comp.positionX = Math.max(0, comp.positionX - 50)" class="btn-sm" title="Move left 50mm" style="padding:2px 6px;font-size:11px;">&#9664;</button>
+              <input type="number" v-model.number="comp.positionX" class="input-sm" style="width:50px;" step="50" title="Position from left (mm)">
+              <span style="color:#888;">mm</span>
+              <button @click="comp.positionX = comp.positionX + 50" class="btn-sm" title="Move right 50mm" style="padding:2px 6px;font-size:11px;">&#9654;</button>
+            </div>
+            <div v-if="canMoveVertically(comp)" style="display:flex;align-items:center;gap:4px;width:100%;font-size:11px;">
+              <span style="color:#888;width:50px;">Height</span>
+              <input type="number" v-model.number="comp.positionY" class="input-sm" style="width:50px;" step="50" title="Height from ground (mm)">
+              <span style="color:#888;">mm from ground</span>
+            </div>
+            <details style="width:100%;font-size:11px;">
+              <summary style="color:#888;cursor:pointer;user-select:none;">Custom width</summary>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:4px;">
+                <input type="number" v-model.number="comp.customWidth" class="input-sm" style="width:60px;" step="50" :placeholder="getCompWidth(comp)">
+                <span style="color:#888;">mm (default: {{ getCompWidth(comp) }})</span>
+              </div>
+            </details>
+          </div>
+          </div>
+        </div>
+        <div class="config-section cfg" :class="{ 'cfg-closed': !cfgOpen('layout'), 'cfg-done': cfgDone('layout') }">
+          <h4 class="cfg-head" @click="toggleCfg('layout')"><span class="cfg-tick">&#10003;</span><span class="cfg-title">6. Internal layout</span><span class="cfg-caret">{{ cfgOpen('layout') ? '&#8963;' : '&#8964;' }}</span></h4>
+          <div class="cfg-body" v-show="cfgOpen('layout')">
+          <h5 class="cfg-sub">Rooms</h5>
           <div v-for="(room, i) in state.rooms" :key="i" class="placed-component" style="flex-wrap:wrap;">
             <div style="display:flex;align-items:center;gap:4px;width:100%;">
               <input type="text" v-model="room.label" class="input-sm" style="width:90px;">
@@ -478,11 +683,7 @@
               </div>
             </div>
           </details>
-        </div>
-
-        <!-- Straight Partition (back to front) -->
-        <div class="config-section">
-          <h4>Straight Partition</h4>
+          <h5 class="cfg-sub">Straight Partition</h5>
           <div class="checkbox-row">
             <input type="checkbox" v-model="state.straightPartition.enabled" id="chk-straight-partition">
             <label for="chk-straight-partition">Add partition wall</label>
@@ -522,11 +723,7 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Corner Partition Room -->
-        <div class="config-section">
-          <h4>Corner Partition Room</h4>
+          <h5 class="cfg-sub">Corner Partition Room</h5>
           <div class="checkbox-row">
             <input type="checkbox" v-model="state.partitionRoom.enabled" id="chk-partition-room">
             <label for="chk-partition-room">Add corner room</label>
@@ -583,11 +780,7 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Bathroom Suite -->
-        <div class="config-section">
-          <h4>Bathroom / WC Suite</h4>
+          <h5 class="cfg-sub">Bathroom / WC Suite</h5>
           <div class="checkbox-row">
             <input type="checkbox" v-model="state.bathroom.enabled" id="chk-bathroom">
             <label for="chk-bathroom">Include bathroom/WC suite</label>
@@ -611,167 +804,11 @@
               <textarea v-model="state.bathroom.notes" rows="2" placeholder="e.g. Customer to confirm soil pipe location" style="width:100%;font-size:12px;"></textarea>
             </label>
           </div>
-        </div>
-
-        <!-- Doors Palette -->
-        <div class="config-section">
-          <h4>Doors</h4>
-          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;">Double-click to add to front elevation</p>
-          <div class="palette">
-            <div v-for="(def, key) in doorTypes" :key="key"
-                 class="palette-item" @dblclick="addComponent(key)">
-              <span class="palette-label">{{ def.label }}</span>
-              <span class="palette-size">{{ def.width }}mm</span>
-              <span v-if="def.upgradePrice > 0" class="palette-price">+{{ fmt(def.upgradePrice) }}</span>
-            </div>
           </div>
         </div>
-
-        <!-- Windows Palette -->
-        <div class="config-section">
-          <h4>Windows</h4>
-          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;">Double-click to add to front elevation</p>
-          <div class="palette">
-            <div v-for="(def, key) in windowTypes" :key="key"
-                 class="palette-item" @dblclick="addComponent(key)">
-              <span class="palette-label">{{ def.label }}</span>
-              <span class="palette-size">{{ def.width }}mm</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Placed Components -->
-        <div class="config-section">
-          <h4>Placed Components</h4>
-          <p v-if="!state.components.length" class="empty-msg">Double-click doors/windows above to add.</p>
-          <div v-for="comp in state.components" :key="comp.id" class="placed-component" style="flex-wrap:wrap;gap:4px;">
-            <div style="display:flex;align-items:center;gap:4px;width:100%;">
-              <span class="comp-label" style="flex:1;min-width:80px;">{{ comp.label }}</span>
-              <select v-model="comp.elevation" class="input-sm" style="width:55px;">
-                <option value="front">Front</option>
-                <option value="left">Left</option>
-                <option value="right">Right</option>
-                <option value="rear">Rear</option>
-              </select>
-              <select v-if="comp.type.includes('sliding') || comp.type.includes('single')" v-model="comp.handleSide" @change="$forceUpdate()" class="input-sm" style="width:50px;" title="Handle side / opening direction">
-                <option value="left">L</option>
-                <option value="right">R</option>
-              </select>
-              <button class="comp-delete" @click="removeComponent(comp.id)">&#215;</button>
-            </div>
-            <div style="display:flex;align-items:center;gap:4px;width:100%;font-size:11px;">
-              <span style="color:#888;width:50px;">Position</span>
-              <button @click="comp.positionX = Math.max(0, comp.positionX - 50)" class="btn-sm" title="Move left 50mm" style="padding:2px 6px;font-size:11px;">&#9664;</button>
-              <input type="number" v-model.number="comp.positionX" class="input-sm" style="width:50px;" step="50" title="Position from left (mm)">
-              <span style="color:#888;">mm</span>
-              <button @click="comp.positionX = comp.positionX + 50" class="btn-sm" title="Move right 50mm" style="padding:2px 6px;font-size:11px;">&#9654;</button>
-            </div>
-            <div v-if="canMoveVertically(comp)" style="display:flex;align-items:center;gap:4px;width:100%;font-size:11px;">
-              <span style="color:#888;width:50px;">Height</span>
-              <input type="number" v-model.number="comp.positionY" class="input-sm" style="width:50px;" step="50" title="Height from ground (mm)">
-              <span style="color:#888;">mm from ground</span>
-            </div>
-            <details style="width:100%;font-size:11px;">
-              <summary style="color:#888;cursor:pointer;user-select:none;">Custom width</summary>
-              <div style="display:flex;align-items:center;gap:4px;margin-top:4px;">
-                <input type="number" v-model.number="comp.customWidth" class="input-sm" style="width:60px;" step="50" :placeholder="getCompWidth(comp)">
-                <span style="color:#888;">mm (default: {{ getCompWidth(comp) }})</span>
-              </div>
-            </details>
-          </div>
-        </div>
-
-        <!-- External Features on Drawing -->
-        <div class="config-section">
-          <h4>External Features on Drawing</h4>
-          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Add lights/sockets to elevation drawings (drag to position)</p>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
-            <button class="btn" style="flex:1;padding:6px;font-size:11px;" @click="addExternalFeature('upDownLight', 'front')">+ Light (Front)</button>
-            <button class="btn" style="flex:1;padding:6px;font-size:11px;" @click="addExternalFeature('upDownLight', 'left')">+ Light (Left)</button>
-            <button class="btn" style="flex:1;padding:6px;font-size:11px;" @click="addExternalFeature('upDownLight', 'right')">+ Light (Right)</button>
-            <button class="btn" style="flex:1;padding:6px;font-size:12px;" @click="addExternalFeature('socket', 'front')">+ Ext. Socket</button>
-          </div>
-          <p v-if="!state.externalFeatures.length" class="empty-msg">Click buttons above to add.</p>
-          <div v-for="feat in state.externalFeatures" :key="feat.id" class="placed-component">
-            <span class="comp-label">{{ feat.type === 'upDownLight' ? 'Up/Down Light' : 'Ext. Socket' }}</span>
-            <select v-model="feat.elevation" class="input-sm" style="width:60px;font-size:11px;" title="Elevation">
-              <option value="front">Front</option>
-              <option value="left">Left</option>
-              <option value="right">Right</option>
-            </select>
-            <input type="number" v-model.number="feat.x" class="input-sm" style="width:55px;" step="50" title="X position (mm from left)">
-            <span class="comp-pos">x</span>
-            <input type="number" v-model.number="feat.y" class="input-sm" style="width:55px;" step="50" title="Y position (mm from ground)">
-            <span class="comp-pos">y</span>
-            <button class="comp-delete" @click="removeExternalFeature(feat.id)">&#215;</button>
-          </div>
-        </div>
-
-        <!-- AC Units on Plan View -->
-        <div class="config-section">
-          <h4>AC Units (Plan View)</h4>
-          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Add AC unit rectangles to plan view (drag to position)</p>
-          <div style="display:flex;gap:6px;margin-bottom:10px;">
-            <button class="btn" style="flex:1;padding:6px;font-size:12px;" @click="addAcUnit('internal')">+ Internal AC</button>
-            <button class="btn" style="flex:1;padding:6px;font-size:12px;" @click="addAcUnit('external')">+ External AC</button>
-          </div>
-          <p v-if="!state.acUnits.length" class="empty-msg">Click buttons above to add.</p>
-          <div v-for="unit in state.acUnits" :key="unit.id" class="placed-component" style="flex-wrap:wrap;gap:4px;">
-            <div style="display:flex;align-items:center;gap:4px;width:100%;">
-              <span class="comp-label">{{ unit.type === 'internal' ? 'AC (Int)' : 'AC (Ext)' }}</span>
-              <input type="number" v-model.number="unit.x" class="input-sm" style="width:55px;" step="50" title="X position (mm)">
-              <span class="comp-pos">x</span>
-              <input type="number" v-model.number="unit.y" class="input-sm" style="width:55px;" step="50" title="Y position (mm)">
-              <span class="comp-pos">y</span>
-              <button class="comp-delete" @click="removeAcUnit(unit.id)">&#215;</button>
-            </div>
-            <div style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;">
-              <span style="color:#888;">W</span>
-              <input type="number" v-model.number="unit.w" class="input-sm" style="width:55px;" step="50" min="200" title="Width (mm)">
-              <span style="color:#888;">H</span>
-              <input type="number" v-model.number="unit.h" class="input-sm" style="width:55px;" step="50" min="200" title="Height (mm)">
-              <button class="btn-sm" style="padding:2px 8px;font-size:11px;" @click="unit.rotated = !unit.rotated" :title="unit.rotated ? 'Vertical — click to rotate horizontal' : 'Horizontal — click to rotate vertical'">&#8635; {{ unit.rotated ? 'Vert' : 'Horiz' }}</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Drawing Labels with Arrows -->
-        <div class="config-section">
-          <h4>Drawing Labels</h4>
-          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Add text labels anywhere on the drawing (drag to position)</p>
-          <div style="margin-bottom:10px;">
-            <button class="btn" style="padding:6px;font-size:12px;" @click="addDrawingLabel">+ Add Label</button>
-          </div>
-          <p v-if="!state.drawingLabels.length" class="empty-msg">Click button above to add.</p>
-          <div v-for="lbl in state.drawingLabels" :key="lbl.id" class="placed-component" style="flex-wrap:wrap;gap:4px;">
-            <div style="display:flex;align-items:center;gap:4px;width:100%;">
-              <input type="text" v-model="lbl.text" class="input-sm" style="flex:1;min-width:80px;" placeholder="Label text">
-              <span style="color:#888;font-size:11px;">Size</span>
-              <input type="number" v-model.number="lbl.fontSize" class="input-sm" style="width:50px;" step="10" min="40" max="400" title="Font size">
-              <input type="color" v-model="lbl.color" style="width:24px;height:24px;padding:0;border:1px solid #ccc;border-radius:3px;cursor:pointer;" title="Text colour">
-              <button class="comp-delete" @click="removeDrawingLabel(lbl.id)">&#215;</button>
-            </div>
-            <div style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;">
-              <span style="color:#888;">X</span>
-              <input type="number" v-model.number="lbl.x" class="input-sm" style="width:55px;" step="50">
-              <span style="color:#888;">Y</span>
-              <input type="number" v-model.number="lbl.y" class="input-sm" style="width:55px;" step="50">
-              <label style="display:flex;align-items:center;gap:2px;margin-left:4px;">
-                <input type="checkbox" v-model="lbl.arrowEnabled"> Arrow
-              </label>
-            </div>
-            <div v-if="lbl.arrowEnabled" style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;">
-              <span style="color:#888;">Tip X</span>
-              <input type="number" v-model.number="lbl.arrowX" class="input-sm" style="width:55px;" step="50">
-              <span style="color:#888;">Tip Y</span>
-              <input type="number" v-model.number="lbl.arrowY" class="input-sm" style="width:55px;" step="50">
-            </div>
-          </div>
-        </div>
-
-        <!-- Electrical Extras -->
-        <div class="config-section">
-          <h4>Electrical Extras</h4>
+        <div class="config-section cfg" :class="{ 'cfg-closed': !cfgOpen('electrics'), 'cfg-done': cfgDone('electrics') }">
+          <h4 class="cfg-head" @click="toggleCfg('electrics')"><span class="cfg-tick">&#10003;</span><span class="cfg-title">7. Electrics</span><span class="cfg-caret">{{ cfgOpen('electrics') ? '&#8963;' : '&#8964;' }}</span></h4>
+          <div class="cfg-body" v-show="cfgOpen('electrics')">
           <div v-for="ex in stepperExtras" :key="ex.key" class="stepper-row">
             <span class="stepper-label">{{ ex.label }}</span>
             <span class="stepper-price">&pound;{{ ex.price }}</span>
@@ -815,11 +852,59 @@
             <label for="chk-tv-mounting">TV mounting preparation</label>
             <span class="extra-price">&pound;95</span>
           </div>
+          <div class="stepper-row"><span class="stepper-label">Up/down lights (placed on the drawing below)</span><span class="stepper-price">&pound;95</span><span class="stepper-value" style="margin-left:auto">{{ state.extras.upDownLight || 0 }}</span></div>
+          <div class="stepper-row"><span class="stepper-label">External sockets (placed on the drawing below)</span><span class="stepper-price">&pound;235</span><span class="stepper-value" style="margin-left:auto">{{ state.extras.externalSocket || 0 }}</span></div>
+          <h5 class="cfg-sub">External Features on Drawing</h5>
+          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Add lights/sockets to elevation drawings (drag to position)</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+            <button class="btn" style="flex:1;padding:6px;font-size:11px;" @click="addExternalFeature('upDownLight', 'front')">+ Light (Front)</button>
+            <button class="btn" style="flex:1;padding:6px;font-size:11px;" @click="addExternalFeature('upDownLight', 'left')">+ Light (Left)</button>
+            <button class="btn" style="flex:1;padding:6px;font-size:11px;" @click="addExternalFeature('upDownLight', 'right')">+ Light (Right)</button>
+            <button class="btn" style="flex:1;padding:6px;font-size:12px;" @click="addExternalFeature('socket', 'front')">+ Ext. Socket</button>
+          </div>
+          <p v-if="!state.externalFeatures.length" class="empty-msg">Click buttons above to add.</p>
+          <div v-for="feat in state.externalFeatures" :key="feat.id" class="placed-component">
+            <span class="comp-label">{{ feat.type === 'upDownLight' ? 'Up/Down Light' : 'Ext. Socket' }}</span>
+            <select v-model="feat.elevation" class="input-sm" style="width:60px;font-size:11px;" title="Elevation">
+              <option value="front">Front</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+            </select>
+            <input type="number" v-model.number="feat.x" class="input-sm" style="width:55px;" step="50" title="X position (mm from left)">
+            <span class="comp-pos">x</span>
+            <input type="number" v-model.number="feat.y" class="input-sm" style="width:55px;" step="50" title="Y position (mm from ground)">
+            <span class="comp-pos">y</span>
+            <button class="comp-delete" @click="removeExternalFeature(feat.id)">&#215;</button>
+          </div>
+          <h5 class="cfg-sub">AC Units (Plan View)</h5>
+          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Add AC unit rectangles to plan view (drag to position)</p>
+          <div style="display:flex;gap:6px;margin-bottom:10px;">
+            <button class="btn" style="flex:1;padding:6px;font-size:12px;" @click="addAcUnit('internal')">+ Internal AC</button>
+            <button class="btn" style="flex:1;padding:6px;font-size:12px;" @click="addAcUnit('external')">+ External AC</button>
+          </div>
+          <p v-if="!state.acUnits.length" class="empty-msg">Click buttons above to add.</p>
+          <div v-for="unit in state.acUnits" :key="unit.id" class="placed-component" style="flex-wrap:wrap;gap:4px;">
+            <div style="display:flex;align-items:center;gap:4px;width:100%;">
+              <span class="comp-label">{{ unit.type === 'internal' ? 'AC (Int)' : 'AC (Ext)' }}</span>
+              <input type="number" v-model.number="unit.x" class="input-sm" style="width:55px;" step="50" title="X position (mm)">
+              <span class="comp-pos">x</span>
+              <input type="number" v-model.number="unit.y" class="input-sm" style="width:55px;" step="50" title="Y position (mm)">
+              <span class="comp-pos">y</span>
+              <button class="comp-delete" @click="removeAcUnit(unit.id)">&#215;</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;">
+              <span style="color:#888;">W</span>
+              <input type="number" v-model.number="unit.w" class="input-sm" style="width:55px;" step="50" min="200" title="Width (mm)">
+              <span style="color:#888;">H</span>
+              <input type="number" v-model.number="unit.h" class="input-sm" style="width:55px;" step="50" min="200" title="Height (mm)">
+              <button class="btn-sm" style="padding:2px 8px;font-size:11px;" @click="unit.rotated = !unit.rotated" :title="unit.rotated ? 'Vertical — click to rotate horizontal' : 'Horizontal — click to rotate vertical'">&#8635; {{ unit.rotated ? 'Vert' : 'Horiz' }}</button>
+            </div>
+          </div>
+          </div>
         </div>
-
-        <!-- Structural Extras -->
-        <div class="config-section">
-          <h4>Structural Extras</h4>
+        <div class="config-section cfg" :class="{ 'cfg-closed': !cfgOpen('extras'), 'cfg-done': cfgDone('extras') }">
+          <h4 class="cfg-head" @click="toggleCfg('extras')"><span class="cfg-tick">&#10003;</span><span class="cfg-title">8. Extras, deductions &amp; discount</span><span class="cfg-caret">{{ cfgOpen('extras') ? '&#8963;' : '&#8964;' }}</span></h4>
+          <div class="cfg-body" v-show="cfgOpen('extras')">
           <label>Height Upgrade
             <select v-model.number="state.structuralExtras.heightUpgrade">
               <option :value="0">Standard height</option>
@@ -894,45 +979,13 @@
           <label>Additional Decking (sqm)
             <input type="number" v-model.number="state.structuralExtras.additionalDecking" min="0" max="50" step="1">
           </label>
-        </div>
-
-        <!-- Deductions -->
-        <div class="config-section">
-          <h4>Deductions</h4>
+          <h5 class="cfg-sub">Deductions</h5>
           <div class="checkbox-row">
             <input type="checkbox" v-model="state.deductions.useExistingFoundation" id="chk-existing-foundation">
             <label for="chk-existing-foundation">Use existing foundation</label>
             <span class="extra-price deduction">-&pound;500</span>
           </div>
-        </div>
-
-
-        <!-- Site Details / Boundaries -->
-        <div class="config-section">
-          <h4>Site Boundaries</h4>
-          <div class="checkbox-row" style="margin-bottom:8px;">
-            <input type="checkbox" v-model="state.showBoundaries" id="chk-show-boundaries">
-            <label for="chk-show-boundaries">Show boundaries on plan view</label>
-          </div>
-          <div class="dim-row">
-            <div>
-              <label>Left (mm)</label>
-              <input type="number" v-model.number="state.site.boundaryLeft" placeholder="1500" step="50">
-            </div>
-            <div>
-              <label>Right (mm)</label>
-              <input type="number" v-model.number="state.site.boundaryRight" placeholder="2000" step="50">
-            </div>
-            <div>
-              <label>Rear (mm)</label>
-              <input type="number" v-model.number="state.site.boundaryRear" placeholder="3000" step="50">
-            </div>
-          </div>
-        </div>
-
-        <!-- Discount -->
-        <div class="config-section">
-          <h4>Discount</h4>
+          <h5 class="cfg-sub">Discount</h5>
           <div class="discount-row">
             <select v-model="state.discount.type">
               <option value="none">No discount</option>
@@ -962,11 +1015,11 @@
           <p v-if="state.discount.type !== 'none' && price?.discount > 0" style="font-size:11px;color:var(--primary);margin-top:6px;">
             Discount: -£{{ price.discount.toLocaleString() }} will appear on quote and in email
           </p>
+          </div>
         </div>
-
-        <!-- Custom Notes -->
-        <div class="config-section">
-          <h4>Custom Notes</h4>
+        <div class="config-section cfg" :class="{ 'cfg-closed': !cfgOpen('notes'), 'cfg-done': cfgDone('notes') }">
+          <h4 class="cfg-head" @click="toggleCfg('notes')"><span class="cfg-tick">&#10003;</span><span class="cfg-title">9. Notes &amp; drawing labels</span><span class="cfg-caret">{{ cfgOpen('notes') ? '&#8963;' : '&#8964;' }}</span></h4>
+          <div class="cfg-body" v-show="cfgOpen('notes')">
           <label>Notes for Quote PDF
             <textarea v-model="state.customNotes.quote" rows="3" placeholder="Additional notes to appear on the quote PDF (e.g. special arrangements, site conditions)..."></textarea>
           </label>
@@ -976,8 +1029,137 @@
           <label>Notes for Drawing
             <textarea v-model="state.customNotes.drawing" rows="2" placeholder="Notes to display on the drawing (e.g. construction notes, site access)..."></textarea>
           </label>
+          <h5 class="cfg-sub">Drawing Labels</h5>
+          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Add text labels anywhere on the drawing (drag to position)</p>
+          <div style="margin-bottom:10px;">
+            <button class="btn" style="padding:6px;font-size:12px;" @click="addDrawingLabel">+ Add Label</button>
+          </div>
+          <p v-if="!state.drawingLabels.length" class="empty-msg">Click button above to add.</p>
+          <div v-for="lbl in state.drawingLabels" :key="lbl.id" class="placed-component" style="flex-wrap:wrap;gap:4px;">
+            <div style="display:flex;align-items:center;gap:4px;width:100%;">
+              <input type="text" v-model="lbl.text" class="input-sm" style="flex:1;min-width:80px;" placeholder="Label text">
+              <span style="color:#888;font-size:11px;">Size</span>
+              <input type="number" v-model.number="lbl.fontSize" class="input-sm" style="width:50px;" step="10" min="40" max="400" title="Font size">
+              <input type="color" v-model="lbl.color" style="width:24px;height:24px;padding:0;border:1px solid #ccc;border-radius:3px;cursor:pointer;" title="Text colour">
+              <button class="comp-delete" @click="removeDrawingLabel(lbl.id)">&#215;</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;">
+              <span style="color:#888;">X</span>
+              <input type="number" v-model.number="lbl.x" class="input-sm" style="width:55px;" step="50">
+              <span style="color:#888;">Y</span>
+              <input type="number" v-model.number="lbl.y" class="input-sm" style="width:55px;" step="50">
+              <label style="display:flex;align-items:center;gap:2px;margin-left:4px;">
+                <input type="checkbox" v-model="lbl.arrowEnabled"> Arrow
+              </label>
+            </div>
+            <div v-if="lbl.arrowEnabled" style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;">
+              <span style="color:#888;">Tip X</span>
+              <input type="number" v-model.number="lbl.arrowX" class="input-sm" style="width:55px;" step="50">
+              <span style="color:#888;">Tip Y</span>
+              <input type="number" v-model.number="lbl.arrowY" class="input-sm" style="width:55px;" step="50">
+            </div>
+          </div>
+          </div>
         </div>
-
+        <div class="config-section cfg" :class="{ 'cfg-closed': !cfgOpen('visit'), 'cfg-done': cfgDone('visit') }">
+          <h4 class="cfg-head" @click="toggleCfg('visit')"><span class="cfg-tick">&#10003;</span><span class="cfg-title">10. Visit notes &amp; sketch</span><span class="cfg-caret">{{ cfgOpen('visit') ? '&#8963;' : '&#8964;' }}</span></h4>
+          <div class="cfg-body" v-show="cfgOpen('visit')">
+          <div class="cfg-row"><span v-if="state.survey?.completed" class="survey-status completed">&#10003; Visit completed {{ state.survey.completedDate }}</span><button class="btn btn-sm" @click="markSurveyComplete">Mark visit complete</button></div>
+          <div class="survey-sub">
+            <h5 class="cfg-sub">Customer</h5>
+            <label>Use Case / Primary Purpose
+              <select v-model="state.survey.useCase">
+                <option value="">Select...</option>
+                <option value="home-office">Home Office (WFH)</option>
+                <option value="gym">Home Gym</option>
+                <option value="studio">Art/Music Studio</option>
+                <option value="therapy">Therapy/Treatment Room</option>
+                <option value="guest-room">Guest Accommodation</option>
+                <option value="annexe">Dependent Relative Annexe</option>
+                <option value="multi-purpose">Multi-Purpose</option>
+                <option value="rental">Airbnb/Rental</option>
+                <option value="custom">Custom...</option>
+              </select>
+            </label>
+            <label v-if="state.survey.useCase === 'custom'">Custom Use
+              <input type="text" v-model="state.survey.useCaseCustom" placeholder="e.g. Photography Studio">
+            </label>
+            <label>Budget Range
+              <select v-model="state.survey.budgetRange">
+                <option value="">Not discussed</option>
+                <option value="under-20k">Under £20,000</option>
+                <option value="20-25k">£20,000 - £25,000</option>
+                <option value="25-30k">£25,000 - £30,000</option>
+                <option value="30-40k">£30,000 - £40,000</option>
+                <option value="40-50k">£40,000 - £50,000</option>
+                <option value="50k-plus">£50,000+</option>
+                <option value="flexible">Flexible / Quality focused</option>
+              </select>
+            </label>
+            <label>Preferred Start Date
+              <input type="text" v-model="state.survey.preferredDelivery" placeholder="e.g. March 2026, ASAP, flexible">
+            </label>
+          </div>
+          <div class="survey-sub">
+            <h5 class="cfg-sub">Visit & Sales Context</h5>
+            <label>Visit Date
+              <input type="date" v-model="state.survey.visitDate">
+            </label>
+            <div class="checkbox-row">
+              <input type="checkbox" v-model="state.survey.visitedShowroom" id="chk-visited-showroom">
+              <label for="chk-visited-showroom">Customer visited showroom</label>
+            </div>
+            <div class="checkbox-row">
+              <input type="checkbox" v-model="state.survey.ambassadorEligible" id="chk-ambassador">
+              <label for="chk-ambassador">Ambassador scheme eligible</label>
+            </div>
+            <label>Referral Source
+              <select v-model="state.survey.referralSource">
+                <option value="">Not specified</option>
+                <option value="google">Google Search</option>
+                <option value="facebook">Facebook</option>
+                <option value="referral">Customer Referral</option>
+                <option value="showroom">Showroom Visit</option>
+                <option value="telegraph">Telegraph Feature</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label>Urgency
+              <select v-model="state.survey.urgency">
+                <option value="exploring">Just exploring</option>
+                <option value="normal">Normal (3-6 months)</option>
+                <option value="soon">Want to start soon</option>
+                <option value="urgent">Urgent / ASAP</option>
+              </select>
+            </label>
+            <label>Competitor Quotes
+              <textarea v-model="state.survey.competitorQuotes" rows="2" placeholder="Any other companies quoted?"></textarea>
+            </label>
+          </div>
+          <div class="survey-sub">
+            <h5 class="cfg-sub">Additional Notes</h5>
+            <textarea v-model="state.site.notes" rows="4" placeholder="Any other notes from the site visit..."></textarea>
+          </div>
+          <div class="survey-sketch-section">
+            <h5 class="cfg-sub">Site sketch</h5>
+            <p class="sketch-instructions">Sketch the garden layout showing building position, access route, boundaries, and any obstacles.</p>
+            <div class="sketch-container">
+              <canvas id="site-sketch-canvas" width="800" height="500"></canvas>
+              <div class="sketch-tools">
+                <button type="button" class="btn btn-sm" @click="clearSketch">Clear</button>
+                <label class="sketch-colour-picker">
+                  <span>Pen:</span>
+                  <input type="color" v-model="sketchColour" value="#333333">
+                </label>
+                <label class="sketch-line-width">
+                  <span>Size:</span>
+                  <input type="range" v-model.number="sketchLineWidth" min="1" max="10" value="2">
+                </label>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
       </aside>
 
       <!-- CENTER: Drawing Canvas -->
@@ -2242,7 +2424,6 @@
     <div class="bottom-panel" v-show="!materialsPage && !installerPage && !customersPage && !projectsPage && !homePage">
       <div class="tab-bar">
         <button :class="{ active: activeBottomTab === 'email' }" @click="activeBottomTab = 'email'">Email Drafter</button>
-        <button :class="{ active: activeBottomTab === 'survey' }" @click="activeBottomTab = 'survey'">Site Visit Notes</button>
         <button class="tab-open-page" @click="openMaterialsPage()">Materials &amp; Orders ↗</button>
       </div>
       <div class="tab-content">
@@ -2276,358 +2457,6 @@
           </div>
         </div>
 
-        <!-- Site Survey (Enhanced) -->
-        <div class="tab-panel" :class="{ active: activeBottomTab === 'survey' }">
-          <div class="survey-form-enhanced">
-            
-            <!-- Survey Header -->
-            <div class="survey-header">
-              <h3>Site Visit Notes</h3>
-              <div class="survey-actions-top">
-                <span v-if="state.survey?.completed" class="survey-status completed">
-                  ✓ Survey completed {{ state.survey.completedDate }}
-                </span>
-                <button class="btn btn-sm btn-primary" @click="applySurveyToQuote">Apply Preferences to Design</button>
-                <button class="btn btn-sm" @click="markSurveyComplete">Mark Complete</button>
-              </div>
-            </div>
-            <p style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Copies customer preferences (cladding, doors, extras) into the building design</p>
-
-            <!-- Survey Sections in 3 Columns -->
-            <div class="survey-columns">
-
-              <!-- Column 1: Customer Preferences -->
-              <div class="survey-column">
-                <div class="survey-section">
-                  <h4>Customer Preferences</h4>
-                  <label>Use Case / Primary Purpose
-                    <select v-model="state.survey.useCase">
-                      <option value="">Select...</option>
-                      <option value="home-office">Home Office (WFH)</option>
-                      <option value="gym">Home Gym</option>
-                      <option value="studio">Art/Music Studio</option>
-                      <option value="therapy">Therapy/Treatment Room</option>
-                      <option value="guest-room">Guest Accommodation</option>
-                      <option value="annexe">Dependent Relative Annexe</option>
-                      <option value="multi-purpose">Multi-Purpose</option>
-                      <option value="rental">Airbnb/Rental</option>
-                      <option value="custom">Custom...</option>
-                    </select>
-                  </label>
-                  <label v-if="state.survey.useCase === 'custom'">Custom Use
-                    <input type="text" v-model="state.survey.useCaseCustom" placeholder="e.g. Photography Studio">
-                  </label>
-                  <label>Budget Range
-                    <select v-model="state.survey.budgetRange">
-                      <option value="">Not discussed</option>
-                      <option value="under-20k">Under £20,000</option>
-                      <option value="20-25k">£20,000 - £25,000</option>
-                      <option value="25-30k">£25,000 - £30,000</option>
-                      <option value="30-40k">£30,000 - £40,000</option>
-                      <option value="40-50k">£40,000 - £50,000</option>
-                      <option value="50k-plus">£50,000+</option>
-                      <option value="flexible">Flexible / Quality focused</option>
-                    </select>
-                  </label>
-                  <label>Preferred Start Date
-                    <input type="text" v-model="state.survey.preferredDelivery" placeholder="e.g. March 2026, ASAP, flexible">
-                  </label>
-                  <label>Cladding Preference
-                    <select v-model="state.survey.claddingPreference">
-                      <option value="">Not discussed</option>
-                      <option value="cedar-front-only">Cedar front only (standard)</option>
-                      <option value="cedar-front-sides">Cedar front + sides</option>
-                      <option value="cedar-all">Cedar all round</option>
-                      <option value="composite">Composite slatted</option>
-                      <option value="mixed">Mixed (discuss)</option>
-                    </select>
-                  </label>
-                  <label>Door Preference
-                    <select v-model="state.survey.doorPreference">
-                      <option value="">Not discussed</option>
-                      <option value="sliding-2.5m">2.5m UPVC Sliding (standard)</option>
-                      <option value="bifold-2.5m">2.5m Aluminium Bi-fold</option>
-                      <option value="bifold-3.5m">3.5m Aluminium Bi-fold</option>
-                      <option value="bifold-4m">4m+ Aluminium Bi-fold</option>
-                      <option value="french-doors">French Doors</option>
-                      <option value="secret-door">Secret Cladded Door</option>
-                      <option value="multiple">Multiple doors (discuss)</option>
-                    </select>
-                  </label>
-                  <label>Window Preference
-                    <select v-model="state.survey.windowPreference">
-                      <option value="">Standard windows</option>
-                      <option value="minimal">Minimal windows</option>
-                      <option value="lots-of-light">Lots of natural light</option>
-                      <option value="side-windows">Side windows important</option>
-                      <option value="aluminium">Aluminium frames preferred</option>
-                    </select>
-                  </label>
-                </div>
-
-                <div class="survey-section">
-                  <h4>Electrical Wishes</h4>
-                  <div class="extras-checklist">
-                    <label class="checkbox-row">
-                      <input type="checkbox" v-model="state.survey.acPreference"> Air Conditioning
-                    </label>
-                    <label class="checkbox-row">
-                      <input type="checkbox" v-model="surveyExtras.heating"> Panel Heater(s)
-                    </label>
-                    <label class="checkbox-row">
-                      <input type="checkbox" v-model="surveyExtras.externalSockets"> External Plug Sockets
-                    </label>
-                    <label class="checkbox-row">
-                      <input type="checkbox" v-model="surveyExtras.upDownLights"> Up/Down Lights
-                    </label>
-                    <label class="checkbox-row">
-                      <input type="checkbox" v-model="surveyExtras.cat6"> CAT6/Network Points
-                    </label>
-                    <label class="checkbox-row">
-                      <input type="checkbox" v-model="surveyExtras.additionalSockets"> Additional Sockets
-                    </label>
-                    <label class="checkbox-row">
-                      <input type="checkbox" v-model="surveyExtras.tvMounting"> TV Mounting Prep
-                    </label>
-                  </div>
-                  <label>Electrical Notes
-                    <textarea v-model="state.survey.extrasNotes" rows="2" placeholder="Socket quantities, lighting zones, etc..."></textarea>
-                  </label>
-                </div>
-
-                <div class="survey-section">
-                  <h4>Partition Wish</h4>
-                  <label class="checkbox-row">
-                    <input type="checkbox" v-model="surveyExtras.partition"> Partition wall required
-                  </label>
-                  <label>Partition Notes
-                    <textarea v-model="state.survey.partitionNotes" rows="2" placeholder="Position, purpose (storage, separate room), door required..."></textarea>
-                  </label>
-                </div>
-
-                <div class="survey-section">
-                  <h4>Bathroom Wish</h4>
-                  <label class="checkbox-row">
-                    <input type="checkbox" v-model="surveyExtras.toilet"> WC / Bathroom required
-                  </label>
-                  <label>Type
-                    <select v-model="state.survey.bathroomType">
-                      <option value="">Not required</option>
-                      <option value="wc">WC only (toilet + basin)</option>
-                      <option value="shower">Shower room (toilet + basin + shower)</option>
-                      <option value="full">Full bathroom</option>
-                    </select>
-                  </label>
-                  <label>Bathroom Notes
-                    <textarea v-model="state.survey.bathroomNotes" rows="2" placeholder="Location preference, specific requirements..."></textarea>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Column 2: Site Conditions -->
-              <div class="survey-column">
-                <div class="survey-section">
-                  <h4>Site Location & Access</h4>
-                  <label>Location in Garden
-                    <input type="text" v-model="state.site.location" placeholder="e.g. Bottom left, facing house">
-                  </label>
-                  <label>Garden Access
-                    <select v-model="state.site.access">
-                      <option value="">Select...</option>
-                      <option value="side-gate">Side gate</option>
-                      <option value="through-house">Through house only</option>
-                      <option value="rear-alley">Rear alley/access</option>
-                      <option value="wide-access">Wide side access (vehicle)</option>
-                      <option value="difficult">Difficult access</option>
-                    </select>
-                  </label>
-                  <div class="survey-row-2col" style="margin-top:6px;">
-                    <label>Access Charge (£)
-                      <input type="number" v-model.number="state.site.accessCharge" min="0" step="50" placeholder="0">
-                    </label>
-                    <label>Reason
-                      <input type="text" v-model="state.site.accessChargeReason" placeholder="e.g. Through house">
-                    </label>
-                  </div>
-                  <label>Parking
-                    <input type="text" v-model="state.site.parking" placeholder="e.g. Driveway, on-street">
-                  </label>
-                </div>
-
-                <div class="survey-section">
-                  <h4>Ground Conditions</h4>
-                  <label>Slope
-                    <select v-model="state.site.slope">
-                      <option value="">Select...</option>
-                      <option value="level">Level</option>
-                      <option value="slight-slope">Slight slope</option>
-                      <option value="significant-slope">Significant slope</option>
-                    </select>
-                  </label>
-                  <label>Soil Type
-                    <select v-model="state.site.soilType">
-                      <option value="">Select...</option>
-                      <option value="normal">Normal soil</option>
-                      <option value="clay">Clay</option>
-                      <option value="sandy">Sandy</option>
-                      <option value="rocky">Rocky</option>
-                    </select>
-                  </label>
-                  <label>Proposed Foundation
-                    <select v-model="state.site.proposedFoundation">
-                      <option value="">Select...</option>
-                      <option value="ground-screws">Ground screws</option>
-                      <option value="concrete-new">Concrete base (new)</option>
-                      <option value="concrete-existing">Concrete base (existing)</option>
-                    </select>
-                  </label>
-                  <label>Ground Notes
-                    <input type="text" v-model="state.site.groundNotes" placeholder="Any relevant ground info...">
-                  </label>
-                </div>
-
-                <div class="survey-section">
-                  <h4>Existing Structures</h4>
-                  <label>Structure in build area?
-                    <select v-model="state.site.existingStructure">
-                      <option value="">None</option>
-                      <option value="shed">Shed</option>
-                      <option value="summerhouse">Summerhouse</option>
-                      <option value="old-building">Old building</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </label>
-                  <label>Removal
-                    <select v-model="state.site.structureRemoval">
-                      <option value="">N/A</option>
-                      <option value="customer">Customer will remove</option>
-                      <option value="gob">GOB to remove</option>
-                    </select>
-                  </label>
-                  <label>Notes
-                    <input type="text" v-model="state.site.structureNotes" placeholder="Size, condition, etc.">
-                  </label>
-                </div>
-
-                <div class="survey-section">
-                  <h4>Adjacent Structures</h4>
-                  <textarea v-model="state.site.structures" rows="2" placeholder="e.g. Shed to left, fence at rear..."></textarea>
-                </div>
-
-                <div class="survey-section">
-                  <h4>Landscaping / Prep Works</h4>
-                  <label>Prep works required?
-                    <select v-model="state.site.prepWorks">
-                      <option value="">Select...</option>
-                      <option value="none">No prep needed</option>
-                      <option value="customer">Customer will prepare</option>
-                      <option value="gob">GOB / landscaper to prepare</option>
-                      <option value="visit-needed">Landscaper visit needed</option>
-                    </select>
-                  </label>
-                  <label>Prep Notes
-                    <textarea v-model="state.site.prepNotes" rows="2" placeholder="Levelling, tree removal, fence move..."></textarea>
-                  </label>
-                </div>
-
-                <div class="survey-section">
-                  <h4>Electrics / Power Source</h4>
-                  <label>Consumer Unit Location
-                    <select v-model="state.site.powerSource">
-                      <option value="">Select...</option>
-                      <option value="consumer-unit">Consumer unit</option>
-                      <option value="existing-cable">Existing cable</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </label>
-                  <label>Location Details
-                    <input type="text" v-model="state.site.powerLocation" placeholder="e.g. Kitchen, 15m away">
-                  </label>
-                  <label>Distance to Building (approx)
-                    <input type="text" v-model="state.site.powerDistance" placeholder="e.g. 20m">
-                  </label>
-                </div>
-
-                <div class="survey-section">
-                  <h4>Planning</h4>
-                  <label class="checkbox-row">
-                    <input type="checkbox" v-model="state.site.permittedDevelopment"> Within permitted development
-                  </label>
-                  <label>Planning Notes
-                    <textarea v-model="state.site.planningNotes" rows="2" placeholder="Height > 2.5m, conservation area, Article 4, listed building..."></textarea>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Column 3: Visit & Sales Context -->
-              <div class="survey-column">
-                <div class="survey-section">
-                  <h4>Visit & Sales Context</h4>
-                  <label>Visit Date
-                    <input type="date" v-model="state.survey.visitDate">
-                  </label>
-                  <div class="checkbox-row">
-                    <input type="checkbox" v-model="state.survey.visitedShowroom" id="chk-visited-showroom">
-                    <label for="chk-visited-showroom">Customer visited showroom</label>
-                  </div>
-                  <div class="checkbox-row">
-                    <input type="checkbox" v-model="state.survey.ambassadorEligible" id="chk-ambassador">
-                    <label for="chk-ambassador">Ambassador scheme eligible</label>
-                  </div>
-                  <label>Referral Source
-                    <select v-model="state.survey.referralSource">
-                      <option value="">Not specified</option>
-                      <option value="google">Google Search</option>
-                      <option value="facebook">Facebook</option>
-                      <option value="referral">Customer Referral</option>
-                      <option value="showroom">Showroom Visit</option>
-                      <option value="telegraph">Telegraph Feature</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </label>
-                  <label>Urgency
-                    <select v-model="state.survey.urgency">
-                      <option value="exploring">Just exploring</option>
-                      <option value="normal">Normal (3-6 months)</option>
-                      <option value="soon">Want to start soon</option>
-                      <option value="urgent">Urgent / ASAP</option>
-                    </select>
-                  </label>
-                  <label>Competitor Quotes
-                    <textarea v-model="state.survey.competitorQuotes" rows="2" placeholder="Any other companies quoted?"></textarea>
-                  </label>
-                </div>
-
-                <div class="survey-section">
-                  <h4>Additional Notes</h4>
-                  <textarea v-model="state.site.notes" rows="4" placeholder="Any other notes from the site visit..."></textarea>
-                </div>
-              </div>
-
-            </div>
-
-            <!-- Site Sketch - Full Width Section -->
-            <div class="survey-sketch-section">
-              <h4>Site Sketch</h4>
-              <p class="sketch-instructions">Sketch the garden layout showing building position, access route, boundaries, and any obstacles.</p>
-              <div class="sketch-container">
-                <canvas id="site-sketch-canvas" width="800" height="500"></canvas>
-                <div class="sketch-tools">
-                  <button type="button" class="btn btn-sm" @click="clearSketch">Clear</button>
-                  <label class="sketch-colour-picker">
-                    <span>Pen:</span>
-                    <input type="color" v-model="sketchColour" value="#333333">
-                  </label>
-                  <label class="sketch-line-width">
-                    <span>Size:</span>
-                    <input type="range" v-model.number="sketchLineWidth" min="1" max="10" value="2">
-                  </label>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
 
       </div>
     </div>
@@ -2656,7 +2485,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=156"></script>
+<script type="module" src="js/app.js?v=157"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

@@ -271,3 +271,30 @@ h1, h2, h3, h4 { letter-spacing: -0.01em; }
 .this-project-meta { font-size: 11px; color: #64748b; margin-top: 2px; }
 .this-project-meta a { color: var(--accent); }
 @media (max-width: 760px) { .save-status { display: none; } }
+
+/* ── Design sidebar: numbered, collapsible, ticked sections (site-visit order) ── */
+.cfg-toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 10px; }
+.cfg-toolbar-label { font-size: 11px; color: #64748b; margin-right: 2px; }
+.cfg .cfg-head { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; margin-bottom: 0; padding: 4px 0; }
+.cfg .cfg-head:hover { color: #0f766e; }
+.cfg .cfg-title { flex: 1; }
+.cfg .cfg-tick { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #cbd5e1; color: transparent; font-size: 10px; line-height: 13px; text-align: center; flex: none; }
+.cfg.cfg-done .cfg-tick { background: #0f766e; border-color: #0f766e; color: #fff; }
+.cfg .cfg-caret { font-size: 12px; color: #94a3b8; }
+.cfg .cfg-body { padding-top: 8px; }
+.cfg.cfg-closed { padding-bottom: 6px; }
+.cfg-sub { font-size: 11px; font-weight: 700; color: #334155; margin: 12px 0 6px; padding-bottom: 3px; border-bottom: 1px dashed #e2e8f0; }
+.cfg-sub:first-child { margin-top: 0; }
+.cfg-note { font-size: 11px; color: #64748b; margin: 0 0 8px; }
+.cfg-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.config-panel .survey-sub { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
+.config-panel .survey-sub .cfg-sub { margin-top: 0; }
+.config-panel .survey-sub label { display: block; font-size: 11px; color: #64748b; margin-bottom: 6px; }
+.config-panel .survey-sub input[type="text"], .config-panel .survey-sub input[type="number"], .config-panel .survey-sub input[type="date"], .config-panel .survey-sub select, .config-panel .survey-sub textarea { width: 100%; }
+.config-panel .survey-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.config-panel .survey-sketch-section .sketch-container { width: 100%; }
+.config-panel #site-sketch-canvas { width: 100%; height: auto; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; touch-action: none; }
+.config-panel .sketch-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: 11px; }
+.config-panel .survey-sketch-section { padding: 8px; margin-top: 8px; }
+.config-panel .survey-sketch-section .sketch-instructions { font-size: 11px; color: #64748b; margin: 0 0 6px; }
+.config-panel .sketch-tools { padding: 4px 0; gap: 8px; background: none; }

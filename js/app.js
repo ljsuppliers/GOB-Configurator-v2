@@ -192,6 +192,7 @@ createApp({
       projectStatuses: PROJECT_STATUSES,
       projectSearch: '',
       projectFilter: 'open',
+      cfgOpenState: {}, // design sidebar sections: key -> open? (missing = open)
       projectBrand: 'gob', // Projects page shows one brand at a time: GOB (default) or Grannexe
       brands: BRANDS,
       projectSort: 'updated',
@@ -263,8 +264,6 @@ createApp({
       ],
 
       stepperExtras: [
-        { key: 'externalSocket', label: 'External plug socket', price: 235, max: 4 },
-        { key: 'upDownLight', label: 'Up/down light', price: 95, max: 6 },
         { key: 'heater', label: 'Panel heater', price: 495, max: 4 },
         { key: 'additionalSocket', label: 'Add. double socket', price: 60, max: 10 },
         { key: 'additionalSocketUsb', label: 'Add. socket w/ USB', price: 85, max: 10 },
@@ -694,6 +693,18 @@ createApp({
         }, 400);
       },
     },
+    // Up/down lights and external sockets are priced from what is placed on the drawing
+    // (one action instead of a stepper + a drawing button - Liam 20 Sep 2026).
+    'state.externalFeatures': {
+      deep: true,
+      handler(feats) {
+        if (!this.state || !this.state.extras || this._restoring) return;
+        const lights = (feats || []).filter((f) => f.type === 'upDownLight').length;
+        const sockets = (feats || []).filter((f) => f.type === 'socket').length;
+        if (this.state.extras.upDownLight !== lights) this.state.extras.upDownLight = lights;
+        if (this.state.extras.externalSocket !== sockets) this.state.extras.externalSocket = sockets;
+      },
+    },
     materialsPage() { this.syncUrl(); },
     installerPage() { this.syncUrl(); },
     currentCloudId() { this.syncUrl(); },
@@ -1064,6 +1075,35 @@ createApp({
     /* ───────────── CUSTOM EXTRAS ───────────── */
     addCustomExtra() { if (!this.state.customExtras) this.state.customExtras = []; this.state.customExtras.push({ id: Date.now(), label: '', price: 0, cost: 0, days: 0, supplier: '', materials: '', notes: '' }); },
     removeCustomExtra(i) { this.state.customExtras.splice(i, 1); },
+    /* ── Design sidebar sections (site-visit order) ── */
+    cfgOpen(k) { return this.cfgOpenState[k] !== false; },
+    toggleCfg(k) { this.cfgOpenState = { ...this.cfgOpenState, [k]: !this.cfgOpen(k) }; if (k === 'visit') this.$nextTick(() => this.initSketch()); },
+    cfgPreset(p) {
+      const all = ['customer', 'site', 'building', 'cladding', 'doors', 'layout', 'electrics', 'extras', 'notes', 'visit'];
+      const open = p === 'visit' ? ['customer', 'site', 'building', 'visit'] : p === 'all' ? all : [];
+      const st = {}; for (const k of all) st[k] = open.includes(k);
+      this.cfgOpenState = st;
+      if (open.includes('visit')) this.$nextTick(() => this.initSketch());
+      window.scrollTo(0, 0);
+    },
+    /** Has anything been entered in this section? Drives the tick on the header. */
+    cfgDone(k) {
+      const s = this.state || {}; const site = s.site || {}; const sv = s.survey || {}; const ex = s.extras || {}; const se = s.structuralExtras || {};
+      const any = (o) => Object.values(o || {}).some((v) => v && v !== 'none');
+      switch (k) {
+        case 'customer': return !!(s.customer && s.customer.name);
+        case 'site': return !!(site.location || site.access || site.slope || site.groundType || site.existingStructure || site.powerSource || site.boundaryLeft || site.boundaryRight || site.boundaryRear || (s.planning && s.planning.required));
+        case 'building': return !!(s.width && s.depth && s.foundationType);
+        case 'cladding': return !!(s.cladding && s.cladding.front);
+        case 'doors': return (s.components || []).length > 0;
+        case 'layout': return !!((s.straightPartition && s.straightPartition.enabled) || (s.partitionRoom && s.partitionRoom.enabled) || (s.bathroom && s.bathroom.enabled) || (s.rooms && s.rooms.length > 1));
+        case 'electrics': return any(ex) || (s.externalFeatures || []).length > 0 || (s.acUnits || []).length > 0;
+        case 'extras': return any(se) || (s.customExtras || []).some((c) => c.label) || (s.customDeductions || []).some((c) => c.label) || any(s.deductions) || (s.discount && s.discount.type !== 'none' && s.discount.amount > 0) || (s.featureWalls && any(s.featureWalls));
+        case 'notes': return !!(s.customNotes && (s.customNotes.quote || s.customNotes.email || s.customNotes.drawing)) || (s.drawingLabels || []).length > 0;
+        case 'visit': return !!(sv.visitDate || sv.referralSource || sv.useCase || sv.budgetRange || sv.competitorQuotes || sv.siteSketch || sv.completed || site.notes);
+        default: return false;
+      }
+    },
     addCustomDeduction() { if (!this.state.customDeductions) this.state.customDeductions = []; this.state.customDeductions.push({ id: Date.now() + Math.random(), label: '', price: 0 }); },
     removeCustomDeduction(i) { this.state.customDeductions.splice(i, 1); },
     /* ───────────── QUOTE EDIT HISTORY ───────────── */
@@ -2601,7 +2641,7 @@ createApp({
         this.nextFeatureId = 1000 + (this.state.externalFeatures?.length || 0);
         this.nextAcUnitId = 2000 + (this.state.acUnits?.length || 0);
         this.nextLabelId = 3000 + (this.state.drawingLabels?.length || 0);
-        this.$nextTick(() => { this.resetUndo(); this.markSaved(); });
+        this.$nextTick(() => { this.resetUndo(); this.markSaved(); this.initSketch(); });
         this.notify('Loaded: ' + design.name);
       } catch (err) {
         console.error('Cloud load error:', err);
@@ -2777,7 +2817,8 @@ createApp({
       
       this.sketchCtx = canvas.getContext('2d');
       
-      // Load saved sketch if exists
+      // Load saved sketch if exists (clear first: the canvas now lives in the sidebar and is re-initialised per design)
+      this.sketchCtx.clearRect(0, 0, canvas.width, canvas.height);
       if (this.state.survey?.siteSketch) {
         const img = new Image();
         img.onload = () => {
@@ -2785,6 +2826,8 @@ createApp({
         };
         img.src = this.state.survey.siteSketch;
       }
+      if (canvas.dataset.sketchInit) return; // listeners already attached
+      canvas.dataset.sketchInit = '1';
       
       // Drawing event listeners
       canvas.addEventListener('mousedown', this.startDrawing);
