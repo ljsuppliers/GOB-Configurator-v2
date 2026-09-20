@@ -534,6 +534,10 @@
           </div>
           <div class="survey-sub">
             <h5 class="cfg-sub">Site photos</h5>
+            <div class="checkbox-row" style="align-items:flex-start;margin-bottom:8px">
+              <input type="checkbox" id="mockup-consent" :checked="!!state.survey.mockupConsent" @change="setMockupConsent($event.target.checked)">
+              <label for="mockup-consent">Customer agrees to an AI mock-up of the building in their garden<span class="cfg-note" style="display:block;font-weight:400">Explain: the garden photo is sent to an image service to produce an illustrative picture; it is not to scale and does not form part of the contract.<template v-if="state.survey.mockupConsent"> Agreed {{ state.survey.mockupConsentAt }}{{ state.survey.mockupConsentBy ? ' with ' + state.survey.mockupConsentBy : '' }}.</template></span></label>
+            </div>
             <p class="cfg-note" v-if="!state.customerId">Link a customer record (section 1) and the photos will file under that contact.</p>
             <template v-else>
               <input type="file" accept="image/*" capture="environment" multiple @change="uploadSurveyPhotos" :disabled="surveyPhotoBusy">
@@ -2595,7 +2599,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=161"></script>
+<script type="module" src="js/app.js?v=162"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

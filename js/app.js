@@ -1182,6 +1182,13 @@ createApp({
       const town = parts.length > 1 ? parts.pop() : '';
       return [parts.join(', '), town, postcode];
     },
+    /** Consent for the AI garden mock-up, recorded with date and who took it (Liam 20 Sep 2026). */
+    setMockupConsent(on) {
+      if (!this.state.survey) this.state.survey = {};
+      this.state.survey.mockupConsent = !!on;
+      this.state.survey.mockupConsentAt = on ? new Date().toLocaleDateString('en-GB') : '';
+      this.state.survey.mockupConsentBy = on ? this.userName() : '';
+    },
     /** Site photos taken from the survey section: filed under the linked contact and tagged with this project. */
     async uploadSurveyPhotos(ev) {
       const files = Array.from((ev.target && ev.target.files) || []);
