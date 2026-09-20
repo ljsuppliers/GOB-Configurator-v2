@@ -46,9 +46,9 @@ const COL = {
   cedarLight:    '#D4995F',
   cedarDark:     '#8B5E30',
   cedarPlank:    '#C4874E',
-  composite:     '#5E4B45', // coffee slats
-  compositeLt:   '#7A655D',
-  compositeDk:   '#2F2522', // grooves between slats
+  composite:     '#8B7355', // coffee slats - the original brown-tea colour (Liam 20 Sep 2026)
+  compositeLt:   '#A08060',
+  compositeDk:   '#5C4A3F', // grooves between slats
   latte:         '#A3A6A9', // latte = a soft mid grey
   latteLt:       '#BDBFC2',
   latteDk:       '#5F6367',
