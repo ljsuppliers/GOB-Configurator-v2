@@ -431,6 +431,114 @@
             </label>
           </div>
           <div class="survey-sub">
+            <h5 class="cfg-sub">Works &amp; access</h5>
+            <label>Working space
+              <select v-model="state.site.workingSpace">
+                <option value="">Select...</option>
+                <option value="plenty">Plenty of room to work</option>
+                <option value="tight">Tight (small garden)</option>
+                <option value="very-restricted">Very restricted - plan the build sequence</option>
+              </select>
+            </label>
+            <label>Working space notes
+              <input type="text" v-model="state.site.workingSpaceNotes" placeholder="e.g. 1m strip behind, materials stored on the patio">
+            </label>
+            <label>Trees / hedges
+              <select v-model="state.site.treeWork">
+                <option value="">None affected</option>
+                <option value="cut-back">Cutting back needed</option>
+                <option value="removal">Tree / hedge removal needed</option>
+                <option value="tpo-check">Check for a TPO / conservation area first</option>
+              </select>
+            </label>
+            <label>Tree notes
+              <input type="text" v-model="state.site.treeNotes" placeholder="e.g. Apple tree overhangs the rear, customer to cut back">
+            </label>
+            <label>Existing base
+              <select v-model="state.site.existingBase">
+                <option value="">None</option>
+                <option value="keep">Existing base - suitable, build on it</option>
+                <option value="level">Existing base - needs levelling</option>
+                <option value="remove">Existing base - unsuitable, needs removing</option>
+                <option value="extend">Existing base - too small, extend or replace</option>
+              </select>
+            </label>
+            <label>Base notes
+              <input type="text" v-model="state.site.baseNotes" placeholder="e.g. Old shed slab 3x2m, cracked, 40mm out of level">
+            </label>
+            <div class="survey-row-2col">
+              <label>Access width (mm)
+                <input type="number" v-model.number="state.site.accessWidthMm" step="10" placeholder="e.g. 900" title="Panels are 1.1m wide x 2.14m long">
+              </label>
+              <label>Carry distance (m)
+                <input type="number" v-model.number="state.site.carryDistanceM" step="1" placeholder="van to site">
+              </label>
+            </div>
+            <p class="cfg-note" v-if="state.site.accessWidthMm && state.site.accessWidthMm < 1150">Under 1150mm: the 1.1m panels will need to be carried on edge or on end. Note it for the team.</p>
+            <label>Access notes
+              <input type="text" v-model="state.site.accessNotes" placeholder="e.g. Side gate 850mm, step down, through conservatory">
+            </label>
+            <label>Levels: fall across the footprint (mm)
+              <input type="number" v-model.number="state.site.levelsFallMm" step="10" placeholder="e.g. 150 front to back">
+            </label>
+            <label>Services in or near the footprint</label>
+            <div class="survey-row-2col">
+              <div class="checkbox-row"><input type="checkbox" v-model="state.site.svcManhole" id="svc-manhole"><label for="svc-manhole">Manhole / drain</label></div>
+              <div class="checkbox-row"><input type="checkbox" v-model="state.site.svcSoakaway" id="svc-soak"><label for="svc-soak">Soakaway</label></div>
+              <div class="checkbox-row"><input type="checkbox" v-model="state.site.svcGas" id="svc-gas"><label for="svc-gas">Gas</label></div>
+              <div class="checkbox-row"><input type="checkbox" v-model="state.site.svcWater" id="svc-water"><label for="svc-water">Water pipe</label></div>
+              <div class="checkbox-row"><input type="checkbox" v-model="state.site.svcElectric" id="svc-elec"><label for="svc-elec">Buried cable</label></div>
+              <div class="checkbox-row"><input type="checkbox" v-model="state.site.svcOverhead" id="svc-over"><label for="svc-over">Overhead lines</label></div>
+            </div>
+            <label>Services notes
+              <input type="text" v-model="state.site.servicesNotes" placeholder="e.g. Manhole 600mm inside the rear right corner - shift building forward">
+            </label>
+            <label>Skip location
+              <input type="text" v-model="state.site.skipLocation" placeholder="e.g. Driveway, or on-road permit needed">
+            </label>
+            <div class="survey-row-2col">
+              <label>Toilet for the team
+                <select v-model="state.site.toiletAccess">
+                  <option value="">Select...</option>
+                  <option value="customer">Customer's downstairs toilet</option>
+                  <option value="portaloo">Porta-loo needed</option>
+                </select>
+              </label>
+              <label>Water &amp; power on site
+                <select v-model="state.site.waterPower">
+                  <option value="">Select...</option>
+                  <option value="both">Both available</option>
+                  <option value="water-only">Water only</option>
+                  <option value="power-only">Power only</option>
+                  <option value="none">Neither - bring a generator</option>
+                </select>
+              </label>
+            </div>
+            <label>Roof water discharge
+              <input type="text" v-model="state.site.roofWaterDischarge" placeholder="e.g. Water butt at rear left, or to the existing drain">
+            </label>
+            <label>Shared boundaries / neighbours
+              <input type="text" v-model="state.site.neighbourNotes" placeholder="e.g. Rear fence shared with no. 12, 2.5m rule applies at the left">
+            </label>
+            <div class="survey-row-2col">
+              <label>Keys / access on the day
+                <input type="text" v-model="state.site.keysAccess" placeholder="e.g. Key safe 1234, side gate unlocked">
+              </label>
+              <label>Customer availability
+                <input type="text" v-model="state.site.availability" placeholder="e.g. WFH Mon-Wed">
+              </label>
+            </div>
+            <div class="checkbox-row"><input type="checkbox" v-model="state.site.dogs" id="site-dogs"><label for="site-dogs">Dogs / pets on site</label></div>
+          </div>
+          <div class="survey-sub">
+            <h5 class="cfg-sub">Site photos</h5>
+            <p class="cfg-note" v-if="!state.customerId">Link a customer record (section 1) and the photos will file under that contact.</p>
+            <template v-else>
+              <input type="file" accept="image/*" capture="environment" multiple @change="uploadSurveyPhotos" :disabled="surveyPhotoBusy">
+              <p class="cfg-note">{{ surveyPhotoBusy ? 'Uploading…' : (surveyPhotoCount ? surveyPhotoCount + ' photo' + (surveyPhotoCount === 1 ? '' : 's') + ' on this project' : 'Take or choose photos; they file under the contact and this project.') }}</p>
+            </template>
+          </div>
+          <div class="survey-sub">
             <h5 class="cfg-sub">Electrics / Power Source</h5>
             <label>Consumer Unit Location
               <select v-model="state.site.powerSource">
@@ -2485,7 +2593,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=158"></script>
+<script type="module" src="js/app.js?v=159"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

@@ -193,6 +193,8 @@ createApp({
       projectSearch: '',
       projectFilter: 'open',
       cfgOpenState: {}, // design sidebar sections: key -> open? (missing = open)
+      surveyPhotoBusy: false,
+      surveyPhotoCount: 0,
       projectBrand: 'gob', // Projects page shows one brand at a time: GOB (default) or Grannexe
       brands: BRANDS,
       projectSort: 'updated',
@@ -1092,7 +1094,7 @@ createApp({
       const any = (o) => Object.values(o || {}).some((v) => v && v !== 'none');
       switch (k) {
         case 'customer': return !!(s.customer && s.customer.name);
-        case 'site': return !!(site.location || site.access || site.slope || site.groundType || site.existingStructure || site.powerSource || site.boundaryLeft || site.boundaryRight || site.boundaryRear || (s.planning && s.planning.required));
+        case 'site': return !!(site.location || site.access || site.slope || site.groundType || site.existingStructure || site.powerSource || site.boundaryLeft || site.boundaryRight || site.boundaryRear || site.workingSpace || site.treeWork || site.existingBase || site.accessWidthMm || site.levelsFallMm || site.skipLocation || (s.planning && s.planning.required));
         case 'building': return !!(s.width && s.depth && s.foundationType);
         case 'cladding': return !!(s.cladding && s.cladding.front);
         case 'doors': return (s.components || []).length > 0;
@@ -1103,6 +1105,23 @@ createApp({
         case 'visit': return !!(sv.visitDate || sv.referralSource || sv.useCase || sv.budgetRange || sv.competitorQuotes || sv.siteSketch || sv.completed || site.notes);
         default: return false;
       }
+    },
+    /** Site photos taken from the survey section: filed under the linked contact and tagged with this project. */
+    async uploadSurveyPhotos(ev) {
+      const files = Array.from((ev.target && ev.target.files) || []);
+      const cid = this.state.customerId;
+      if (!cid || !files.length) return;
+      this.surveyPhotoBusy = true;
+      try {
+        for (const f of files) {
+          const id = await uploadFile(cid, f, this.userName());
+          if (this.currentCloudId) await firebase.firestore().collection('customers').doc(cid).collection('files').doc(id).update({ projectName: this.currentCloudName || '', projectId: this.currentCloudId });
+        }
+        this.surveyPhotoCount += files.length;
+        this.notify(`${files.length} photo${files.length === 1 ? '' : 's'} uploaded`);
+      } catch (e) { this.notify('Photo upload failed: ' + e.message); }
+      this.surveyPhotoBusy = false;
+      if (ev.target) ev.target.value = '';
     },
     addCustomDeduction() { if (!this.state.customDeductions) this.state.customDeductions = []; this.state.customDeductions.push({ id: Date.now() + Math.random(), label: '', price: 0 }); },
     removeCustomDeduction(i) { this.state.customDeductions.splice(i, 1); },
