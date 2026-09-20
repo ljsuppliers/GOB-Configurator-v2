@@ -213,9 +213,9 @@
         "note": "PROPOSED 19 Sep 2026: ~9 panels x \u00a320 + adhesive + 0.5 day = ~\u00a3390 cost per 5m wall; \u00a3950 sell = ~59% margin. Liam to confirm."
       },
       "epdmUpgrade": {
-        "label": "EPDM roof upgrade to 1.2mm",
+        "label": "EPDM roof upgrade to 1.5mm (standard is 1.2mm)",
         "price": 0,
-        "note": "PRICE TBC - Liam to confirm (19 Sep 2026)"
+        "note": "PRICE TBC - Liam to confirm (20 Sep 2026)"
       }
     },
     "bathroom": {

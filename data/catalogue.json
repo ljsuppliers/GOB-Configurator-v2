@@ -1,6 +1,6 @@
 {
-  "version": 24,
-  "updated": "2026-09-19",
+  "version": 25,
+  "updated": "2026-09-20",
   "suppliers": [
     {
       "name": "Advanced Sealed Units",
@@ -1621,13 +1621,13 @@
       "category": "Doors & Windows",
       "sku": "SL22",
       "unit": "each",
-      "unitCost": 1000,
+      "unitCost": 1100,
       "supplier": "Spectral",
       "packSize": null,
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: Climadoor retail 2400mm \u00a31,289 inc (\u00a31,074 ex), 2700mm \u00a31,449 inc. Unchanged - confirm with Spectral. Added 19 Sep 2026 as the standard slider; cost estimated between the 2.0m (\u00a3900) and 2.5m (\u00a31100), confirm with Spectral.",
+      "notes": "Standard slider from 19 Sep 2026. Same cost as the 2.5m it replaced (Liam 20 Sep 2026).",
       "supply": "site"
     },
     {
