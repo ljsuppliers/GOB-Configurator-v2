@@ -326,16 +326,23 @@ export function buildPremiumBom(state, componentDefs) {
   const cols = sl.lines.length;
   const rowsN = sl.rows.length;
   const pedestals = sl.count;
+  // Liam 21 Sep 2026: list BOTH ground screws and pedestals so the logistics team
+  // can pick on the day; the alternative is not costed and not on any order.
+  const ALT_SCREWS = { separate: 'ALTERNATIVE if ground screws are used instead', alternative: true };
+  const ALT_PEDS = { separate: 'ALTERNATIVE if pedestals are used instead', alternative: true };
   if (groundScrews) {
     add('Radix ground screw', pedestals, `${cols} doubled-joist lines (1.2m centres) × ${rowsN} rows (≤1.3m along the depth) - see construction drawing 1`);
+    add('Adjustable plastic pedestal', pedestals, `ALTERNATIVE to the ${pedestals} ground screws: the same ${cols} × ${rowsN} points on pedestals (on a slab, or on concrete blocks) - logistics to choose, NOT costed or ordered unless swapped`, ALT_PEDS);
   } else if (blockBase) {
     add('Concrete block 440x215x100 medium density (7.3N)', pedestals, `CONCRETE BLOCK BASE: 1 block per support point, ${cols} doubled-joist lines × ${rowsN} rows (≤1.3m) - see construction drawing 1`);
     add('Postcrete (20kg bag)', pedestals * 2, `2 bags per hole × ${pedestals} holes`);
     add('Adjustable plastic pedestal', pedestals, `1 adjustable pedestal on each concrete block (Liam 2026-09-07) - frame builds on the pedestal heads`);
     add('DPM sheet', Math.ceil(w * d * 1.1), `Over the ground under the floor frame (${(w * d).toFixed(1)}m2 + 10% laps)`);
+    add('Radix ground screw', pedestals, `ALTERNATIVE to the ${pedestals} blocks + pedestals: the same points on ground screws - logistics to choose, NOT costed or ordered unless swapped`, ALT_SCREWS);
   } else {
     add('Adjustable plastic pedestal', pedestals, `${cols} doubled-joist lines × ${rowsN} rows (≤1.3m) - frame builds DIRECTLY on the heads (no bearers). Anchored to the slab - see construction drawing 1`);
     add('DPM sheet', Math.ceil(w * d * 1.1), `Over the slab under the pedestals (${(w * d).toFixed(1)}m2 + 10% laps)`);
+    add('Radix ground screw', pedestals, `ALTERNATIVE to the ${pedestals} pedestals: the same points on ground screws - logistics to choose, NOT costed or ordered unless swapped`, ALT_SCREWS);
   }
 
   /* ---------- FLOOR (5x2, doubled ring + 1.2m grid) ---------- */
@@ -486,6 +493,10 @@ export function buildPremiumBom(state, componentDefs) {
     } else if (glassAtCorner[side]) {
       add('Corner Trim (40x180 anthracite L)', 1, `FRONT ${side} corner, glazing meets glazing: 180x40 L +`);
       add('Corner Trim (200x40x40 anthracite U)', 1, `FRONT ${side} corner, glazing meets glazing: 200x40x40 U (with the 180x40 L forms the corner)`);
+    } else if (!hasCanopy && isSteel(state.cladding[side])) {
+      // Plain front corner (no canopy) where the clad front meets an anthracite
+      // panel side: 2 x 180x40 L per corner (Liam 21 Sep 2026, Patel).
+      add('Corner Trim (40x180 anthracite L)', 2, `FRONT ${side} corner (no canopy, front cladding meets the anthracite panel side): 2 x 180x40 L`);
     } else {
       add('Corner Trim (50x50 anthracite L)', 1, `FRONT ${side} corner (open corner, cladding meets cladding): 50x50 L`);
     }
@@ -846,14 +857,21 @@ export function buildPremiumBom(state, componentDefs) {
     // same 1.3m grid as the extra decking. Boards run along the width.
     {
       const stdJ = Math.ceil(w / 0.4) + 1, stdCols = Math.ceil(w / 1.3) + 1;
-      add('4x2 tanalised C24 timber', Math.ceil((stdJ * 0.4 + w) * 1.10), `STANDARD DECKING FRAME (400mm): ${stdJ} joists x 400mm @400mm off the base front end joist + 1 front rim x ${w.toFixed(2)}m, +10%`,
+      // 5x2 like the floor (Liam 21 Sep 2026)
+      add('5x2 tanalised C24 timber', Math.ceil((stdJ * 0.4 + w) * 1.10), `STANDARD DECKING FRAME (400mm): ${stdJ} joists x 400mm @400mm off the base front end joist + 1 front rim x ${w.toFixed(2)}m, +10%`,
         { cuts: [{ len: 0.4, n: stdJ, what: 'decking joists' }, { len: w, n: 1, what: 'decking front rim', join: true }], separate: 'DECKING frame' });
-      if (groundScrews) add('Radix ground screw', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing)`, { separate: 'DECKING supports' });
-      else if (blockBase) {
+      if (groundScrews) {
+        add('Radix ground screw', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing)`, { separate: 'DECKING supports' });
+        add('Adjustable plastic pedestal', stdCols, `DECKING ALTERNATIVE: ${stdCols} pedestals (on a slab or on concrete blocks) instead of the ground screws - logistics to choose, NOT costed or ordered unless swapped`, { separate: 'DECKING supports ALTERNATIVE', alternative: true });
+      } else if (blockBase) {
         add('Concrete block 440x215x100 medium density (7.3N)', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing), 1 block per support`, { separate: 'DECKING supports' });
         add('Postcrete (20kg bag)', stdCols * 2, `DECKING: 2 bags per hole x ${stdCols} holes`, { separate: 'DECKING supports' });
         add('Adjustable plastic pedestal', stdCols, `DECKING: 1 pedestal on each block`, { separate: 'DECKING supports' });
-      } else add('Adjustable plastic pedestal', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing)`, { separate: 'DECKING supports' });
+        add('Radix ground screw', stdCols, `DECKING ALTERNATIVE: ${stdCols} ground screws instead of the blocks + pedestals - logistics to choose, NOT costed or ordered unless swapped`, { separate: 'DECKING supports ALTERNATIVE', alternative: true });
+      } else {
+        add('Adjustable plastic pedestal', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing)`, { separate: 'DECKING supports' });
+        add('Radix ground screw', stdCols, `DECKING ALTERNATIVE: ${stdCols} ground screws instead of the pedestals - logistics to choose, NOT costed or ordered unless swapped`, { separate: 'DECKING supports ALTERNATIVE', alternative: true });
+      }
       add('TimberLok 150mm', Math.ceil(stdJ * 2 * 1.25), `DECKING frame: joists through the base front end joist (2 per joist), +25%`, { separate: 'DECKING fixings' });
       add('TimberLok 100mm', Math.ceil((stdJ * 2 + stdCols * 2) * 1.25), `DECKING frame: joists to the front rim + rim to supports, +25%`, { separate: 'DECKING fixings' });
     }
@@ -925,18 +943,19 @@ export function buildPremiumBom(state, componentDefs) {
   add('Self-drilling screw 25mm plain (hidden trims / U-channel)', up(uChannelM / 0.3), `U-CHANNEL + hidden trims @300mm (~${uChannelM.toFixed(0)}m) - cheaper plain self-drillers, not visible (Liam), +25%`);
   add('Bay pole self-drilling screw 70mm (timber to panel)', up(((2 * sideRun + w) / 0.4) + liningStudsTotal * Math.ceil(wallH / 0.6)), `4x2 WALL PLATE into the panel tops @400mm + VERTICAL BATTENS into the panel steel @600mm (${liningStudsTotal} battens), +25%`);
   if (!groundScrews && !blockBase) add('Concrete screw 100mm (Ammo)', up(pedestals * 2), `PEDESTALS anchored to the slab: 2 per pedestal (${pedestals}), +25%`);
-  add('Stainless self-drilling screw 40mm (gutters/fascia)', up(Math.ceil(w / 0.5) * 2 + 3 * 2 + 12), `GUTTER brackets 2 each (${Math.ceil(w / 0.5)}) + downpipe clips + fascia corners, +25%. (Whether these also fix the fascia boards is UNCONFIRMED - fascia is on polytop pins here; ask the fitters)`);
+  add('Stainless self-drilling screw 40mm (gutters/fascia)', up(Math.ceil(w / 0.5) * 2 + 3 * 2), `GUTTER BRACKETS 2 each (${Math.ceil(w / 0.5)}) + downpipe clips 2 each (3), +25%. Fascia boards are on polytop pins, not these.`);
   add('Polytop pins 40mm anthracite', up(((w + 2 * roofLen) + w) / 0.4 * 2), `FASCIA (front + sides + rear, both edges @400mm), +25%`);
   if (hasCanopy) add('Polytop pins 65mm anthracite', up((w / 0.4) * 2 + 12), `SOFFIT boards into the 2x2 canopy frame @400mm both edges, +25%`);
   // -- Cladding fixings --
   const timberCladRuns = [...cladTotals].filter(([n]) => /cedar|larch/i.test(n)).reduce((t, [, c]) => t + c, 0);
   if (timberCladRuns > 0) add('Stainless angled brad 16g x 38mm', up(timberCladRuns * Math.ceil(wallH / 0.4) * 2), `CEDAR/LARCH boards: 2 brads per board per batten row (${timberCladRuns} boards x ${Math.ceil(wallH / 0.4)} rows), +25%`);
   // -- Roof joist hangers + ties --
-  add('Jiffy hanger 47mm (mini joist hanger)', up(rJoists * 2), `ROOF JOISTS: 1 hanger per joist end on the front + rear plates (${rJoists} joists x 2), +25%`);
+  add('Jiffy hanger 47mm (mini joist hanger)', rJoists + 1, `ROOF JOISTS: 1 hanger per joist at the FRONT only (hung off the flitch; rear ends sit on the plate) - ${rJoists} joists + 1 spare (Liam 21 Sep 2026)`);
   add('Square twist nails 30mm (1kg bag)', Math.ceil(up(rJoists * 2) * 8 / 350), `~8 nails per jiffy hanger, ~350 nails per 1kg bag`);
   // -- Sealants + adhesives (Liam: we use a LOT of silicone; 14.5 tubes on a 17m-perimeter Maxi) --
-  add('Silicone - anthracite grey RAL 7016 (310ml)', Math.ceil(perim * 0.85), `EXTERNAL: trims, panel joints, openings - ~0.85 tubes per metre of external perimeter (${perim.toFixed(1)}m)`);
-  add('Silicone - clear (310ml)', Math.ceil(perim * 0.85), `Panel T&G joints, flashings, glazing - ~0.85 tubes per metre of perimeter`);
+  // Halved from 0.85/m (Liam 21 Sep 2026: 24 tubes on a 3.8x2.8 was far too many)
+  add('Silicone - anthracite grey RAL 7016 (310ml)', Math.ceil(perim * 0.45), `EXTERNAL: trims, panel joints, openings - ~0.45 tubes per metre of external perimeter (${perim.toFixed(1)}m)`);
+  add('Silicone - clear (310ml)', Math.ceil(perim * 0.45), `Panel T&G joints, flashings, glazing - ~0.45 tubes per metre of perimeter`);
   add('Silicone - white (310ml)', 2, `Internal thresholds + trim edges (avg 2/job)`);
   add('Decorators caulk (tube)', 2, `Internal junctions (avg 1.75/job)`);
   add('Grab adhesive / Gripfill (tube)', 3 + (ladder.web ? 1 : 0), `Skirting, reveals, general (avg 2.5/job, rounded up) + 1 for OSB webs on doubled-joist roofs (webs are PVA-glued + screwed)`);

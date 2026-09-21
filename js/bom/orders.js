@@ -289,7 +289,7 @@ export function joinBom(bomRows, catalogue, overrides = {}) {
     const packSize = mat && mat.packSize > 0 ? mat.packSize : 1;
     let orderQty = Math.max(0, Math.ceil(r.qty / packSize - 1e-9));
     let orderUnit = mat && mat.orderUnit ? mat.orderUnit : (mat ? mat.unit : '');
-    let lineCost = mat ? (mat.unitCost || 0) * (r.costQty > 0 ? r.costQty : r.qty) : (r.unitCost || 0) * r.qty;
+    let lineCost = r.alternative ? 0 : (mat ? (mat.unitCost || 0) * (r.costQty > 0 ? r.costQty : r.qty) : (r.unitCost || 0) * r.qty);
     let stockPlan = null;
     const orderText = r.orderText || '';
     const stockRule = r.cuts ? stockRuleFor(r.catalogueName || r.name) : null;
@@ -338,7 +338,7 @@ export function buildOrders(lines, catalogue, opts) {
   const supByName = new Map(catalogue.suppliers.map((s) => [s.name.toLowerCase(), s]));
   const groups = new Map();
   for (const l of lines) {
-    if (l.inStock || l.orderQty <= 0) continue;
+    if (l.inStock || l.orderQty <= 0 || l.alternative) continue; // alternatives are for the logistics team to swap in, never auto-ordered
     const supplierName = l.supplier || 'NO SUPPLIER SET';
     const stage = stageFor(l);
     const key = `${supplierName}||${l.destination}||${stage}`;
