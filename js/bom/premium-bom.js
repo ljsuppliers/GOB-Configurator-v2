@@ -788,13 +788,16 @@ export function buildPremiumBom(state, componentDefs) {
   for (const [wallName, ops] of [['front', front], ['rear', rear], ['left side', left], ['right side', right]]) {
     for (const o of ops) {
       const def = componentDefs[o.type] || {};
-      add(def.label || o.type, 1, `On the ${wallName}${def.width ? ` - ${def.width}mm wide` : ''}`,
-        { orderText: `1 × ${def.label || o.type}${def.width ? `, ${def.width}mm wide` : ''}${def.height ? ` × ${def.height}mm high` : ''}, ${/aluminium|bi-fold|bifold/i.test(def.label || o.type) ? 'anthracite grey RAL 7016 both sides (aluminium)' : 'anthracite grey RAL 7016 outside / white inside (uPVC)'} - FRAME ONLY, unglazed (glass ordered separately) - for the ${wallName} wall` });
+      // A custom width typed on the drawing (e.g. Patel: 2.5m slider type made at
+      // 2100mm) drives the order wording AND the glass sizes (Liam 21 Sep 2026).
+      const W = Math.round(o.widthM * 1000) || def.width || 900, H = def.height || 2050;
+      const madeToMeasure = def.width && W !== def.width;
+      add(def.label || o.type, 1, `On the ${wallName}${W ? ` - ${W}mm wide${madeToMeasure ? ` (MADE TO MEASURE, not the stock ${def.width}mm)` : ''}` : ''}`,
+        { orderText: `1 × ${def.label || o.type}${madeToMeasure ? ` MADE TO MEASURE ${W}mm wide (NOT the stock ${def.width}mm)` : (W ? `, ${W}mm wide` : '')}${H ? ` × ${H}mm high` : ''}, ${/aluminium|bi-fold|bifold/i.test(def.label || o.type) ? 'anthracite grey RAL 7016 both sides (aluminium)' : 'anthracite grey RAL 7016 outside / white inside (uPVC)'} - FRAME ONLY, unglazed (glass ordered separately) - for the ${wallName} wall` });
       // GLAZING comes from a separate supplier (Liam 2026-09-06): frames are
       // supplied unglazed. One line per opening with approximate pane sizes
       // (frame size less ~60mm per edge; confirm from the frame maker's
       // glazing list before ordering).
-      const W = def.width || 900, H = def.height || 2050;
       const pane = (pw, ph) => `${Math.round(pw)} × ${Math.round(ph)}mm`;
       const cat = def.category || 'standard';
       if (cat === 'sliding') {
