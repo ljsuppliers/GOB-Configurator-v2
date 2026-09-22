@@ -55,7 +55,7 @@
 //         edges), 18mm T&G OSB, one-piece EPDM, 75/100mm PIR set 30mm down.
 //         Half-round gutter full width at the rear, downpipe one end (both ends
 //         from 6m wide).
-import { supportLayout, panelPlan, openingsOnWall, roofLadderFor, isSteelClad } from './bom/premium-bom.js?v=46';
+import { supportLayout, panelPlan, openingsOnWall, roofLadderFor, isSteelClad } from './bom/premium-bom.js?v=47';
 
 const F = 'font-family:Inter,Arial,sans-serif';
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -164,9 +164,16 @@ export function buildConstructionDrawings(state, componentDefs) {
     s += rc(M + 100, fy, W - 200, 100, { fill: '#fde68a', stroke: '#92400e', sw: 4 });
     for (let xx = 0.4; xx < w - 0.2; xx += 0.4) s += ln(M + mm(xx), fy, M + mm(xx), fy + 100, { sw: 3, stroke: '#92400e' });
     for (const o of ops('front')) { s += rc(M + mm(o.posM), fy - 20, mm(o.widthM), 140, { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 4 }); s += tx(M + mm(o.posM + o.widthM / 2), fy + 230, `${mm(o.widthM)} ${o.fullHeight ? (o.type.includes('window') ? 'FH window' : 'door') : 'window'}`, { size: 52, fill: '#1d4ed8' }); }
-    // open corner posts: built-up 4x2 (~200x200), in line with the front wall face, both sides
-    if (!closedL) s += rc(M, fy - 100, 200, 200, { fill: '#92400e', stroke: '#111', sw: 4 }) + tx(M + 100, fy - 140, 'post', { size: 50 });
-    if (!closedR) s += rc(M + W - 200, fy - 100, 200, 200, { fill: '#92400e', stroke: '#111', sw: 4 }) + tx(M + W - 100, fy - 140, 'post', { size: 50 });
+    // Corners: the front stick wall sits BETWEEN the side walls, which run the full depth to
+    // the front face. Its DOUBLED END STUDS meet the side wall. A built-up post exists only
+    // where glazing meets glazing at an open corner (Liam 22 Sep 2026).
+    const nearCorner = (o2, atStart) => o2.some((o) => o.fullHeight && (atStart ? o.posM <= 0.05 : o.posM + o.widthM >= o.wallM - 0.05));
+    const glassL = !closedL && nearCorner(ops('front'), true) && nearCorner(ops('left'), false);
+    const glassR = !closedR && nearCorner(ops('front'), false) && nearCorner(ops('right'), true);
+    if (glassL) s += rc(M, fy - 100, 200, 200, { fill: '#92400e', stroke: '#111', sw: 4 }) + tx(M + 100, fy - 140, 'post', { size: 50 });
+    else s += rc(M + 100, fy, 47, 100, { fill: '#f59e0b', stroke: '#92400e', sw: 3 }) + rc(M + 147, fy, 47, 100, { fill: '#f59e0b', stroke: '#92400e', sw: 3 });
+    if (glassR) s += rc(M + W - 200, fy - 100, 200, 200, { fill: '#92400e', stroke: '#111', sw: 4 }) + tx(M + W - 100, fy - 140, 'post', { size: 50 });
+    else s += rc(M + W - 194, fy, 47, 100, { fill: '#f59e0b', stroke: '#92400e', sw: 3 }) + rc(M + W - 147, fy, 47, 100, { fill: '#f59e0b', stroke: '#92400e', sw: 3 });
     // canopy / decking line
     if (hasCanopy || hasDecking) s += rc(M, y0 + D, W, ext, { sw: 4, stroke: '#0f766e', dash: '60 40' }) + tx(M + W / 2, y0 + D + ext / 2 + 30, `${hasCanopy ? 'canopy' : ''}${hasCanopy && hasDecking ? ' + ' : ''}${hasDecking ? 'decking' : ''} ${ext}mm`, { size: 80, fill: '#0f766e' });
     s += dimH(M, M + W, y0 - 250, `${W}mm`);
@@ -181,7 +188,8 @@ export function buildConstructionDrawings(state, componentDefs) {
     s += rc(lx + 1500, ly, 160, 90, { fill: '#fde68a', stroke: '#92400e', sw: 2 }) + tx(lx + 1720, ly + 70, '4x2 stick frame', { size: 70, anchor: 'start' });
     s += rc(lx + 2900, ly, 160, 90, { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 2 }) + tx(lx + 3120, ly + 70, 'door / window', { size: 70, anchor: 'start' });
     s += ln(lx + 4200, ly, lx + 4200, ly + 90, { sw: 5, stroke: '#f59e0b' }) + tx(lx + 4280, ly + 70, 'panel joint', { size: 70, anchor: 'start' });
-    s += rc(lx, ly + 150, 160, 90, { fill: '#92400e', stroke: '#111', sw: 2 }) + tx(lx + 220, ly + 220, 'open-corner post (built-up 4x2, ~200x200, flush with the front wall face)', { size: 70, anchor: 'start' });
+    s += rc(lx, ly + 150, 160, 90, { fill: '#f59e0b', stroke: '#92400e', sw: 2 }) + tx(lx + 220, ly + 220, 'doubled end studs of the front wall, meeting the side wall (no post)', { size: 70, anchor: 'start' });
+    s += rc(lx + 4200, ly + 150, 160, 90, { fill: '#92400e', stroke: '#111', sw: 2 }) + tx(lx + 4420, ly + 220, 'built-up 4x2 post (~200x200): ONLY where glazing meets glazing at an open corner', { size: 70, anchor: 'start' });
     const notes = [
       `Rear wall FIRST, full width: ${plan.rear.pieces.length} pieces (${plan.rear.pieces.map((p) => mm(p.width)).join(' + ')}mm). Cut piece at the RIGHT-hand end.`,
     ];
@@ -190,14 +198,17 @@ export function buildConstructionDrawings(state, componentDefs) {
     if (plan.right) notes.push(`Right side (from the rear): ${plan.right.pieces.map((p) => mm(p.width)).join(' + ')}mm${closedR ? ' incl. the 400mm closed-corner return' : ''}. Cut piece at the FRONT.`);
     else notes.push(`Right side: stick frame (4x2 @400), 75mm PIR, ply + Tyvek + battens + ${(state.cladding?.right || '').replace(/-/g, ' ')} cladding${closedR ? '; carried 400mm forward for the closed corner' : ''}.`);
     notes.push(`PANELS TO ORDER: ${plan.total} × 1100mm × ${mm(plan.panelHeightM)}mm. ${plan.cutNote}`);
-    notes.push(`Panel widths are written on each piece (CUT = cut on site). Panels are anthracite OUTSIDE / white inside and tongue-and-groove: never flip a piece to put white out. Both front corner posts sit flush with the front wall face, in line with each other. Front corners: ${closedL ? 'left CLOSED (side wall carried 400mm forward)' : 'left OPEN (built-up 4x2 post, corner trims)'}, ${closedR ? 'right CLOSED' : 'right OPEN'}.`);
+    notes.push(`Panel widths are written on each piece (CUT = cut on site). Panels are anthracite OUTSIDE / white inside and tongue-and-groove: never flip a piece to put white out. The side walls run the FULL depth to the front face and the front stick wall sits between them; its doubled end studs meet the side wall. A corner post is only built where glazing meets glazing at an open corner. Front corners: ${closedL ? 'left CLOSED (side wall carried 400mm forward)' : 'left OPEN (built-up 4x2 post, corner trims)'}, ${closedR ? 'right CLOSED' : 'right OPEN'}.`);
     out.push({ key: 'walls', title: '2. Wall plan & Kingspan panel layout (from above)', svg: sheet(SW, SH, s), notes });
   }
 
   /* ── 3. Front wall framing (elevation from outside) ── */
   {
     const PL = 49, FL = 145; // flat 4x2 plate, 6x2 flitch depth
-    const W = mm(w), H = mm(plan.panelHeightM) + PL; // 2140 + 49 = 2189 to the top of the head plate
+    // The front frame sits BETWEEN panel sides (100mm each), so it is narrower than the building.
+    const offL = leftPanel ? 0.1 : 0, offR = rightPanel ? 0.1 : 0;
+    const frameW = w - offL - offR;
+    const W = mm(frameW), H = mm(plan.panelHeightM) + PL; // 2140 + 49 = 2189 to the top of the head plate
     const SW = W + 2 * M + 800, SH = H + FL + 2 * M + 700;
     let s = '';
     const gy = M + FL + H; // ground line (top of chipboard)
@@ -210,12 +221,15 @@ export function buildConstructionDrawings(state, componentDefs) {
     s += rc(M, M, W, FL, { fill: '#7c2d12', stroke: '#111', sw: 4 });
     s += tx(M + W / 2, M + FL / 2 + 25, `2 × 6x2 flitch ON TOP of the head plate, full width ${W}mm${W > 4800 ? ' (joined pieces, joints staggered between the two layers)' : ''}`, { size: 60, fill: '#fff' });
     const fronts = ops('front').sort((a, b) => a.posM - b.posM);
-    const inOpening = (x) => fronts.some((o) => x > o.posM + 0.001 && x < o.posM + o.widthM - 0.001);
+    // openings are positioned from the BUILDING's left edge; the frame starts offL in from it
+    const inOpening = (x) => fronts.some((o) => x + offL > o.posM + 0.001 && x + offL < o.posM + o.widthM - 0.001);
     const studTop = top + PL, studH = H - 2 * PL;
-    for (let x = 0; x <= w + 0.001; x += 0.4) { const xx = Math.min(x, w - 0.047); if (!inOpening(xx + 0.02)) s += rc(M + mm(xx), studTop, 47, studH, { fill: '#fde68a', stroke: '#92400e', sw: 3 }); }
-    s += rc(M + W - 47, studTop, 47, studH, { fill: '#fde68a', stroke: '#92400e', sw: 3 });
+    for (let x = 0; x <= frameW + 0.001; x += 0.4) { const xx = Math.min(x, frameW - 0.047); if (!inOpening(xx + 0.02)) s += rc(M + mm(xx), studTop, 47, studH, { fill: '#fde68a', stroke: '#92400e', sw: 3 }); }
+    // doubled end studs (they meet the side walls)
+    s += rc(M, studTop, 47, studH, { fill: '#f59e0b', stroke: '#92400e', sw: 3 }) + rc(M + 47, studTop, 47, studH, { fill: '#f59e0b', stroke: '#92400e', sw: 3 });
+    s += rc(M + W - 47, studTop, 47, studH, { fill: '#f59e0b', stroke: '#92400e', sw: 3 }) + rc(M + W - 94, studTop, 47, studH, { fill: '#f59e0b', stroke: '#92400e', sw: 3 });
     for (const o of fronts) {
-      const X = M + mm(o.posM), OW = mm(o.widthM), OH = mm(o.heightM);
+      const X = M + mm(o.posM - offL), OW = mm(o.widthM), OH = mm(o.heightM);
       const oy = o.fullHeight ? gy - PL - OH : gy - PL - 900 - OH; // standard windows cill 900
       // DOUBLED 4x2 each side of every opening (king + jack)
       for (const k of [X - 94, X - 47, X + OW, X + OW + 47]) s += rc(k, studTop, 47, studH, { fill: '#f59e0b', stroke: '#92400e', sw: 3 });
@@ -231,13 +245,13 @@ export function buildConstructionDrawings(state, componentDefs) {
       s += dimH(X, X + OW, gy + 200, `${OW}mm`);
       if (!o.fullHeight) s += rc(X, gy - PL - 900, OW, 47, { fill: '#fde68a', stroke: '#92400e', sw: 3 });
     }
-    s += dimH(M, M + W, M - 250, `${W}mm`);
+    s += dimH(M, M + W, M - 250, `${W}mm frame${offL || offR ? ` (building ${mm(w)}mm less ${mm(offL + offR)}mm of panel sides)` : ''}`);
     s += dimV(top, gy, M - 300, `${H}mm to top of plate`);
     s += dimV(M, top, M - 300, `${FL}`);
     out.push({
       key: 'front', title: '3. Front wall framing (elevation, viewed from outside)', svg: sheet(SW, SH, s),
       notes: [
-        `4x2 TANALISED C24 throughout: base plate on the chipboard, studs @400mm from the LEFT, head plate. Frame is ${H}mm to the top of the head plate = the panel walls (${mm(plan.panelHeightM)}mm panel + ${PL}mm flat 4x2 plate). DOUBLED 4x2 uprights (orange) each side of every door and window.`,
+        `4x2 TANALISED C24 throughout: base plate on the chipboard, studs @400mm from the LEFT, head plate. The frame is ${W}mm wide: it sits BETWEEN the side walls${offL || offR ? ' (100mm panels each side)' : ''}, and its DOUBLED END STUDS (orange) meet the side walls - no corner post unless glazing meets glazing at an open corner. Frame is ${H}mm to the top of the head plate = the panel walls (${mm(plan.panelHeightM)}mm panel + ${PL}mm flat 4x2 plate). DOUBLED 4x2 uprights (orange) each side of every door and window.`,
         `DOUBLED 6x2 flitch (two 6x2 laminated with TimberLok 100s, NO OSB web) sits ON TOP of the head plate the FULL width of the front${W > 4800 ? ', made of joined pieces with the joints staggered between the two layers' : ''}. Its top is level with the roof joist tops. ${tall ? 'Taller build: the roof joists run OVER the flitch and oversail to form the canopy.' : 'Standard 2.5m build: the roof joists hang off the flitch on jiffy hangers.'}`,
         `Doors and full-height windows (2050mm) sit on the base plate; a 4x2 packer under the head plate closes the gap to the door head (about ${H - 2 * PL - 2050}mm, trim to suit). Standard windows shown on a 900mm cill; check the drawing for the customer's positions.`,
         `Outside: 12mm ply, Tyvek, 18x38 battens @400, ${(state.cladding?.front || '').replace(/-/g, ' ')} cladding. Inside: 75mm PIR in every bay, VCL, 12.5mm plasterboard, skim.`,

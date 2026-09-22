@@ -312,12 +312,22 @@ export function buildPremiumBom(state, componentDefs) {
     ? 'classic'
     : tall ? 'joists-oversail' : 'edge-joists';
   const closedCorners = ['cornerLeft', 'cornerRight'].filter((k) => state[k] === 'closed').length;
-  const openCorners = (hasCanopy && hasDecking) ? 2 - closedCorners : 0;
 
   const front = openingsOn(state, componentDefs, 'front');
   const rear = openingsOn(state, componentDefs, 'rear');
   const left = openingsOn(state, componentDefs, 'left');
   const right = openingsOn(state, componentDefs, 'right');
+  // A corner POST exists only where glazing meets glazing at that corner (a door or
+  // window on the front AND on the side, both touching the corner) and the corner is
+  // open. Everywhere else the front stick wall simply sits between the side walls and
+  // its doubled end studs meet the panel (Liam 22 Sep 2026).
+  const nearCorner = (ops, atStart) => ops.some((o) => o.fullHeight && (atStart ? o.posM <= 0.05 : o.posM + o.widthM >= o.wallM - 0.05));
+  // front wall: positionX from the LEFT; left elevation: positionX from the REAR; right elevation: positionX from the FRONT.
+  const glassAtCorner = {
+    left: state.cornerLeft !== 'closed' && nearCorner(front, true) && nearCorner(left, false),
+    right: state.cornerRight !== 'closed' && nearCorner(front, false) && nearCorner(right, true),
+  };
+  const openCorners = (glassAtCorner.left ? 1 : 0) + (glassAtCorner.right ? 1 : 0);
   const fhOn = (ops) => ops.filter((o) => o.fullHeight);
   const fhWidth = (ops) => fhOn(ops).reduce((s, o) => s + o.widthM, 0);
 
@@ -409,7 +419,10 @@ export function buildPremiumBom(state, componentDefs) {
   // Stick walls: front always + any slat-clad side + closed-corner extensions.
   // ALL stick-wall bays get 75mm PIR (Liam 2026-09-05: clad sides same as the
   // front; Rockwool is for partition walls only).
-  const stickWalls = [{ label: 'front', run: w, openings: front }];
+  // The front stick wall sits BETWEEN the side panels (panels run the full depth to the
+  // front face), so its run is the width less 100mm per panel side (Liam 22 Sep 2026).
+  const frontRun = w - (isSteel(state.cladding.left) ? 0.1 : 0) - (isSteel(state.cladding.right) ? 0.1 : 0);
+  const stickWalls = [{ label: 'front', run: frontRun, openings: front }];
   if (!isSteel(state.cladding.left)) stickWalls.push({ label: 'left side', run: sideRun, openings: left });
   if (!isSteel(state.cladding.right)) stickWalls.push({ label: 'right side', run: sideRun, openings: right });
   let stickLm = 0, plySheets = 0, tyvekM2 = 0, pirWallM2 = 0, soleLm = 0;
@@ -464,7 +477,7 @@ export function buildPremiumBom(state, componentDefs) {
   // cloaked with the open corner trims. Doors/windows may meet glass-to-glass.
   if (openCorners > 0) {
     add('4x2 tanalised C24 timber', Math.ceil(openCorners * 4 * wallH * 1.10),
-      `OPEN corner post${openCorners === 1 ? '' : 's'}: ~200x200 built-up tanalised 4x2 post (4 x ${wallH.toFixed(2)}m per corner), cloaked by the corner trims`,
+      `CORNER POST${openCorners === 1 ? '' : 'S'} where glazing meets glazing at the corner: ~200x200 built-up tanalised 4x2 post (4 x ${wallH.toFixed(2)}m per corner), cloaked by the corner trims`,
       [{ len: wallH, n: openCorners * 4, what: 'open-corner post members' }]);
   }
   // ---- CORNER TRIMS (Liam 2026-09-06) ----
@@ -476,13 +489,6 @@ export function buildPremiumBom(state, componentDefs) {
   //  Plain front corner (no canopy/decking): 180x40 L like the rear.
   // "Glazing meets glazing" only when the frames TOUCH the corner (Liam 2026-09-06);
   // any gap is at least 400mm of cladding, which is a clad corner.
-  const nearCorner = (ops, atStart) => ops.some((o) => o.fullHeight && (atStart ? o.posM <= 0.05 : o.posM + o.widthM >= o.wallM - 0.05));
-  // front wall: positionX from the LEFT; left elevation: positionX from the REAR (front is at the drawing's right);
-  // right elevation: positionX from the FRONT.
-  const glassAtCorner = {
-    left: nearCorner(front, true) && nearCorner(left, false),
-    right: nearCorner(front, false) && nearCorner(right, true),
-  };
   add('Corner Trim (40x180 anthracite L)', 2, `REAR corners: 1 per corner`);
   // Front corners are open corners on every build (Liam 2026-09-06): 50x50 L
   // unless closed (U) or the glazing meets at the corner (180 L + U).
