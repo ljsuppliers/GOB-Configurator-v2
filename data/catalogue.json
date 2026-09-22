@@ -1,5 +1,5 @@
 {
-  "version": 27,
+  "version": 28,
   "updated": "2026-09-22",
   "suppliers": [
     {
@@ -55,6 +55,12 @@
       "email": "",
       "phone": "",
       "notes": "Plastic trims supplier: fascia, soffit, gutter kit"
+    },
+    {
+      "name": "Garden Office Buildings",
+      "email": "",
+      "phone": "",
+      "notes": "Our own site equipment: factory stock that goes out with the job and comes back (Liam 22 Sep 2026)."
     },
     {
       "name": "Howden",
@@ -2454,7 +2460,7 @@
       "sku": "",
       "unit": "each",
       "unitCost": 0,
-      "supplier": "",
+      "supplier": "Garden Office Buildings",
       "packSize": null,
       "orderUnit": "",
       "supply": "stock",
@@ -2468,7 +2474,7 @@
       "sku": "",
       "unit": "each",
       "unitCost": 0,
-      "supplier": "",
+      "supplier": "Garden Office Buildings",
       "packSize": null,
       "orderUnit": "",
       "supply": "stock",
@@ -2482,7 +2488,7 @@
       "sku": "",
       "unit": "each",
       "unitCost": 0,
-      "supplier": "",
+      "supplier": "Garden Office Buildings",
       "packSize": null,
       "orderUnit": "",
       "supply": "stock",
@@ -2496,7 +2502,7 @@
       "sku": "",
       "unit": "each",
       "unitCost": 0,
-      "supplier": "",
+      "supplier": "Garden Office Buildings",
       "packSize": null,
       "orderUnit": "",
       "supply": "stock",
@@ -2510,7 +2516,7 @@
       "sku": "",
       "unit": "each",
       "unitCost": 0,
-      "supplier": "",
+      "supplier": "Garden Office Buildings",
       "packSize": null,
       "orderUnit": "",
       "supply": "stock",
@@ -2524,7 +2530,7 @@
       "sku": "",
       "unit": "each",
       "unitCost": 0,
-      "supplier": "",
+      "supplier": "Garden Office Buildings",
       "packSize": null,
       "orderUnit": "",
       "supply": "stock",
@@ -2538,7 +2544,7 @@
       "sku": "",
       "unit": "each",
       "unitCost": 0,
-      "supplier": "",
+      "supplier": "Garden Office Buildings",
       "packSize": null,
       "orderUnit": "",
       "supply": "stock",
