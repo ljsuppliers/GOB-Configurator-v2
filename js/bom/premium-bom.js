@@ -77,7 +77,7 @@ export const USE_TAGS = {
   '6x2 tanalised C24 timber': 'Roof joists and flitch beam',
   '7x2 tanalised C24 timber': 'Roof joists',
   'Flitch beam bolts': 'Flitch over front openings',
-  '4x2 tanalised C24 timber': 'Front stick wall (base plate, studs, head plate) + the flat head plate on top of the panel walls',
+  '4x2 tanalised C24 timber': 'Front stick wall + the flat head plate on top of the panel walls',
   '18mm OSB3 board (2440x1220)': 'Webs between doubled roof joists',
   'Tapered firring (47mm, 1:40)': 'Roof fall + canopy overhang',
   '18mm T&G OSB3 roof board (2400x590)': 'Roof deck',
@@ -508,8 +508,9 @@ export function buildPremiumBom(state, componentDefs) {
       add('Corner Trim (50x50 anthracite L)', 1, `FRONT ${side} corner (normal open corner, cladding meets cladding on a clad side): 50x50 L`);
     }
   }
-  add('4x2 tanalised C24 timber', Math.ceil(stickLm - soleLm), `Stick walls (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): studs @400mm + plates + noggins + opening framing, +10%`, stickCuts);
-  add('4x2 tanalised C24 timber', Math.ceil(soleLm * 1.10), `Stick-wall BASE PLATES on the chipboard (the studs stand on these)`, soleCuts);
+  // One line for the whole stick wall: base plate, studs, head plate, noggins, opening
+  // framing (Liam 22 Sep 2026: the base plate is just part of the stick front wall).
+  add('4x2 tanalised C24 timber', Math.ceil(stickLm - soleLm) + Math.ceil(soleLm * 1.10), `Stick wall${stickWalls.length > 1 ? 's' : ''} (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): base plate + studs @400mm + head plate + noggins + opening framing, +10%`, [...soleCuts, ...stickCuts]);
   add('12mm Plywood (1220×2440 sheet)', plySheets + 1, `Stick wall external sheathing + 10% + 1 spare sheet (openings cut out on site)`,
     { orderText: `${plySheets + 1} sheets 2440 × 1220 × 12mm structural ply (WBP/exterior grade), incl. 1 spare` });
   add('Tyvek breather membrane', tyvekM2, `Over the ply, under the battens (m2 + 10%)`,
