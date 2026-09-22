@@ -1013,3 +1013,13 @@ html, body {
 .constr-notes { margin: 6px 0 0; padding-left: 18px; font-size: 11.5px; line-height: 1.45; }
 .constr-notes li { margin: 2px 0; }
 @media print { .constr-sheet { break-before: page; page-break-before: always; } .constr-sheet:first-of-type { break-before: auto; page-break-before: auto; } .constr-svg svg { max-height: 200mm; } }
+
+/* Logistics pack print: never split a row or a small group across pages (Liam 22 Sep 2026) */
+@media print {
+  .logi-pack table { page-break-inside: auto; border-collapse: collapse; }
+  .logi-pack thead { display: table-header-group; }
+  .logi-pack tr, .logi-pack td, .logi-pack th { page-break-inside: avoid; break-inside: avoid; }
+  .logi-pack .pack-cat { page-break-inside: avoid; break-inside: avoid; }
+  .logi-pack .pack-cat h3, .logi-pack .pack-h2, .logi-pack .pack-sub { page-break-after: avoid; break-after: avoid; }
+  .logi-pack td { vertical-align: top; }
+}

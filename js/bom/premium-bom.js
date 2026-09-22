@@ -240,6 +240,38 @@ export function openingsOnWall(state, componentDefs, elevation) { return opening
  *  lines at 1.2m centres across the width + both outer joists; supports under
  *  the doubled lines only, ≤1.3m apart along the depth. Same rule for ground
  *  screws, blocks+pedestals and pedestals on a slab. */
+/** SHEET LAYOUT (Liam 22 Sep 2026: 'does the m2 method actually work out the right number?').
+ *  Board-by-board layout: rows of boardW across the depth, boards laid end to end along the length.
+ *  Offcuts are reused for the short end pieces; the last part-row is ripped from offcuts if they are long enough. */
+export function sheetPlan(lenM, depthM, boardL, boardW, stagger = true) { // eslint-disable-line no-unused-vars
+  // rows run ACROSS the joists (joists front-back, boards left-right)
+  const rowsFull = Math.floor(depthM / boardW + 1e-6);
+  const strip = Math.round((depthM - rowsFull * boardW) * 1000) / 1000; // last row width (0 = none)
+  let boards = 0; const offcuts = []; const notes = [];
+  const takeEnd = (need) => { // an end piece of length `need`: from an offcut if one fits, else a new board
+    const i = offcuts.findIndex((o) => o + 1e-6 >= need);
+    if (i >= 0) { const left = Math.round((offcuts[i] - need) * 1000) / 1000; offcuts.splice(i, 1); if (left > 0.3) offcuts.push(left); return 'offcut'; }
+    boards++; const left = Math.round((boardL - need) * 1000) / 1000; if (left > 0.3) offcuts.push(left); return 'new';
+  };
+  for (let r = 0; r < rowsFull; r++) {
+    // stagger: odd rows start with the short piece so end joints do not line up
+    const full = Math.floor(lenM / boardL + 1e-6); const rem = Math.round((lenM - full * boardL) * 1000) / 1000;
+    boards += full;
+    if (rem > 0.01) takeEnd(rem);
+  }
+  let stripNote = '';
+  if (strip > 0.01) {
+    // rip the strip from offcuts laid end to end (each offcut gives one strip of its own length)
+    let covered = 0; offcuts.sort((a, b) => b - a);
+    while (covered < lenM - 1e-6 && offcuts.length) covered += offcuts.shift();
+    if (covered < lenM - 1e-6) { const extra = Math.ceil((lenM - covered) / boardL); boards += extra; stripNote = `last ${Math.round(strip * 1000)}mm row ripped from offcuts + ${extra} extra board${extra === 1 ? '' : 's'}`; }
+    else stripNote = `last ${Math.round(strip * 1000)}mm row ripped from the offcuts`;
+  }
+  const rowLen = `${Math.floor(lenM / boardL)} full + ${Math.round((lenM % boardL) * 1000)}mm piece per row`;
+  notes.push(`${rowsFull} full rows of ${Math.round(boardW * 1000)}mm across the ${depthM.toFixed(2)}m depth, each ${lenM.toFixed(2)}m long (${rowLen})${stripNote ? '; ' + stripNote : ''}`);
+  return { boards, rowsFull, strip, notes, leftover: offcuts };
+}
+
 export function supportLayout(wM, dM) {
   const lines = [0];
   for (let x = 1.2; x < wM - 0.4; x += 1.2) lines.push(Math.round(x * 1000) / 1000);
@@ -411,8 +443,9 @@ export function buildPremiumBom(state, componentDefs) {
     [{ len: d, n: 2 * (fJoists - 1), what: 'floor PIR battens' }]);
   add(pirFRName, Math.ceil(w * d), `Floor: friction-fit between the 5x2 joists, ${(w * d).toFixed(1)}m2`,
     { orderText: `${Math.ceil(Math.ceil(w * d) / 2.88)} boards 2400 × 1200 × ${pirFR}mm PIR (floor, ${(w * d).toFixed(1)}m²)` });
-  add('22mm P5 T&G chipboard (2400x600)', Math.ceil((w * d) * 1.05 / CHIPBOARD_M2), `Floor deck: ${(w * d).toFixed(1)}m2 + 5%, glued at every joint`,
-    { orderText: `${Math.ceil((w * d) * 1.05 / CHIPBOARD_M2)} boards 2400 × 600 × 22mm P5 T&G (moisture-resistant)` });
+  const floorPlan = sheetPlan(w, d, 2.4, 0.6);
+  add('22mm P5 T&G chipboard (2400x600)', floorPlan.boards, `Floor deck ${w.toFixed(2)} x ${d.toFixed(2)}m laid board by board: ${floorPlan.notes[0]}. Glued at every joint`,
+    { orderText: `${floorPlan.boards} boards 2400 × 600 × 22mm P5 T&G (moisture-resistant) - ${floorPlan.rowsFull} rows${floorPlan.strip > 0.01 ? ` + a ${Math.round(floorPlan.strip * 1000)}mm strip` : ''}` });
 
   /* ---------- WALLS ---------- */
   // Panel walls: rear always; sides when steel-clad. Side run excludes the
@@ -667,8 +700,9 @@ export function buildPremiumBom(state, componentDefs) {
           : `They run ${canopyMm}mm past the front wall (classic token overhang)`
     }`,
     { costQty: (rJoists + 2) * roofLen, orderText: `${rJoists + 2} × ${roofLen.toFixed(2)}m long, 47mm wide, tapered ${firrFrontMm}mm → 0mm (identical pieces; 2 are fitted reversed on the side edges)` });
-  add('18mm T&G OSB3 roof board (2400x590)', Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2), `Roof deck ${(w + 0.2).toFixed(2)} x ${roofLen.toFixed(2)}m incl. 100mm side overhangs + ${canopyMm}mm front + 100mm rear, +5%`,
-    { orderText: `${Math.ceil((w + 0.2) * roofLen * 1.05 / OSB_TG_M2)} boards 2400 × 590 × 18mm OSB3 T&G (roof deck ${(w + 0.2).toFixed(2)} × ${roofLen.toFixed(2)}m)` });
+  const roofPlan = sheetPlan(w + 0.2, roofLen, 2.4, 0.59);
+  add('18mm T&G OSB3 roof board (2400x590)', roofPlan.boards, `Roof deck ${(w + 0.2).toFixed(2)} x ${roofLen.toFixed(2)}m (incl. 100mm side overhangs + ${canopyMm}mm front + 100mm rear) laid board by board: ${roofPlan.notes[0]}`,
+    { orderText: `${roofPlan.boards} boards 2400 × 590 × 18mm OSB3 T&G (roof deck ${(w + 0.2).toFixed(2)} × ${roofLen.toFixed(2)}m, ${roofPlan.rowsFull} rows${roofPlan.strip > 0.01 ? ` + a ${Math.round(roofPlan.strip * 1000)}mm strip` : ''})` });
   add('EPDM roof kit (membrane, adhesive, edge trims)', Math.ceil((w + 0.2) * roofLen * 1.15), `One-piece EPDM, deck m2 + 15% wraps/upstands, up-and-over the squared side edges`,
     { orderText: `ONE PIECE ${(w + 0.2 + 0.5).toFixed(2)}m wide × ${(roofLen + 0.5).toFixed(2)}m deep (roof deck ${(w + 0.2).toFixed(2)} × ${roofLen.toFixed(2)}m + 0.5m allowance each way) + contact adhesive + edge trims for ${(w + 2 * roofLen).toFixed(1)}m of edge` });
   // Roof PIR is 75mm like the floor and walls (Liam 2026-09-06) - one thickness
