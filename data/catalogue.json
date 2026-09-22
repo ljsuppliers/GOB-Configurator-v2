@@ -1,5 +1,5 @@
 {
-  "version": 29,
+  "version": 30,
   "updated": "2026-09-22",
   "suppliers": [
     {
@@ -67,6 +67,12 @@
       "email": "",
       "phone": "",
       "notes": ""
+    },
+    {
+      "name": "iWood",
+      "email": "",
+      "phone": "",
+      "notes": "Western red cedar cladding. Delivered to the Biggin Hill factory, then GOB delivers to site (Liam 22 Sep 2026). Add the order email when known."
     },
     {
       "name": "Kingspan",
@@ -1914,13 +1920,13 @@
       "sku": "",
       "unit": "length",
       "unitCost": 29,
-      "supplier": "Builders merchant",
+      "supplier": "iWood",
       "packSize": null,
       "orderUnit": "2.5m length",
-      "destination": "site",
+      "destination": "factory",
       "inStock": false,
-      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. WRC 18x144 shadow-gap/slat board ~\u00a311.55/m ex (\u00a313.86 inc, Timber Living) x 2.5m length | SET COST + SUPPLIER (missing from designer catalogue too)",
-      "supply": "site"
+      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. WRC 18x144 shadow-gap/slat board ~\u00a311.55/m ex (\u00a313.86 inc, Timber Living) x 2.5m length | SET COST + SUPPLIER (missing from designer catalogue too) Supplier iWood, delivered to the factory first (Liam 22 Sep 2026).",
+      "supply": "factory"
     },
     {
       "name": "TimberLok 150mm",
