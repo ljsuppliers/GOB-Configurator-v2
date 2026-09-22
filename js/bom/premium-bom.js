@@ -856,8 +856,12 @@ export function buildPremiumBom(state, componentDefs) {
       // 2100mm) drives the order wording AND the glass sizes (Liam 21 Sep 2026).
       const W = Math.round(o.widthM * 1000) || def.width || 900, H = def.height || 2050;
       const madeToMeasure = def.width && W !== def.width;
+      // A made-to-measure opening is NAMED for its real size on the list and the pack
+      // (Liam 22 Sep 2026: "Patel shows a 2.5m door when it should be 2.1"); it is still
+      // priced from the stock product it is based on.
+      const mtmName = madeToMeasure ? `${(W / 1000).toFixed(1)}m ${(def.label || o.type).replace(/^\d+(\.\d+)?m\s*/, '')} (made to measure, based on the ${def.label})` : '';
       add(def.label || o.type, 1, `On the ${wallName}${W ? ` - ${W}mm wide${madeToMeasure ? ` (MADE TO MEASURE, not the stock ${def.width}mm)` : ''}` : ''}`,
-        { orderText: `1 × ${def.label || o.type}${madeToMeasure ? ` MADE TO MEASURE ${W}mm wide (NOT the stock ${def.width}mm)` : (W ? `, ${W}mm wide` : '')}${H ? ` × ${H}mm high` : ''}, ${/aluminium|bi-fold|bifold/i.test(def.label || o.type) ? 'anthracite grey RAL 7016 both sides (aluminium)' : 'anthracite grey RAL 7016 outside / white inside (uPVC)'} - FRAME ONLY, unglazed (glass ordered separately) - for the ${wallName} wall` });
+        { displayName: mtmName || undefined, separate: madeToMeasure ? `MTM ${W}` : undefined, orderText: `1 × ${madeToMeasure ? `${(W / 1000).toFixed(1)}m ${(def.label || o.type).replace(/^\d+(\.\d+)?m\s*/, '')} MADE TO MEASURE at ${W}mm wide (based on the stock ${def.label})` : `${def.label || o.type}${W ? `, ${W}mm wide` : ''}`}${H ? ` × ${H}mm high` : ''}, ${/aluminium|bi-fold|bifold/i.test(def.label || o.type) ? 'anthracite grey RAL 7016 both sides (aluminium)' : 'anthracite grey RAL 7016 outside / white inside (uPVC)'} - FRAME ONLY, unglazed (glass ordered separately) - for the ${wallName} wall` });
       // GLAZING comes from a separate supplier (Liam 2026-09-06): frames are
       // supplied unglazed. One line per opening with approximate pane sizes
       // (frame size less ~60mm per edge; confirm from the frame maker's
@@ -865,7 +869,7 @@ export function buildPremiumBom(state, componentDefs) {
       const pane = (pw, ph) => `${Math.round(pw)} × ${Math.round(ph)}mm`;
       const cat = def.category || 'standard';
       if (cat === 'sliding') {
-        add('Glass for sliding door', 2, `${def.label} on the ${wallName}: 2 panes`, { orderText: `2 panes approx ${pane(W / 2 - 100, H - 130)} toughened DGU 28mm (${def.label}, ${wallName})` });
+        add('Glass for sliding door', 2, `${madeToMeasure ? `${(W / 1000).toFixed(1)}m made-to-measure sliding door` : def.label} on the ${wallName}: 2 panes`, { orderText: `2 panes approx ${pane(W / 2 - 100, H - 130)} (${madeToMeasure ? `${W}mm made-to-measure sliding door` : def.label}, ${wallName})` });
       } else if (cat === 'bifold') {
         const leaves = W >= 4200 ? 5 : W >= 3200 ? 4 : 3;
         add('Toughened double glazed unit 28mm (made to size)', leaves, `${def.label} on the ${wallName}: ${leaves} leaves`, { costQty: leaves * ((W / leaves - 110) / 1000) * ((H - 130) / 1000), orderText: `${leaves} panes approx ${pane(W / leaves - 110, H - 130)} toughened DGU 28mm (${def.label}, ${wallName})` });

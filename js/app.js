@@ -8,9 +8,9 @@ import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=6';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=51';
-import { buildConstructionDrawings } from './construction.js?v=19';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=40';
+import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=52';
+import { buildConstructionDrawings } from './construction.js?v=20';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=41';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=12';
 import { emptyInstaller } from './bom/installers.js?v=2';
@@ -502,7 +502,7 @@ createApp({
       const split = new Set([...groups.values()].filter((g) => g.stage).map((g) => g.supplier));
       const supByName = new Map((this.catalogue?.suppliers || []).map((sp) => [sp.name.toLowerCase(), sp]));
       const secs = [...groups.values()].map(({ supplier, stage, lines }) => {
-        lines.sort((a, b) => (a.material?.category || '').localeCompare(b.material?.category || '') || a.name.localeCompare(b.name));
+        lines.sort((a, b) => this.loadOrder(a) - this.loadOrder(b) || (a.material?.category || '').localeCompare(b.material?.category || '') || a.name.localeCompare(b.name));
         const sup = supByName.get(supplier.toLowerCase()) || null;
         const orders = (this.orders || []).filter((o) => o.supplierName === supplier && (o.stage || '') === stage);
         const name = stage ? `${supplier} · 2nd delivery (week 2: plastering + decorating)` : split.has(supplier) ? `${supplier} · 1st delivery` : supplier;
@@ -587,7 +587,7 @@ createApp({
         // a supplier with a week-2 delivery is listed as two deliveries (1st / 2nd).
         const PRIORITY = ['Kingspan', 'Builders merchant', 'Local timber merchant', 'GAP', 'Montravia', 'Spectral', 'Advanced Sealed Units'];
         const rank = (n) => (PRIORITY.indexOf(n) >= 0 ? PRIORITY.indexOf(n) : 50);
-        return [...m.values()].map(({ sup, stage, lines: ls }) => ({ name: stage ? `${sup} · 2nd delivery (week 2)` : split.has(sup) ? `${sup} · 1st delivery` : sup, sup, stage, lines: ls.sort((a, b) => (a.material?.category || '').localeCompare(b.material?.category || '')) }))
+        return [...m.values()].map(({ sup, stage, lines: ls }) => ({ name: stage ? `${sup} · 2nd delivery (week 2)` : split.has(sup) ? `${sup} · 1st delivery` : sup, sup, stage, lines: ls.sort((a, b) => this.loadOrder(a) - this.loadOrder(b) || (a.material?.category || '').localeCompare(b.material?.category || '')) }))
           .sort((a, b) => rank(a.sup) - rank(b.sup) || a.sup.localeCompare(b.sup) || (a.stage ? 1 : 0) - (b.stage ? 1 : 0));
       };
       const toSite = lines.filter((l) => !l.inStock && l.destination !== 'factory');
@@ -975,7 +975,7 @@ createApp({
     },
     rebuildOrders() {
       const open = new Set((this.orders || []).filter((o) => o.showEmail).map((o) => o.supplierName + o.destination));
-      this.orders = buildOrders(this.bomLines, this.catalogue, {
+      this.orders = buildOrders([...this.bomLines].map((l, i) => [l, i]).sort((a, b) => this.loadOrder(a[0]) - this.loadOrder(b[0]) || a[1] - b[1]).map((x) => x[0]), this.catalogue, {
         ref: this.orderRef,
         siteAddress: [this.state.customer?.name, this.state.customer?.address].filter(Boolean).join('\n'),
         supplierNotes: this.state.orderNotes || {},
@@ -1618,6 +1618,8 @@ createApp({
       this.rebuildOrders();
     },
     printMaterials() { this.$nextTick(() => window.print()); },
+    /** Van-loading order within a supplier: doors first, then windows, then the rest (Liam 22 Sep 2026). */
+    loadOrder(l) { const n = (l.catalogueName || l.name || '').toLowerCase(); const isGlass = /glass|glazed unit/.test(n); if (!isGlass && /bi-?fold|sliding|door/.test(n) && !/seal|trim|mat|ironmongery|lining/.test(n)) return 0; if (!isGlass && /window/.test(n)) return 1; if (isGlass && /door|bi-?fold|sliding/.test(n)) return 2; if (isGlass) return 3; return 4; },
     useTagDefault(name) { return USE_TAGS[name] || ''; },
     useTag(l) {
       // A "use" typed on the catalogue line wins over the built-in wording (editable by Liam, 22 Sep 2026)

@@ -299,7 +299,7 @@ export function joinBom(bomRows, catalogue, overrides = {}) {
   const byName = new Map(catalogue.materials.map((m) => [m.name.toLowerCase(), m]));
   return mergeBomRows(bomRows).map((r) => {
     const mat = byName.get(r.name.toLowerCase()) || null;
-    if (r.separate) r = { ...r, catalogueName: r.name, name: `${r.name} — ${r.separate}` };
+    if (r.separate) r = { ...r, catalogueName: r.name, name: r.displayName || `${r.name} — ${r.separate}` };
     const ov = overrides[r.name] || {};
     const packSize = mat && mat.packSize > 0 ? mat.packSize : 1;
     let orderQty = Math.max(0, Math.ceil(r.qty / packSize - 1e-9));
