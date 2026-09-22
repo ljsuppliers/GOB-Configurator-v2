@@ -77,7 +77,7 @@ export const USE_TAGS = {
   '6x2 tanalised C24 timber': 'Roof joists and flitch beam',
   '7x2 tanalised C24 timber': 'Roof joists',
   'Flitch beam bolts': 'Flitch over front openings',
-  '4x2 tanalised C24 timber': 'Stick walls and wall plates',
+  '4x2 tanalised C24 timber': 'Front stick wall (base plate, studs, head plate) + the flat head plate on top of the panel walls',
   '18mm OSB3 board (2440x1220)': 'Webs between doubled roof joists',
   'Tapered firring (47mm, 1:40)': 'Roof fall + canopy overhang',
   '18mm T&G OSB3 roof board (2400x590)': 'Roof deck',
@@ -424,8 +424,8 @@ export function buildPremiumBom(state, componentDefs) {
     const kings = fhCount * (6 * wallH + 2);
     stickLm += (studs * wallH + 2 * sw.run + sw.run /* noggins */ + 4 * wallH + kings) * 1.10;
     stickCuts.push({ len: wallH, n: studs + 4 + fhCount * 6, what: `${sw.label} studs (${studs} after the ${openW.toFixed(1)}m of openings) + corner + king/jack studs (${fhCount * 6})` });
-    stickCuts.push({ len: sw.run, n: 3, what: `${sw.label} top plate x2 + noggin run (join over a stud if longer than stock)`, join: true });
-    soleCuts.push({ len: sw.run, n: 1, what: `${sw.label} sole plate (join over a stud if longer than stock)`, join: true });
+    stickCuts.push({ len: sw.run, n: 3, what: `${sw.label} head plate + noggin run (join over a stud if longer than stock)`, join: true });
+    soleCuts.push({ len: sw.run, n: 1, what: `${sw.label} base plate (join over a stud if longer than stock)`, join: true });
     const areaM2 = sw.run * wallH;
     plySheets += Math.ceil(areaM2 * 1.10 / PLY_SHEET_M2);
     tyvekM2 += Math.ceil(areaM2 * 1.10);
@@ -502,7 +502,7 @@ export function buildPremiumBom(state, componentDefs) {
     }
   }
   add('4x2 tanalised C24 timber', Math.ceil(stickLm - soleLm), `Stick walls (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): studs @400mm + plates + noggins + opening framing, +10%`, stickCuts);
-  add('4x2 tanalised C24 timber', Math.ceil(soleLm * 1.10), `Stick-wall sole plates at deck level (tanalised)`, soleCuts);
+  add('4x2 tanalised C24 timber', Math.ceil(soleLm * 1.10), `Stick-wall BASE PLATES on the chipboard (the studs stand on these)`, soleCuts);
   add('12mm Plywood (1220×2440 sheet)', plySheets + 1, `Stick wall external sheathing + 10% + 1 spare sheet (openings cut out on site)`,
     { orderText: `${plySheets + 1} sheets 2440 × 1220 × 12mm structural ply (WBP/exterior grade), incl. 1 spare` });
   add('Tyvek breather membrane', tyvekM2, `Over the ply, under the battens (m2 + 10%)`,
@@ -594,8 +594,8 @@ export function buildPremiumBom(state, componentDefs) {
       `CANOPY LADDER (2.5m method): the 2 OUTER (doubled) roof joists are cut ${canopyMm}mm longer to sail forward, a 6x2 TIE JOIST x ${w.toFixed(2)}m across their ends, ${nogs} 6x2 NOGGINGS x ${(nogLen * 1000).toFixed(0)}mm @400mm between (in line with the joists), +10%`,
       [{ len: w, n: 1, what: 'canopy tie joist (front)', join: true }, { len: nogLen, n: nogs, what: 'canopy noggings' }, { len: canopyM, n: 2 * edgePly, what: 'ADD to the outer (doubled) joist lengths' }]);
   }
-  add('4x2 tanalised C24 timber', Math.ceil((2 * sideRun + w) * 1.05), `Flat 4x2 wall plate on the panel wall tops (sides + rear)`,
-    [{ len: sideRun, n: 2, what: 'side wall plates', join: true }, { len: w, n: 1, what: 'rear wall plate', join: true }]);
+  add('4x2 tanalised C24 timber', Math.ceil((2 * sideRun + w) * 1.05), `Flat 4x2 HEAD PLATE on top of the Kingspan panels (sides + rear): the 49mm that takes the walls to 2189, bay-pole screws @400`,
+    [{ len: sideRun, n: 2, what: 'panel head plates, sides', join: true }, { len: w, n: 1, what: 'panel head plate, rear', join: true }]);
   if (ladder.web) add('18mm OSB3 board (2440x1220)', Math.ceil((rJoists * joistLen * ladder.depthM * 1.10) / PLY_SHEET_M2), `OSB webs glued+screwed between the doubled joist pairs, ripped from full sheets`,
     { orderText: `${Math.ceil((rJoists * joistLen * ladder.depthM * 1.10) / PLY_SHEET_M2)} sheets 2440 × 1220 × 18mm OSB3 (ripped to ${(ladder.depthM * 1000).toFixed(0)}mm webs on site)` });
   // Firrings are CUSTOM MADE per job (Liam 2026-09-05): give the exact spec.
