@@ -379,12 +379,15 @@
                 <option value="rocky">Rocky</option>
               </select>
             </label>
-            <label>Proposed Foundation
-              <select v-model="state.site.proposedFoundation">
-                <option value="">Select...</option>
-                <option value="ground-screws">Ground screws</option>
-                <option value="concrete-new">Concrete base (new)</option>
-                <option value="concrete-existing">Concrete base (existing)</option>
+            <label>Foundation / groundworks <span class="cfg-note" style="display:inline">(same setting as section 3; drives the materials list)</span>
+              <select v-model="state.foundationType">
+                <option value="ground-screw">Ground screws (installed by our team)</option>
+                <option value="concrete-pile">Concrete blocks + Postcrete + pedestals (installed by our team)</option>
+                <option value="concrete-existing">Existing concrete base (pedestals on the slab)</option>
+                <option value="concrete-landscaper">Concrete base via our landscaper (customer pays direct), then pedestals</option>
+                <option value="concrete-others">Concrete base to be installed by others, then pedestals</option>
+                <option value="concrete-base">Concrete base poured by our team, then pedestals</option>
+                <option value="hybrid">Hybrid: existing base + ground screws</option>
               </select>
             </label>
             <label>Ground Notes
@@ -2600,7 +2603,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=175"></script>
+<script type="module" src="js/app.js?v=176"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

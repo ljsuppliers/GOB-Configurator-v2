@@ -384,23 +384,20 @@ export function buildPremiumBom(state, componentDefs) {
   const cols = sl.lines.length;
   const rowsN = sl.rows.length;
   const pedestals = sl.count;
-  // Liam 21 Sep 2026: list BOTH ground screws and pedestals so the logistics team
-  // can pick on the day; the alternative is not costed and not on any order.
-  const ALT_SCREWS = { separate: 'ALTERNATIVE if ground screws are used instead', alternative: true };
-  const ALT_PEDS = { separate: 'ALTERNATIVE if pedestals are used instead', alternative: true };
+  // FOUNDATION KITS (Liam 22 Sep 2026 - the designer's foundation dropdown decides):
+  //   ground screws  -> screws + the ground screw machine (auger, site kit)
+  //   concrete base  -> adjustable pedestals only (existing slab, landscaper's, others', ours)
+  //   concrete blocks-> blocks + pedestals + 2 bags of Postcrete per hole
   if (groundScrews) {
     add('Radix ground screw', pedestals, `${cols} doubled-joist lines (1.2m centres) × ${rowsN} rows (≤1.3m along the depth) - see construction drawing 1`);
-    add('Adjustable plastic pedestal', pedestals, `ALTERNATIVE to the ${pedestals} ground screws: the same ${cols} × ${rowsN} points on pedestals (on a slab, or on concrete blocks) - logistics to choose, NOT costed or ordered unless swapped`, { ...ALT_PEDS, use: 'FOUNDATION ALTERNATIVE - LOGISTICS TO CHOOSE' });
   } else if (blockBase) {
     add('Concrete block 440x215x100 medium density (7.3N)', pedestals, `CONCRETE BLOCK BASE: 1 block per support point, ${cols} doubled-joist lines × ${rowsN} rows (≤1.3m) - see construction drawing 1`);
     add('Postcrete (20kg bag)', pedestals * 2, `2 bags per hole × ${pedestals} holes`);
     add('Adjustable plastic pedestal', pedestals, `1 adjustable pedestal on each concrete block (Liam 2026-09-07) - frame builds on the pedestal heads`);
     add('DPM sheet', Math.ceil(w * d * 1.1), `Over the ground under the floor frame (${(w * d).toFixed(1)}m2 + 10% laps)`);
-    add('Radix ground screw', pedestals, `ALTERNATIVE to the ${pedestals} blocks + pedestals: the same points on ground screws - logistics to choose, NOT costed or ordered unless swapped`, { ...ALT_SCREWS, use: 'FOUNDATION ALTERNATIVE - LOGISTICS TO CHOOSE' });
   } else {
     add('Adjustable plastic pedestal', pedestals, `${cols} doubled-joist lines × ${rowsN} rows (≤1.3m) - frame builds DIRECTLY on the heads (no bearers). Anchored to the slab - see construction drawing 1`);
     add('DPM sheet', Math.ceil(w * d * 1.1), `Over the slab under the pedestals (${(w * d).toFixed(1)}m2 + 10% laps)`);
-    add('Radix ground screw', pedestals, `ALTERNATIVE to the ${pedestals} pedestals: the same points on ground screws - logistics to choose, NOT costed or ordered unless swapped`, { ...ALT_SCREWS, use: 'FOUNDATION ALTERNATIVE - LOGISTICS TO CHOOSE' });
   }
 
   /* ---------- FLOOR (5x2, doubled ring + 1.2m grid) ---------- */
@@ -928,20 +925,17 @@ export function buildPremiumBom(state, componentDefs) {
     // same 1.3m grid as the extra decking. Boards run along the width.
     {
       const stdJ = Math.ceil(w / 0.4) + 1, stdCols = Math.ceil(w / 1.3) + 1;
-      // 5x2 like the floor (Liam 21 Sep 2026)
-      add('5x2 tanalised C24 timber', Math.ceil((stdJ * 0.4 + w) * 1.10), `STANDARD DECKING FRAME (400mm): ${stdJ} joists x 400mm @400mm off the base front end joist + 1 front rim x ${w.toFixed(2)}m, +10%`,
+      // 4x2 (Liam 22 Sep 2026, overriding the 21 Sep 5x2)
+      add('4x2 tanalised C24 timber', Math.ceil((stdJ * 0.4 + w) * 1.10), `STANDARD DECKING FRAME (400mm): ${stdJ} joists x 400mm @400mm off the base front end joist + 1 front rim x ${w.toFixed(2)}m, +10%`,
         { cuts: [{ len: 0.4, n: stdJ, what: 'decking joists' }, { len: w, n: 1, what: 'decking front rim', join: true }], separate: 'DECKING frame' });
       if (groundScrews) {
         add('Radix ground screw', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing)`, { separate: 'DECKING supports', use: 'DECKING SUPPORTS - UNDER THE FRONT RIM' });
-        add('Adjustable plastic pedestal', stdCols, `DECKING ALTERNATIVE: ${stdCols} pedestals (on a slab or on concrete blocks) instead of the ground screws - logistics to choose, NOT costed or ordered unless swapped`, { separate: 'DECKING supports ALTERNATIVE', alternative: true, use: 'DECKING SUPPORTS - ALTERNATIVE, LOGISTICS TO CHOOSE' });
       } else if (blockBase) {
         add('Concrete block 440x215x100 medium density (7.3N)', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing), 1 block per support`, { separate: 'DECKING supports', use: 'DECKING SUPPORTS - UNDER THE FRONT RIM' });
         add('Postcrete (20kg bag)', stdCols * 2, `DECKING: 2 bags per hole x ${stdCols} holes`, { separate: 'DECKING supports', use: 'DECKING SUPPORTS - UNDER THE FRONT RIM' });
         add('Adjustable plastic pedestal', stdCols, `DECKING: 1 pedestal on each block`, { separate: 'DECKING supports', use: 'DECKING SUPPORTS - UNDER THE FRONT RIM' });
-        add('Radix ground screw', stdCols, `DECKING ALTERNATIVE: ${stdCols} ground screws instead of the blocks + pedestals - logistics to choose, NOT costed or ordered unless swapped`, { separate: 'DECKING supports ALTERNATIVE', alternative: true, use: 'DECKING SUPPORTS - ALTERNATIVE, LOGISTICS TO CHOOSE' });
       } else {
         add('Adjustable plastic pedestal', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing)`, { separate: 'DECKING supports', use: 'DECKING SUPPORTS - UNDER THE FRONT RIM' });
-        add('Radix ground screw', stdCols, `DECKING ALTERNATIVE: ${stdCols} ground screws instead of the pedestals - logistics to choose, NOT costed or ordered unless swapped`, { separate: 'DECKING supports ALTERNATIVE', alternative: true, use: 'DECKING SUPPORTS - ALTERNATIVE, LOGISTICS TO CHOOSE' });
       }
       add('TimberLok 150mm', Math.ceil(stdJ * 2 * 1.25), `DECKING frame: joists through the base front end joist (2 per joist), +25%`, { separate: 'DECKING fixings', use: 'DECKING SUB-FRAME FIXINGS' });
       add('TimberLok 100mm', Math.ceil((stdJ * 2 + stdCols * 2) * 1.25), `DECKING frame: joists to the front rim + rim to supports, +25%`, { separate: 'DECKING fixings', use: 'DECKING SUB-FRAME FIXINGS' });
