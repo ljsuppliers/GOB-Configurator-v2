@@ -499,12 +499,13 @@ export function buildPremiumBom(state, componentDefs) {
     } else if (glassAtCorner[side]) {
       add('Corner Trim (40x180 anthracite L)', 1, `FRONT ${side} corner, glazing meets glazing: 180x40 L +`);
       add('Corner Trim (200x40x40 anthracite U)', 1, `FRONT ${side} corner, glazing meets glazing: 200x40x40 U (with the 180x40 L forms the corner)`);
-    } else if (!hasCanopy && isSteel(state.cladding[side])) {
-      // Plain front corner (no canopy) where the clad front meets an anthracite
-      // panel side: 2 x 180x40 L per corner (Liam 21 Sep 2026, Patel).
-      add('Corner Trim (40x180 anthracite L)', 2, `FRONT ${side} corner (no canopy, front cladding meets the anthracite panel side): 2 x 180x40 L`);
+    } else if (isSteel(state.cladding[side])) {
+      // NORMAL open corner (canopy or not) where the clad front meets an anthracite
+      // PANEL side: 2 x 180x40 L per corner (Liam 21/22 Sep 2026). The trim follows
+      // the side wall type, not the canopy.
+      add('Corner Trim (40x180 anthracite L)', 2, `FRONT ${side} corner (normal open corner, front cladding meets the anthracite panel side): 2 x 180x40 L`);
     } else {
-      add('Corner Trim (50x50 anthracite L)', 1, `FRONT ${side} corner (open corner, cladding meets cladding): 50x50 L`);
+      add('Corner Trim (50x50 anthracite L)', 1, `FRONT ${side} corner (normal open corner, cladding meets cladding on a clad side): 50x50 L`);
     }
   }
   add('4x2 tanalised C24 timber', Math.ceil(stickLm - soleLm), `Stick walls (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): studs @400mm + plates + noggins + opening framing, +10%`, stickCuts);
