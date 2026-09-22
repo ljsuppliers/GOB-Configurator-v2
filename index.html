@@ -2167,7 +2167,7 @@
         <div v-for="g in logistics.toSite" :key="'ts'+g.name" class="pack-cat">
           <h3>{{ g.name }}</h3>
           <table class="pack-table pack-check">
-            <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}<span v-if="l.stage === 'week2'" class="pack-small"> · 2ND DELIVERY (week 2)</span></td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.orderStatus === 'delivered' ? 'delivered' : l.orderStatus === 'ordered' ? 'ordered' : 'NOT YET ORDERED' }}</td></tr>
+            <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}<span class="pack-small"> · {{ useTag(l) }}</span><span v-if="l.stage === 'week2'" class="pack-small"> · 2ND DELIVERY (week 2)</span></td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.orderStatus === 'delivered' ? 'delivered' : l.orderStatus === 'ordered' ? 'ordered' : 'NOT YET ORDERED' }}</td></tr>
           </table>
         </div>
 
@@ -2178,7 +2178,7 @@
           <div v-for="g in logistics.factoryDelivered" :key="'fd'+g.name" class="pack-cat">
             <h3>{{ g.name }}</h3>
             <table class="pack-table pack-check">
-              <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}</td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.orderStatus === 'delivered' ? 'at factory' : l.orderStatus === 'ordered' ? 'ordered, awaiting delivery to factory' : 'NOT YET ORDERED' }}</td></tr>
+              <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}<span class="pack-small"> · {{ useTag(l) }}</span></td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.orderStatus === 'delivered' ? 'at factory' : l.orderStatus === 'ordered' ? 'ordered, awaiting delivery to factory' : 'NOT YET ORDERED' }}</td></tr>
             </table>
           </div>
         </template>
@@ -2603,7 +2603,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=177"></script>
+<script type="module" src="js/app.js?v=178"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>
