@@ -55,7 +55,7 @@
 //         edges), 18mm T&G OSB, one-piece EPDM, 75/100mm PIR set 30mm down.
 //         Half-round gutter full width at the rear, downpipe one end (both ends
 //         from 6m wide).
-import { supportLayout, panelPlan, openingsOnWall, roofLadderFor, isSteelClad } from './bom/premium-bom.js?v=49';
+import { supportLayout, panelPlan, openingsOnWall, roofLadderFor, isSteelClad } from './bom/premium-bom.js?v=50';
 
 const F = 'font-family:Inter,Arial,sans-serif';
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');

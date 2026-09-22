@@ -48,121 +48,170 @@ const PLASTERBOARD_M2 = 1.2 * 2.4;
 /** Short "where it's used" labels (Liam 2026-09-06: accurate, short, concise).
  *  Shown next to the material name instead of the catalogue category. */
 export const USE_TAGS = {
-  'Adjustable plastic pedestal': 'Under the floor frame',
-  'DPM sheet': 'Under the pedestals, on the slab',
-  'Radix ground screw': 'Foundation',
-  'Concrete block 440x215x100 medium density (7.3N)': 'Base: 1 per support point',
-  'Postcrete (20kg bag)': 'Base: 2 bags per hole',
-  '5x2 tanalised C24 timber': 'Floor joists and decking frame',
-  '18x38 treated batten': 'Floor PIR support, panel double battens, cladding sub-frame',
-  '75mm PIR insulation board': 'Floor, stick-wall bays + roof',
-  '100mm PIR insulation board': 'Floor + roof (100mm jobs)',
-  'Oak acoustic slat wall panel (2400×600)': 'Rear feature wall, over plasterboard',
-  '22mm P5 T&G chipboard (2400x600)': 'Floor deck',
-  'Kingspan 100mm insulated wall panel (1.1m wide)': 'Rear + unclad side walls',
-  'U-channel (40x102x40mm)': 'Panel tops, corners, opening edges',
-  'Standard panel base trim (steel)': 'Panel bottoms + front FH windows',
-  'Door base trim': 'Under every door',
-    '12mm Plywood (1220×2440 sheet)': 'Stick-wall sheathing + canopy box',
-  'Tyvek breather membrane': 'Over the ply, stick walls',
-  'Tyvek/breather tape (roll)': 'Tyvek laps + openings',
-  'Western Red Cedar slatted cladding 140×2500mm': 'External cladding',
-  'Larch slatted cladding 140×2500mm': 'External cladding',
-  'Composite slatted cladding (Latte) 200×2500mm': 'External cladding',
-  'Composite slatted cladding (Coffee) 200×2500mm': 'External cladding',
-  'Front-cladding return (closed corner)': 'Closed-corner inside return',
-  'Corner Trim (40x180 anthracite L)': 'Rear + plain corners',
-  'Corner Trim (50x50 anthracite L)': 'Open corner, clad both faces',
-  'Corner Trim (200x40x40 anthracite U)': 'Closed corner / glazed open corner',
-  '6x2 tanalised C24 timber': 'Roof joists and flitch beam',
-  '7x2 tanalised C24 timber': 'Roof joists',
-  'Flitch beam bolts': 'Flitch over front openings',
-  '4x2 tanalised C24 timber': 'Front stick wall + the flat head plate on top of the panel walls',
-  '18mm OSB3 board (2440x1220)': 'Webs between doubled roof joists',
-  'Tapered firring (47mm, 1:40)': 'Roof fall + canopy overhang',
-  '18mm T&G OSB3 roof board (2400x590)': 'Roof deck',
-  'EPDM roof kit (membrane, adhesive, edge trims)': 'Roof covering',
-
-  '2x2 tanalised C16 timber': 'Canopy frame',
-  'Soffit vent strip (2.5m)': 'Front soffit + rear rim vents',
-  'Vapour control layer (roll)': 'Under roof joists + behind wall lining',
-  '300mm plastic fascia (5m length, GAP)': 'Fascia: front + sides',
-  '200mm plastic fascia (5m length, GAP)': 'Fascia: rear',
-  '400mm plastic soffit (5m length, GAP)': 'Canopy soffit',
-  'Fascia corner (500mm plastic)': 'Fascia corners',
-  'Fascia connector (500mm plastic, 300mm)': 'Fascia joins, front + sides',
-  'Fascia connector (200mm plastic)': 'Fascia joins, rear',
-  'Steel top cap': 'Fascia + roof edge, front + sides',
-  'Half-Round Gutter 4 Mtr (Black)': 'Rear gutter',
-  'Half-Round Gutter Fascia Bracket (Black)': 'Rear gutter',
-  'Half-Round Stop End Outlet (Black)': 'Rear gutter',
-  'Half-Round Gutter Stop End Ext (Black)': 'Rear gutter',
-  'Half-Round Gutter Joiner (Black)': 'Rear gutter',
-  'Round 68mm Downpipe 2.5 Mtr (Black)': 'Downpipe',
-  'Round Downpipe Clip (Black)': 'Downpipe',
-  'Round Downpipe Shoe (Black)': 'Downpipe',
-  'Plasterboard 12.5mm (1200x2400 sheet)': 'Internal walls + ceiling',
-  'Plasterboard scrim/jointing tape (90m roll)': 'Plasterboard joints',
-  'Plasterboard corner bead (2.4m)': 'Internal corners + reveals',
-  'Multi-finish plaster (25kg bag)': 'Skim coat',
-  'Drywall screw 3.5 x 38mm black (coarse)': 'Plasterboard to studs',
-  'White trade emulsion paint (10L)': 'Walls + ceiling',
-  'Satin wood paint (750ml)': 'Skirting',
-  'Skirting board': 'Internal perimeter',
-  'Decorators caulk (tube)': 'Internal junctions',
-  'Wickes laminate flooring - Natural Oak (1.48m² pack)': 'Internal floor', 'Wickes laminate flooring - Light Grey (1.48m² pack)': 'Internal floor', 'Wickes laminate underlay (10.03m² pack)': 'Under the laminate',
-  'Trex Clam Shell composite decking board (140 × 4880mm)': 'Front decking',
-  'Decking screws - colour-headed (Winchester grey)': 'Decking boards',
-  'Bitumen paint (1L)': 'Decking sub-frame',
-  'Door mat': 'Handover',
-  'Anthracite touch-up pen': 'Trim + panel touch-ups',
-  'Mitre bond kit (adhesive + activator)': 'Trim mitres',
-  'Packer shim assortment (box)': 'Levelling frames + timber',
-  'uPVC frame fixing screw': 'Door + window frames',
-  'Expanding foam can': 'Around openings',
-  'Gun foam (can)': 'Around openings + perimeter gaps',
-  'Door/window seal': 'Door + window frames',
-  'Quinetic wireless switch kit (receiver + 2 switches)': 'Wireless switching', 'HDMI cable 5m + brush plates (pair)': 'TV point', 'IP66 outdoor junction box': 'Floodlight feed',
-  'Interior door 826x2040': 'Partition door', 'Interior door lining & frame': 'Partition door', 'Interior door ironmongery set': 'Partition door', 'Rockwool insulation 50mm (acoustic)': 'Partition bays',
-  'Glass for sliding door': 'Sliding door panes', 'Glass for single door (clear)': 'Single door pane', 'Glass for desk window 1000x1000': 'Desk window', 'Glass for slot window 900x450': 'Slot window', 'Glass for full-height window 600x2050 fixed': 'FH window 600', 'Glass for full-height window 600x2050 opener main': 'FH window 600 opener', 'Glass for full-height window 900x2050 fixed': 'FH window 900', 'Glass for full-height window 900x2050 opener main': 'FH window 900 opener', 'Glass for full-height window opener top': 'Opener top pane', 'Toughened double glazed unit 28mm (made to size)': 'Bifold / other openings',
-  '25x25mm white PVC reveal trim (2.5m length)': 'Window + door reveals',
-  'TimberLok 150mm': 'Floor doubling',
-  'TimberLok 100mm': 'Roof joists, plates, studs, canopy',
-  'TimberLok 89mm': 'Lining frame into panels, corners',
-  'TimberLok 225mm': 'Floor rim into joist ends',
-  'Wood screw 5.0 x 100mm': 'Stick framing',
-  'Wood screw 5.0 x 70mm': 'Battens + firrings',
-  'Wood screw 5.0 x 50mm': 'Ply, floor + roof decks, pedestals',
-  'Grey RAL 7016 self-drilling trim screw 25mm': 'Visible steel trims',
-  'Self-drilling screw 25mm plain (hidden trims / U-channel)': 'U-channel + hidden trims',
-  'Bay pole self-drilling screw 70mm (timber to panel)': 'Wall plates into panel steel',
-  'Concrete screw 100mm (Ammo)': 'Pedestals to slab',
-  'Stainless self-drilling screw 40mm (gutters/fascia)': 'Gutter brackets + clips',
-  'Polytop pins 40mm anthracite': 'Fascia boards',
-  'Polytop pins 65mm anthracite': 'Soffit boards',
-  'Stainless angled brad 16g x 38mm': 'Cedar/larch boards',
-  'Jiffy hanger 47mm (mini joist hanger)': 'Roof joist ends',
-  'Square twist nails 30mm (1kg bag)': 'Jiffy hangers',
-  'Twisted restraint strap 30x2.5x600mm': 'Roof tie-down to plates',
-  'Silicone - anthracite grey RAL 7016 (310ml)': 'External trims + joints',
-  'Silicone - clear (310ml)': 'Panel joints, glazing, flashings',
-  'Silicone - white (310ml)': 'Internal thresholds + trims',
-  'Grab adhesive / Gripfill (tube)': 'Skirting, reveals, OSB webs',
-  'PVA wood glue (1L)': 'Floor deck joints',
-  '8mm staples (box)': 'Tyvek + DPM',
-  'Duck tape (roll)': 'DPM/Tyvek laps',
-  'Masking tape (roll)': 'Decorating',
-  'Stanley blades (pack)': 'Site kit',
-  '115mm angle grinder disc': 'Cutting steel trims + panels',
-  'Drill bits 3.2mm + 4.2mm (set)': 'Site kit',
-  'Glass cleaner': 'Cleaning kit', 'Solvent cleaner': 'Cleaning kit', 'Hand wipes (tub)': 'Cleaning kit', 'Roll tissue': 'Cleaning kit',
-  'Paint roller & tray set (large + small)': 'Decorating', 'Paint brushes (pack)': 'Decorating + bitumen',
-  'Foil insulation tape (roll)': 'VCL laps + back boxes',
-  'Consumer unit (garden room, 4-6 way, RCBO/dual RCD)': 'Electrics', '13A double socket (screwless white)': 'Internal sockets', '13A double socket with USB': 'Internal socket (USB)',
-  'Double back box (47mm, plasterboard or surface)': 'Sockets + switches', 'Single back box (35mm, plasterboard or surface)': 'RJ45 / isolator',
-  'RJ45 internet socket (single)': 'Broadband point', 'Dimmable LED downlight (fire-rated, recessed)': 'Ceiling', 'LED dimmer switch (trailing-edge, multi-gang plate)': 'Lighting switch',
-  'External up/down wall light (anthracite/black, IP44)': 'External wall', 'Canopy light (recessed, IP65)': 'Canopy soffit', '1.5mm twin & earth cable': 'Lighting circuit', '2.5mm twin & earth cable': 'Socket circuit', 'Cable clip': 'Cable runs', 'Grommet pack': 'Cable entries',
-  'IP65 weatherproof double socket': 'External socket', 'Air conditioning isolator switch': 'AC unit', '1.5kW electric radiator': 'Heating', 'Fuse spur': 'Radiator', 'CAT6 data cable (m)': 'Extra data points',
+  // Where each material goes, in Liam's wording (22 Sep 2026). A 'Use' typed on the
+  // catalogue line overrides these; cladding lines get the wall list added per job.
+  "Composite slatted cladding (Coffee) 200\u00d72500mm": "EXTERNAL CLADDING",
+  "Composite slatted cladding (Latte) 200\u00d72500mm": "EXTERNAL CLADDING",
+  "Western Red Cedar slatted cladding 140\u00d72500mm": "EXTERNAL CLADDING",
+  "Larch slatted cladding 140\u00d72500mm": "EXTERNAL CLADDING",
+  "Front-cladding return (closed corner)": "CLOSED CORNER - INSIDE RETURN IN THE FRONT CLADDING",
+  "Door/window seal": "DOOR + WINDOW FRAMES",
+  "Interior door 826x2040": "PARTITION WALL DOOR",
+  "Interior door ironmongery set": "PARTITION WALL DOOR",
+  "Interior door lining & frame": "PARTITION WALL DOOR",
+  "Glass for sliding door": "GLAZING - SLIDING DOOR",
+  "Glass for single door (clear)": "GLAZING - SINGLE DOOR",
+  "Glass for single door (frosted)": "GLAZING - SINGLE DOOR",
+  "Glass for full-height window 600x2050 fixed": "GLAZING - FULL HEIGHT WINDOW",
+  "Glass for full-height window 600x2050 opener main": "GLAZING - FULL HEIGHT WINDOW",
+  "Glass for full-height window 900x2050 fixed": "GLAZING - FULL HEIGHT WINDOW",
+  "Glass for full-height window 900x2050 opener main": "GLAZING - FULL HEIGHT WINDOW",
+  "Glass for full-height window opener top": "GLAZING - WINDOW TOP OPENER",
+  "Glass for desk window 1000x1000": "GLAZING - DESK WINDOW",
+  "Glass for slot window 900x450": "GLAZING - SLOT WINDOW",
+  "Toughened double glazed unit 28mm (made to size)": "GLAZING - MADE TO SIZE",
+  "1.5mm twin & earth cable": "ELECTRICS - LIGHTING CABLE RUNS",
+  "2.5mm twin & earth cable": "ELECTRICS - SOCKET CABLE RUNS",
+  "Armoured cable (electrical connection)": "ELECTRICIAN - SUPPLY CABLE TO THE BUILDING",
+  "Cable clip": "ELECTRICS - CABLE RUNS",
+  "CAT6A data cable": "ELECTRICS - DATA POINTS",
+  "CAT6 data cable (m)": "ELECTRICS - DATA POINTS",
+  "Consumer unit (garden room, 4-6 way, RCBO/dual RCD)": "ELECTRICS - CONSUMER UNIT",
+  "Double back box (47mm, plasterboard or surface)": "ELECTRICS - SOCKETS + SWITCH PLATES",
+  "Single back box (35mm, plasterboard or surface)": "ELECTRICS - BROADBAND POINT",
+  "Grommet pack": "ELECTRICS - CABLE ENTRIES",
+  "1.5kW electric radiator": "ELECTRICS - PANEL HEATER",
+  "13A double socket (screwless white)": "ELECTRICS - INTERNAL SOCKETS",
+  "13A double socket with USB": "ELECTRICS - INTERNAL SOCKET (USB)",
+  "Air Conditioning": "AIR CON INSTALLER",
+  "Air conditioning isolator switch": "ELECTRICS - AIR CON ISOLATOR",
+  "Dimmable LED downlight (fire-rated, recessed)": "ELECTRICS - CEILING DOWNLIGHTS",
+  "LED dimmer switch (trailing-edge, multi-gang plate)": "ELECTRICS - LIGHT SWITCH / DIMMER",
+  "External up/down wall light (anthracite/black, IP44)": "ELECTRICS - EXTERNAL WALL LIGHT",
+  "Fuse spur": "ELECTRICS - RADIATOR SPUR",
+  "IP65 weatherproof double socket": "ELECTRICS - EXTERNAL SOCKET",
+  "RJ45 internet socket (single)": "ELECTRICS - BROADBAND POINT",
+  "Canopy light (recessed, IP65)": "ELECTRICS - CANOPY SOFFIT DOWNLIGHTS",
+  "Quinetic wireless switch kit (receiver + 2 switches)": "ELECTRICS - WIRELESS SWITCHING",
+  "HDMI cable 5m + brush plates (pair)": "ELECTRICS - TV POINT",
+  "IP66 outdoor junction box": "ELECTRICS - EXTERNAL FLOODLIGHT CABLING",
+  "Foil insulation tape (roll)": "VCL LAPS + BACK BOXES",
+  "Anthracite touch-up pen": "STEEL TRIMS + PANEL TOUCH-UPS",
+  "Composite cladding screws": "COMPOSITE CLADDING BOARDS",
+  "Decking screws - colour-headed (Winchester grey)": "DECKING BOARDS",
+  "Mitre bond kit (adhesive + activator)": "STEEL TRIM MITRES",
+  "Packer shim assortment (box)": "LEVELLING DOOR/WINDOW FRAMES + TIMBER",
+  "22mm P5 T&G chipboard (2400x600)": "FLOOR DECK",
+  "Adjustable plastic pedestal": "FOUNDATION - UNDER THE FLOOR FRAME",
+  "Radix ground screw": "FOUNDATION - UNDER THE FLOOR FRAME",
+  "Concrete block 440x215x100 medium density (7.3N)": "FOUNDATION - BLOCK BASE (1 PER SUPPORT)",
+  "Postcrete (20kg bag)": "FOUNDATION - BLOCK BASE (2 BAGS PER HOLE)",
+  "DPM sheet": "UNDER THE FLOOR FRAME / OVER THE SLAB",
+  "DPM jointing tape (roll)": "DPM LAPS",
+  "Half-Round Gutter 4 Mtr (Black)": "REAR GUTTER",
+  "Half-Round Gutter Fascia Bracket (Black)": "REAR GUTTER",
+  "Half-Round Gutter Joiner (Black)": "REAR GUTTER",
+  "Half-Round Gutter Stop End Ext (Black)": "REAR GUTTER",
+  "Half-Round Stop End Outlet (Black)": "REAR GUTTER",
+  "Rnd D/pipe Offset Bend 112.5 Deg (Black)": "REAR DOWNPIPE",
+  "Round 68mm Downpipe 2.5 Mtr (Black)": "REAR DOWNPIPE",
+  "Round Downpipe Clip (Black)": "REAR DOWNPIPE",
+  "Round Downpipe Shoe (Black)": "REAR DOWNPIPE",
+  "50mm PIR insulation board": "PARTITION WALLS",
+  "75mm PIR insulation board": "FLOOR, FRONT STICK-WALL + ROOF",
+  "100mm PIR insulation board": "FLOOR + ROOF (100MM JOBS)",
+  "Kingspan 100mm insulated wall panel (1.1m wide)": "REAR + SIDE WALLS (PANELS)",
+  "12mm Plywood (1220\u00d72440 sheet)": "STICK-WALL + CANOPY BOX",
+  "18x38 treated batten": "FLOOR PIR SUPPORT, DOUBLE BATTENS INTERNAL PANELS, BATTEN ON STICK WALL UNDER CLADDING",
+  "Acoustic insulation roll (100mm)": "PARTITION WALLS",
+  "Rockwool insulation 100mm": "PARTITION WALLS",
+  "Rockwool insulation 50mm (acoustic)": "PARTITION WALLS (ACOUSTIC)",
+  "Oak acoustic slat wall panel (2400\u00d7600)": "FEATURE WALL (OVER THE PLASTERBOARD)",
+  "Decorators caulk (tube)": "INTERNAL JUNCTIONS",
+  "Multi-finish plaster (25kg bag)": "SKIM - INTERNAL WALLS + CEILING",
+  "Plasterboard 12.5mm (1200x2400 sheet)": "INTERNAL WALLS + CEILING",
+  "Plasterboard corner bead (2.4m)": "INTERNAL CORNERS + REVEALS",
+  "Plasterboard scrim/jointing tape (90m roll)": "PLASTERBOARD JOINTS",
+  "White trade emulsion paint (10L)": "INTERNAL WALLS + CEILING",
+  "Skirting board": "INTERNAL PERIMETER",
+  "Tyvek breather membrane": "OVER THE PLY ON THE STICK WALL",
+  "Tyvek/breather tape (roll)": "TYVEK LAPS + OPENINGS",
+  "Door mat": "HANDOVER",
+  "200mm plastic fascia (5m length, GAP)": "REAR FASCIA",
+  "300mm plastic fascia (5m length, GAP)": "FRONT + SIDE FASCIA",
+  "400mm plastic soffit (5m length, GAP)": "CANOPY SOFFIT",
+  "Fascia corner (500mm plastic)": "FASCIA CORNERS",
+  "Fascia connector (500mm plastic, 300mm)": "FRONT + SIDE FASCIA JOINS",
+  "Fascia connector (200mm plastic)": "REAR FASCIA JOINS",
+  "Soffit vent strip (2.5m)": "FRONT SOFFIT + REAR RIM VENTS",
+  "EPDM roof kit (membrane, adhesive, edge trims)": "ROOF COVERING",
+  "Vapour control layer (roll)": "UNDER THE ROOF JOISTS + BEHIND THE STICK-WALL LINING",
+  "Corner Trim (40x180 anthracite L)": "REAR CORNERS + FRONT CORNERS WITH PANEL SIDES",
+  "Corner Trim (50x50 anthracite L)": "FRONT OPEN CORNERS WITH CLAD SIDES",
+  "Corner Trim (200x40x40 anthracite U)": "CLOSED CORNER / GLASS CORNER",
+  "Door base trim": "UNDER EVERY DOOR",
+  "Standard panel base trim (steel)": "PANEL BOTTOMS + UNDER FRONT FULL-HEIGHT WINDOWS",
+  "Steel top cap": "OVER THE FASCIA + ROOF EDGE, FRONT + SIDES",
+  "U-channel (40x102x40mm)": "PANEL TOPS, CORNERS + OPENING EDGES",
+  "Wide U-channel (40x140x40mm, for composite openings)": "COMPOSITE-CLAD OPENING EDGES",
+  "18mm OSB3 board (2440x1220)": "WEBS BETWEEN DOUBLED ROOF JOISTS",
+  "18mm T&G OSB3 roof board (2400x590)": "ROOF DECK",
+  "2x2 tanalised C16 timber": "CANOPY BOX",
+  "4x2 tanalised C24 timber": "FRONT STICK WALL + HEAD PLATE ON TOP OF THE PANEL WALLS",
+  "5x2 tanalised C24 timber": "FLOOR JOISTS + DECKING FRAME",
+  "6x2 tanalised C24 timber": "ROOF JOISTS AND FLITCH BEAM",
+  "7x2 tanalised C24 timber": "ROOF JOISTS",
+  "9x2 tanalised C24 timber": "ROOF JOISTS (LONG SPAN)",
+  "Tapered firring 47mm (custom cut)": "ROOF FALL - ON TOP OF THE ROOF JOISTS",
+  "TimberLok 150mm": "FLOOR - DOUBLED JOISTS",
+  "TimberLok 100mm": "ROOF JOISTS, PLATES, STUDS + CANOPY",
+  "TimberLok 89mm": "CORNERS + CANOPY 2x2",
+  "TimberLok 225mm": "FLOOR - END JOISTS INTO THE JOIST ENDS",
+  "Wood screw 5.0 x 100mm": "STICK WALL FRAMING",
+  "Wood screw 5.0 x 70mm": "BATTENS + FIRRINGS",
+  "Wood screw 5.0 x 50mm": "PLY, FLOOR DECK, ROOF DECK",
+  "Drywall screw 3.5 x 38mm black (coarse)": "PLASTERBOARD",
+  "Grey RAL 7016 self-drilling trim screw 25mm": "VISIBLE STEEL TRIMS",
+  "Self-drilling screw 25mm plain (hidden trims / U-channel)": "U-CHANNEL + HIDDEN TRIMS",
+  "Bay pole self-drilling screw 70mm (timber to panel)": "HEAD PLATE + BATTENS INTO THE PANELS",
+  "Concrete screw 100mm (Ammo)": "PEDESTALS TO THE SLAB",
+  "Stainless self-drilling screw 40mm (gutters/fascia)": "GUTTER BRACKETS + DOWNPIPE CLIPS",
+  "Polytop pins 40mm anthracite": "FASCIA BOARDS",
+  "Polytop pins 65mm anthracite": "SOFFIT BOARDS",
+  "Stainless angled brad 16g x 38mm": "CEDAR / LARCH CLADDING BOARDS",
+  "Jiffy hanger 47mm (mini joist hanger)": "ROOF JOISTS INTO THE FLITCH (FRONT)",
+  "Square twist nails 30mm (1kg bag)": "JIFFY HANGERS",
+  "Silicone - anthracite grey RAL 7016 (310ml)": "EXTERNAL STEEL TRIMS + JOINTS",
+  "Silicone - clear (310ml)": "PANEL JOINTS, GLAZING + FLASHINGS",
+  "Silicone - white (310ml)": "INTERNAL THRESHOLDS + TRIMS",
+  "Grab adhesive / Gripfill (tube)": "SKIRTING, REVEALS + OSB WEBS",
+  "PVA wood glue (1L)": "FLOOR DECK JOINTS",
+  "Gun foam (can)": "AROUND OPENINGS + PERIMETER GAPS",
+  "8mm staples (box)": "TYVEK + DPM",
+  "Duck tape (roll)": "DPM / TYVEK LAPS",
+  "Masking tape (roll)": "DECORATING",
+  "Stanley blades (pack)": "SITE KIT",
+  "115mm angle grinder disc": "CUTTING STEEL TRIMS + PANELS",
+  "Drill bits 3.2mm + 4.2mm (set)": "SITE KIT",
+  "Glass cleaner": "CLEANING KIT",
+  "Solvent cleaner": "CLEANING KIT",
+  "Hand wipes (tub)": "CLEANING KIT",
+  "Roll tissue": "CLEANING KIT",
+  "Paint roller & tray set (large + small)": "DECORATING",
+  "Paint brushes (pack)": "DECORATING",
+  "Satin wood paint (750ml)": "SKIRTING BOARDS",
+  "Bitumen paint (1L)": "DECKING SUB-FRAME",
+  "Auger + fuel": "SITE KIT (RETURNS TO FACTORY)",
+  "Shovel / spade / post hole digger": "SITE KIT (RETURNS TO FACTORY)",
+  "Tarpaulins x2 + tonne bag + black bin": "SITE KIT (RETURNS TO FACTORY)",
+  "Marketing sign board + banner": "SITE KIT (RETURNS TO FACTORY)",
+  "Gazebo tent + case": "SITE KIT (RETURNS TO FACTORY)",
+  "Rubber protection mats": "SITE KIT (RETURNS TO FACTORY)",
+  "Timber bearers / risers (under panels on site)": "SITE KIT (RETURNS TO FACTORY)",
+  "Wickes laminate flooring - Natural Oak (1.48m\u00b2 pack)": "INTERNAL FLOOR",
+  "Wickes laminate flooring - Light Grey (1.48m\u00b2 pack)": "INTERNAL FLOOR",
+  "Wickes laminate underlay (10.03m\u00b2 pack)": "INTERNAL FLOOR",
+  "Trex Clam Shell composite decking board (140 \u00d7 4880mm)": "FRONT DECKING",
 };
 
 /** Which internal walls carry the oak acoustic slat feature panels. Accepts the
@@ -342,17 +391,17 @@ export function buildPremiumBom(state, componentDefs) {
   const ALT_PEDS = { separate: 'ALTERNATIVE if pedestals are used instead', alternative: true };
   if (groundScrews) {
     add('Radix ground screw', pedestals, `${cols} doubled-joist lines (1.2m centres) × ${rowsN} rows (≤1.3m along the depth) - see construction drawing 1`);
-    add('Adjustable plastic pedestal', pedestals, `ALTERNATIVE to the ${pedestals} ground screws: the same ${cols} × ${rowsN} points on pedestals (on a slab, or on concrete blocks) - logistics to choose, NOT costed or ordered unless swapped`, ALT_PEDS);
+    add('Adjustable plastic pedestal', pedestals, `ALTERNATIVE to the ${pedestals} ground screws: the same ${cols} × ${rowsN} points on pedestals (on a slab, or on concrete blocks) - logistics to choose, NOT costed or ordered unless swapped`, { ...ALT_PEDS, use: 'FOUNDATION ALTERNATIVE - LOGISTICS TO CHOOSE' });
   } else if (blockBase) {
     add('Concrete block 440x215x100 medium density (7.3N)', pedestals, `CONCRETE BLOCK BASE: 1 block per support point, ${cols} doubled-joist lines × ${rowsN} rows (≤1.3m) - see construction drawing 1`);
     add('Postcrete (20kg bag)', pedestals * 2, `2 bags per hole × ${pedestals} holes`);
     add('Adjustable plastic pedestal', pedestals, `1 adjustable pedestal on each concrete block (Liam 2026-09-07) - frame builds on the pedestal heads`);
     add('DPM sheet', Math.ceil(w * d * 1.1), `Over the ground under the floor frame (${(w * d).toFixed(1)}m2 + 10% laps)`);
-    add('Radix ground screw', pedestals, `ALTERNATIVE to the ${pedestals} blocks + pedestals: the same points on ground screws - logistics to choose, NOT costed or ordered unless swapped`, ALT_SCREWS);
+    add('Radix ground screw', pedestals, `ALTERNATIVE to the ${pedestals} blocks + pedestals: the same points on ground screws - logistics to choose, NOT costed or ordered unless swapped`, { ...ALT_SCREWS, use: 'FOUNDATION ALTERNATIVE - LOGISTICS TO CHOOSE' });
   } else {
     add('Adjustable plastic pedestal', pedestals, `${cols} doubled-joist lines × ${rowsN} rows (≤1.3m) - frame builds DIRECTLY on the heads (no bearers). Anchored to the slab - see construction drawing 1`);
     add('DPM sheet', Math.ceil(w * d * 1.1), `Over the slab under the pedestals (${(w * d).toFixed(1)}m2 + 10% laps)`);
-    add('Radix ground screw', pedestals, `ALTERNATIVE to the ${pedestals} pedestals: the same points on ground screws - logistics to choose, NOT costed or ordered unless swapped`, ALT_SCREWS);
+    add('Radix ground screw', pedestals, `ALTERNATIVE to the ${pedestals} pedestals: the same points on ground screws - logistics to choose, NOT costed or ordered unless swapped`, { ...ALT_SCREWS, use: 'FOUNDATION ALTERNATIVE - LOGISTICS TO CHOOSE' });
   }
 
   /* ---------- FLOOR (5x2, doubled ring + 1.2m grid) ---------- */
@@ -545,8 +594,10 @@ export function buildPremiumBom(state, componentDefs) {
     // Spares: composite +2 lengths on the job (Liam 2026-09-06); timber +4.
     const spare = /composite/i.test(name) ? 2 : 4;
     const count = calcCount + spare;
+    const wallsFor = cladWalls.filter((cw) => (cw.type === 'western-red-cedar' ? 'Western Red Cedar' : cw.type === 'larch' ? 'Larch' : cw.type === 'composite-latte' ? 'Latte' : 'Coffee') === (name.includes('Cedar') ? 'Western Red Cedar' : name.includes('Larch') ? 'Larch' : name.includes('Latte') ? 'Latte' : 'Coffee')).map((cw) => cw.wall.replace(' side', '').toUpperCase());
+    const useNote = wallsFor.length === 1 ? `${wallsFor[0]} WALL ONLY` : `${wallsFor.join(' + ')} WALLS`;
     add(name, count, `${calcCount} vertical runs calculated across the clad walls + ${spare} spare lengths. Colour/type per wall spec`,
-      { orderText: `${count} boards × 2.5m long, ${boardW} wide - ${name.replace(/ \d+×\d+mm$/, '')} (walls: ${cladWalls.filter((cw) => (cw.type === 'western-red-cedar' ? 'Western Red Cedar' : cw.type === 'larch' ? 'Larch' : cw.type === 'composite-latte' ? 'Latte' : 'Coffee') === (name.includes('Cedar') ? 'Western Red Cedar' : name.includes('Larch') ? 'Larch' : name.includes('Latte') ? 'Latte' : 'Coffee')).map((cw) => cw.wall).join(' + ')})` });
+      { useNote, orderText: `${count} boards × 2.5m long, ${boardW} wide - ${name.replace(/ \d+×\d+mm$/, '')} (walls: ${cladWalls.filter((cw) => (cw.type === 'western-red-cedar' ? 'Western Red Cedar' : cw.type === 'larch' ? 'Larch' : cw.type === 'composite-latte' ? 'Latte' : 'Coffee') === (name.includes('Cedar') ? 'Western Red Cedar' : name.includes('Larch') ? 'Larch' : name.includes('Latte') ? 'Latte' : 'Coffee')).map((cw) => cw.wall).join(' + ')})` });
   }
   if (cladBattenLm > 0) {
     add('18x38 treated batten', Math.ceil(cladBattenLm * 1.05), `Cladding double-batten sub-frame (vertical counter-battens + horizontal rows @400mm) on the clad walls`,
@@ -878,19 +929,19 @@ export function buildPremiumBom(state, componentDefs) {
       add('5x2 tanalised C24 timber', Math.ceil((stdJ * 0.4 + w) * 1.10), `STANDARD DECKING FRAME (400mm): ${stdJ} joists x 400mm @400mm off the base front end joist + 1 front rim x ${w.toFixed(2)}m, +10%`,
         { cuts: [{ len: 0.4, n: stdJ, what: 'decking joists' }, { len: w, n: 1, what: 'decking front rim', join: true }], separate: 'DECKING frame' });
       if (groundScrews) {
-        add('Radix ground screw', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing)`, { separate: 'DECKING supports' });
-        add('Adjustable plastic pedestal', stdCols, `DECKING ALTERNATIVE: ${stdCols} pedestals (on a slab or on concrete blocks) instead of the ground screws - logistics to choose, NOT costed or ordered unless swapped`, { separate: 'DECKING supports ALTERNATIVE', alternative: true });
+        add('Radix ground screw', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing)`, { separate: 'DECKING supports', use: 'DECKING SUPPORTS - UNDER THE FRONT RIM' });
+        add('Adjustable plastic pedestal', stdCols, `DECKING ALTERNATIVE: ${stdCols} pedestals (on a slab or on concrete blocks) instead of the ground screws - logistics to choose, NOT costed or ordered unless swapped`, { separate: 'DECKING supports ALTERNATIVE', alternative: true, use: 'DECKING SUPPORTS - ALTERNATIVE, LOGISTICS TO CHOOSE' });
       } else if (blockBase) {
-        add('Concrete block 440x215x100 medium density (7.3N)', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing), 1 block per support`, { separate: 'DECKING supports' });
-        add('Postcrete (20kg bag)', stdCols * 2, `DECKING: 2 bags per hole x ${stdCols} holes`, { separate: 'DECKING supports' });
-        add('Adjustable plastic pedestal', stdCols, `DECKING: 1 pedestal on each block`, { separate: 'DECKING supports' });
-        add('Radix ground screw', stdCols, `DECKING ALTERNATIVE: ${stdCols} ground screws instead of the blocks + pedestals - logistics to choose, NOT costed or ordered unless swapped`, { separate: 'DECKING supports ALTERNATIVE', alternative: true });
+        add('Concrete block 440x215x100 medium density (7.3N)', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing), 1 block per support`, { separate: 'DECKING supports', use: 'DECKING SUPPORTS - UNDER THE FRONT RIM' });
+        add('Postcrete (20kg bag)', stdCols * 2, `DECKING: 2 bags per hole x ${stdCols} holes`, { separate: 'DECKING supports', use: 'DECKING SUPPORTS - UNDER THE FRONT RIM' });
+        add('Adjustable plastic pedestal', stdCols, `DECKING: 1 pedestal on each block`, { separate: 'DECKING supports', use: 'DECKING SUPPORTS - UNDER THE FRONT RIM' });
+        add('Radix ground screw', stdCols, `DECKING ALTERNATIVE: ${stdCols} ground screws instead of the blocks + pedestals - logistics to choose, NOT costed or ordered unless swapped`, { separate: 'DECKING supports ALTERNATIVE', alternative: true, use: 'DECKING SUPPORTS - ALTERNATIVE, LOGISTICS TO CHOOSE' });
       } else {
-        add('Adjustable plastic pedestal', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing)`, { separate: 'DECKING supports' });
-        add('Radix ground screw', stdCols, `DECKING ALTERNATIVE: ${stdCols} ground screws instead of the pedestals - logistics to choose, NOT costed or ordered unless swapped`, { separate: 'DECKING supports ALTERNATIVE', alternative: true });
+        add('Adjustable plastic pedestal', stdCols, `DECKING: ${stdCols} under the front rim (max 1.3m spacing)`, { separate: 'DECKING supports', use: 'DECKING SUPPORTS - UNDER THE FRONT RIM' });
+        add('Radix ground screw', stdCols, `DECKING ALTERNATIVE: ${stdCols} ground screws instead of the pedestals - logistics to choose, NOT costed or ordered unless swapped`, { separate: 'DECKING supports ALTERNATIVE', alternative: true, use: 'DECKING SUPPORTS - ALTERNATIVE, LOGISTICS TO CHOOSE' });
       }
-      add('TimberLok 150mm', Math.ceil(stdJ * 2 * 1.25), `DECKING frame: joists through the base front end joist (2 per joist), +25%`, { separate: 'DECKING fixings' });
-      add('TimberLok 100mm', Math.ceil((stdJ * 2 + stdCols * 2) * 1.25), `DECKING frame: joists to the front rim + rim to supports, +25%`, { separate: 'DECKING fixings' });
+      add('TimberLok 150mm', Math.ceil(stdJ * 2 * 1.25), `DECKING frame: joists through the base front end joist (2 per joist), +25%`, { separate: 'DECKING fixings', use: 'DECKING SUB-FRAME FIXINGS' });
+      add('TimberLok 100mm', Math.ceil((stdJ * 2 + stdCols * 2) * 1.25), `DECKING frame: joists to the front rim + rim to supports, +25%`, { separate: 'DECKING fixings', use: 'DECKING SUB-FRAME FIXINGS' });
     }
     // EXTRA DECKING (rows beyond the standard 400mm): its own sub-frame on its
     // own screws/pedestals - shown as SEPARATE lines in the same supplier

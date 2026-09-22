@@ -8,8 +8,8 @@ import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=6';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=49';
-import { buildConstructionDrawings } from './construction.js?v=17';
+import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=50';
+import { buildConstructionDrawings } from './construction.js?v=18';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=39';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=12';
@@ -1622,10 +1622,13 @@ createApp({
     useTag(l) {
       // A "use" typed on the catalogue line wins over the built-in wording (editable by Liam, 22 Sep 2026)
       const mat = l.material || (this.catalogue && this.catalogue.materials || []).find((x) => x.name === (l.catalogueName || l.name));
-      if (mat && mat.use) return mat.use;
-      if (USE_TAGS[l.catalogueName || l.name]) return USE_TAGS[l.catalogueName || l.name];
+      if (l.use) return l.use; // wording set on the line itself (decking, alternatives)
+      let base = (mat && mat.use) || USE_TAGS[l.catalogueName || l.name] || '';
+      // cladding: the walls it goes on change per job, so they are added here, never typed in the catalogue
+      if (l.useNote) { base = base.replace(/\s*\(.*$/, '').trim() || 'EXTERNAL CLADDING'; return `${base} (${l.useNote})`; }
+      if (base) return base;
       const m = /^On the (front|rear|left side|right side)/i.exec(l.derivation || '');
-      if (m) return `${m[1].charAt(0).toUpperCase() + m[1].slice(1)} wall opening`;
+      if (m) return `${m[1].toUpperCase()} WALL OPENING - FRAME ONLY, UNGLAZED`;
       return l.material?.category || '';
     },
     /** "2 each" -> "2"; "2 roll" -> "2 rolls"; "1 box of 50" stays. */
