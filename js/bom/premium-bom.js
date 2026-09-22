@@ -157,7 +157,7 @@ export const USE_TAGS = {
   "18mm T&G OSB3 roof board (2400x590)": "ROOF DECK",
   "2x2 tanalised C16 timber": "CANOPY BOX",
   "4x2 tanalised C24 timber": "FRONT STICK WALL + HEAD PLATE ON TOP OF THE PANEL WALLS",
-  "5x2 tanalised C24 timber": "FLOOR JOISTS + DECKING FRAME",
+  "5x2 tanalised C24 timber": "FLOOR JOISTS",
   "6x2 tanalised C24 timber": "ROOF JOISTS AND FLITCH BEAM",
   "7x2 tanalised C24 timber": "ROOF JOISTS",
   "9x2 tanalised C24 timber": "ROOF JOISTS (LONG SPAN)",
