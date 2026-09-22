@@ -1,5 +1,5 @@
 {
-  "version": 26,
+  "version": 27,
   "updated": "2026-09-22",
   "suppliers": [
     {
@@ -37,6 +37,18 @@
       "email": "",
       "phone": "",
       "notes": ""
+    },
+    {
+      "name": "Easypanels",
+      "email": "",
+      "phone": "",
+      "notes": "Online - oak acoustic slat wall panels for feature walls."
+    },
+    {
+      "name": "Factory Store (Biggin Hill)",
+      "email": "",
+      "phone": "",
+      "notes": "Items kept at the Biggin Hill factory and loaded onto the van with the job (Liam 22 Sep 2026)."
     },
     {
       "name": "GAP",
@@ -109,12 +121,6 @@
       "email": "",
       "phone": "",
       "notes": "Laminate flooring (Natural Oak / Light Grey, 1.48m\u00b2 packs) + underlay (10.03m\u00b2 packs). Trade counter / online."
-    },
-    {
-      "name": "Easypanels",
-      "email": "",
-      "phone": "",
-      "notes": "Online - oak acoustic slat wall panels for feature walls."
     }
   ],
   "materials": [
@@ -1230,13 +1236,13 @@
       "sku": "",
       "unit": "each",
       "unitCost": 15.0,
-      "supplier": "Amazon",
+      "supplier": "Factory Store (Biggin Hill)",
       "packSize": null,
       "orderUnit": "",
       "destination": "site",
-      "inStock": false,
-      "notes": "CLAUDE ESTIMATE \u00a315. Complimentary with every job - 1 per build.",
-      "supply": "site"
+      "inStock": true,
+      "notes": "CLAUDE ESTIMATE \u00a315. Complimentary with every job - 1 per build. Comes from the factory store, not Amazon (Liam 22 Sep 2026).",
+      "supply": "stock"
     },
     {
       "name": "Rockwool insulation 100mm",
