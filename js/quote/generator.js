@@ -20,17 +20,18 @@ function getNextVersion(customerName) {
   return nextVersion;
 }
 
-function formatVersionedFilename(baseType, customerName, date) {
+function formatVersionedFilename(baseType, customerName, date, quoteNumber) {
+  // "PATEL-4595 - Satch Patel - Quote - 22-09-2026.pdf" (Liam 22 Sep 2026: customer
+  // name/number first on every download); falls back to the name alone.
   const version = getNextVersion(customerName);
   const dateStr = date || new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-  
-  if (customerName) {
-    return version > 1 
-      ? `GOB ${baseType} - ${customerName} - ${dateStr} v${version}.pdf`
-      : `GOB ${baseType} - ${customerName} - ${dateStr}.pdf`;
-  }
-  
-  return `GOB ${baseType}.pdf`;
+  const parts = String(customerName || '').trim().split(/\s+/).filter(Boolean);
+  const surname = (parts.length > 1 ? parts[parts.length - 1] : parts[0] || '').replace(/[^A-Za-z0-9'-]/g, '').toUpperCase();
+  const num = String(quoteNumber || '').replace(/\D/g, '');
+  const ref = surname && num ? `${surname}-${num}` : '';
+  const stem = [ref, customerName, baseType, dateStr].filter(Boolean).join(' - ').replace(/[\\/:*?"<>|]+/g, ' ');
+  if (!customerName) return `GOB ${baseType}.pdf`;
+  return version > 1 ? `${stem} v${version}.pdf` : `${stem}.pdf`;
 }
 
 export function generateQuotePDF(state, price) {
@@ -741,7 +742,7 @@ export function generateQuotePDF(state, price) {
   // SAVE PDF
   // ═══════════════════════════════════════════════════════════════
 
-  const filename = formatVersionedFilename('Quote', state.customer?.name, state.customer?.date);
+  const filename = formatVersionedFilename('Quote', state.customer?.name, state.customer?.date, state.customer?.number);
   doc.save(filename);
   
   return doc; // Return doc for potential reuse in combined PDF
@@ -808,7 +809,7 @@ export async function generateCombinedPDF(state, price, svgString) {
 
       URL.revokeObjectURL(url);
       
-      const filename = formatVersionedFilename('Drawing', state.customer?.name, state.customer?.date);
+      const filename = formatVersionedFilename('Drawing', state.customer?.name, state.customer?.date, state.customer?.number);
       doc.save(filename);
       
       console.log('Combined pack exported: Quote + Drawing');

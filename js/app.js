@@ -3,7 +3,7 @@
 
 import { initPricing, calculatePrice, formatPrice } from './pricing.js?v=7';
 import { generateDrawing } from './drawing-engine.js?v=48';
-import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=4';
+import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=5';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=6';
@@ -1598,7 +1598,22 @@ createApp({
       catch (e) { this.installersSaveStatus = 'Save failed: ' + e.message; }
       setTimeout(() => { this.installersSaveStatus = ''; }, 3000);
     },
-    printInstallerPack() { this.$nextTick(() => window.print()); },
+    /** Browser "Save as PDF" names the file after the page title, so set it for the print
+     *  and put it back afterwards: "PATEL-4595 - Satch Patel - Logistics pack" (Liam 22 Sep 2026). */
+    printFileName(kind) {
+      const ref = (this.orderRef || this.defaultOrderRef() || '').trim();
+      const name = ((this.state && this.state.customer && this.state.customer.name) || '').trim();
+      return [ref, name, kind].filter(Boolean).join(' - ').replace(/[\\/:*?"<>|]+/g, ' ');
+    },
+    printWithTitle(kind) {
+      const prev = document.title;
+      document.title = this.printFileName(kind);
+      const restore = () => { document.title = prev; window.removeEventListener('afterprint', restore); };
+      window.addEventListener('afterprint', restore);
+      setTimeout(restore, 60000); // Safari on iPad does not always fire afterprint
+      this.$nextTick(() => window.print());
+    },
+    printInstallerPack() { this.printWithTitle(this.printMode === 'agreement' ? 'Installer agreement' : 'Installer job pack'); },
     fmtDateLong(iso) {
       if (!iso) return '________________';
       return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -1617,7 +1632,7 @@ createApp({
       this.state.orderNotes[supplierName] = { ...this.orderNoteFor(supplierName), [field]: value };
       this.rebuildOrders();
     },
-    printMaterials() { this.$nextTick(() => window.print()); },
+    printMaterials() { this.printWithTitle('Logistics pack'); },
     /** Van-loading order within a supplier: doors first, then windows, then the rest (Liam 22 Sep 2026). */
     loadOrder(l) { const n = (l.catalogueName || l.name || '').toLowerCase(); const isGlass = /glass|glazed unit/.test(n); if (!isGlass && /bi-?fold|sliding|door/.test(n) && !/seal|trim|mat|ironmongery|lining/.test(n)) return 0; if (!isGlass && /window/.test(n)) return 1; if (isGlass && /door|bi-?fold|sliding/.test(n)) return 2; if (isGlass) return 3; return 4; },
     useTagDefault(name) { return USE_TAGS[name] || ''; },
@@ -2670,7 +2685,7 @@ createApp({
       const svg = document.querySelector('#drawing-canvas svg');
       if (!svg) return;
       const win = window.open('', '_blank');
-      win.document.write(`<!DOCTYPE html><html><head><title>Drawing for ${this.state.customer?.name || 'Customer'}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;}svg{max-width:100%;max-height:100vh;}</style></head><body>${svg.outerHTML}</body></html>`);
+      win.document.write(`<!DOCTYPE html><html><head><title>${this.printFileName('Drawing')}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;}svg{max-width:100%;max-height:100vh;}</style></head><body>${svg.outerHTML}</body></html>`);
       win.document.close();
       win.print();
     },
