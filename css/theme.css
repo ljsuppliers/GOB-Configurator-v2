@@ -83,8 +83,13 @@ h1, h2, h3, h4 { letter-spacing: -0.01em; }
 
 /* ─── Print ─── */
 @media print {
-  .side-nav, .topbar { display: none !important; }
+  /* Every piece of app chrome, including the PHONE bottom nav + tab strip: they are
+     position: fixed/sticky with a white background, and Chrome repeats fixed elements
+     on every printed page, which painted a blank band across the logistics pack
+     (Liam 22 Sep 2026). Hidden here regardless of the paper width. */
+  .side-nav, .topbar, .bottom-nav, .mobile-tabs, .m-back, .cfg-toolbar, #notification, .outbox-chip { display: none !important; }
   .app { display: block !important; }
+  .main-content, .mp-layout, .materials-page { position: static !important; }
 }
 @media (max-width: 900px) {
   .app { grid-template-columns: 64px minmax(0, 1fr); }
