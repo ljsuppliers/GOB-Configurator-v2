@@ -305,7 +305,6 @@ export function generateQuotePDF(state, price) {
     'grey-steel': 'Grey steel',
     'composite-latte': 'Composite slatted (Latte)',
     'composite-coffee': 'Composite slatted (Coffee)',
-    'larch': 'Larch'
   };
 
   const cladding = state.cladding || {};

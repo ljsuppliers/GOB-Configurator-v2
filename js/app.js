@@ -1,16 +1,16 @@
 // GOB Configurator v2 — Vue 3 App
 // Reactive state, live pricing, drawing preview, email drafting
 
-import { initPricing, calculatePrice, formatPrice } from './pricing.js?v=6';
-import { generateDrawing } from './drawing-engine.js?v=47';
-import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=3';
+import { initPricing, calculatePrice, formatPrice } from './pricing.js?v=7';
+import { generateDrawing } from './drawing-engine.js?v=48';
+import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=4';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=6';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=55';
-import { buildConstructionDrawings } from './construction.js?v=23';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=41';
+import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=56';
+import { buildConstructionDrawings } from './construction.js?v=24';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=42';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=12';
 import { emptyInstaller } from './bom/installers.js?v=2';
@@ -2062,7 +2062,6 @@ createApp({
           'composite-grey': 'Composite slatted cladding in grey',
           'composite-sage': 'Composite slatted cladding in sage green',
           'composite-chartwell': 'Composite slatted cladding in chartwell green',
-          'larch': 'Larch cladding',
         };
         return labels[key] || 'premium cladding';
       };

@@ -426,7 +426,7 @@ function calculateCladdingUpgrades(state) {
         .replace('grey', '')];
 
       // Check for timber/composite upgrades on sides
-      if (current === 'western-red-cedar' || current === 'larch') {
+      if (current === 'western-red-cedar') {
         const sqm = info.widthM * heightM;
         const rate = pricesData.claddingUpgrade.cedar?.perSqm || 125;
         upgrades.push({

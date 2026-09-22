@@ -72,15 +72,6 @@
       "premium": false,
       "colour": "#7BA05B"
     },
-    "larch": {
-      "label": "Larch",
-      "category": "timber",
-      "elevationPattern": "diagonal",
-      "sidePattern": "vertical",
-      "default": false,
-      "premium": true,
-      "colour": "#B8860B"
-    },
     "other": {
       "label": "Other (specify below)",
       "category": "other",

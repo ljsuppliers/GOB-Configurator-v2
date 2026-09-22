@@ -275,10 +275,6 @@
     "composite": {
       "label": "Composite slatted",
       "perSqm": 115
-    },
-    "larch": {
-      "label": "Larch",
-      "perSqm": 80
     }
   },
   "heightUpgrade": {

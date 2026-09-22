@@ -53,7 +53,6 @@ export const USE_TAGS = {
   "Composite slatted cladding (Coffee) 200\u00d72500mm": "EXTERNAL CLADDING",
   "Composite slatted cladding (Latte) 200\u00d72500mm": "EXTERNAL CLADDING",
   "Western Red Cedar slatted cladding 140\u00d72500mm": "EXTERNAL CLADDING",
-  "Larch slatted cladding 140\u00d72500mm": "EXTERNAL CLADDING",
   "Front-cladding return (closed corner)": "CLOSED CORNER - INSIDE RETURN IN THE FRONT CLADDING",
   "Door/window seal": "DOOR + WINDOW FRAMES",
   "Interior door 826x2040": "PARTITION WALL DOOR",
@@ -177,7 +176,7 @@ export const USE_TAGS = {
   "Stainless self-drilling screw 40mm (gutters/fascia)": "GUTTER BRACKETS + DOWNPIPE CLIPS",
   "Polytop pins 40mm anthracite": "FASCIA BOARDS",
   "Polytop pins 65mm anthracite": "SOFFIT BOARDS",
-  "Stainless angled brad 16g x 38mm": "CEDAR / LARCH CLADDING BOARDS",
+  "Stainless angled brad 16g x 38mm": "CEDAR CLADDING BOARDS",
   "Jiffy hanger 47mm (mini joist hanger)": "ROOF JOISTS INTO THE FLITCH (FRONT)",
   "Square twist nails 30mm (1kg bag)": "JIFFY HANGERS",
   "Silicone - anthracite grey RAL 7016 (310ml)": "EXTERNAL STEEL TRIMS + JOINTS",
@@ -609,9 +608,8 @@ export function buildPremiumBom(state, componentDefs) {
     const openW = fhOn(cw.ops).reduce((s2, o) => s2 + o.widthM, 0);
     let run = Math.max(0, cw.run - openW);
     if (cw.wall === 'front') run += closedCorners * 0.4; // inside returns clad in front cladding
-    const boardW = cw.type === 'western-red-cedar' || cw.type === 'larch' ? 0.14 : 0.2;
+    const boardW = cw.type === 'western-red-cedar' ? 0.14 : 0.2;
     const name = cw.type === 'western-red-cedar' ? 'Western Red Cedar slatted cladding 140×2500mm'
-      : cw.type === 'larch' ? 'Larch slatted cladding 140×2500mm'
       : cw.type === 'composite-latte' ? 'Composite slatted cladding (Latte) 200×2500mm'
       : 'Composite slatted cladding (Coffee) 200×2500mm';
     const runs = Math.ceil(run / boardW);
@@ -619,14 +617,14 @@ export function buildPremiumBom(state, componentDefs) {
     cladBattenLm += Math.ceil(run / 0.4) * wallH + cw.run * Math.ceil(wallH / 0.4);
   }
   for (const [calcCount, name] of [...cladTotals].map(([n, c]) => [c, n])) {
-    const boardW = /cedar|larch/i.test(name) ? '140mm' : '200mm';
+    const boardW = /cedar/i.test(name) ? '140mm' : '200mm';
     // Spares: composite +2 lengths on the job (Liam 2026-09-06); timber +4.
     const spare = /composite/i.test(name) ? 2 : 4;
     const count = calcCount + spare;
-    const wallsFor = cladWalls.filter((cw) => (cw.type === 'western-red-cedar' ? 'Western Red Cedar' : cw.type === 'larch' ? 'Larch' : cw.type === 'composite-latte' ? 'Latte' : 'Coffee') === (name.includes('Cedar') ? 'Western Red Cedar' : name.includes('Larch') ? 'Larch' : name.includes('Latte') ? 'Latte' : 'Coffee')).map((cw) => cw.wall.replace(' side', '').toUpperCase());
+    const wallsFor = cladWalls.filter((cw) => (cw.type === 'western-red-cedar' ? 'Western Red Cedar' : cw.type === 'composite-latte' ? 'Latte' : 'Coffee') === (name.includes('Cedar') ? 'Western Red Cedar' : name.includes('Latte') ? 'Latte' : 'Coffee')).map((cw) => cw.wall.replace(' side', '').toUpperCase());
     const useNote = wallsFor.length === 1 ? `${wallsFor[0]} WALL ONLY` : `${wallsFor.join(' + ')} WALLS`;
     add(name, count, `${calcCount} vertical runs calculated across the clad walls + ${spare} spare lengths. Colour/type per wall spec`,
-      { useNote, orderText: `${count} boards × 2.5m long, ${boardW} wide - ${name.replace(/ \d+×\d+mm$/, '')} (walls: ${cladWalls.filter((cw) => (cw.type === 'western-red-cedar' ? 'Western Red Cedar' : cw.type === 'larch' ? 'Larch' : cw.type === 'composite-latte' ? 'Latte' : 'Coffee') === (name.includes('Cedar') ? 'Western Red Cedar' : name.includes('Larch') ? 'Larch' : name.includes('Latte') ? 'Latte' : 'Coffee')).map((cw) => cw.wall).join(' + ')})` });
+      { useNote, orderText: `${count} boards × 2.5m long, ${boardW} wide - ${name.replace(/ \d+×\d+mm$/, '')} (walls: ${cladWalls.filter((cw) => (cw.type === 'western-red-cedar' ? 'Western Red Cedar' : cw.type === 'composite-latte' ? 'Latte' : 'Coffee') === (name.includes('Cedar') ? 'Western Red Cedar' : name.includes('Latte') ? 'Latte' : 'Coffee')).map((cw) => cw.wall).join(' + ')})` });
   }
   if (cladBattenLm > 0) {
     add('18x38 treated batten', Math.ceil(cladBattenLm * 1.05), `Cladding double-batten sub-frame (vertical counter-battens + horizontal rows @400mm) on the clad walls`,
@@ -1046,8 +1044,8 @@ export function buildPremiumBom(state, componentDefs) {
   add('Polytop pins 40mm anthracite', up(((w + 2 * roofLen) + w) / 0.4 * 2), `FASCIA (front + sides + rear, both edges @400mm), +25%`);
   if (hasCanopy) add('Polytop pins 65mm anthracite', up((w / 0.4) * 2 + 12), `SOFFIT boards into the 2x2 canopy frame @400mm both edges, +25%`);
   // -- Cladding fixings --
-  const timberCladRuns = [...cladTotals].filter(([n]) => /cedar|larch/i.test(n)).reduce((t, [, c]) => t + c, 0);
-  if (timberCladRuns > 0) add('Stainless angled brad 16g x 38mm', up(timberCladRuns * Math.ceil(wallH / 0.4) * 2), `CEDAR/LARCH boards: 2 brads per board per batten row (${timberCladRuns} boards x ${Math.ceil(wallH / 0.4)} rows), +25%`);
+  const timberCladRuns = [...cladTotals].filter(([n]) => /cedar/i.test(n)).reduce((t, [, c]) => t + c, 0);
+  if (timberCladRuns > 0) add('Stainless angled brad 16g x 38mm', up(timberCladRuns * Math.ceil(wallH / 0.4) * 2), `CEDAR boards: 2 brads per board per batten row (${timberCladRuns} boards x ${Math.ceil(wallH / 0.4)} rows), +25%`);
   // -- Roof joist hangers + ties --
   add('Jiffy hanger 47mm (mini joist hanger)', rJoists + 1, `ROOF JOISTS: 1 hanger per joist at the FRONT only (hung off the flitch; rear ends sit on the plate) - ${rJoists} joists + 1 spare (Liam 21 Sep 2026)`);
   add('Square twist nails 30mm (1kg bag)', Math.ceil(up(rJoists * 2) * 8 / 350), `~8 nails per jiffy hanger, ~350 nails per 1kg bag`);

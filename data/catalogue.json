@@ -1,5 +1,5 @@
 {
-  "version": 28,
+  "version": 29,
   "updated": "2026-09-22",
   "suppliers": [
     {
@@ -1909,20 +1909,6 @@
       "supply": "site"
     },
     {
-      "name": "Larch slatted cladding 140\u00d72500mm",
-      "category": "Cladding",
-      "sku": "",
-      "unit": "each",
-      "unitCost": 12.5,
-      "supplier": "Builders merchant",
-      "packSize": null,
-      "orderUnit": "",
-      "destination": "site",
-      "inStock": false,
-      "notes": "CLAUDE ESTIMATE (web prices Sept 2026, ex VAT, trade-adjusted) - confirm against first invoice. Siberian larch 20x145 ~\u00a34.50-5.10/m ex x 2.5m length | SET COST + SUPPLIER if offered",
-      "supply": "site"
-    },
-    {
       "name": "Western Red Cedar slatted cladding 140\u00d72500mm",
       "category": "Cladding",
       "sku": "",
@@ -2144,7 +2130,7 @@
       "supply": "stock",
       "destination": "site",
       "inStock": true,
-      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. FirmaHold/Fischer 16g A2 stainless angled brads 38mm, box 2000 ~\u00a345 ex (Paslode compatible). Cedar/larch cladding. LINK: https://www.tradecounteronline.co.uk/firmahold-16-gauge-stainless-steel-angled-brad-nails/"
+      "notes": "CLAUDE ESTIMATE (web, Sept 2026, ex VAT) - confirm on invoice. FirmaHold/Fischer 16g A2 stainless angled brads 38mm, box 2000 ~\u00a345 ex (Paslode compatible). LINK: https://www.tradecounteronline.co.uk/firmahold-16-gauge-stainless-steel-angled-brad-nails/"
     },
     {
       "name": "Jiffy hanger 47mm (mini joist hanger)",
