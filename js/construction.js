@@ -23,7 +23,8 @@
 //  HEIGHTS (Liam 2026-09-19) Panel walls = 2140 panel + 49 flat 4x2 plate =
 //         2189 to the top of the plate. The front stud wall (base plate, studs,
 //         head plate) tops out at the SAME 2189. The doubled 6x2 flitch sits ON
-//         TOP of the front wall head plate (over every opening as a minimum),
+//         TOP of the front wall head plate, FULL WIDTH (joined + staggered when
+//         wider than 4.8m; Liam 22 Sep 2026),
 //         so its top is ~2334, level with the roof joist tops. Doors (2050) on
 //         the 49 base plate reach 2099; the head plate underside is 2140, so a
 //         4x2 packer under the head plate closes the ~40mm gap at each door.
@@ -54,7 +55,7 @@
 //         edges), 18mm T&G OSB, one-piece EPDM, 75/100mm PIR set 30mm down.
 //         Half-round gutter full width at the rear, downpipe one end (both ends
 //         from 6m wide).
-import { supportLayout, panelPlan, openingsOnWall, roofLadderFor, isSteelClad } from './bom/premium-bom.js?v=44';
+import { supportLayout, panelPlan, openingsOnWall, roofLadderFor, isSteelClad } from './bom/premium-bom.js?v=45';
 
 const F = 'font-family:Inter,Arial,sans-serif';
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -207,7 +208,7 @@ export function buildConstructionDrawings(state, componentDefs) {
     s += rc(M, top, W, PL, { fill: '#fde68a', stroke: '#92400e', sw: 4 });
     // flitch ON TOP of the head plate, full width
     s += rc(M, M, W, FL, { fill: '#7c2d12', stroke: '#111', sw: 4 });
-    s += tx(M + W / 2, M + FL / 2 + 25, `2 × 6x2 flitch ON TOP of the head plate (${W}mm, over every opening as a minimum)`, { size: 60, fill: '#fff' });
+    s += tx(M + W / 2, M + FL / 2 + 25, `2 × 6x2 flitch ON TOP of the head plate, full width ${W}mm${W > 4800 ? ' (joined pieces, joints staggered between the two layers)' : ''}`, { size: 60, fill: '#fff' });
     const fronts = ops('front').sort((a, b) => a.posM - b.posM);
     const inOpening = (x) => fronts.some((o) => x > o.posM + 0.001 && x < o.posM + o.widthM - 0.001);
     const studTop = top + PL, studH = H - 2 * PL;
@@ -237,7 +238,7 @@ export function buildConstructionDrawings(state, componentDefs) {
       key: 'front', title: '3. Front wall framing (elevation, viewed from outside)', svg: sheet(SW, SH, s),
       notes: [
         `4x2 TANALISED C24 throughout: base plate on the chipboard, studs @400mm from the LEFT, head plate. Frame is ${H}mm to the top of the head plate = the panel walls (${mm(plan.panelHeightM)}mm panel + ${PL}mm flat 4x2 plate). DOUBLED 4x2 uprights (orange) each side of every door and window.`,
-        `DOUBLED 6x2 flitch (two 6x2 laminated with TimberLok 100s, NO OSB web) sits ON TOP of the head plate, over every opening as a minimum (drawn full width). Its top is level with the roof joist tops. ${tall ? 'Taller build: the roof joists run OVER the flitch and oversail to form the canopy.' : 'Standard 2.5m build: the roof joists hang off the flitch on jiffy hangers.'}`,
+        `DOUBLED 6x2 flitch (two 6x2 laminated with TimberLok 100s, NO OSB web) sits ON TOP of the head plate the FULL width of the front${W > 4800 ? ', made of joined pieces with the joints staggered between the two layers' : ''}. Its top is level with the roof joist tops. ${tall ? 'Taller build: the roof joists run OVER the flitch and oversail to form the canopy.' : 'Standard 2.5m build: the roof joists hang off the flitch on jiffy hangers.'}`,
         `Doors and full-height windows (2050mm) sit on the base plate; a 4x2 packer under the head plate closes the gap to the door head (about ${H - 2 * PL - 2050}mm, trim to suit). Standard windows shown on a 900mm cill; check the drawing for the customer's positions.`,
         `Outside: 12mm ply, Tyvek, 18x38 battens @400, ${(state.cladding?.front || '').replace(/-/g, ' ')} cladding. Inside: 75mm PIR in every bay, VCL, 12.5mm plasterboard, skim.`,
       ],

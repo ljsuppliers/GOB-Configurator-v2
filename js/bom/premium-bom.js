@@ -549,12 +549,18 @@ export function buildPremiumBom(state, componentDefs) {
   const doorBaseM = [...front, ...rear, ...left, ...right].filter((o) => /sliding|bifold|french|door|single/.test(o.category)).reduce((x, o) => x + o.widthM, 0);
   if (doorBaseM > 0) add('Door base trim', Math.ceil(doorBaseM / 3), `Across the base of every door: ${doorBaseM.toFixed(2)}m ÷ 3m lengths`);
 
-  // Flitch over wide front openings
-  const wideFront = fhOn(front).filter((o) => o.widthM >= 1.8);
-  if (wideFront.length > 0) {
-    const flitchLm = wideFront.reduce((s, o) => s + 2 * (o.widthM + 0.3), 0);
-    add('6x2 tanalised C24 timber', Math.ceil(flitchLm * 1.05), `Flitch pairs over ${wideFront.length} wide front opening${wideFront.length === 1 ? '' : 's'} (opening + 150mm bearing each side, x2 timbers, laminated with TimberLok 100s - no bolts)`,
-      wideFront.map((o) => ({ len: o.widthM + 0.3, n: 2, what: `flitch pair over ${(o.widthM * 1000).toFixed(0)}mm opening` })));
+  // FLITCH BEAM (Liam 22 Sep 2026): a doubled 6x2 the FULL WIDTH of the front wall,
+  // sitting on top of the head plate, back to back, laminated with TimberLok 100s
+  // (no bolts). Wider than a 4.8m length: each layer is made of joined pieces with
+  // the joints STAGGERED between the two layers.
+  const wideFront = fhOn(front).filter((o) => o.widthM >= 1.8); // still used for packing screws
+  {
+    const FL_MAX = 4.8;
+    const k = Math.ceil(w / FL_MAX);
+    const flitchCuts = k === 1
+      ? [{ len: w, n: 2, what: `flitch beam, full front width x2 (back to back)` }]
+      : [{ len: w / k, n: k, what: `flitch layer A: ${k} joined pieces` }, { len: w / k, n: k, what: `flitch layer B: ${k} joined pieces, joints staggered against layer A` }];
+    add('6x2 tanalised C24 timber', Math.ceil(2 * w * 1.05), `FLITCH BEAM: doubled 6x2 the FULL front width (${w.toFixed(2)}m x2, back to back on top of the head plate, laminated with TimberLok 100s - no bolts)${k > 1 ? `; wider than ${FL_MAX}m so each layer is ${k} joined pieces with the joints staggered between layers` : ''}`, flitchCuts);
   }
 
   /* ---------- ROOF ---------- */
@@ -572,15 +578,15 @@ export function buildPremiumBom(state, componentDefs) {
   // EDGE joists are DOUBLED as standard (Liam 2026-09-19): extra timbers for
   // the two edges when the ladder is single.
   const edgePly = Math.max(2, ladder.ply), edgeExtra = 2 * (edgePly - ladder.ply);
-  add(ladder.sku, Math.ceil(((rJoists * ladder.ply + edgeExtra) * joistLen + 2 * w) * 1.10),
-    `Roof: ${ladder.label} - ${rJoists}${ladder.ply === 2 ? ' pairs' : ''} x ${joistLen.toFixed(2)}m @${(ladder.spacing * 1000).toFixed(0)}mm${edgeExtra ? ` + ${edgeExtra} extra to DOUBLE the two edge joists` : ' (edges already doubled)'} + front/rear end joists, +10%. Bears on front top plate/flitch + rear wall plate, OVERSAILS THE REAR BY 100mm. ${
+  add(ladder.sku, Math.ceil(((rJoists * ladder.ply + edgeExtra) * joistLen + w) * 1.10),
+    `Roof: ${ladder.label} - ${rJoists}${ladder.ply === 2 ? ' pairs' : ''} x ${joistLen.toFixed(2)}m @${(ladder.spacing * 1000).toFixed(0)}mm${edgeExtra ? ` + ${edgeExtra} extra to DOUBLE the two edge joists` : ' (edges already doubled)'} + rear end joist (the full-width flitch is the front beam), +10%. Bears on front top plate/flitch + rear wall plate, OVERSAILS THE REAR BY 100mm. ${
       canopyMethod === 'joists-oversail'
         ? `${(h).toFixed(2)}m BUILD: joists also OVERSAIL the front by ${canopyMm}mm to form the canopy`
         : canopyMethod === 'edge-joists'
           ? `2.5m BUILD: joists hang off the flitch (ON TOP of the front head plate) on jiffy hangers; only the 2 OUTER joists run on ${canopyMm}mm - the canopy ladder is listed separately below`
           : `CLASSIC: joists stop at the front wall, ${canopyMm}mm token overhang in the firrings/deck only`
     }`,
-    [{ len: joistLen, n: rJoists * ladder.ply + edgeExtra, what: 'roof joists (incl. doubled edges)' }, { len: w, n: 2, what: 'front + rear END JOISTS of the roof (join over a joist if longer than stock)', join: true }]);
+    [{ len: joistLen, n: rJoists * ladder.ply + edgeExtra, what: 'roof joists (incl. doubled edges)' }, { len: w, n: 1, what: 'rear END JOIST of the roof (join over a joist if longer than stock)', join: true }]);
   if (canopyMethod === 'edge-joists') {
     const nogs = Math.max(0, rJoists - 2), nogLen = Math.max(0.1, canopyM - 0.047);
     const ladderLm = Math.ceil((2 * canopyM * edgePly + w + nogs * nogLen) * 1.10);
