@@ -170,9 +170,12 @@ export function buildConstructionDrawings(state, componentDefs) {
     const nearCorner = (o2, atStart) => o2.some((o) => o.fullHeight && (atStart ? o.posM <= 0.05 : o.posM + o.widthM >= o.wallM - 0.05));
     const glassL = !closedL && nearCorner(ops('front'), true) && nearCorner(ops('left'), false);
     const glassR = !closedR && nearCorner(ops('front'), false) && nearCorner(ops('right'), true);
-    if (glassL) s += rc(M, fy - 100, 200, 200, { fill: '#92400e', stroke: '#111', sw: 4 }) + tx(M + 100, fy - 140, 'post', { size: 50 });
+    // A glass-corner post sits INSIDE the side wall line (x from 100mm in), flush with the
+    // front face, both posts at exactly the same depth; the side wall stops behind it.
+    const postY = fy - 100; // 200mm deep, front face flush with the building front
+    if (glassL) { s += rc(M, postY, 100, 200, { fill: '#fff', stroke: 'none' }); s += rc(M + 100, postY, 200, 200, { fill: '#92400e', stroke: '#111', sw: 4 }) + tx(M + 200, postY - 40, 'post', { size: 50 }); }
     else s += rc(M + 100, fy, 47, 100, { fill: '#f59e0b', stroke: '#92400e', sw: 3 }) + rc(M + 147, fy, 47, 100, { fill: '#f59e0b', stroke: '#92400e', sw: 3 });
-    if (glassR) s += rc(M + W - 200, fy - 100, 200, 200, { fill: '#92400e', stroke: '#111', sw: 4 }) + tx(M + W - 100, fy - 140, 'post', { size: 50 });
+    if (glassR) { s += rc(M + W - 100, postY, 100, 200, { fill: '#fff', stroke: 'none' }); s += rc(M + W - 300, postY, 200, 200, { fill: '#92400e', stroke: '#111', sw: 4 }) + tx(M + W - 200, postY - 40, 'post', { size: 50 }); }
     else s += rc(M + W - 194, fy, 47, 100, { fill: '#f59e0b', stroke: '#92400e', sw: 3 }) + rc(M + W - 147, fy, 47, 100, { fill: '#f59e0b', stroke: '#92400e', sw: 3 });
     // canopy / decking line
     if (hasCanopy || hasDecking) s += rc(M, y0 + D, W, ext, { sw: 4, stroke: '#0f766e', dash: '60 40' }) + tx(M + W / 2, y0 + D + ext / 2 + 30, `${hasCanopy ? 'canopy' : ''}${hasCanopy && hasDecking ? ' + ' : ''}${hasDecking ? 'decking' : ''} ${ext}mm`, { size: 80, fill: '#0f766e' });
@@ -189,7 +192,7 @@ export function buildConstructionDrawings(state, componentDefs) {
     s += rc(lx + 2900, ly, 160, 90, { fill: '#bfdbfe', stroke: '#1d4ed8', sw: 2 }) + tx(lx + 3120, ly + 70, 'door / window', { size: 70, anchor: 'start' });
     s += ln(lx + 4200, ly, lx + 4200, ly + 90, { sw: 5, stroke: '#f59e0b' }) + tx(lx + 4280, ly + 70, 'panel joint', { size: 70, anchor: 'start' });
     s += rc(lx, ly + 150, 160, 90, { fill: '#f59e0b', stroke: '#92400e', sw: 2 }) + tx(lx + 220, ly + 220, 'doubled end studs of the front wall, meeting the side wall (no post)', { size: 70, anchor: 'start' });
-    s += rc(lx + 4200, ly + 150, 160, 90, { fill: '#92400e', stroke: '#111', sw: 2 }) + tx(lx + 4420, ly + 220, 'built-up 4x2 post (~200x200): ONLY where glazing meets glazing at an open corner', { size: 70, anchor: 'start' });
+    s += rc(lx + 4200, ly + 150, 160, 90, { fill: '#92400e', stroke: '#111', sw: 2 }) + tx(lx + 4420, ly + 220, 'built-up 4x2 post (~200x200) INSIDE the side wall line: ONLY where glazing meets glazing at an open corner', { size: 70, anchor: 'start' });
     const notes = [
       `Rear wall FIRST, full width: ${plan.rear.pieces.length} pieces (${plan.rear.pieces.map((p) => mm(p.width)).join(' + ')}mm). Cut piece at the RIGHT-hand end.`,
     ];
