@@ -1621,8 +1621,8 @@ createApp({
     useTagDefault(name) { return USE_TAGS[name] || ''; },
     useTag(l) {
       // A "use" typed on the catalogue line wins over the built-in wording (editable by Liam, 22 Sep 2026)
-      const m = l.material || (this.catalogue && this.catalogue.materials || []).find((x) => x.name === (l.catalogueName || l.name));
-      if (m && m.use) return m.use;
+      const mat = l.material || (this.catalogue && this.catalogue.materials || []).find((x) => x.name === (l.catalogueName || l.name));
+      if (mat && mat.use) return mat.use;
       if (USE_TAGS[l.catalogueName || l.name]) return USE_TAGS[l.catalogueName || l.name];
       const m = /^On the (front|rear|left side|right side)/i.exec(l.derivation || '');
       if (m) return `${m[1].charAt(0).toUpperCase() + m[1].slice(1)} wall opening`;
