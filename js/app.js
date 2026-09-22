@@ -8,9 +8,9 @@ import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=6';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=43';
-import { buildConstructionDrawings } from './construction.js?v=10';
-import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=38';
+import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=44';
+import { buildConstructionDrawings } from './construction.js?v=11';
+import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=39';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
 import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=12';
 import { emptyInstaller } from './bom/installers.js?v=2';
@@ -1618,7 +1618,11 @@ createApp({
       this.rebuildOrders();
     },
     printMaterials() { this.$nextTick(() => window.print()); },
+    useTagDefault(name) { return USE_TAGS[name] || ''; },
     useTag(l) {
+      // A "use" typed on the catalogue line wins over the built-in wording (editable by Liam, 22 Sep 2026)
+      const m = l.material || (this.catalogue && this.catalogue.materials || []).find((x) => x.name === (l.catalogueName || l.name));
+      if (m && m.use) return m.use;
       if (USE_TAGS[l.catalogueName || l.name]) return USE_TAGS[l.catalogueName || l.name];
       const m = /^On the (front|rear|left side|right side)/i.exec(l.derivation || '');
       if (m) return `${m[1].charAt(0).toUpperCase() + m[1].slice(1)} wall opening`;

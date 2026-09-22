@@ -2109,10 +2109,11 @@
         </div>
         <div class="cat-scroll">
           <table class="cat-table">
-            <thead><tr><th>Material</th><th>Category</th><th>Supplier</th><th>Unit</th><th>Unit cost £</th><th>Pack size</th><th>Ordered as</th><th>Default supply</th><th></th></tr></thead>
+            <thead><tr><th>Material</th><th>Use (shown on the pack)</th><th>Category</th><th>Supplier</th><th>Unit</th><th>Unit cost £</th><th>Pack size</th><th>Ordered as</th><th>Default supply</th><th></th></tr></thead>
             <tbody>
               <tr v-for="mt in filteredCatalogue" :key="mt.name + mt.category">
                 <td><input v-model="mt.name"></td>
+                <td><input v-model="mt.use" :placeholder="useTagDefault(mt.name)" style="width:170px" title="What this material is used for - printed next to it on the materials list and the logistics pack. Leave blank for the built-in wording."></td>
                 <td><input v-model="mt.category" style="width:90px"></td>
                 <td>
             <select v-model="mt.supplier"><option value="">—</option><option v-for="sp in catalogue.suppliers" :value="sp.name">{{ sp.name }}</option></select>
@@ -2599,7 +2600,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=164"></script>
+<script type="module" src="js/app.js?v=165"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

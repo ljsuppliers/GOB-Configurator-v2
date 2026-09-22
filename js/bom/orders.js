@@ -200,6 +200,20 @@ export function planStock(cuts, stockLengths, splittable = false) {
     // smallest standard length that fits the longest piece; prefer <= 4.8m
     const fits = stockLengths.filter((L) => L + 1e-6 >= maxPiece);
     let L = fits.find((x) => x <= PREFER_MAX + 1e-6) ?? fits[0];
+    // SHORT pieces (<= 2.4m, e.g. flitch pairs): pick the stock length that buys the
+    // fewest METRES, so two 2.4m flitch pieces come out of one 4.8m rather than two
+    // 3.6m bars (Liam 22 Sep 2026, Patel: "why 3 x 3.6m?").
+    if (key === 'short' && fits.length > 1) {
+      const pcs = []; for (const c of g) { const n = Math.ceil(c.n * SPARE_FACTOR); for (let i = 0; i < n; i++) pcs.push(c.len); }
+      pcs.sort((a, b) => b - a);
+      let best = null;
+      for (const cand of fits.filter((x) => x <= PREFER_MAX + 1e-6)) {
+        const bars = []; for (const p of pcs) { let ok = false; for (const b of bars) { if (b.left + 1e-6 >= p) { b.left -= p; ok = true; break; } } if (!ok) bars.push({ left: cand - p }); }
+        const metres = bars.length * cand;
+        if (!best || metres < best.metres - 1e-6 || (Math.abs(metres - best.metres) < 1e-6 && bars.length < best.bars)) best = { L: cand, metres, bars: bars.length };
+      }
+      if (best) L = best.L;
+    }
     if (!L) {
       L = stockLengths[stockLengths.length - 1];
       for (const c of g) { notes.push(`${Math.ceil(c.n * SPARE_FACTOR)} x ${c.len.toFixed(2)}m (${c.what || 'pieces'}) LONGER THAN ${L}m STOCK - order special lengths`); lengths[`${c.len.toFixed(2)}*`] = (lengths[`${c.len.toFixed(2)}*`] || 0) + Math.ceil(c.n * SPARE_FACTOR); totalM += c.n * c.len; }
@@ -487,5 +501,5 @@ function orderEmailText(order, opts = {}) {
 }
 
 export function catalogueEmptyMaterial() {
-  return { name: '', category: '', sku: '', unit: 'each', unitCost: 0, supplier: '', packSize: null, orderUnit: '', supply: 'site', destination: 'site', inStock: false, notes: '' };
+  return { name: '', use: '', category: '', sku: '', unit: 'each', unitCost: 0, supplier: '', packSize: null, orderUnit: '', supply: 'site', destination: 'site', inStock: false, notes: '' };
 }
