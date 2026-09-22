@@ -1,6 +1,6 @@
 {
-  "version": 25,
-  "updated": "2026-09-20",
+  "version": 26,
+  "updated": "2026-09-22",
   "suppliers": [
     {
       "name": "Advanced Sealed Units",
@@ -1320,20 +1320,6 @@
       "destination": "site",
       "inStock": false,
       "notes": "500mm plastic fascia corner. 4 per build (2 front + 2 rear).",
-      "supply": "site"
-    },
-    {
-      "name": "Soffit vent strip (2.5m)",
-      "category": "Plastic trims",
-      "sku": "",
-      "unit": "length",
-      "unitCost": 4.5,
-      "supplier": "GAP",
-      "packSize": 1,
-      "orderUnit": "2.5m length",
-      "destination": "site",
-      "inStock": false,
-      "notes": "CLAUDE ESTIMATE \u00a34.50 per 2.5m length, confirm product/supplier. PREMIUM vented cold roof: continuous front soffit vent + rear rim vent slots (mesh) behind the fascia.",
       "supply": "site"
     },
     {

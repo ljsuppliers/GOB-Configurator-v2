@@ -56,6 +56,7 @@ export async function loadCatalogue() {
 // Items retired from the system: always removed from a saved catalogue, whatever
 // its version, so they can never reappear on a job or in the stock ledger.
 export const RETIRED_MATERIALS = new Set([
+  'Soffit vent strip (2.5m)', // Liam 22 Sep 2026: not used any more
   'CLS 4x2 timber', 'Treated CLS 4x2 timber', 'CLS 3x2 timber', 'Standard base trim (steel)', 'Composite decking board (3.6m)', 'Composite decking board (140×4880mm)',
   'Medium Oak vinyl', 'Light Grey vinyl', 'Vinyl spray adhesive (500ml can)', 'Privacy screen (vertical slats on frame)',
   'Corner trims', 'Close corner trims', 'Open-corner glazing junction kit', 'Flitch beam bolts', 'uPVC frame fixing screw',

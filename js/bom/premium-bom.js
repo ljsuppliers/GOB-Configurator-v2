@@ -143,7 +143,6 @@ export const USE_TAGS = {
   "Fascia corner (500mm plastic)": "FASCIA CORNERS",
   "Fascia connector (500mm plastic, 300mm)": "FRONT + SIDE FASCIA JOINS",
   "Fascia connector (200mm plastic)": "REAR FASCIA JOINS",
-  "Soffit vent strip (2.5m)": "FRONT SOFFIT + REAR RIM VENTS",
   "EPDM roof kit (membrane, adhesive, edge trims)": "ROOF COVERING",
   "Vapour control layer (roll)": "UNDER THE ROOF JOISTS + BEHIND THE STICK-WALL LINING",
   "Corner Trim (40x180 anthracite L)": "REAR CORNERS + FRONT CORNERS WITH PANEL SIDES",
@@ -698,7 +697,7 @@ export function buildPremiumBom(state, componentDefs) {
   } else {
     add('12mm Plywood (1220×2440 sheet)', Math.ceil((w * 0.3) * 1.10 / PLY_SHEET_M2), `Front fascia backing strip (classic, no canopy): ${w.toFixed(2)} x 0.30m + 10%`);
   }
-  add('Soffit vent strip (2.5m)', Math.ceil((2 * w) / 2.5), `Front soffit vent + rear rim mesh vents (cross-flow)`);
+  // Soffit vent strip removed (Liam 22 Sep 2026: no longer used).
   add('Vapour control layer (roll)', 2, `Warm-side VCL under the roof joists + continuous VCL to all walls behind the lining`,
     { orderText: `2 rolls VCL / polythene vapour barrier 2.7m × 50m (roof underside + walls)` });
 
