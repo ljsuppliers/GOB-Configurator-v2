@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
   <title>GOB CRM</title>
-  <link rel="stylesheet" href="css/app.css?v=30">
+  <link rel="stylesheet" href="css/app.css?v=31">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/theme.css?v=13">
@@ -2166,9 +2166,9 @@
         <p class="pack-note">Check each delivery against this list on arrival. Report damage or shortages to the office the same day.</p>
         <div v-for="g in logistics.toSite" :key="'ts'+g.name" class="pack-cat">
           <h3>{{ g.name }}</h3>
-          <table class="pack-table pack-check">
-            <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}<span class="pack-small"> · {{ useTag(l) }}</span><span v-if="l.stage === 'week2'" class="pack-small"> · 2ND DELIVERY (week 2)</span></td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.orderStatus === 'delivered' ? 'delivered' : l.orderStatus === 'ordered' ? 'ordered' : 'NOT YET ORDERED' }}</td></tr>
-          </table>
+          <div class="pack-rows">
+            <div v-for="l in g.lines" :key="l.name" class="pack-row"><span class="pack-tick">☐</span><span class="pack-item">{{ l.name }}<span class="pack-small"> · {{ useTag(l) }}</span><span v-if="l.stage === 'week2'" class="pack-small"> · 2ND DELIVERY (week 2)</span></span><span class="pack-qty">{{ orderAs(l) }}</span><span class="pack-status pack-small">{{ l.orderStatus === 'delivered' ? 'delivered' : l.orderStatus === 'ordered' ? 'ordered' : 'NOT YET ORDERED' }}</span></div>
+          </div>
         </div>
 
         <h2 class="pack-h2 pack-break">B. Factory to load and deliver to site ({{ logistics.counts.factory }} lines)</h2>
@@ -2177,18 +2177,18 @@
           <h3 class="pack-sub">Supplier deliveries arriving at the factory</h3>
           <div v-for="g in logistics.factoryDelivered" :key="'fd'+g.name" class="pack-cat">
             <h3>{{ g.name }}</h3>
-            <table class="pack-table pack-check">
-              <tr v-for="l in g.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}<span class="pack-small"> · {{ useTag(l) }}</span></td><td class="num">{{ orderAs(l) }}</td><td class="pack-small">{{ l.orderStatus === 'delivered' ? 'at factory' : l.orderStatus === 'ordered' ? 'ordered, awaiting delivery to factory' : 'NOT YET ORDERED' }}</td></tr>
-            </table>
+            <div class="pack-rows">
+              <div v-for="l in g.lines" :key="l.name" class="pack-row"><span class="pack-tick">☐</span><span class="pack-item">{{ l.name }}<span class="pack-small"> · {{ useTag(l) }}</span></span><span class="pack-qty">{{ orderAs(l) }}</span><span class="pack-status pack-small">{{ l.orderStatus === 'delivered' ? 'at factory' : l.orderStatus === 'ordered' ? 'ordered, awaiting delivery to factory' : 'NOT YET ORDERED' }}</span></div>
+            </div>
           </div>
         </template>
         <template v-if="logistics.fromStock.length">
           <h3 class="pack-sub">From factory stock</h3>
           <div v-for="g in logistics.fromStockByCategory" :key="'sc'+g.name" class="pack-cat">
             <h3>{{ g.name }}</h3>
-            <table class="pack-table pack-check">
-              <tr v-for="l in g.lines" :key="'st'+l.name"><td class="pack-tick">☐</td><td>{{ l.name }}<span class="pack-small"> · {{ useTag(l) }}</span></td><td class="num">{{ orderAs(l) }}</td></tr>
-            </table>
+            <div class="pack-rows">
+              <div v-for="l in g.lines" :key="'st'+l.name" class="pack-row"><span class="pack-tick">☐</span><span class="pack-item">{{ l.name }}<span class="pack-small"> · {{ useTag(l) }}</span></span><span class="pack-qty">{{ orderAs(l) }}</span></div>
+            </div>
           </div>
         </template>
         <p v-if="!logistics.counts.factory" class="pack-note">Nothing to load - every line on this job is delivered straight to site.</p>
@@ -2484,9 +2484,9 @@
         <h2 class="pack-h2 pack-break">3. Materials checklist (by supplier)</h2>
         <div v-for="sec in supplierSections" :key="'pk'+sec.name" class="pack-cat">
           <h3>{{ sec.name }}<span class="pack-small" v-if="sec.stockCount"> · {{ sec.stockCount }} from GOB stock</span></h3>
-          <table class="pack-table pack-check">
-            <tr v-for="l in sec.lines" :key="l.name"><td class="pack-tick">☐</td><td>{{ l.name }}<span class="pack-small"> · {{ useTag(l) }}</span><span v-if="l.inStock" class="pack-small"> · GOB stock</span></td><td class="num">{{ orderAs(l) }}</td></tr>
-          </table>
+          <div class="pack-rows">
+            <div v-for="l in sec.lines" :key="l.name" class="pack-row"><span class="pack-tick">☐</span><span class="pack-item">{{ l.name }}<span class="pack-small"> · {{ useTag(l) }}</span><span v-if="l.inStock" class="pack-small"> · GOB stock</span></span><span class="pack-qty">{{ orderAs(l) }}</span></div>
+          </div>
         </div>
 
         <div class="agreement-part">
@@ -2603,7 +2603,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=180"></script>
+<script type="module" src="js/app.js?v=181"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

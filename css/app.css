@@ -1023,3 +1023,18 @@ html, body {
   .logi-pack .pack-cat h3, .logi-pack .pack-h2, .logi-pack .pack-sub { page-break-after: avoid; break-after: avoid; }
   .logi-pack td { vertical-align: top; }
 }
+
+/* Pack checklists as block rows (not table rows): Chrome paginates these reliably,
+   table rows were split or blanked at page breaks (Liam 22 Sep 2026). */
+.pack-rows { width: 100%; font-size: 12px; }
+.pack-row { display: flex; align-items: flex-start; gap: 8px; padding: 3px 8px; border-bottom: 1px solid #e2e8f0; }
+.pack-row .pack-tick { flex: 0 0 22px; width: auto; font-size: 14px; }
+.pack-row .pack-item { flex: 1 1 40%; min-width: 0; }
+.pack-row .pack-qty { flex: 0 0 30%; text-align: right; }
+.pack-row .pack-status { flex: 0 0 22%; }
+@media print {
+  .pack-row { break-inside: avoid; page-break-inside: avoid; font-size: 14.5px; }
+  .pack-rows { break-inside: auto; page-break-inside: auto; }
+  .logi-pack .pack-cat, .pack-cat { break-inside: auto !important; page-break-inside: auto !important; }
+  .pack-cat h3 { break-after: avoid; page-break-after: avoid; }
+}
