@@ -210,8 +210,19 @@ export async function createProject({ name, customerId = '', customerName = '', 
   return ref.id;
 }
 
+/** Delete a project (design doc) outright, with its edit history and any
+ *  tasks tied to it. Notes and files live on the customer and are kept. */
 export async function deleteProject(designId) {
-  await db().collection('designs').doc(designId).delete();
+  const ref = db().collection('designs').doc(designId);
+  const hist = await ref.collection('history').get().catch(() => ({ docs: [] }));
+  const tasks = await db().collection('tasks').where('projectId', '==', designId).get().catch(() => ({ docs: [] }));
+  const docs = [...hist.docs, ...tasks.docs];
+  for (let i = 0; i < docs.length; i += 400) {
+    const batch = db().batch();
+    docs.slice(i, i + 400).forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+  await ref.delete();
 }
 
 /** Attach an existing configurator design to a project that has no drawing:

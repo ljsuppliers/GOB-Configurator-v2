@@ -16,7 +16,7 @@ import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=12';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
-import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject, mergeDesignIntoProject, listTasks, addTask, updateTask, deleteTask, SOURCE_LABELS, BRANDS, standardProjectName, isStandardName } from './crm.js?v=8';
+import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject, mergeDesignIntoProject, listTasks, addTask, updateTask, deleteTask, SOURCE_LABELS, BRANDS, standardProjectName, isStandardName } from './crm.js?v=9';
 
 const { createApp } = Vue;
 
@@ -1407,12 +1407,35 @@ createApp({
     async removeProject() {
       const j = this.currentProject;
       if (!j) return;
-      if (j.hasState) { this.projectStatus = 'This project has a drawing - delete it from Saved Projects in the designer if you really mean it'; return; }
-      if (!confirm(`Delete project "${j.name}"? Notes stay on the customer. This cannot be undone.`)) return;
-      await deleteProject(j.id);
-      this.currentProject = null; this.projectDraft = null;
-      await this.refreshCloudDesigns();
-      this.syncUrl();
+      const title = this.projectTitle(j);
+      if (j.hasState) {
+        const typed = prompt(`"${title}" has a drawing, quote and materials attached.\n\nDeleting removes all of that for good. Notes and files stay on the contact.\n\nType DELETE to confirm:`);
+        if (typed === null) return;
+        if (typed.trim().toUpperCase() !== 'DELETE') { this.projectStatus = 'Not deleted (you did not type DELETE)'; return; }
+      } else if (!confirm(`Delete project "${title}"? Notes and files stay on the contact. This cannot be undone.`)) return;
+      this.projectBusy = true;
+      try {
+        await deleteProject(j.id);
+        if (this.currentCloudId === j.id) { this.currentCloudId = null; this.currentCloudName = ''; }
+        this.tasks = (this.tasks || []).filter((t) => t.projectId !== j.id);
+        this.currentProject = null; this.projectDraft = null;
+        await this.refreshCloudDesigns();
+        this.syncUrl();
+        this.notify('Deleted: ' + title);
+      } catch (e) { this.projectStatus = 'Delete failed: ' + e.message; }
+      this.projectBusy = false;
+    },
+    async removeProjectFile(f) {
+      const j = this.currentProject;
+      const cid = j && j.customerId;
+      if (!cid || !confirm(`Remove "${f.name}"? This deletes the file for good.`)) return;
+      try {
+        if (f.storagePath && firebase.storage) await firebase.storage().ref(f.storagePath).delete().catch(() => {});
+        await deleteFileRecord(cid, f.id);
+        this.projectFiles = this.projectFiles.filter((x) => x.id !== f.id);
+        this.customerFiles = this.customerFiles.filter((x) => x.id !== f.id);
+        this.notify('Removed: ' + f.name);
+      } catch (e) { this.projectStatus = 'Remove failed: ' + e.message; }
     },
     async attachDesignToProject(design) {
       const j = this.currentProject;

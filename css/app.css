@@ -117,6 +117,8 @@ html, body {
 #export-menu button:hover {
   background: var(--accent-bg);
 }
+#export-menu button.danger { color: #b91c1c; border-top: 1px solid #e5e7eb; margin-top: 4px; }
+#export-menu button.danger:hover { background: #fee2e2; }
 
 /* ─── MAIN CONTENT ─── */
 .main-content {

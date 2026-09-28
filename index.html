@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
   <title>GOB CRM</title>
-  <link rel="stylesheet" href="css/app.css?v=31">
+  <link rel="stylesheet" href="css/app.css?v=32">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/theme.css?v=14">
@@ -1576,7 +1576,7 @@
                   <button v-if="!isGrannexe(currentProject) && currentProject.hasState" @click="showExportMenu = false; openProjectDesign('materials')">Materials &amp; orders</button>
                   <template v-if="!isGrannexe(currentProject)"><button v-for="d in attachableDesigns" :key="d.id" @click="showExportMenu = false; attachDesignToProject(d)">Attach drawing: {{ d.name }} · {{ d.dimensions }}</button></template>
                   <button v-if="projectCustomer" @click="showExportMenu = false; openCustomersPage(projectCustomer.id)">Open contact: {{ projectCustomer.name }}</button>
-                  <button v-if="!currentProject.hasState" @click="showExportMenu = false; removeProject()">Delete project</button>
+                  <button class="danger" @click="showExportMenu = false; removeProject()">Delete project</button>
                 </div>
               </div>
             </div>
@@ -1712,8 +1712,8 @@
                 </div>
                 <div v-show="secOpen['p-files'] !== false" class="sec-body">
                   <div v-if="!projectFiles.length" class="crm-muted">No files.</div>
-                  <table v-else class="rel-table"><tr><th>Name</th><th>Size</th><th>Category</th><th>Date Added</th><th>Added By</th></tr>
-                    <tr v-for="f in projectFiles" :key="f.id"><td><a v-if="f.url" :href="f.url" target="_blank" rel="noopener">{{ f.name }}</a><span v-else>{{ f.name }}</span></td><td>{{ fmtSize(f.size) }}</td><td>{{ f.category || '' }}</td><td>{{ f.createdAt ? fmtDateOnly(f.createdAt) : '' }}</td><td>{{ f.author || '' }}</td></tr></table>
+                  <table v-else class="rel-table"><tr><th>Name</th><th>Size</th><th>Category</th><th>Date Added</th><th>Added By</th><th></th></tr>
+                    <tr v-for="f in projectFiles" :key="f.id"><td><a v-if="f.url" :href="f.url" target="_blank" rel="noopener">{{ f.name }}</a><span v-else>{{ f.name }}</span></td><td>{{ fmtSize(f.size) }}</td><td>{{ f.category || '' }}</td><td>{{ f.createdAt ? fmtDateOnly(f.createdAt) : '' }}</td><td>{{ f.author || '' }}</td><td><button class="btn-tiny" @click="removeProjectFile(f)">remove</button></td></tr></table>
                 </div>
               </div>
 
@@ -2603,7 +2603,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=183"></script>
+<script type="module" src="js/app.js?v=184"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>
