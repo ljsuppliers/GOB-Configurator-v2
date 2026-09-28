@@ -84,7 +84,7 @@ export async function saveDesign(name, state, author = '', docId = '') {
   await ref.set({
     name,
     ...meta,
-    source: 'crm', stage: 1, stageName: 'Quote sent', projectStatus: 'IN PROGRESS', createdBy: author || '',
+    source: 'crm', stage: 0, stageName: 'Quote in progress', projectStatus: 'IN PROGRESS', createdBy: author || '',
     savedAt: now,
     updatedAt: now,
     state: JSON.parse(JSON.stringify(state)),
@@ -211,7 +211,7 @@ export async function listDesigns() {
       legacyName: d.legacyName || '',
       quoteTotal: typeof d.quoteTotal === 'number' ? d.quoteTotal : null,
       updatedBy: d.updatedBy || '',
-      stage: d.stage || 0,
+      stage: typeof d.stage === 'number' ? d.stage : null,
       stageName: d.stageName || '',
       projectStatus: d.projectStatus || '',
       details: d.details || (d.insightly && d.insightly.details) || '',

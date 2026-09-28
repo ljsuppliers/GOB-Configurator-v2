@@ -6,7 +6,7 @@ import { generateDrawing } from './drawing-engine.js?v=48';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=5';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
-import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=6';
+import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=7';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=56';
 import { buildConstructionDrawings } from './construction.js?v=24';
@@ -16,7 +16,7 @@ import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=12';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
-import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject, mergeDesignIntoProject, listTasks, addTask, updateTask, deleteTask, SOURCE_LABELS, BRANDS, standardProjectName, isStandardName } from './crm.js?v=9';
+import { listCustomers, getCustomer, saveCustomer, deleteCustomer, listNotes, addNote, deleteNote, listFiles, uploadFile, deleteFileRecord, setDesignCustomer, emptyCustomer, matchScore, PIPELINE, PROJECT_STATUSES, stageOf, stageName, projectStatusOf, updateProject, createProject, deleteProject, mergeDesignIntoProject, listTasks, addTask, updateTask, deleteTask, SOURCE_LABELS, BRANDS, standardProjectName, isStandardName } from './crm.js?v=10';
 
 const { createApp } = Vue;
 
@@ -357,7 +357,7 @@ createApp({
     pipelineGroups() {
       const open = this.cloudDesigns.filter((j) => !['complete', 'cancelled'].includes(j.jobStatus));
       const groups = [
-        { key: 'quote', label: 'Quotes out', from: 1, to: 1 }, { key: 'deposit', label: 'Deposit & design', from: 2, to: 8 },
+        { key: 'quote', label: 'Quotes', from: 0, to: 1 }, { key: 'deposit', label: 'Deposit & design', from: 2, to: 8 },
         { key: 'ordering', label: 'Ordering', from: 9, to: 12 }, { key: 'delivery', label: 'Delivery', from: 13, to: 14 },
         { key: 'install', label: 'Installing', from: 15, to: 16 }, { key: 'closing', label: 'Invoicing & review', from: 17, to: 18 },
       ];
@@ -2359,13 +2359,28 @@ createApp({
         this.notify(rich
           ? 'Email copied — paste into Gmail with formatting and links'
           : 'Rich copy unavailable in this browser — plain text copied');
+        this.markQuoteSent();
       } catch {
         this.notify('Copy failed — select the text and copy manually');
       }
     },
 
     copyEmailPlain() {
-      navigator.clipboard.writeText(this.emailBody).then(() => this.notify('Email copied as plain text'));
+      navigator.clipboard.writeText(this.emailBody).then(() => { this.notify('Email copied as plain text'); this.markQuoteSent(); });
+    },
+
+    /** Copying a quote email is the moment the quote goes out: move a
+     *  "Quote in progress" project (stage 0) on to "Quote sent" (stage 1). */
+    async markQuoteSent() {
+      if (!['quoteEmail', 'preliminaryQuoteEmail'].includes(this.selectedEmailTemplate)) return;
+      const j = this.currentCloudId && this.cloudDesigns.find((d) => d.id === this.currentCloudId);
+      if (!j || stageOf(j) !== 0 || !this.cloudReady) return;
+      try {
+        await updateProject(j.id, { stage: 1, stageName: stageName(1), jobStatus: 'quote' });
+        j.stage = 1; j.stageName = stageName(1);
+        if (j.customerId) addNote(j.customerId, { body: 'Quote email copied - stage moved to Quote sent', kind: 'stage', projectId: j.id, projectName: j.name }, this.userName()).catch(() => {});
+        this.notify('Project moved to "Quote sent"');
+      } catch (e) { console.warn('markQuoteSent', e); }
     },
 
     saveConfig() {

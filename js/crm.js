@@ -153,6 +153,7 @@ export function matchScore(customer, { name = '', email = '', phone = '', postco
 /* ───────────── PROJECTS (the Insightly "Projects" pipeline) ───────────── */
 // Stage names copied from the Insightly Project Pipeline so the team works the same way.
 export const PIPELINE = [
+  { order: 0, name: 'Quote in progress', status: 'quote' },
   { order: 1, name: 'Quote sent', status: 'quote' },
   { order: 2, name: 'Holding Deposit (Holding invoice + approx delivery date)', status: 'deposit' },
   { order: 3, name: 'Guillaume 2nd Visit', status: 'deposit' },
@@ -179,7 +180,7 @@ export const PROJECT_STATUSES = [
 const STATUS_TO_STAGE = { quote: 1, deposit: 2, ordered: 11, delivered: 13, installing: 15, complete: 18, cancelled: 0 };
 /** Stage order for a project: stored value, else inferred from the job status. */
 export function stageOf(job) {
-  if (job && job.stage) return job.stage;
+  if (job && typeof job.stage === 'number') return job.stage;
   if (job && job.insightly && job.insightly.stageOrder) return job.insightly.stageOrder;
   return STATUS_TO_STAGE[(job && job.jobStatus) || 'quote'] || 1;
 }
@@ -202,7 +203,7 @@ export async function createProject({ name, customerId = '', customerName = '', 
   const ref = await db().collection('designs').add({
     name, customer: customerName, address, dimensions: '', tier: 'signature',
     ref: `${surname.replace(/[^A-Za-z0-9-]/g, '').toUpperCase()}-${quoteNumber || 'NOQUOTENO'}`, quoteNumber,
-    jobStatus: 'quote', stage: 1, stageName: PIPELINE[0].name, projectStatus: 'IN PROGRESS', details,
+    jobStatus: 'quote', stage: 0, stageName: PIPELINE[0].name, projectStatus: 'IN PROGRESS', details,
     installStart: '', installEnd: '', installerName: '', ordersOrdered: 0, ordersDelivered: 0, deliveries: [],
     customerId, legacy: true, hasState: false, state: null, createdBy: author || '', brand: brand === 'grannexe' ? 'grannexe' : 'gob',
     savedAt: ts(), updatedAt: ts(),

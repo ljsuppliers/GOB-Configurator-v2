@@ -1390,7 +1390,7 @@
       <div class="home-head">
         <div>
           <h2>Good {{ new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening' }}, {{ userName() }}</h2>
-          <p class="crm-muted">{{ new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }} · {{ projectCounts.open }} open projects (deposit received) · {{ projectCounts.quotes }} quotes out · {{ customers.length }} customers</p>
+          <p class="crm-muted">{{ new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }} · {{ projectCounts.open }} open projects (deposit received) · {{ projectCounts.quotes }} quotes (in progress or sent) · {{ customers.length }} customers</p>
         </div>
         <div class="home-actions">
           <input type="search" v-model="homeSearch" placeholder="Find a customer or project…" class="crm-search home-search" @keydown.enter="homeGo">
@@ -2603,7 +2603,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=184"></script>
+<script type="module" src="js/app.js?v=185"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>
