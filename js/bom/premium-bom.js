@@ -9,7 +9,7 @@
 //    2026-09-29). Supports still sit on 1.2m lines. 75mm PIR on 18x38 side battens, 22mm P5 T&G.
 //  - 100mm Kingspan panels on the rear + any steel-clad side, ALL ONE LENGTH
 //    (square building, no raked sides). DOUBLE 18x38 battens inside them (Liam 2026-09-07).
-//  - Front always stick: 4x2 TANALISED C24 @400 (Liam 2026-09-06: no CLS 4x2 anywhere), tanalised sole plate, 12mm ply, Tyvek,
+//  - Front always stick: 4x2 TANALISED C24 @400 (Liam 2026-09-06: no CLS 4x2 anywhere), tanalised sole plate, 12mm OSB3 sheathing (Liam 2026-09-29, was ply; ply stays on the canopy box only), Tyvek,
 //    75mm PIR in the bays. Slat-clad sides also stick (rockwool in bays).
 //  - Flat timber roof: joist ladder by span, stock firrings 75/100mm -> 0
 //    at the rear + 2 reverse firrings (one per side edge) squaring the sides, 18mm T&G OSB,
@@ -121,7 +121,8 @@ export const USE_TAGS = {
   "75mm PIR insulation board": "FLOOR, FRONT STICK-WALL + ROOF",
   "100mm PIR insulation board": "FLOOR + ROOF (100MM JOBS)",
   "Kingspan 100mm insulated wall panel (1.1m wide)": "REAR + SIDE WALLS (PANELS)",
-  "12mm Plywood (1220\u00d72440 sheet)": "STICK-WALL + CANOPY BOX",
+  "12mm Plywood (1220\u00d72440 sheet)": "CANOPY BOX ONLY (FRONT FACE + SOFFIT)",
+  "12mm OSB3 board (2440x1220)": "STICK WALL EXTERNAL SHEATHING (FRONT + ANY CLAD SIDE WALL)",
   "18x38 treated batten": "FLOOR PIR SUPPORT, DOUBLE BATTENS INTERNAL PANELS, BATTEN ON STICK WALL UNDER CLADDING",
   "Acoustic insulation roll (100mm)": "PARTITION WALLS",
   "Rockwool insulation 100mm": "PARTITION WALLS",
@@ -134,7 +135,7 @@ export const USE_TAGS = {
   "Plasterboard scrim/jointing tape (90m roll)": "PLASTERBOARD JOINTS",
   "White trade emulsion paint (10L)": "INTERNAL WALLS + CEILING",
   "Skirting board": "INTERNAL PERIMETER",
-  "Tyvek breather membrane": "OVER THE PLY ON THE STICK WALL",
+  "Tyvek breather membrane": "OVER THE OSB ON THE STICK WALL",
   "Tyvek/breather tape (roll)": "TYVEK LAPS + OPENINGS",
   "Door mat": "HANDOVER",
   "200mm plastic fascia (5m length, GAP)": "REAR FASCIA",
@@ -168,7 +169,7 @@ export const USE_TAGS = {
   "TimberLok 225mm": "FLOOR - END JOISTS INTO THE JOIST ENDS",
   "Wood screw 5.0 x 100mm": "STICK WALL FRAMING",
   "Wood screw 5.0 x 70mm": "BATTENS + FIRRINGS",
-  "Wood screw 5.0 x 50mm": "PLY, FLOOR DECK, ROOF DECK",
+  "Wood screw 5.0 x 50mm": "OSB SHEATHING, CANOPY PLY, FLOOR DECK, ROOF DECK",
   "Drywall screw 3.5 x 38mm black (coarse)": "PLASTERBOARD",
   "Grey RAL 7016 self-drilling trim screw 25mm": "VISIBLE STEEL TRIMS",
   "Self-drilling screw 25mm plain (hidden trims / U-channel)": "U-CHANNEL + HIDDEN TRIMS",
@@ -506,7 +507,7 @@ export function buildPremiumBom(state, componentDefs) {
   const stickWalls = [{ label: 'front', run: frontRun, openings: front }];
   if (!isSteel(state.cladding.left)) stickWalls.push({ label: 'left side', run: sideRun, openings: left });
   if (!isSteel(state.cladding.right)) stickWalls.push({ label: 'right side', run: sideRun, openings: right });
-  let stickLm = 0, plySheets = 0, tyvekM2 = 0, pirWallM2 = 0, soleLm = 0;
+  let stickLm = 0, osbSheets = 0, tyvekM2 = 0, pirWallM2 = 0, soleLm = 0;
   const stickCuts = [];
   const soleCuts = [];
   for (const sw of stickWalls) {
@@ -521,7 +522,7 @@ export function buildPremiumBom(state, componentDefs) {
     stickCuts.push({ len: sw.run, n: 3, what: `${sw.label} head plate + noggin run (join over a stud if longer than stock)`, join: true });
     soleCuts.push({ len: sw.run, n: 1, what: `${sw.label} base plate (join over a stud if longer than stock)`, join: true });
     const areaM2 = sw.run * wallH;
-    plySheets += Math.ceil(areaM2 * 1.10 / PLY_SHEET_M2);
+    osbSheets += Math.ceil(areaM2 * 1.10 / PLY_SHEET_M2);
     tyvekM2 += Math.ceil(areaM2 * 1.10);
     const netM2 = Math.max(0, areaM2 - fhOn(sw.openings).reduce((s, o) => s + o.widthM * o.heightM, 0)) * 1.10;
     pirWallM2 += Math.ceil(netM2);
@@ -547,7 +548,7 @@ export function buildPremiumBom(state, componentDefs) {
       stickLm += ((2 * wallH) + 3 * 0.4) * 1.10;
       stickCuts.push({ len: wallH, n: 2, what: `closed ${side} corner studs` });
       soleLm += 0.4;
-      plySheets += 1;
+      osbSheets += 1;
       tyvekM2 += Math.ceil(0.4 * wallH * 1.2);
     }
     add('Front-cladding return (closed corner)', 1,
@@ -592,9 +593,11 @@ export function buildPremiumBom(state, componentDefs) {
   // One line for the whole stick wall: base plate, studs, head plate, noggins, opening
   // framing (Liam 22 Sep 2026: the base plate is just part of the stick front wall).
   add('4x2 tanalised C24 timber', Math.ceil(stickLm - soleLm) + Math.ceil(soleLm * 1.10), `Stick wall${stickWalls.length > 1 ? 's' : ''} (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ` + ${closedCorners} closed-corner extension${closedCorners === 1 ? '' : 's'}` : ''}): base plate + studs @400mm + head plate + noggins + opening framing, +10%`, [...soleCuts, ...stickCuts]);
-  add('12mm Plywood (1220×2440 sheet)', plySheets + 1, `Stick wall external sheathing + 10% + 1 spare sheet (openings cut out on site)`,
-    { orderText: `${plySheets + 1} sheets 2440 × 1220 × 12mm structural ply (WBP/exterior grade), incl. 1 spare` });
-  add('Tyvek breather membrane', tyvekM2, `Over the ply, under the battens (m2 + 10%)`,
+  // STICK WALL SHEATHING = 12mm OSB3 full 8x4 sheets (Liam 2026-09-29). 12mm ply is
+  // now ONLY the canopy box (front face + soffit) further down.
+  add('12mm OSB3 board (2440x1220)', osbSheets + 1, `Stick wall external sheathing (${stickWalls.map((x) => x.label).join(' + ')}${closedCorners ? ' + closed-corner extensions' : ''}) + 10% + 1 spare sheet (openings cut out on site)`,
+    { orderText: `${osbSheets + 1} sheets 2440 × 1220 × 12mm OSB3, incl. 1 spare (stick wall sheathing)` });
+  add('Tyvek breather membrane', tyvekM2, `Over the OSB, under the battens (m2 + 10%)`,
     { orderText: `${Math.ceil(tyvekM2 / 70)} roll${Math.ceil(tyvekM2 / 70) === 1 ? '' : 's'} Tyvek Housewrap 1.4m × 50m (${tyvekM2}m² needed)` });
   add('Tyvek/breather tape (roll)', 1, `Tape laps + around openings`);
   if (pirWallM2 > 0) add('75mm PIR insulation board', pirWallM2, `ALL stick wall bays (${stickWalls.map((x) => x.label).join(' + ')}): 75mm PIR friction-fit between the tanalised 4x2 studs (no Rockwool - partitions only)`,
@@ -1035,7 +1038,7 @@ export function buildPremiumBom(state, componentDefs) {
   // -- Wood screws --
   add('Wood screw 5.0 x 100mm', up(totalStuds * 6 + (hasCanopy ? Math.ceil(w / 0.4) * 2 + 8 : 0) + wideFront.length * 12), `STICK FRAMING: ~6 per stud (studs to plates, noggins, kings; ${totalStuds} studs) + canopy 2x2 frame/box fixings + flitch packing, +25%`);
   add('Wood screw 5.0 x 70mm', up(cladBattenLm / 0.4 + 2 * (fJoists - 1) * d / 0.6 + (rJoists + 2) * roofLen / 0.4 + liningRunTotal * (Math.ceil(wallH / 0.6) + 1) / 0.6), `BATTENS + FIRRINGS: cladding sub-frame battens @400mm crossings (${cladBattenLm.toFixed(0)}m) + floor PIR battens @600mm + firrings down into joists @400mm + horizontal panel battens onto the verticals @600mm, +25%`);
-  add('Wood screw 5.0 x 50mm', up(plySheets * 30 + floorM2 * 12 + roofDeckM2 * 10 + pedestals * 4), `SHEET FIXING: ply sheathing ~30/sheet (${plySheets} sheets) + 22mm floor deck ~12/m² (${floorM2.toFixed(1)}m²) + 18mm roof deck ~10/m² (${roofDeckM2.toFixed(1)}m²) + 4 per pedestal head, +25%`);
+  add('Wood screw 5.0 x 50mm', up((osbSheets + 1) * 30 + floorM2 * 12 + roofDeckM2 * 10 + pedestals * 4), `SHEET FIXING: OSB sheathing ~30/sheet (${osbSheets + 1} sheets) + 22mm floor deck ~12/m² (${floorM2.toFixed(1)}m²) + 18mm roof deck ~10/m² (${roofDeckM2.toFixed(1)}m²) + 4 per pedestal head, +25%`);
   add('Drywall screw 3.5 x 38mm black (coarse)', up(boardM2 * 12), `PLASTERBOARD: ~12/m² over ${boardM2.toFixed(0)}m² of board, +25%`);
   // -- Steel / trim fixings --
   const visibleTrimM = (panelWalls.reduce((t, p) => t + p.run, 0)) /* base trims */ + 4 * wallH /* corners */ + (w + 2 * roofLen) /* top cap */;
