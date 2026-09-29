@@ -437,9 +437,11 @@ export function buildPremiumBom(state, componentDefs) {
   // Only the OUTER RING is doubled: both side joists + front/rear end joists.
   // Internal joists are single (Liam 2026-09-29; the old 1.2m-grid doubling is gone).
   const fDoubledLm = 2 * w + 2 * d;
-  add('5x2 tanalised C24 timber', Math.ceil((fJoists * d + 2 * w + fDoubledLm) * 1.10),
-    `Floor: ${fJoists} joists x ${d.toFixed(2)}m @400mm front-to-back (both side joists doubled: +2) + front/rear end joists doubled (4 x ${w.toFixed(2)}m), +10%`,
-    [{ len: d, n: fJoists + 2, what: 'floor joists (@400) incl. the 2 doubled side joists' }, { len: w, n: 4, what: 'front + rear END JOISTS (the long outer pieces the joists fix into), doubled - join over a joist/pedestal if longer than stock', join: true }]);
+  // MID-SPAN SPLINE (Liam 2026-09-29): one 5x2 laid FLAT under the joists, across
+  // the full width at mid-depth, on the middle row of supports.
+  add('5x2 tanalised C24 timber', Math.ceil((fJoists * d + 2 * w + fDoubledLm + w) * 1.10),
+    `Floor: ${fJoists} joists x ${d.toFixed(2)}m @400mm front-to-back (both side joists doubled: +2) + front/rear end joists doubled (4 x ${w.toFixed(2)}m) + mid-span SPLINE laid flat under the joists across the width (1 x ${w.toFixed(2)}m), +10%`,
+    [{ len: d, n: fJoists + 2, what: 'floor joists (@400) incl. the 2 doubled side joists' }, { len: w, n: 1, what: 'mid-span SPLINE, laid FLAT under the joists across the width at mid-depth - join over a support if longer than stock', join: true }, { len: w, n: 4, what: 'front + rear END JOISTS (the long outer pieces the joists fix into), doubled - join over a joist/pedestal if longer than stock', join: true }]);
   add('18x38 treated batten', Math.ceil(2 * (fJoists - 1) * d), `Floor PIR support battens, joist sides, tops ${pirFR}mm down`,
     [{ len: d, n: 2 * (fJoists - 1), what: 'floor PIR battens' }]);
   add(pirFRName, Math.ceil(w * d), `Floor: friction-fit between the 5x2 joists, ${(w * d).toFixed(1)}m2`,
@@ -1028,6 +1030,7 @@ export function buildPremiumBom(state, componentDefs) {
   const canopyFixings = hasCanopy ? Math.ceil(w / 0.4) * 2 + 8 : 0;
   add('TimberLok 100mm', up(rJoists * 4 + (2 * sideRun + w) / 0.6 + 8 + totalStuds * 2 + canopyFixings + closedCorners * 10), `ROOF joists to wall plates/flitch (~4 skew per joist, ${rJoists} joists) + flat 4x2 wall plate into panel tops @600mm + STUDS to sole plate (2 per stud, ${totalStuds} studs) + CANOPY 2x2 frame/box to the front wall/joists (${canopyFixings}) + closed-corner extensions, +25% (Liam: used for all of these)`);
   add('TimberLok 89mm', up(closedCorners * 12 + (hasCanopy ? Math.ceil(w / 0.4) + 1 : 0) + totalStuds), `Closed-corner extension framing + canopy 2x2 cross pieces + stud-to-plate where 100mm is too long, +25%. (89mm not a FastenMaster size - Timberfix/Spax 6x90 equivalent)`);
+  add('TimberLok 150mm', up(fJoists), `MID-SPAN SPLINE: up through the flat spline into every joist (${fJoists} joists), +25%`, { use: 'FLOOR SPLINE TO JOISTS' });
   add('TimberLok 225mm', up(fJoists * 2 * 2 + 8), `FLOOR RIM through into the joist ends: 2 per joist end, both rims (${fJoists} joists) + 8 spare, +25%. (nearest stock size 200/250mm TimberLok)`);
   // -- Wood screws --
   add('Wood screw 5.0 x 100mm', up(totalStuds * 6 + (hasCanopy ? Math.ceil(w / 0.4) * 2 + 8 : 0) + wideFront.length * 12), `STICK FRAMING: ~6 per stud (studs to plates, noggins, kings; ${totalStuds} studs) + canopy 2x2 frame/box fixings + flitch packing, +25%`);

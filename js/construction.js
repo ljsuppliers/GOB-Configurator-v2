@@ -55,7 +55,7 @@
 //         edges), 18mm T&G OSB, one-piece EPDM, 75/100mm PIR set 30mm down.
 //         Half-round gutter full width at the rear, downpipe one end (both ends
 //         from 6m wide).
-import { supportLayout, panelPlan, openingsOnWall, roofLadderFor, isSteelClad } from './bom/premium-bom.js?v=57';
+import { supportLayout, panelPlan, openingsOnWall, roofLadderFor, isSteelClad } from './bom/premium-bom.js?v=58';
 
 const F = 'font-family:Inter,Arial,sans-serif';
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -101,6 +101,8 @@ export function buildConstructionDrawings(state, componentDefs) {
     s += rc(M, M, W, D, { sw: 10 });
     // internal joists: SINGLE (the support lines at 1.2m are ordinary joists with supports under them)
     for (let x = 0.4; x < w - 0.05; x += 0.4) { const X = M + mm(x); s += ln(X, M, X, M + D, { sw: sup.lines.some((L) => Math.abs(L - x) < 0.01) ? 8 : 4, stroke: '#94a3b8' }); }
+    // mid-span SPLINE: 5x2 laid flat UNDER the joists across the width (dashed = below)
+    s += rc(M, M + D / 2 - 62, W, 125, { fill: 'none', stroke: '#b45309', sw: 6, dash: '40 25' }) + tx(M + W / 2, M + D / 2 + 260, 'SPLINE under the joists (5x2 laid flat, full width)', { size: 70 });
     // both side joists doubled
     s += rc(M, M, 94, D, { fill: '#cbd5e1', stroke: '#334155', sw: 5 }) + rc(M + W - 94, M, 94, D, { fill: '#cbd5e1', stroke: '#334155', sw: 5 });
     // end joists doubled
@@ -119,7 +121,7 @@ export function buildConstructionDrawings(state, componentDefs) {
       svg: sheet(SW, SH, s),
       notes: [
         `${foundation}: ${sup.count} supports = ${sup.lines.length} lines across the width × ${sup.rows.length} rows along the depth (green dots). Rows ${sup.rowSpacingMm}mm apart (max 1300mm).`,
-        `5x2 C24 floor joists run FRONT→BACK at 400mm centres (grey), all SINGLE except the outer ring: both side joists and the front + rear end joists are DOUBLED (two 5x2 laminated with TimberLok 150s @400 staggered, shaded). Supports sit under the joists on the 1200mm lines (drawn heavier) and under both sides.`,
+        `5x2 C24 floor joists run FRONT→BACK at 400mm centres (grey), all SINGLE except the outer ring: both side joists and the front + rear end joists are DOUBLED (two 5x2 laminated with TimberLok 150s @400 staggered, shaded). Supports sit under the joists on the 1200mm lines (drawn heavier) and under both sides. A 5x2 SPLINE (orange dashed) is laid FLAT across the full width at mid-depth, UNDERNEATH the joists, and screwed up into every joist with TimberLok 150s.`,
         `${pir}mm PIR between joists on 18x38 side battens, then 22mm P5 T&G moisture-resistant chipboard laid across the joists (staggered joints). Walls stand on the chipboard.`,
         state.foundationType === 'concrete-pile' ? `Blocks: dig, 2 bags Postcrete per hole, one 440×215×100 block per point, adjustable pedestal on each block, frame on the pedestal heads.` : state.foundationType === 'ground-screw' || state.foundationType === 'hybrid' ? `Ground screws driven at the marked points, frame fixed to the screw heads with TimberLok 100s.` : `Pedestals anchored to the slab with 2 concrete screws each; DPM over the slab first.`,
       ],
