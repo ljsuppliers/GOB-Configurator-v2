@@ -4,8 +4,9 @@
 //
 // Premium system (confirmed with Liam 2026-08/09):
 //  - Pedestals on the slab (or ground screws), 5x2 C24 floor frame DIRECTLY
-//    on the pedestal heads (NO bearer layer). Outer ring doubled + every 3rd
-//    joist doubled (1.2m grid). 75mm PIR on 18x38 side battens, 22mm P5 T&G.
+//    on the pedestal heads (NO bearer layer). Outer ring doubled ONLY (both
+//    side joists + front/rear end joists); internal joists are single (Liam
+//    2026-09-29). Supports still sit on 1.2m lines. 75mm PIR on 18x38 side battens, 22mm P5 T&G.
 //  - 100mm Kingspan panels on the rear + any steel-clad side, ALL ONE LENGTH
 //    (square building, no raked sides). DOUBLE 18x38 battens inside them (Liam 2026-09-07).
 //  - Front always stick: 4x2 TANALISED C24 @400 (Liam 2026-09-06: no CLS 4x2 anywhere), tanalised sole plate, 12mm ply, Tyvek,
@@ -433,11 +434,12 @@ export function buildPremiumBom(state, componentDefs) {
 
   /* ---------- FLOOR (5x2, doubled ring + 1.2m grid) ---------- */
   const fJoists = Math.ceil(w / 0.4) + 1;
-  const fDoubledInternals = Math.max(0, Math.floor((fJoists - 2) / 3));
-  const fDoubledLm = 2 * w + 2 * d + fDoubledInternals * d;
+  // Only the OUTER RING is doubled: both side joists + front/rear end joists.
+  // Internal joists are single (Liam 2026-09-29; the old 1.2m-grid doubling is gone).
+  const fDoubledLm = 2 * w + 2 * d;
   add('5x2 tanalised C24 timber', Math.ceil((fJoists * d + 2 * w + fDoubledLm) * 1.10),
-    `Floor: ${fJoists} joists x ${d.toFixed(2)}m @400mm front-to-back + front/rear end joists (2 x ${w.toFixed(2)}m) + DOUBLING (outer ring + every 3rd joist / 1.2m grid: ${fDoubledInternals} x ${d.toFixed(2)}m), +10%`,
-    [{ len: d, n: fJoists + 2 + fDoubledInternals, what: 'floor joists incl. doubled sides + grid doubles' }, { len: w, n: 4, what: 'front + rear END JOISTS (the long outer pieces the joists fix into), doubled - join over a joist/pedestal if longer than stock', join: true }]);
+    `Floor: ${fJoists} joists x ${d.toFixed(2)}m @400mm front-to-back (both side joists doubled: +2) + front/rear end joists doubled (4 x ${w.toFixed(2)}m), +10%`,
+    [{ len: d, n: fJoists + 2, what: 'floor joists (@400) incl. the 2 doubled side joists' }, { len: w, n: 4, what: 'front + rear END JOISTS (the long outer pieces the joists fix into), doubled - join over a joist/pedestal if longer than stock', join: true }]);
   add('18x38 treated batten', Math.ceil(2 * (fJoists - 1) * d), `Floor PIR support battens, joist sides, tops ${pirFR}mm down`,
     [{ len: d, n: 2 * (fJoists - 1), what: 'floor PIR battens' }]);
   add(pirFRName, Math.ceil(w * d), `Floor: friction-fit between the 5x2 joists, ${(w * d).toFixed(1)}m2`,
@@ -1022,7 +1024,7 @@ export function buildPremiumBom(state, componentDefs) {
   const roofDeckM2 = (w + 0.2) * roofLen;
 
   // -- TimberLok structural screws (Liam's confirmed uses) --
-  add('TimberLok 150mm', up(fDoubledLm / 0.4 + rJoists * ladder.ply * 0), `FLOOR DOUBLING: laminating the doubled ring + 1.2m-grid joist pairs, 1 per 400mm staggered (${fDoubledLm.toFixed(1)}m of doubled run) +25%`);
+  add('TimberLok 150mm', up(fDoubledLm / 0.4 + rJoists * ladder.ply * 0), `FLOOR DOUBLING: laminating the doubled outer ring (sides + front/rear end joists), 1 per 400mm staggered (${fDoubledLm.toFixed(1)}m of doubled run) +25%`);
   const canopyFixings = hasCanopy ? Math.ceil(w / 0.4) * 2 + 8 : 0;
   add('TimberLok 100mm', up(rJoists * 4 + (2 * sideRun + w) / 0.6 + 8 + totalStuds * 2 + canopyFixings + closedCorners * 10), `ROOF joists to wall plates/flitch (~4 skew per joist, ${rJoists} joists) + flat 4x2 wall plate into panel tops @600mm + STUDS to sole plate (2 per stud, ${totalStuds} studs) + CANOPY 2x2 frame/box to the front wall/joists (${canopyFixings}) + closed-corner extensions, +25% (Liam: used for all of these)`);
   add('TimberLok 89mm', up(closedCorners * 12 + (hasCanopy ? Math.ceil(w / 0.4) + 1 : 0) + totalStuds), `Closed-corner extension framing + canopy 2x2 cross pieces + stud-to-plate where 100mm is too long, +25%. (89mm not a FastenMaster size - Timberfix/Spax 6x90 equivalent)`);
