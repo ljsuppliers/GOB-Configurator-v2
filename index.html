@@ -98,7 +98,7 @@
             <button @click="showExportMenu = false; exportBothPDFs()">Quote + Drawing PDF</button>
             <button @click="showExportMenu = false; printDrawing()">Print drawing</button>
             <button @click="showExportMenu = false; createGoogleSheet()">Create Quote/Spec (Google Sheets)</button>
-            <button @click="showExportMenu = false; saveAsNewVersion()" :disabled="!cloudReady">Save as a new version (alternative design)</button>
+            <button @click="showExportMenu = false; saveAsNewVersion()" :disabled="!cloudReady" title="Copies this design as it is now and switches you onto the copy. Make your changes AFTER clicking this; the original stays untouched.">New version (copy this design, then edit the copy)</button>
             <button v-if="currentCloudId" @click="showExportMenu = false; openProjectsPage(currentCloudId)">Open project record</button>
             <button @click="showExportMenu = false; saveConfig()">Download backup file (.json)</button>
             <button @click="showExportMenu = false; loadConfig()">Import backup file</button>
@@ -1768,6 +1768,7 @@
                       <span class="hist-by">{{ h.by || 'unknown' }}</span>
                       <span class="hist-sum">{{ h.count }} change{{ h.count === 1 ? '' : 's' }}<template v-if="h.changes && h.changes.length"> · {{ h.changes[0].text }}<template v-if="h.changes.length > 1">, …</template></template></span>
                       <span class="crm-muted" v-if="h.quoteTotal">£{{ Math.round(h.quoteTotal).toLocaleString() }}</span>
+                      <button v-if="h.hasBefore" class="btn-tiny" @click.stop="restoreProjectHistory(h)" :disabled="projectBusy" :title="'Put the design back to how it was before this edit' + (h.beforeDims ? ' (' + h.beforeDims + ')' : '')">restore before</button>
                     </div>
                     <ul v-if="historyOpen[h.id]" class="hist-list"><li v-for="(c, i) in h.changes" :key="i">{{ c.text }}</li></ul>
                   </div>
@@ -2603,7 +2604,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=193"></script>
+<script type="module" src="js/app.js?v=194"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

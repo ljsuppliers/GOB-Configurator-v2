@@ -6,7 +6,7 @@ import { generateDrawing } from './drawing-engine.js?v=48';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=7';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
-import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=7';
+import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory, restoreHistoryEntry } from './cloud-storage.js?v=8';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=59';
 import { buildConstructionDrawings } from './construction.js?v=26';
@@ -1117,16 +1117,38 @@ createApp({
       this._justSaved = true; setTimeout(() => { this._justSaved = false; }, 800);
     },
     /** Keep the current design as a separate project (alternative size / revision). */
+    /** NEW VERSION = copy first, then edit (Colgan 30 Sep 2026: the autosave had already
+     *  written the edits over the original before 'Save as a new version' was pressed).
+     *  The copy is made from the design as it is NOW and you are switched onto the copy,
+     *  so every later autosave lands on the copy and the original stays untouched. */
     async saveAsNewVersion() {
       if (!this.cloudReady) return;
       const base = this.suggestedProjectName();
       const taken = new Set(this.cloudDesigns.map((d) => d.name));
       let name = base, n = 2; while (taken.has(name)) name = `${base} (${n++})`;
+      const origId = this.currentCloudId, origName = this.currentCloudName;
+      if (origId && this.dirty) { await this.saveNow(); } // the original keeps everything up to this moment
+      clearTimeout(this._autosaveTimer);
       this.currentCloudId = null; this.currentCloudName = '';
       this.cloudSaveName = name;
       await this.saveToCloud();
       this.markSaved();
-      this.notify('Saved as a new version: ' + name);
+      this.notify(origId ? `Now editing the new version "${name}". "${origName}" is untouched - your changes from here on save to the new one.` : 'Saved as a new version: ' + name);
+    },
+    /** Activity tab: put the project's design back to how it was before a listed edit. */
+    async restoreProjectHistory(h) {
+      const j = this.currentProject;
+      if (!j || !h || !h.hasBefore) return;
+      if (!confirm(`Put the design back to how it was BEFORE the edit of ${this.fmtDateTime(h.at)}${h.beforeDims ? ` (${h.beforeDims})` : ''}?\n\nThe current version is recorded first, so this can be undone the same way.`)) return;
+      this.projectBusy = true;
+      try {
+        const st = await restoreHistoryEntry(j.id, h.id, this.userName());
+        if (this.currentCloudId === j.id) { clearTimeout(this._autosaveTimer); this.state = ensureStateDefaults(st); this.markSaved(); this.$nextTick(() => this.resetUndo && this.resetUndo()); }
+        await this.refreshCloudDesigns();
+        await this.loadProjectHistory(j.id);
+        this.notify('Design restored');
+      } catch (e) { this.projectStatus = 'Restore failed: ' + e.message; }
+      this.projectBusy = false;
     },
     saveStatusText() {
       if (this.currentCloudId && this.outbox.some((o) => o.id === this.currentCloudId)) return 'Saved on this device (outbox)';

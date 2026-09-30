@@ -97,10 +97,12 @@ export async function updateDesign(docId, name, state, author = '', quoteTotal =
   const meta = extractMetadata(state);
   const ref = designsCollection.doc(docId);
   let changes = [];
+  let before = null; // full state BEFORE this save - lets any autosave be restored (Colgan 30 Sep 2026)
   try {
     const prev = await ref.get();
     const p = prev.exists ? prev.data() : null;
     changes = describeChanges(p && p.state, state, p && p.quoteTotal, quoteTotal);
+    if (p && p.state && p.state.width) before = { state: JSON.parse(JSON.stringify(p.state)), quoteTotal: typeof p.quoteTotal === 'number' ? p.quoteTotal : null, dimensions: p.dimensions || '' };
   } catch (e) { changes = [{ path: 'state', text: 'Saved (previous version unreadable)' }]; }
   await ref.update({
     name,
@@ -121,19 +123,40 @@ export async function updateDesign(docId, name, state, author = '', quoteTotal =
           const byPath = new Map((ld.changes || []).map((c) => [c.path, c]));
           for (const c of changes) byPath.set(c.path, c);
           const all = [...byPath.values()];
-          await last.docs[0].ref.update({ at: firebase.firestore.FieldValue.serverTimestamp(), count: all.length, changes: all.slice(0, 60), quoteTotal: quoteTotal === null ? null : quoteTotal });
+          // keep the entry's ORIGINAL 'before' (the state at the start of this editing run); add one if the entry predates snapshots
+          const patch = { at: firebase.firestore.FieldValue.serverTimestamp(), count: all.length, changes: all.slice(0, 60), quoteTotal: quoteTotal === null ? null : quoteTotal };
+          if (!ld.before && before) patch.before = before;
+          await last.docs[0].ref.update(patch);
           merged = true;
         }
       }
     } catch (e) { /* fall through to a new entry */ }
-    if (!merged) await hist.add({ at: firebase.firestore.FieldValue.serverTimestamp(), by: author || '', count: changes.length, changes: changes.slice(0, 60), quoteTotal: quoteTotal === null ? null : quoteTotal });
+    if (!merged) await hist.add({ at: firebase.firestore.FieldValue.serverTimestamp(), by: author || '', count: changes.length, changes: changes.slice(0, 60), quoteTotal: quoteTotal === null ? null : quoteTotal, before: before || null });
   }
 }
 
 export async function listHistory(docId) {
   if (!designsCollection) throw new Error('Firebase not initialised');
   const snap = await designsCollection.doc(docId).collection('history').orderBy('at', 'desc').limit(200).get();
-  return snap.docs.map((d) => ({ id: d.id, ...d.data(), at: d.data().at?.toDate?.() || null }));
+  // the full 'before' snapshot stays in Firestore; the list only says whether one exists
+  return snap.docs.map((d) => { const x = d.data(); return { id: d.id, ...x, before: undefined, hasBefore: !!(x.before && x.before.state), beforeDims: x.before ? x.before.dimensions || '' : '', at: x.at?.toDate?.() || null }; });
+}
+
+/** Put a design back to the state it had BEFORE a given history entry (a copy of the
+ *  current state is recorded first, so the restore itself can be undone). */
+export async function restoreHistoryEntry(docId, entryId, author = '') {
+  if (!designsCollection) throw new Error('Firebase not initialised');
+  const ref = designsCollection.doc(docId);
+  const entry = await ref.collection('history').doc(entryId).get();
+  const before = entry.exists && entry.data().before;
+  if (!before || !before.state || !before.state.width) throw new Error('That edit has no saved copy to go back to');
+  const cur = await ref.get();
+  const name = cur.exists ? cur.data().name : '';
+  await updateDesign(docId, name, before.state, author || 'restore', before.quoteTotal);
+  const hist = ref.collection('history');
+  const last = await hist.orderBy('at', 'desc').limit(1).get();
+  if (!last.empty) await last.docs[0].ref.update({ changes: [{ path: 'state', text: `RESTORED the design as it was before the edit of ${entry.data().at?.toDate?.()?.toLocaleString('en-GB') || 'that time'}` }], count: 1 });
+  return before.state;
 }
 
 /* Human-readable diff of two design states for the edit history. */
