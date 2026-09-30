@@ -798,6 +798,8 @@ createApp({
         if (this.currentCustomer && this.currentCustomer.id === id) { this.customerNotes = notes; this.customerFiles = files; }
       } catch (e) { console.error('customer detail', e); }
     },
+    /** Live (not complete/cancelled) projects already linked to a contact. */
+    openProjectsForCustomer(customerId) { return this.cloudDesigns.filter((d) => d.customerId === customerId && !['complete', 'cancelled'].includes(d.jobStatus)); },
     /** New project form: jump to a blank contact form; saving it comes straight back here with the contact picked. */
     createContactForProject() {
       const guess = (this.newProject.name || '').replace(/^\s*\d{3,5}\s*-\s*/, '').split(/\s*-\s*/)[0].trim();
@@ -1040,6 +1042,10 @@ createApp({
         this.customerPickerOpen = true; this.cfgOpenState.customer = true;
         this.notify('Link this design to a contact first (Customer record: link existing, or create from details)');
         return;
+      }
+      if (!this.currentCloudId && this.state.customerId) {
+        const existing = this.openProjectsForCustomer(this.state.customerId);
+        if (existing.length && !confirm(`This contact already has an open project: "${this.projectTitle(existing[0])}".\n\nNormally there is ONE project per contact. To keep this drawing as an alternative design, open that project and use "Save as a new version" instead.\n\nSave this as a SECOND project anyway?`)) return;
       }
       clearTimeout(this._autosaveTimer);
       if (!this.online) { this.queueOutbox(); this.markSaved(); return; }
@@ -1419,6 +1425,10 @@ createApp({
       const c = this.customers.find((x) => x.id === f.customerId);
       // A project always belongs to a contact (Liam 30 Sep 2026: two 'Colgan' projects with no contact).
       if (!c) { this.projectStatus = 'Pick the contact first. If they are not in Contacts yet, use "Create the contact first" below.'; return; }
+      // ONE project per contact (Liam 30 Sep 2026): a contact with an open project gets a
+      // second one only on a deliberate yes (e.g. a genuine second building).
+      const existing = this.openProjectsForCustomer(c.id);
+      if (existing.length && !confirm(`${c.name} already has an open project: "${this.projectTitle(existing[0])}".\n\nNormally there is ONE project per contact - open that one and add a new design version inside it.\n\nCreate a SECOND project anyway?`)) { this.projectStatus = ''; this.newProjectOpen = false; await this.selectProject(existing[0].id); return; }
       this.projectBusy = true;
       try {
         const id = await createProject({ name: f.name.trim(), quoteNumber: f.quoteNumber.trim() || (f.name.match(/^\s*(\d{3,5})/) || [])[1] || '', customerId: c ? c.id : '', customerName: c ? c.name : '', address: c ? [c.address, c.postcode].filter(Boolean).join(', ') : '', details: f.details, brand: f.brand }, this.userName());
