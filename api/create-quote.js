@@ -494,11 +494,17 @@ function buildQuoteData(q) {
 
   greySpacer(28);
 
-  sectionBar('Electrical Connection');
-  contentRow('To be arranged by electrician');
-  if (q.bathroom && q.bathroom.enabled) {
-    sectionBar('Utility Connections (Water, Waste)');
-    contentRow('To be arranged separately with our plumber/landscaper');
+  // Arranged by us, paid directly to the contractor (Liam 30 Sep 2026): the same list
+  // as the quote PDF and the email, sent by the app as q.paidDirectly.
+  const paidDirectly = Array.isArray(q.paidDirectly) && q.paidDirectly.length ? q.paidDirectly : [
+    { label: 'Electrical and internet connection', detail: 'Priced after a visit from our electrician. Typically \u00a31,000 to \u00a32,000.' },
+    ...(q.bathroom && q.bathroom.enabled ? [{ label: 'Water supply and waste connections', detail: 'Arranged with our plumber and landscaper, priced after the site visit.' }] : []),
+  ];
+  sectionBar('Arranged by us, paid directly to the contractor (not in the total)');
+  contentRow('We arrange and liaise throughout the project; you pay each contractor directly at their own price.', { fontSize: 10 });
+  for (const it of paidDirectly) {
+    contentRow(it.label);
+    contentRow(it.detail, { fontSize: 10 });
   }
 
   greySpacer(28);

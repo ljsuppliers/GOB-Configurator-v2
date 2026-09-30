@@ -525,6 +525,31 @@ function buildLineItems(result, state) {
 }
 
 // Format currency
+/**
+ * Items we ARRANGE but the customer pays the contractor DIRECTLY, so they sit
+ * outside the quote total (Liam 30 Sep 2026). One list feeds the quote PDF,
+ * the Google Sheet quote and the email, so all three say the same thing.
+ * Each item: { key, label, detail } - detail always gives a typical range.
+ */
+export function paidDirectlyItems(state) {
+  const items = [];
+  const hasBathroom = !!(state.bathroom?.enabled && state.bathroom?.type && state.bathroom.type !== 'none');
+  items.push({ key: 'electrical', label: 'Electrical and internet connection',
+    detail: 'Priced after a visit from our electrician. Typically £1,000 to £2,000 if the supply runs back to the consumer unit in your home, less with an existing cable or a nearby power source.' });
+  if (state.foundationType === 'concrete-landscaper') items.push({ key: 'base', label: 'Concrete base foundation',
+    detail: 'Priced after a visit from our landscaper. Typically £2,000 to £3,000. The landscaper can also help with any preparation works or post-build landscaping.' });
+  if (state.foundationType === 'concrete-others') items.push({ key: 'base', label: 'Concrete base foundation',
+    detail: 'To be installed by others before we arrive, level and to the size on the drawing.' });
+  if (hasBathroom) items.push({ key: 'utilities', label: 'Water supply and waste connections',
+    detail: 'Arranged with our plumber and landscaper, priced after the site visit.' });
+  const ac = state.extras?.acUnit;
+  if (ac === 'standard' || ac === 'premium') items.push({ key: 'aircon', label: 'Air conditioning (heating and cooling)',
+    detail: `£1,750 for the standard unit or £2,500 for the premium unit, paid to our air conditioning specialist who fits all of our units. Your quote shows the ${ac} unit.` });
+  items.push({ key: 'site', label: hasBathroom ? 'Skip' : 'Skip and toilet facility',
+    detail: hasBathroom ? 'A 6-yard skip for the build, to keep the site clean and tidy.' : 'A 6-yard skip and a toilet facility (porta-loo or downstairs toilet) for the build, to keep the site clean and tidy. About £500 for both.' });
+  return items;
+}
+
 export function formatPrice(amount) {
   const n = Math.round(Math.abs(Number(amount) || 0) * 100) / 100;
   const txt = Number.isInteger(n) ? n.toLocaleString('en-GB') : n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

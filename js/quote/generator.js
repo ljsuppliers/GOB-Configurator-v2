@@ -3,7 +3,7 @@
 
 import { getQuoteLayout, formatCurrency, formatDate } from './template.js';
 import logoBase64 from './logoData.js';
-import { getSocketCount } from '../pricing.js';
+import { getSocketCount, paidDirectlyItems } from '../pricing.js';
 
 // ═══════════════════════════════════════════════════════════════
 // VERSION TRACKING
@@ -491,15 +491,33 @@ export function generateQuotePDF(state, price) {
   doc.text('* Groundworks and installation paid directly to installer team', margins.left + 5, y);
   y += 8;
 
-  setColor(colors.dark);
-  doc.setFontSize(9);
-  doc.text('• Electrical Connection', margins.left + 3, y);
-  y += 4;
-  
+  // ═══ ARRANGED BY US, PAID DIRECTLY (not in the total) - Liam 30 Sep 2026 ═══
+  y = checkPageBreak(y, 40);
+  setColor(colors.primary);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ARRANGED BY US, PAID DIRECTLY TO THE CONTRACTOR', margins.left, y);
+  y += 5;
   setColor(colors.grey);
   doc.setFontSize(8);
-  doc.text('* To be arranged by customer\'s own electrician (excluded from quote)', margins.left + 5, y);
-  y += 10;
+  doc.setFont('helvetica', 'normal');
+  doc.text('Not included in the total below. We arrange and liaise throughout the project; you pay each contractor directly at their own price.', margins.left, y);
+  y += 5;
+  for (const item of paidDirectlyItems(state)) {
+    y = checkPageBreak(y, 12);
+    setColor(colors.dark);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`\u2022 ${item.label}`, margins.left + 3, y);
+    y += 4;
+    doc.setFont('helvetica', 'normal');
+    setColor(colors.grey);
+    doc.setFontSize(8);
+    const lines = doc.splitTextToSize(item.detail, contentWidth - 8);
+    lines.forEach((line) => { y = checkPageBreak(y, 4); doc.text(line, margins.left + 6, y); y += 3.6; });
+    y += 1.5;
+  }
+  y += 4;
 
   // ═══════════════════════════════════════════════════════════════
   // ADDITIONAL NOTES
@@ -705,7 +723,7 @@ export function generateQuotePDF(state, price) {
     'All prices include VAT at 20%.',
     'Customer to provide toilet facility and 6-yard skip for waste removal.',
     'Installation and groundworks are paid directly to our installer team.',
-    'Electrical connection to mains supply is excluded and must be arranged by the customer.',
+    'Items listed under "Arranged by us, paid directly" are arranged by us and paid by the customer to the contractor; they are not included in the total.',
     'Lead time: typically 8-12 weeks from deposit payment.',
     'A holding deposit of £250 is required to reserve your delivery and installation date.',
     'Possible step at front of building may be required depending on final ground/building level.'

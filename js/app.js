@@ -1,9 +1,9 @@
 // GOB Configurator v2 — Vue 3 App
 // Reactive state, live pricing, drawing preview, email drafting
 
-import { initPricing, calculatePrice, formatPrice } from './pricing.js?v=7';
+import { initPricing, calculatePrice, formatPrice, paidDirectlyItems } from './pricing.js?v=8';
 import { generateDrawing } from './drawing-engine.js?v=48';
-import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=5';
+import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=6';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=7';
@@ -2060,21 +2060,8 @@ createApp({
 
       // ─── Exclusions: bulleted section (Liam's 2026-08-24 format) ───
       const hasBathroom = !!(s.bathroom?.enabled && s.bathroom?.type);
-      const exclusionBullets = [
-        '* Electrical connection, which will be subject to a visit from our electrician (£1k to £2k on average)',
-      ];
-      if (hasBathroom) {
-        exclusionBullets.push('* Utility connections (water supply and waste), which will be arranged separately with our plumber and landscaper');
-      }
-      if (s.foundationType === 'concrete-landscaper') {
-        exclusionBullets.push('* Concrete base foundation, which is subject to a visit from our landscaper (£2k to £4k on average). The landscaper can also assist with any preparation works or post-build landscaping.');
-      }
-      if (s.foundationType === 'concrete-others') {
-        exclusionBullets.push('* Concrete base foundation, which is to be installed by others before we arrive (level, to the size on the drawing)');
-      }
-      exclusionBullets.push(hasBathroom
-        ? '* We also ask that customers provide a 6-yard skip whilst we are on site, to keep everything clean and tidy'
-        : '* We also ask that customers provide a toilet facility (porta-loo or downstairs toilet) and 6-yard skip to help keep the site clean and tidy throughout the build (~£500 for both)');
+      // Same list as the quote PDF + sheet (paidDirectlyItems), in email form.
+      const exclusionBullets = paidDirectlyItems(s).map((it) => `* ${it.label} - ${it.detail.charAt(0).toLowerCase() + it.detail.slice(1)}`);
       const exclusionsParagraph =
         'Excluded from our price are the following, but we will arrange and liaise throughout the project, we just ask that you pay the contractors directly:\n\n'
         + exclusionBullets.join('\n');
@@ -2089,6 +2076,8 @@ createApp({
           ? (s.landscaping.customReason || 'preparation works')
           : (s.landscaping.reason || 'preparation works');
         depositNextSteps = depositNextSteps.replace(/\.$/, '') + `, as well as our landscaper, who can assist with the ${landscapeReason}.`;
+      } else if (s.foundationType === 'concrete-landscaper') {
+        depositNextSteps = depositNextSteps.replace(/\.$/, '') + ', and our landscaper, to assess the concrete base and any pre- or post-build landscaping works.';
       }
 
       // ─── Height upgrade paragraph (preliminary) ───
@@ -2655,6 +2644,8 @@ createApp({
         flooring: this.state.flooring === 'light-grey' ? 'Light Grey' : 'Natural Oak',
         // Foundation
         foundationType: this.state.foundationType || 'ground-screw',
+        // Arranged by us, paid directly to the contractor (one list shared with the PDF + email)
+        paidDirectly: paidDirectlyItems(this.state),
         foundationPrice: this.state.foundationType === 'ground-screw' ? 1200 : 0,
         
         // Components (doors/windows)
