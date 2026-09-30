@@ -529,23 +529,24 @@ function buildLineItems(result, state) {
  * Items we ARRANGE but the customer pays the contractor DIRECTLY, so they sit
  * outside the quote total (Liam 30 Sep 2026). One list feeds the quote PDF,
  * the Google Sheet quote and the email, so all three say the same thing.
- * Each item: { key, label, detail } - detail always gives a typical range.
+ * Each item: { key, label, detail, short, amount }. `label` + `detail` are the
+ * email sentences; `short` + `amount` are the one-line quote rows (Liam 30 Sep: neat).
  */
 export function paidDirectlyItems(state) {
   const items = [];
   const hasBathroom = !!(state.bathroom?.enabled && state.bathroom?.type && state.bathroom.type !== 'none');
-  items.push({ key: 'electrical', label: 'Electrical and internet connection',
+  items.push({ key: 'electrical', label: 'Electrical and internet connection', short: 'Electrical & internet connection (our electrician)', amount: '£1,000 - £2,000',
     detail: 'Priced after a visit from our electrician. Typically £1,000 to £2,000 if the supply runs back to the consumer unit in your home, less with an existing cable or a nearby power source.' });
-  if (state.foundationType === 'concrete-landscaper') items.push({ key: 'base', label: 'Concrete base foundation',
+  if (state.foundationType === 'concrete-landscaper') items.push({ key: 'base', label: 'Concrete base foundation', short: 'Concrete base (our landscaper)', amount: '£2,000 - £3,000',
     detail: 'Priced after a visit from our landscaper. Typically £2,000 to £3,000. The landscaper can also help with any preparation works or post-build landscaping.' });
-  if (state.foundationType === 'concrete-others') items.push({ key: 'base', label: 'Concrete base foundation',
+  if (state.foundationType === 'concrete-others') items.push({ key: 'base', label: 'Concrete base foundation', short: 'Concrete base (by others, before we arrive)', amount: 'by others',
     detail: 'To be installed by others before we arrive, level and to the size on the drawing.' });
-  if (hasBathroom) items.push({ key: 'utilities', label: 'Water supply and waste connections',
+  if (hasBathroom) items.push({ key: 'utilities', label: 'Water supply and waste connections', short: 'Water & waste connections (our plumber)', amount: 'after site visit',
     detail: 'Arranged with our plumber and landscaper, priced after the site visit.' });
   const ac = state.extras?.acUnit;
-  if (ac === 'standard' || ac === 'premium') items.push({ key: 'aircon', label: 'Air conditioning (heating and cooling)',
+  if (ac === 'standard' || ac === 'premium') items.push({ key: 'aircon', label: 'Air conditioning (heating and cooling)', short: `Air conditioning, ${ac} unit (our specialist)`, amount: ac === 'premium' ? '£2,500' : '£1,750',
     detail: `£1,750 for the standard unit or £2,500 for the premium unit, paid to our air conditioning specialist who fits all of our units. Your quote shows the ${ac} unit.` });
-  items.push({ key: 'site', label: hasBathroom ? 'Skip' : 'Skip and toilet facility',
+  items.push({ key: 'site', label: hasBathroom ? 'Skip' : 'Skip and toilet facility', short: hasBathroom ? 'Skip (customer to provide)' : 'Skip & toilet facility (customer to provide)', amount: hasBathroom ? '' : 'about £500',
     detail: hasBathroom ? 'A 6-yard skip for the build, to keep the site clean and tidy.' : 'A 6-yard skip and a toilet facility (porta-loo or downstairs toilet) for the build, to keep the site clean and tidy. About £500 for both.' });
   return items;
 }

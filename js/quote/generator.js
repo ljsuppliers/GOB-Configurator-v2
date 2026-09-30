@@ -496,28 +496,23 @@ export function generateQuotePDF(state, price) {
   setColor(colors.primary);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('ARRANGED BY US, PAID DIRECTLY TO THE CONTRACTOR', margins.left, y);
-  y += 5;
-  setColor(colors.grey);
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Not included in the total below. We arrange and liaise throughout the project; you pay each contractor directly at their own price.', margins.left, y);
-  y += 5;
+  doc.text('PAID DIRECTLY TO THE CONTRACTOR (NOT IN THE TOTAL)', margins.left, y);
+  y += 6;
   for (const item of paidDirectlyItems(state)) {
-    y = checkPageBreak(y, 12);
+    y = checkPageBreak(y, 6);
     setColor(colors.dark);
     doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`\u2022 ${item.label}`, margins.left + 3, y);
-    y += 4;
     doc.setFont('helvetica', 'normal');
-    setColor(colors.grey);
-    doc.setFontSize(8);
-    const lines = doc.splitTextToSize(item.detail, contentWidth - 8);
-    lines.forEach((line) => { y = checkPageBreak(y, 4); doc.text(line, margins.left + 6, y); y += 3.6; });
-    y += 1.5;
+    doc.text(`\u2022 ${item.short}`, margins.left + 3, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(item.amount || '', headerRight, y, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    y += 4.5;
   }
-  y += 4;
+  setColor(colors.grey);
+  doc.setFontSize(8);
+  doc.text('* Ranges are confirmed after the site visits. We arrange and liaise throughout; you pay each contractor directly.', margins.left + 5, y + 1);
+  y += 9;
 
   // ═══════════════════════════════════════════════════════════════
   // ADDITIONAL NOTES

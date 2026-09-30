@@ -1,9 +1,9 @@
 // GOB Configurator v2 — Vue 3 App
 // Reactive state, live pricing, drawing preview, email drafting
 
-import { initPricing, calculatePrice, formatPrice, paidDirectlyItems } from './pricing.js?v=8';
+import { initPricing, calculatePrice, formatPrice, paidDirectlyItems } from './pricing.js?v=9';
 import { generateDrawing } from './drawing-engine.js?v=48';
-import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=6';
+import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=7';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory } from './cloud-storage.js?v=7';
