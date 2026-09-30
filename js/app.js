@@ -1,7 +1,7 @@
 // GOB Configurator v2 — Vue 3 App
 // Reactive state, live pricing, drawing preview, email drafting
 
-import { initPricing, calculatePrice, formatPrice, paidDirectlyItems } from './pricing.js?v=10';
+import { initPricing, calculatePrice, formatPrice, paidDirectlyItems } from './pricing.js?v=11';
 import { generateDrawing } from './drawing-engine.js?v=48';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=7';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
@@ -714,14 +714,15 @@ createApp({
     materialsPage() { this.syncUrl(); },
     installerPage() { this.syncUrl(); },
     currentCloudId() { this.syncUrl(); },
-    'state.tier'(newTier) {
+    'state.tier'(newTier, oldTier) {
       if (!this.appData.cladding) return;
       const defaults = this.appData.cladding.defaultByTier[newTier];
       if (defaults) {
         this.state.cladding.front = defaults.front;
       }
-      // Reset canopy/decking to included when switching to Signature
-      if (newTier === 'signature') {
+      // Reset canopy/decking to included only on a REAL switch from Classic (not when a
+      // saved design loads - that was turning the canopy back on for no-canopy designs, 30 Sep 2026)
+      if (newTier === 'signature' && oldTier === 'classic') {
         this.state.hasCanopy = true;
         this.state.hasDecking = true;
       }
@@ -2154,13 +2155,12 @@ createApp({
       // ─── Building includes: detailed bullet list (post-visit) ───
       const buildFeatures = [];
 
-      // Signature canopy/decking
-      if (isSig) {
-        buildFeatures.push('Signature integrated canopy on front of building with down lights');
-        if (s.hasDecking !== false) {
-          buildFeatures.push('Signature integrated decking on front of building');
-        }
-      }
+      // Signature canopy/decking - only when the design actually has them (Colgan (2), 30 Sep 2026: 'less canopy/decking')
+      const hasCanopyNow = isSig && s.hasCanopy !== false;
+      const hasDeckingNow = isSig && s.hasDecking !== false;
+      if (hasCanopyNow) buildFeatures.push('Signature integrated canopy on front of building with down lights');
+      if (hasDeckingNow) buildFeatures.push('Signature integrated decking on front of building');
+      if (isSig && !hasCanopyNow && !hasDeckingNow) buildFeatures.push('Signature range, built without the canopy and decking (flush front)');
 
       // Cladding per side (group same types)
       const clad = s.cladding || {};
@@ -2252,7 +2252,7 @@ createApp({
       if (lightingZones > 1) {
         electricalDesc += `, ${lightingZones} x internal lighting zones on separate switches`;
       }
-      if (isSig) {
+      if (isSig && s.hasCanopy !== false) {
         const spotlights = Math.floor(s.width / 1000);
         electricalDesc += `, ${spotlights} x external downlights in canopy soffit`;
       }

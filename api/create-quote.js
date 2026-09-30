@@ -295,7 +295,7 @@ function buildQuoteData(q) {
   contentRow(`Internal Dimensions \u2013 (W) ${intW}mm x (D) ${intD}mm x (H) ${intH}mm (approx)`, { height: 31 });
 
   const tierDesc = isSig
-    ? `Signature range with integrated canopy${hasDecking ? ' and decking' : ''} on front of building`
+    ? (hasCanopy ? `Signature range with integrated canopy${hasDecking ? ' and decking' : ''} on front of building` : `Signature range, built without the canopy${hasDecking ? '' : ' and decking'} (flush front)`)
     : 'Classic Design';
   contentRow(tierDesc, { height: 29 });
   contentRow('Configuration as per drawing (TBC). All internal sizes are approximates and subject to final drawing.', { height: 31 });
@@ -308,7 +308,7 @@ function buildQuoteData(q) {
   sectionBar(`Standard Features (${isSig ? 'Signature' : 'Classic'})`);
 
   contentRow('Insulated timber/panel construction with 100mm PIR walls, 75mm PIR floor and ceiling');
-  if (isSig) {
+  if (hasCanopy) {
     contentRow('To include 400mm canopy with down lights');
   }
   contentRow('Plaster-boarded, skimmed and decorated internal finish');
@@ -846,7 +846,8 @@ module.exports = async (req, res) => {
 
     const q = req.body;
     const customerName = q.customerName || 'Unknown';
-    const title = `Quote for ${customerName}`;
+    // Size in the title so two options for one customer are told apart in Drive (Colgan 30 Sep 2026)
+    const title = `Quote for ${customerName}${q.width && q.depth ? ` - ${(q.width / 1000).toFixed(1)}m x ${(q.depth / 1000).toFixed(1)}m` : ''}`;
 
     // 1. Copy from template (which has the logo as a floating image)
     const copyRes = await driveApi.files.copy({

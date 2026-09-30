@@ -40,7 +40,7 @@ export function getSocketCount(state) {
 }
 
 export function getSpotlightCount(state) {
-  if (state.tier !== 'signature') return 0;
+  if (state.tier !== 'signature' || state.hasCanopy === false) return 0;
   return Math.floor(state.width / 1000);
 }
 
