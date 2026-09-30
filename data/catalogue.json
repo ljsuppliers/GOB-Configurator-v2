@@ -1,6 +1,6 @@
 {
-  "version": 31,
-  "updated": "2026-09-29",
+  "version": 32,
+  "updated": "2026-09-30",
   "suppliers": [
     {
       "name": "Advanced Sealed Units",
@@ -827,13 +827,13 @@
       "category": "Sheet materials",
       "sku": "",
       "unit": "board",
-      "unitCost": 15.5,
+      "unitCost": 11.59,
       "supplier": "Builders merchant",
       "packSize": null,
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: Trade Timber £15.12 ex, Fulham £20.21 ex; merchant trade ~£15.50.",
+      "notes": "Selhurst 29 Sep 2026: £11.59/board (2NCB8222). Ex VAT.",
       "supply": "site"
     },
     {
@@ -1023,13 +1023,13 @@
       "category": "Insulation",
       "sku": "",
       "unit": "m2",
-      "unitCost": 9.5,
+      "unitCost": 12.01,
       "supplier": "Builders merchant",
       "packSize": 2.88,
       "orderUnit": "board 2400x1200",
       "destination": "site",
       "inStock": false,
-      "notes": "75mm PIR, 2400x1200 boards: floor, stick-wall bays AND roof (Liam 2026-09-06 - one thickness for the whole job).",
+      "notes": "Selhurst 29 Sep 2026: 70mm PIR 1200x2400 £34.60/board (3BCEL070) = £12.01/m2 (they supplied 70mm, not 75mm). Ex VAT. Was £9.50 estimate.",
       "supply": "site"
     },
     {
@@ -1051,13 +1051,13 @@
       "category": "Sheet materials",
       "sku": "",
       "unit": "sheet",
-      "unitCost": 16.49,
+      "unitCost": 16.98,
       "supplier": "Builders merchant",
       "packSize": null,
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "Selhurst 12mm Structural Ply H/F 1220x2440 EN314-2 CE2+ (2DWBP8412)",
+      "notes": "Selhurst 29 Sep 2026: 12mm structural ply H/F 1220x2440 £16.98/sheet (2DWBP8412). Ex VAT.",
       "supply": "site"
     },
     {
@@ -1065,13 +1065,13 @@
       "category": "Battens",
       "sku": "",
       "unit": "linear m",
-      "unitCost": 0.45,
+      "unitCost": 0.5,
       "supplier": "Builders merchant",
       "packSize": 4.8,
       "orderUnit": "4.8m length",
       "destination": "site",
       "inStock": false,
-      "notes": "Selhurst 19x38 4.8m treated roofing batten (1B01903848), £2.16/length",
+      "notes": "Selhurst 29 Sep 2026: 19x38 4.5m treated roofing batten £2.24 (1B01903845) = £0.50/m (they supplied 4.5m, not 4.8m). Ex VAT.",
       "supply": "site"
     },
     {
@@ -1500,13 +1500,13 @@
       "category": "Sheet materials",
       "sku": "",
       "unit": "sheet",
-      "unitCost": 12.5,
+      "unitCost": 12.98,
       "supplier": "Builders merchant",
       "packSize": null,
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "Web-checked 19 Sep 2026, ex VAT: S&D Timber £12.50 ex (£15 inc).",
+      "notes": "Selhurst 29 Sep 2026: 18mm T&G OSB3 610x2440 £12.98/board (2KOS8218TG). Ex VAT.",
       "supply": "site"
     },
     {
@@ -1514,13 +1514,13 @@
       "category": "Structural timber",
       "sku": "",
       "unit": "linear m",
-      "unitCost": 1.8,
+      "unitCost": 1.08,
       "supplier": "Builders merchant",
       "packSize": 4.8,
       "orderUnit": "4.8m length",
       "destination": "site",
       "inStock": false,
-      "notes": "Built on site under the 400mm front canopy. Provides fixing for front fascia + 400mm soffit.",
+      "notes": "Selhurst 29 Sep 2026: 47x50 3.0m £3.25 (1B0470503) = £1.08/m. Ex VAT.",
       "supply": "site"
     },
     {
@@ -1528,13 +1528,13 @@
       "category": "Structural timber",
       "sku": "",
       "unit": "linear m",
-      "unitCost": 1.88,
+      "unitCost": 1.89,
       "supplier": "Builders merchant",
       "packSize": 4.8,
       "orderUnit": "4.8m length",
       "destination": "site",
       "inStock": false,
-      "notes": "Tanalised C24 4x2 (47x95): stick-wall studs/plates/noggins, sole plates, open-corner posts, flat wall plates on panel tops. Liam 2026-09-06: NO CLS 4x2 anywhere.",
+      "notes": "Selhurst 29 Sep 2026: 47x100 4.8m £9.05 (1BC2404710048) = £1.89/m. Ex VAT.",
       "supply": "site"
     },
     {
@@ -1542,13 +1542,13 @@
       "category": "Structural timber",
       "sku": "",
       "unit": "linear m",
-      "unitCost": 2.41,
+      "unitCost": 2.46,
       "supplier": "Builders merchant",
       "packSize": 4.2,
       "orderUnit": "4.2m length",
       "destination": "site",
       "inStock": false,
-      "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 5x2 spec used on builds with width up to 4.05m (i.e. 3.3m, 3.85m). Source: Selhurst C24 47x125 4.8m treated regularised (1BC2404712548) at £11.59/length = £2.41/m.",
+      "notes": "Selhurst 29 Sep 2026: 3.6m £8.86 (1BC2404712536) = £2.46/m; 4.8m £11.86 (1BC2404712548) = £2.47/m. Ex VAT.",
       "supply": "site"
     },
     {
@@ -1556,13 +1556,13 @@
       "category": "Structural timber",
       "sku": "",
       "unit": "linear m",
-      "unitCost": 2.85,
+      "unitCost": 2.91,
       "supplier": "Builders merchant",
       "packSize": 4.2,
       "orderUnit": "4.2m length",
       "destination": "site",
       "inStock": false,
-      "notes": "Used as the flitch beam pair (2 timbers) across the full front of the building, sitting on top of the front wall panels. Carries the roof load and creates the slope. 6x2 spec required on builds with width >4.05m (i.e. 4.4m and above) to handle the extra span. Not in current Selhurst invoices — interpolated price between 47x125 (£2.41/m) and 47x175 (£3.28/m). Confirm with a Selhurst quote when you next order.",
+      "notes": "Selhurst 29 Sep 2026: 3.6m £10.46 (1BC2404715036) = £2.91/m; 6.0m £19.75 (1BLC240471506) = £3.29/m. Ex VAT.",
       "supply": "site"
     },
     {
@@ -1598,13 +1598,13 @@
       "category": "Structural timber",
       "sku": "",
       "unit": "each",
-      "unitCost": 3.0,
+      "unitCost": 8.52,
       "supplier": "Builders merchant",
       "packSize": null,
       "orderUnit": "",
       "destination": "site",
       "inStock": false,
-      "notes": "CUSTOM CUT per job by the timber merchant: 47mm wide tapers, 70mm at the front to 0 at the rear on EVERY building (Liam 2026-09-06), length per the order text; priced ~£3 per linear metre.",
+      "notes": "Selhurst 29 Sep 2026: 75-0 3.6m treated firring £8.52 each (1BFP4707536). Stock taper is 75mm, not 70. Ex VAT.",
       "supply": "site"
     },
     {
