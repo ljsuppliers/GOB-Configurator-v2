@@ -1,5 +1,6 @@
 // Pricing engine — calculates all prices from building state
 // Reads from prices.json data loaded at init
+import { computeLabour } from './bom/labour.js';
 
 let pricesData = null;
 let componentsData = null;
@@ -465,6 +466,19 @@ function calculateHeightUpgrade(state, additionalMm) {
 }
 
 function calculateInstallation(state) {
+  // The quote's 'Installation & Groundworks' line is what the customer pays the
+  // installer team directly, so it must be the SAME figure as the installer
+  // agreement on the costing page (Liam 30 Sep 2026: quote said £7,000, costing
+  // £6,000). Agreed price wins, then the labour calculation; the old external-area
+  // bands are only a fallback. The matrix price already includes installation, so
+  // this only moves the split between the building line and this line.
+  const inst = state.installer || {};
+  if (Number(inst.agreedPrice) > 0) return Math.round(Number(inst.agreedPrice));
+  try {
+    const defs = { ...((componentsData && componentsData.doors) || {}), ...((componentsData && componentsData.windows) || {}) };
+    const lab = computeLabour(state, defs);
+    if (lab && lab.install && lab.install.total > 0) return Math.round(lab.install.total);
+  } catch (e) { /* fall through to the bands */ }
   const areaSqm = (state.width / 1000) * (state.depth / 1000);
   const ranges = pricesData.installation.ranges;
 
