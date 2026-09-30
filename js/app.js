@@ -798,6 +798,14 @@ createApp({
         if (this.currentCustomer && this.currentCustomer.id === id) { this.customerNotes = notes; this.customerFiles = files; }
       } catch (e) { console.error('customer detail', e); }
     },
+    /** New project form: jump to a blank contact form; saving it comes straight back here with the contact picked. */
+    createContactForProject() {
+      const guess = (this.newProject.name || '').replace(/^\s*\d{3,5}\s*-\s*/, '').split(/\s*-\s*/)[0].trim();
+      this._returnToNewProject = { ...this.newProject };
+      this.newProjectOpen = false;
+      this.newCustomer(guess ? { name: guess } : {});
+      this.customerStatus = 'Save the contact and you will be taken back to the new project form.';
+    },
     newCustomer(prefill = {}) {
       this.currentCustomer = { id: null, name: '' };
       this.customerEdit = true; this.customerTab = 'details';
@@ -815,6 +823,14 @@ createApp({
       try {
         const id = await saveCustomer(this.currentCustomer && this.currentCustomer.id, d, this.userName());
         await this.loadCustomers();
+        if (this._returnToNewProject) {
+          const back = this._returnToNewProject; this._returnToNewProject = null;
+          this.customerBusy = false;
+          this.newProject = { ...back, customerId: id }; this.newProjectQuery = '';
+          this.openProjectsPage(); this.newProjectOpen = true;
+          this.notify('Contact saved - now create the project');
+          return;
+        }
         await this.selectCustomer(id);
         this.customerStatus = 'Saved';
         this.notify('Customer saved');
@@ -1017,6 +1033,14 @@ createApp({
       this.blankDesign = false;
       if (!this.cloudReady) { this.notify('Not connected - check your internet and sign-in'); return; }
       if (!this.currentCloudId && !(this.state.customer && this.state.customer.name)) { this.notify('Type the customer name (Customer & Project) before the first save'); return; }
+      // A project always belongs to a contact: link or create one before the first save.
+      // Offline on site the contact list may not be loaded, so the save is allowed and
+      // the project shows under 'Needs tidying' until it is linked.
+      if (!this.currentCloudId && !this.state.customerId && this.online && this.customers.length) {
+        this.customerPickerOpen = true; this.cfgOpenState.customer = true;
+        this.notify('Link this design to a contact first (Customer record: link existing, or create from details)');
+        return;
+      }
       clearTimeout(this._autosaveTimer);
       if (!this.online) { this.queueOutbox(); this.markSaved(); return; }
       await this.saveJob();
@@ -1393,6 +1417,8 @@ createApp({
       const f = this.newProject;
       if (!f.name.trim()) { this.projectStatus = 'Give the project a name (e.g. 4500 - Smith - Bromley)'; return; }
       const c = this.customers.find((x) => x.id === f.customerId);
+      // A project always belongs to a contact (Liam 30 Sep 2026: two 'Colgan' projects with no contact).
+      if (!c) { this.projectStatus = 'Pick the contact first. If they are not in Contacts yet, use "Create the contact first" below.'; return; }
       this.projectBusy = true;
       try {
         const id = await createProject({ name: f.name.trim(), quoteNumber: f.quoteNumber.trim() || (f.name.match(/^\s*(\d{3,5})/) || [])[1] || '', customerId: c ? c.id : '', customerName: c ? c.name : '', address: c ? [c.address, c.postcode].filter(Boolean).join(', ') : '', details: f.details, brand: f.brand }, this.userName());

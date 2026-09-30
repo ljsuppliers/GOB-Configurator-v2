@@ -1500,8 +1500,8 @@
             <label class="wide">Brand <select v-model="newProject.brand"><option v-for="b in brands" :key="b.value" :value="b.value">{{ b.label }}</option></select><small class="crm-muted" v-if="newProject.brand === 'grannexe'">Grannexe projects are CRM only: contact, pipeline, notes, files and tasks. No configurator, quote or materials.</small></label>
             <label class="wide">Project name <input v-model.trim="newProject.name" placeholder="4500 - Smith - Bromley"></label>
             <label>Quote number <input v-model.trim="newProject.quoteNumber" placeholder="4500"></label>
-            <label>Customer
-              <input v-model="newProjectQuery" placeholder="Search customers…" v-if="!newProject.customerId">
+            <label>Contact (required)
+              <input v-model="newProjectQuery" placeholder="Search contacts…" v-if="!newProject.customerId">
               <span v-else class="crm-picked">{{ (customerById(newProject.customerId) || {}).name }} <button type="button" class="btn-tiny" @click="newProject.customerId = ''">change</button></span>
             </label>
             <div class="wide cust-picker" v-if="!newProject.customerId && newProjectCustomerResults.length">
@@ -1510,9 +1510,9 @@
             <label class="wide">Project details <textarea v-model="newProject.details" rows="5" placeholder="Size, contact, address, electrician, team, delivery date…"></textarea></label>
           </div>
           <div class="crm-form-actions">
-            <button class="btn btn-primary" @click="createProjectFromForm" :disabled="projectBusy">Create project</button>
+            <button class="btn btn-primary" @click="createProjectFromForm" :disabled="projectBusy || !newProject.customerId" :title="newProject.customerId ? '' : 'Pick the contact first'">Create project</button>
             <button class="btn" @click="newProjectOpen = false">Cancel</button>
-            <span class="crm-muted">No customer yet? Create one on the Customers page first, or leave blank and link later.</span>
+            <span class="crm-muted">Every project belongs to a contact. Not in Contacts yet? <a href="#" @click.prevent="createContactForProject()">Create the contact first</a> and you will come straight back here.</span>
           </div>
           <p v-if="projectStatus" class="crm-status">{{ projectStatus }}</p>
         </div>
@@ -2603,7 +2603,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=188"></script>
+<script type="module" src="js/app.js?v=189"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>
