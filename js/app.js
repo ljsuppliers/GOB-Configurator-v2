@@ -948,6 +948,10 @@ createApp({
       this.state.customerId = c.id;
       this.customersPage = false;
       this.syncUrl();
+      const open = this.openProjectsForCustomer(c.id);
+      const empty = open.find((d) => !d.hasState);
+      if (empty) this.notify(`This drawing will be saved into the existing project "${this.projectTitle(empty)}"`);
+      else if (open.length) this.notify(`"${this.projectTitle(open[0])}" already has a drawing - saving this will add a new version to it`);
     },
     /** Design view: attach the open design to a customer record. */
     async linkDesignToCustomer(c) {
@@ -1046,12 +1050,56 @@ createApp({
       }
       if (!this.currentCloudId && this.state.customerId) {
         const existing = this.openProjectsForCustomer(this.state.customerId);
-        if (existing.length && !confirm(`This contact already has an open project: "${this.projectTitle(existing[0])}".\n\nNormally there is ONE project per contact. To keep this drawing as an alternative design, open that project and use "Save as a new version" instead.\n\nSave this as a SECOND project anyway?`)) return;
+        // The contact's open project has NO drawing yet (e.g. an Insightly project): this
+        // drawing simply becomes that project's drawing. No second project, no question.
+        // (STG Design, 1 Oct 2026: a drawing started from the contact got pushed into a second project.)
+        const empty = existing.find((d) => !d.hasState);
+        if (empty) {
+          clearTimeout(this._autosaveTimer);
+          if (!this.online) { this.currentCloudId = empty.id; this.currentCloudName = empty.name; this.queueOutbox(); this.markSaved(); return; }
+          await this.attachDrawingToProject(empty);
+          return;
+        }
+        if (existing.length) {
+          const title = this.projectTitle(existing[0]);
+          if (!confirm(`"${title}" already has a drawing.\n\nOK = save this drawing as a NEW VERSION of that project (it will be listed as "${title} (2)").\nCancel = don't save yet.`)) return;
+          const base = this.suggestedProjectName();
+          const taken = new Set(this.cloudDesigns.map((d) => d.name));
+          let name = base, n = 2; while (taken.has(name)) name = `${base} (${n++})`;
+          clearTimeout(this._autosaveTimer);
+          if (!this.online) { this.currentCloudName = name; this.queueOutbox(); this.markSaved(); return; }
+          this.cloudSaveName = name;
+          await this.saveToCloud();
+          this.markSaved();
+          return;
+        }
       }
       clearTimeout(this._autosaveTimer);
       if (!this.online) { this.queueOutbox(); this.markSaved(); return; }
       await this.saveJob();
       this.markSaved();
+    },
+    /** First save of a drawing whose contact already has a project with no drawing:
+     *  write the drawing INTO that project and carry on editing it there. */
+    async attachDrawingToProject(project) {
+      this.cloudLoading = true; this.cloudError = null;
+      try {
+        if (!this.state.customer.number && project.quoteNumber) this.state.customer.number = project.quoteNumber;
+        let name = project.name || this.suggestedProjectName();
+        const num = String(this.state.customer.number || '').replace(/\D/g, '');
+        if (num && !/^\s*\d{3,5}\s*-/.test(name)) name = `${num} - ${name}`;
+        const total = this.price && typeof this.price.totalIncVat === 'number' ? this.price.totalIncVat : null;
+        await this.withTimeout(updateDesign(project.id, name, this.state, this.userName(), total), 15000);
+        await updateProject(project.id, { legacy: false, hasState: true, drawingSource: 'configurator' });
+        this.currentCloudId = project.id; this.currentCloudName = name;
+        this.markSaved();
+        await this.refreshCloudDesigns();
+        this.notify(`Saved into the existing project "${name}"`);
+      } catch (err) {
+        console.error('attach drawing', err);
+        if (this.isNetworkError(err)) { this.currentCloudId = project.id; this.currentCloudName = project.name; this.queueOutbox(); this.markSaved(); }
+        else this.cloudError = 'Failed to save: ' + err.message;
+      } finally { this.cloudLoading = false; }
     },
     async autoSave() {
       if (!this.currentCloudId || !this.cloudReady || this.cloudLoading || !this.dirty) return;
