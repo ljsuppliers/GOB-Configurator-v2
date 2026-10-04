@@ -210,7 +210,7 @@
       "featureWall": {
         "label": "Oak acoustic slat feature wall (per wall)",
         "price": 950,
-        "note": "PROPOSED 19 Sep 2026: ~9 panels x \u00a320 + adhesive + 0.5 day = ~\u00a3390 cost per 5m wall; \u00a3950 sell = ~59% margin. Liam to confirm."
+        "note": "PROPOSED 19 Sep 2026: ~9 panels x £20 + adhesive + 0.5 day = ~£390 cost per 5m wall; £950 sell = ~59% margin. Liam to confirm."
       },
       "epdmUpgrade": {
         "label": "EPDM roof upgrade to 1.5mm (standard is 1.2mm)",
@@ -302,7 +302,7 @@
   "vatRate": 0.2,
   "holdingDeposit": 250,
   "premiumMatrix": {
-    "note": "Liam 2026-09-05 matrix: customer price incl. installation + groundworks. Extras on top. Interpolated between points, extrapolated beyond; rounded to \u00a350.",
+    "note": "Liam 2026-10-04: prices cut (3.0m row -£5,000, 3.5m -£4,000, 4.0m -£3,500, 4.5m -£3,000) after fewer enquiries since the Sept rise; website matrix matches. Customer price incl. installation + groundworks. Extras on top. Interpolated between points, extrapolated beyond; rounded to £50.",
     "widths": [
       4.0,
       4.5,
@@ -322,48 +322,48 @@
     ],
     "prices": {
       "3.0": [
-        30000,
-        31750,
-        33550,
-        35300,
-        36900,
-        38200,
-        39450,
-        40750,
-        42000
+        25000,
+        26750,
+        28550,
+        30300,
+        31900,
+        33200,
+        34450,
+        35750,
+        37000
       ],
       "3.5": [
-        32350,
-        34450,
-        36500,
-        38000,
-        39450,
-        40950,
-        42500,
-        44250,
-        46000
+        28350,
+        30450,
+        32500,
+        34000,
+        35450,
+        36950,
+        38500,
+        40250,
+        42000
       ],
       "4.0": [
-        34750,
-        36900,
-        38600,
-        40300,
-        42000,
-        44000,
-        46000,
-        48000,
-        50000
+        31250,
+        33400,
+        35100,
+        36800,
+        38500,
+        40500,
+        42500,
+        44500,
+        46500
       ],
       "4.5": [
-        36900,
-        38850,
-        40750,
-        42750,
-        45000,
-        47250,
-        49500,
-        51750,
-        54000
+        33900,
+        35850,
+        37750,
+        39750,
+        42000,
+        44250,
+        46500,
+        48750,
+        51000
       ]
     }
   }
