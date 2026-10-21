@@ -620,7 +620,7 @@
             </div>
             <div>
               <label>External depth (mm) <span style="color:#888;font-weight:normal">excl. canopy/decking</span></label>
-              <input type="number" v-model.number="state.depth" min="2000" max="15000" step="50">
+              <input type="number" v-model.number="state.depth" min="2000" max="25000" step="50">
             </div>
             <div>
               <label>Height (mm) <span v-if="state.roof && state.roof.type !== 'flat'" style="color:#888;font-weight:normal">at the eaves</span></label>
@@ -853,6 +853,7 @@
             <button type="button" class="btn-tiny" @click="addPartition('h')">+ wall left-to-right</button>
             <button type="button" class="btn-tiny" @click="addCorridorLayout()" title="Replaces the current walls with a central corridor and rooms either side">corridor layout</button>
           </div>
+          <label v-if="state.partitions.length" class="checkbox-row" style="margin:0 0 6px;" title="100mm acoustic insulation in every internal wall plus a second layer of board each side"><input type="checkbox" v-model="state.partitionsAcoustic"> soundproof all internal walls (acoustic insulation + double board, priced per metre as an estimate)</label>
           <div v-for="(p, i) in state.partitions" :key="p.id" class="placed-component" style="flex-wrap:wrap;">
             <div style="display:flex;align-items:center;gap:4px;width:100%;flex-wrap:wrap;">
               <select v-model="p.dir" class="input-sm" style="width:118px;"><option value="v">front-to-back</option><option value="h">left-to-right</option></select>
@@ -2771,7 +2772,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=203"></script>
+<script type="module" src="js/app.js?v=204"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

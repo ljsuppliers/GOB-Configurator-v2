@@ -206,7 +206,8 @@ function tag(n, a, c) {
 function ln(x1,y1,x2,y2,sw,col,ex) { return tag('line',{x1,y1,x2,y2,stroke:col||'#000','stroke-width':sw,...(ex||{})}); }
 function rc(x,y,w,h,o) { o=o||{}; return tag('rect',{x,y,width:w,height:h,fill:o.fill||'none',stroke:o.stroke||(o.sw?'#000':'none'),'stroke-width':o.sw||0,rx:o.rx||0,opacity:o.opacity,'clip-path':o.clip}); }
 let TS = 1; // text scale: grows with the building so labels stay legible on a 20m plan (set in compose)
-function tx(x,y,str,sz,o) { o=o||{}; return tag('text',{x,y,'font-family':'Arial,Helvetica,sans-serif','font-size':sz*TS,fill:o.color||'#222','text-anchor':o.anchor||'middle','font-weight':o.bold?'bold':undefined,'font-style':o.italic?'italic':undefined,'text-decoration':o.underline?'underline':undefined,'letter-spacing':o.spacing,transform:o.transform},str); }
+const esc = (v) => String(v ?? '').replace(/&(?!(amp|lt|gt|quot|#\d+);)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function tx(x,y,str,sz,o) { o=o||{}; str = esc(str); return tag('text',{x,y,'font-family':'Arial,Helvetica,sans-serif','font-size':sz*TS,fill:o.color||'#222','text-anchor':o.anchor||'middle','font-weight':o.bold?'bold':undefined,'font-style':o.italic?'italic':undefined,'text-decoration':o.underline?'underline':undefined,'letter-spacing':o.spacing,transform:o.transform},str); }
 function grp(c,a) { return tag('g',a||{},c); }
 
 // ── Glass ────────────────────────────────────────────────────
@@ -1130,10 +1131,11 @@ function renderRoomLabels(labels, ui) {
     const isSel = sel && sel.type === 'label' && sel.id === l.id;
     const sub = { wc: 'WC', shower: 'Shower room', kitchenette: 'Kitchenette', meeting: 'Meeting room', reception: 'Reception', store: 'Store', corridor: 'Corridor' }[l.kind] || '';
     const showSub = sub && l.text.toLowerCase().indexOf(sub.toLowerCase().split(' ')[0]) < 0;
-    const w = Math.max(600, Math.max(l.text.length, showSub ? sub.length * 0.7 : 0) * 120 * TS), h = (showSub ? 420 : 260) * TS;
+    const LS = Math.min(TS, 1.3) / TS; // room labels grow less than the rest of the text on big plans (rooms stay small)
+    const w = Math.max(600, Math.max(l.text.length, showSub ? sub.length * 0.7 : 0) * 120 * TS * LS), h = (showSub ? 420 : 260) * TS * LS;
     const tint = { wc: '#dbeafe', shower: '#dbeafe', kitchenette: '#fef3c7' }[l.kind];
     s += tag('g', { class: 'plan-room-label' + (isSel ? ' selected' : ''), 'data-rl-id': l.id, style: 'cursor:move' },
-      rc(l.x - w / 2, l.y - h * 0.6, w, h, { fill: tint || 'transparent', rx: tint ? 60 : 0 }) + (isSel ? rc(l.x - w / 2, l.y - h * 0.6, w, h, { fill: 'none', sw: 4, stroke: '#0f766e' }) : '') + tx(l.x, l.y, l.text, 200, { color: '#444', bold: true }) + (showSub ? tx(l.x, l.y + 150 * TS, sub, 120, { color: '#666' }) : ''));
+      rc(l.x - w / 2, l.y - h * 0.6, w, h, { fill: tint || 'transparent', rx: tint ? 60 : 0 }) + (isSel ? rc(l.x - w / 2, l.y - h * 0.6, w, h, { fill: 'none', sw: 4, stroke: '#0f766e' }) : '') + tx(l.x, l.y, l.text, 200 * LS, { color: '#444', bold: true }) + (showSub ? tx(l.x, l.y + 150 * TS * LS, sub, 120 * LS, { color: '#666' }) : ''));
   }
   return s;
 }
@@ -1382,6 +1384,7 @@ function renderPlan(cfg) {
     s += rc(wt, wt, width-wt*2, depth-wt*2, { fill: COL.white, sw: 3, stroke: '#333' });
   }
   const hitPad = 80; // extra padding for click targets on thin wall elements
+  const showCompDims = (components || []).length <= 8; // many windows (offices): the per-opening labels only clutter the plan
   for (const c of (components || [])) {
     const dimLabel = `${c.w}mm (w) x ${c.h || ''}mm (h)`;
     const dimFontSize = 100;
@@ -1403,7 +1406,7 @@ function renderPlan(cfg) {
       }
       s += '</g>';
       // Dimension label inside building (above front wall inner edge)
-      s += dimH_comp(c.x, c.x + c.w, depth - wt, dimLabel, -dimOff);
+      if (showCompDims) s += dimH_comp(c.x, c.x + c.w, depth - wt, dimLabel, -dimOff);
     } else if (c.wall === 'left') {
       s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="left" style="cursor:grab">`;
       s += rc(-hitPad, c.x, wt + hitPad * 2, c.w, { fill: 'transparent' });
@@ -1412,7 +1415,7 @@ function renderPlan(cfg) {
       s += ln(wt*0.7, c.x, wt*0.7, c.x+c.w, 1.5, COL.anthracite);
       s += '</g>';
       // Dimension label inside building (right of left wall inner edge)
-      s += dimV_comp(c.x, c.x + c.w, wt, dimLabel, dimOff);
+      if (showCompDims) s += dimV_comp(c.x, c.x + c.w, wt, dimLabel, dimOff);
     } else if (c.wall === 'right') {
       s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="right" style="cursor:grab">`;
       s += rc(width - wt - hitPad, c.x, wt + hitPad * 2, c.w, { fill: 'transparent' });
@@ -1421,7 +1424,7 @@ function renderPlan(cfg) {
       s += ln(width-wt*0.7, c.x, width-wt*0.7, c.x+c.w, 1.5, COL.anthracite);
       s += '</g>';
       // Dimension label inside building (left of right wall inner edge)
-      s += dimV_comp(c.x, c.x + c.w, width - wt, dimLabel, -dimOff);
+      if (showCompDims) s += dimV_comp(c.x, c.x + c.w, width - wt, dimLabel, -dimOff);
     } else if (c.wall === 'rear') {
       s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="rear" style="cursor:grab">`;
       s += rc(c.x, -hitPad, c.w, wt + hitPad * 2, { fill: 'transparent' });
@@ -1436,7 +1439,7 @@ function renderPlan(cfg) {
       }
       s += '</g>';
       // Dimension label inside building (below rear wall inner edge)
-      s += dimH_comp(c.x, c.x + c.w, wt, dimLabel, dimOff);
+      if (showCompDims) s += dimH_comp(c.x, c.x + c.w, wt, dimLabel, dimOff);
     }
   }
   if (rooms && rooms.length > 1) {
@@ -1526,8 +1529,8 @@ function renderPlan(cfg) {
     if (r.type === 'dual' && r.ridge === 'y') { // ridge front-to-back, falls to both sides
       s += tag('line', { x1: width / 2, y1: wt, x2: width / 2, y2: depth - wt, ...dash });
       s += lbl(width / 2, wt + 300, 'RIDGE', 0);
-      s += arrow(width / 2 - 300, depth * 0.3, width * 0.12, depth * 0.3) + arrow(width / 2 + 300, depth * 0.3, width * 0.88, depth * 0.3);
-      s += lbl(width * 0.3, depth * 0.3 - 120, 'FALL', 0) + lbl(width * 0.7, depth * 0.3 - 120, 'FALL', 0);
+      s += arrow(width / 2 - 300, depth * 0.93, width * 0.12, depth * 0.93) + arrow(width / 2 + 300, depth * 0.93, width * 0.88, depth * 0.93);
+      s += lbl(width * 0.3, depth * 0.93 - 120, 'FALL', 0) + lbl(width * 0.7, depth * 0.93 - 120, 'FALL', 0);
     } else if (r.type === 'dual') { // ridge left-to-right, falls front and rear
       s += tag('line', { x1: wt, y1: depth / 2, x2: width - wt, y2: depth / 2, ...dash });
       s += lbl(width * 0.08 + 300, depth / 2 - 100, 'RIDGE', 0);
@@ -1858,11 +1861,14 @@ function compose(b) {
   // Add extra plan space for canopy and/or decking projection
   const planExtra = frontProj > 0 ? frontProj + 300 : 0;
 
-  const tiW = Math.max(4000, D*2 + 1000);
-  const tiH = Math.max(D + planExtra + 600, 2800);
+  // Title block: grows with the plan but is capped so a deep building does not get a giant block (keeps the 1.8:1 template ratio)
+  const tiH = Math.min(Math.max(D + planExtra + 600, 2800), 6600);
+  let tiW = Math.min(Math.max(4000, D*2 + 1000), Math.round(tiH * 1.85));
   const tiX = pX + W + boundaryRight + siteR + 500;
   const tiY = row2Y;
 
+  // a deep, narrow building leaves the elevations row much wider than the plan: let the title block use that width (up to 3:1)
+  tiW = Math.max(tiW, Math.min(row1Right - tiX, Math.round(tiH * 3)));
   const totW = Math.max(row1Right + margin, tiX + tiW + margin, pX + W + boundaryRight + dim + margin);
   const totH = row2Y + Math.max(D + planExtra + siteB, tiH) + dim + 500 + margin;
 
@@ -1926,9 +1932,9 @@ function compose(b) {
     const notesX = tiX;
     const notesY = tiY + tiH + 120;
     const notesW = tiW;
-    const notesFontSize = 160;
-    const notesLineHeight = 200;
-    const maxCharsPerLine = Math.floor(notesW / (notesFontSize * 0.5));
+    const notesFontSize = 160; // tx() scales it by TS, so the wrap and line height must scale too
+    const notesLineHeight = 220 * TS;
+    const maxCharsPerLine = Math.floor(notesW / (notesFontSize * TS * 0.5));
     
     // Word wrap the notes text
     const words = b.drawingNotes.trim().split(/\s+/);

@@ -1,8 +1,8 @@
 // GOB Configurator v2 — Vue 3 App
 // Reactive state, live pricing, drawing preview, email drafting
 
-import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding, roomSchedule, ROOM_KINDS, roofInfo } from './pricing.js?v=14';
-import { generateDrawing, generateSitePlan } from './drawing-engine.js?v=53';
+import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding, roomSchedule, ROOM_KINDS, roofInfo } from './pricing.js?v=15';
+import { generateDrawing, generateSitePlan } from './drawing-engine.js?v=54';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=7';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
@@ -78,7 +78,8 @@ function ensureStateDefaults(state) {
   if (!state.cladding) state.cladding = { front: 'anthracite-steel', left: 'anthracite-steel', right: 'anthracite-steel', rear: 'anthracite-steel' };
   if (!state.partitionRoom) state.partitionRoom = { enabled: false };
   if (!state.bathroom) state.bathroom = { enabled: false };
-  if (!Array.isArray(state.partitions)) state.partitions = []; // internal walls drawn on the plan (multi-room / commercial)
+  if (!Array.isArray(state.partitions)) state.partitions = [];
+  if (state.partitionsAcoustic === undefined) state.partitionsAcoustic = false; // internal walls drawn on the plan (multi-room / commercial)
   if (!Array.isArray(state.roomLabels)) state.roomLabels = [];
   for (const l of state.roomLabels) { // room kind drives the fit-out price; infer it for labels saved before kinds existed
     if (l && !l.kind) { const t = String(l.text || '').toLowerCase(); l.kind = /\bwc\b|toilet|loo/.test(t) ? 'wc' : /shower|bath/.test(t) ? 'shower' : /kitchen/.test(t) ? 'kitchenette' : /meeting|board/.test(t) ? 'meeting' : /reception/.test(t) ? 'reception' : /store|storage|cupboard/.test(t) ? 'store' : /corridor|hall|lobby/.test(t) ? 'corridor' : /office|studio|desk/.test(t) ? 'office' : 'other'; }
@@ -2567,7 +2568,7 @@ createApp({
       }
 
       // Internal walls drawn on the plan
-      { const ps = partitionSummary(s); if (ps.count) buildFeatures.push(`Internal partition walls (${ps.count} wall${ps.count === 1 ? '' : 's'}, ${ps.metres.toFixed(1)}m in total${ps.glazedMetres ? `, of which ${ps.glazedMetres.toFixed(1)}m glazed` : ''}) with ${ps.doors} interior door${ps.doors === 1 ? '' : 's'}, plastered and decorated both sides, creating the rooms shown on the drawing`); }
+      { const ps = partitionSummary(s); if (ps.count) buildFeatures.push(`Internal partition walls (${ps.count} wall${ps.count === 1 ? '' : 's'}, ${ps.metres.toFixed(1)}m in total${ps.glazedMetres ? `, of which ${ps.glazedMetres.toFixed(1)}m glazed` : ''}) with ${ps.doors} interior door${ps.doors === 1 ? '' : 's'}, plastered and decorated both sides, creating the rooms shown on the drawing${s.partitionsAcoustic ? ', each wall acoustically insulated with a double layer of board for sound privacy between rooms' : ''}`); }
       { const rs = roomSchedule(s); if (rs.rooms) buildFeatures.push(`Room schedule as drawn: ${this.roomScheduleText()}`); for (const it of rs.items) { if (['wc', 'shower', 'kitchenette'].includes(it.kind)) buildFeatures.push(`${it.baseLabel}${it.count > 1 ? ` (x${it.count})` : ''}: ${it.description.replace(/\.$/, '')}`); } }
       // Partition
       if (s.straightPartition?.enabled) {

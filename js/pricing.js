@@ -179,6 +179,7 @@ export function calculatePrice(state) {
     const perM = struct.partitionWallPerM?.price || 185, perDoor = struct.partitionDoor?.price || 450, perGlazedM = struct.partitionGlazedPerM?.price || 350;
     const label = `Internal partition walls: ${ps.count} wall${ps.count === 1 ? '' : 's'}, ${ps.metres.toFixed(1)}m in total${ps.glazedMetres ? ` (${ps.glazedMetres.toFixed(1)}m glazed)` : ''}${ps.doors ? `, ${ps.doors} interior door${ps.doors === 1 ? '' : 's'}` : ''}`;
     result.extras.push({ label, baseLabel: label, qty: 1, unitPrice: 0, price: Math.round(ps.solidMetres * perM + ps.glazedMetres * perGlazedM + ps.doors * perDoor), section: 'internal' });
+    if (state.partitionsAcoustic) { const perAc = struct.partitionAcousticPerM?.price || 60; result.extras.push({ label: `Acoustic (soundproof) upgrade to all internal walls: ${ps.solidMetres.toFixed(1)}m`, baseLabel: 'Acoustic partition upgrade', qty: ps.solidMetres, unitPrice: perAc, price: Math.round(ps.solidMetres * perAc), section: 'internal' }); }
   }
   // Per-room fit-out from the room labels (WC, shower room, kitchenette, data points)
   for (const it of roomSchedule(state).items) {

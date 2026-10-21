@@ -236,6 +236,11 @@
         "label": "Pitched roof (per m2 of plan area)",
         "price": 95,
         "note": "Dual or mono pitch instead of the flat roof: ridge beam, rafters cut to the slope, gable framing + cladding, extra PIR/deck/EPDM area. ESTIMATE 21 Oct 2026 - Liam/Richard to confirm."
+      },
+      "partitionAcousticPerM": {
+        "label": "Acoustic (soundproof) partition upgrade (per linear metre)",
+        "price": 60,
+        "note": "100mm Rockwool RWA45 in the stud + a second layer of board each side, acoustic sealant. ESTIMATE 21 Oct 2026 - Liam to confirm."
       }
     },
     "bathroom": {
