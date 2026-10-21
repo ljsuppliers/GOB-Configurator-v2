@@ -1806,6 +1806,9 @@ function dimV(y1, y2, x, label, off) {
 // ── Full Drawing Composer ───────────────────────────────────
 
 function compose(b) {
+  // Deep, narrow buildings (depth >= 1.4 x width, e.g. an 18m x 10m office block) get the 'deep' sheet:
+  // plan down the left, four elevations stacked on the right. Overridable per design with state.sheetLayout.
+  if (b.sheetLayout === 'deep' || (b.sheetLayout !== 'standard' && (b.depth || 0) >= (b.width || 0) * 1.4)) return composeDeep(b);
   TS = Math.max(1, Math.min(2, Math.max(b.width || 0, b.depth || 0) / 8000)); // 8m building = 1x, 16m+ = 2x
   const W=b.width, D=b.depth, H=b.height;
   const oh = b.overhang || 0;
@@ -1972,6 +1975,99 @@ function compose(b) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totW} ${totH}" style="background:white;width:100%;height:100%;">${s}</svg>`;
 }
 
+// ── Deep-building sheet: plan left, elevations stacked right ─
+function composeDeep(b) {
+  TS = Math.max(1, Math.min(2, Math.max(b.width || 0, b.depth || 0) / 8000));
+  const W=b.width, D=b.depth, H=b.height, oh=b.overhang||0, isSig=b.tier==='signature';
+  const hasCanopy=b.hasCanopy!==false, hasDecking=b.hasDecking!==false, deckingDepth=b.deckingDepth||400;
+  const proj=(isSig&&oh>0&&hasCanopy)?oh:0, deckProj=(isSig&&hasDecking)?deckingDepth:0, frontProj=Math.max(proj,deckProj);
+  const deckH = oh > 0 ? 100 : 0, cL=b.cornerLeft||'open', cR=b.cornerRight||'open';
+  const roof = b.roof && b.roof.type !== 'flat' ? b.roof : null; const rise = roof ? roof.rise : 0;
+  const prof = { front: null, rear: null, left: null, right: null };
+  if (roof && roof.type === 'dual') {
+    if (roof.ridge === 'y') { prof.front = prof.rear = { kind: 'gable', rise, peakX: W / 2 }; prof.left = prof.right = { kind: 'band', rise }; }
+    else { prof.front = prof.rear = { kind: 'band', rise }; prof.left = prof.right = { kind: 'gable', rise, peakX: D / 2 }; }
+  }
+  const margin=700*TS, dim=(roof?1050:600)*TS, labH=350*TS, gap=700*TS;
+  const boundaryLeft = (b.boundaries?.show && b.boundaries?.left) ? b.boundaries.left + 300 : 0;
+  const boundaryRight = (b.boundaries?.show && b.boundaries?.right) ? b.boundaries.right + 300 : 0;
+  const boundaryRear = (b.boundaries?.show && b.boundaries?.rear) ? b.boundaries.rear + 200 : 0;
+  const sb = siteBounds(b.siteObjects, b.siteImage); const LIM = 60000;
+  const siteL=Math.min(LIM,Math.max(0,-sb.minX)), siteT=Math.min(LIM,Math.max(0,-sb.minY)), siteR=Math.min(LIM,Math.max(0,sb.maxX-W)), siteB=Math.min(LIM,Math.max(0,sb.maxY-D));
+  const planExtra = frontProj > 0 ? frontProj + 300 : 0;
+  const titleOpts = { bold:true, color:'#333', spacing: 28 };
+  let s = svgDefs();
+  // ── PLAN (left) ──
+  const pX = margin + dim + boundaryLeft + siteL, pY = margin + labH + boundaryRear + siteT;
+  const planBottom = pY + D + planExtra + siteB + dim + 500*TS;
+  const planRight = pX + W + boundaryRight + siteR;
+  // ── ELEVATIONS (right column) ──
+  const cX = planRight + dim + gap;
+  const sideW = D + frontProj, colW = Math.max(sideW, W * 2 + gap);
+  const rowH = labH + rise + H + deckH + (frontProj > 0 ? 900 : 600) * TS + 300 * TS;
+  const overallLabel = (extra) => `${D + extra}mm overall incl. ${hasCanopy && proj > 0 && hasDecking && deckProj > 0 ? 'canopy/decking' : hasCanopy && proj > 0 ? 'canopy' : 'decking'}`;
+  let y = margin;
+  // row 1: left elevation
+  let ey = y + labH + rise;
+  s += tx(cX + sideW/2, ey - rise - 160*TS, 'LEFT ELEVATION', 150, titleOpts);
+  s += grp(renderSide({ depth:D, height:H, side:'left', tier:b.tier, overhang:oh, components:b.leftComponents||[], corner:cL, claddingType:b.leftCladding, hasCanopy, hasDecking, deckingDepth, externalFeatures:b.leftExternalFeatures||[], roofProfile: prof.left }), { transform:`translate(${cX},${ey})` });
+  s += dimH(cX, cX+D, ey+H+deckH+30, `${D}mm`, 250*TS);
+  if (frontProj > 0) s += dimH(cX, cX+D+frontProj, ey+H+deckH+30, overallLabel(frontProj), 620*TS);
+  s += dimV(ey, ey+H+deckH, cX, roof ? `${H}mm eaves` : `${H}mm`, -450*TS);
+  if (roof) s += dimV(ey - rise, ey+H+deckH, cX, `${H + rise}mm ridge`, -900*TS);
+  y += rowH;
+  // row 2: right elevation (front at the left edge, so canopy projects left)
+  ey = y + labH + rise;
+  const rX = cX + frontProj;
+  s += tx(rX + D/2, ey - rise - 160*TS, 'RIGHT ELEVATION', 150, titleOpts);
+  s += grp(renderSide({ depth:D, height:H, side:'right', tier:b.tier, overhang:oh, components:b.rightComponents||[], corner:cR, claddingType:b.rightCladding, hasCanopy, hasDecking, deckingDepth, externalFeatures:b.rightExternalFeatures||[], roofProfile: prof.right }), { transform:`translate(${rX},${ey})` });
+  s += dimH(rX, rX+D, ey+H+deckH+30, `${D}mm`, 250*TS);
+  if (frontProj > 0) s += dimH(rX-frontProj, rX+D, ey+H+deckH+30, overallLabel(frontProj), 620*TS);
+  y += rowH;
+  // row 3: front + rear side by side
+  ey = y + labH + rise;
+  const fX = cX, bX = cX + W + gap;
+  s += tx(fX + W/2, ey - rise - 160*TS, 'FRONT ELEVATION', 150, titleOpts);
+  s += grp(renderFront({ width:W, height:H, overhang:oh, tier:b.tier, claddingType:b.frontCladding, components:b.frontComponents||[], cornerLeft:cL, cornerRight:cR, externalFeatures:b.externalFeatures||[], hasCanopy, hasDecking, roofProfile: prof.front }), { transform:`translate(${fX},${ey})` });
+  s += dimH(fX, fX+W, ey+H+deckH+30, `${W}mm`, 250*TS);
+  s += tx(bX + W/2, ey - rise - 160*TS, 'REAR ELEVATION', 150, titleOpts);
+  s += grp(renderFront({ width:W, height:H, overhang:0, tier:b.tier, claddingType:b.rearCladding, components:b.rearComponents||[], cornerLeft:'closed', cornerRight:'closed', externalFeatures:b.rearExternalFeatures||[], hasCanopy:false, hasDecking:false, roofProfile: prof.rear }), { transform:`translate(${bX},${ey})` });
+  s += dimH(bX, bX+W, ey+H+deckH+30, `${W}mm`, 250*TS);
+  y += rowH;
+  // row 4: title block + notes
+  const tiH = 6600, tiW = Math.min(colW, Math.round(tiH * 1.85)); const tiX = cX, tiY = y + 200*TS;
+  s += grp(renderTitle({ w:tiW, h:tiH, title:b.title, customer:b.customer, address:b.address, date:b.date, spec:b.spec, useCase:b.useCase, drawingNumber:b.drawingNumber, scaleLabel: `1:${100} @ A3` }), { transform:`translate(${tiX},${tiY})` });
+  let colBottom = tiY + tiH;
+  if (b.drawingNotes && b.drawingNotes.trim()) {
+    const notesX = tiX + tiW + 500*TS, notesW = Math.max(4000, cX + colW - notesX), below = notesW < 7000;
+    const nx = below ? tiX : notesX, ny = below ? tiY + tiH + 300*TS : tiY + 250*TS, nw = below ? tiW : notesW;
+    const fs = 150, lh = 220 * TS, maxChars = Math.floor(nw / (fs * TS * 0.5));
+    const words = b.drawingNotes.trim().split(/\s+/); const lines = []; let cur = '';
+    for (const w of words) { const t = cur ? cur + ' ' + w : w; if (t.length > maxChars) { if (cur) lines.push(cur); cur = w; } else cur = t; }
+    if (cur) lines.push(cur);
+    s += tx(nx, ny, 'Notes:', fs, { anchor: 'start', bold: true, color: '#444' });
+    let ly = ny + lh; for (const line of lines) { s += tx(nx, ly, line, fs, { anchor: 'start', color: '#555' }); ly += lh; }
+    colBottom = Math.max(colBottom, ly);
+  }
+  // plan last so its group id is unique and it sits above nothing else
+  s += tx(pX+W/2, pY - boundaryRear - 160*TS, 'PLAN VIEW', 150, titleOpts);
+  s += grp(renderPlan({ width:W, depth:D, wallThickness:150, overhang:oh, tier:b.tier, components:b.planComponents||[], rooms:b.rooms, cornerLeft:cL, cornerRight:cR, straightPartition:b.straightPartition, partitionRoom:b.partitionRoom, partitions:b.partitions, roomLabels:b.roomLabels, siteObjects:b.siteObjects, siteImage:b.siteImage, ui:b.ui, boundaries:b.boundaries, roof, hasCanopy, hasDecking, deckingDepth, acUnits:b.acUnits||[], intDimWidthOffset:b.intDimWidthOffset, intDimDepthOffset:b.intDimDepthOffset }), { transform:`translate(${pX},${pY})`, id: 'plan-group' });
+  const planDimY = pY + D + (frontProj > 0 ? frontProj : 0) + 80;
+  s += dimH(pX, pX+W, planDimY, `${W}mm`, 450*TS, false);
+  s += dimV(pY, pY+D, pX, `${D}mm`, -450*TS);
+  if (frontProj > 0) s += dimV(pY, pY+D+frontProj, pX, overallLabel(frontProj), -900*TS);
+  if (isSig && (hasCanopy || hasDecking)) {
+    const numSpot = hasCanopy ? Math.floor(W / 1000) : 0; const parts = [];
+    if (hasCanopy && oh > 0) parts.push(`canopy (${oh}mm) with ${numSpot} spotlight${numSpot !== 1 ? 's' : ''}`);
+    if (hasDecking) parts.push(`decking (${deckingDepth}mm)`);
+    if (parts.length) s += tx(pX+W/2, planDimY+900, `Integrated ${parts.join(' and ')}`, 120, { italic:true, color:'#666' });
+  }
+  if (b.drawingLabels && b.drawingLabels.length) for (const label of b.drawingLabels) s += renderDrawingLabel(label);
+  const totW = cX + colW + margin, totH = Math.max(planBottom, colBottom) + margin;
+  const sheet = rc(0,0,totW,totH,{fill:'white'}) + rc(margin*0.4, margin*0.4, totW-margin*0.8, totH-margin*0.8, { sw: 4, stroke: '#333' });
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totW} ${totH}" style="background:white;width:100%;height:100%;">${svgDefs()}${sheet}${s.slice(svgDefs().length)}</svg>`;
+}
+
 // ── Public API ──────────────────────────────────────────────
 
 export function generateDrawing(state, componentsData, claddingData, ui) {
@@ -1983,6 +2079,7 @@ export function generateDrawing(state, componentsData, claddingData, ui) {
   const leftComponents = [];
   const rightComponents = [];
   const planComponents = [];
+  const rearComponents = [];
 
   for (const comp of (state.components || [])) {
     const def = allComps[comp.type];
@@ -2033,8 +2130,9 @@ export function generateDrawing(state, componentsData, claddingData, ui) {
       rightComponents.push(elevEntry);
       planComponents.push(planEntry);
     } else if (comp.elevation === 'rear') {
-      // Rear components only show on plan view (no rear elevation drawing)
+      // Plan + the rear elevation (deep sheet): seen from behind, so x is mirrored
       planComponents.push(planEntry);
+      rearComponents.push({ ...elevEntry, x: state.width - planEntry.x - planEntry.w });
     }
   }
 
@@ -2050,6 +2148,10 @@ export function generateDrawing(state, componentsData, claddingData, ui) {
   if (leftClad?.category === 'timber') leftCladding = 'cedar';
   else if (leftClad?.category === 'composite') leftCladding = compositeKey(state.cladding?.left);
 
+  const rearCladT = claddingData?.types?.[state.cladding?.rear];
+  let rearCladding = 'steel';
+  if (rearCladT?.category === 'timber') rearCladding = 'cedar';
+  else if (rearCladT?.category === 'composite') rearCladding = compositeKey(state.cladding?.rear);
   const rightClad = claddingData?.types?.[state.cladding?.right];
   let rightCladding = 'steel';
   if (rightClad?.category === 'timber') rightCladding = 'cedar';
@@ -2079,6 +2181,9 @@ export function generateDrawing(state, componentsData, claddingData, ui) {
     frontCladding,
     leftCladding,
     rightCladding,
+    rearCladding,
+    rearComponents,
+    sheetLayout: state.sheetLayout || 'auto',
     cornerLeft: state.cornerLeft || 'open',
     cornerRight: state.cornerRight || 'open',
     hasCanopy: state.tier === 'signature' ? (state.hasCanopy !== false) : false,
@@ -2099,6 +2204,7 @@ export function generateDrawing(state, componentsData, claddingData, ui) {
     externalFeatures: (state.externalFeatures || []).filter(f => (f.elevation || 'front') === 'front'),
     leftExternalFeatures: (state.externalFeatures || []).filter(f => f.elevation === 'left'),
     rightExternalFeatures: (state.externalFeatures || []).filter(f => f.elevation === 'right'),
+    rearExternalFeatures: (state.externalFeatures || []).filter(f => f.elevation === 'rear').map(f => ({ ...f, x: state.width - (f.x || 0) - 150 })),
     acUnits: state.acUnits || [],
     drawingLabels: state.drawingLabels || [],
     intDimWidthOffset: state.intDimWidthOffset || 0,
