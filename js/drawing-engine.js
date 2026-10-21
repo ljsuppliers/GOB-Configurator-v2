@@ -1194,10 +1194,12 @@ function renderFurniture(objs, ui) {
       g += rc(o.x, o.y, w, h, { fill: '#f3f0ea', sw, stroke });
       for (let ux = o.x + 600; ux < o.x + w - 10; ux += 600) g += ln(ux, o.y, ux, o.y + h, 2, '#9aa0a8'); // 600mm unit modules
       g += ln(o.x, o.y + h - 60, o.x + w, o.y + h - 60, 2, stroke);
+      if (!o.plain) { // a second run of units carries no sink or hob
       g += tag('rect', { x: o.x + w * 0.25, y: o.y + 90, width: 500, height: h - 180, rx: 60, fill: FILL, stroke, 'stroke-width': 3 });
       g += tag('circle', { cx: o.x + w * 0.25 + 250, cy: o.y + 60, r: 40, fill: stroke });
       g += tag('rect', { x: o.x + w * 0.65, y: o.y + 90, width: 580, height: h - 180, fill: 'none', stroke, 'stroke-width': 3 });
       for (const [dx, dy] of [[150, 150], [430, 150], [150, 410], [430, 410]]) g += tag('circle', { cx: o.x + w * 0.65 + dx, cy: o.y + dy, r: 70, fill: 'none', stroke, 'stroke-width': 3 }); // hob rings
+      }
     } else if (o.kind === 'wc') { // pan + cistern, facing away from the wall it backs onto
       g += rc(o.x, o.y, w, 180, { fill: '#eef0f3', sw: 3, stroke }); // cistern
       g += tag('ellipse', { cx: cx, cy: o.y + 180 + (h - 180) / 2 + 40, rx: w * 0.42, ry: (h - 180) / 2, fill: FILL, stroke, 'stroke-width': sw });
@@ -1970,7 +1972,7 @@ function compose(b) {
   if (frontProj > 0) s += dimH(rX-frontProj, rX+D, row1Y+H+deckH+30, overallLabel(frontProj), 620*TS);
 
   // PLAN VIEW
-  const planLabelY = boundaryRear ? row2Y - boundaryRear - 160 : row2Y - 160;
+  const planLabelY = row2Y - boundaryRear - siteT - 160;
   s += tx(pX+W/2, planLabelY, 'PLAN VIEW', 150, titleOpts);
   s += grp(renderPlan({ width:W, depth:D, wallThickness:150, overhang:oh, tier:b.tier, components:b.planComponents||[], rooms:b.rooms, cornerLeft:cL, cornerRight:cR, straightPartition:b.straightPartition, partitionRoom:b.partitionRoom, partitions:b.partitions, roomLabels:b.roomLabels, siteObjects:b.siteObjects, siteImage:b.siteImage, ui:b.ui, boundaries:b.boundaries, roof, hasCanopy, hasDecking, deckingDepth, acUnits:b.acUnits||[], intDimWidthOffset:b.intDimWidthOffset, intDimDepthOffset:b.intDimDepthOffset }), { transform:`translate(${pX},${row2Y})`, id: 'plan-group' });
   // Add canopy/decking space to dimension line
@@ -2115,7 +2117,7 @@ function composeDeep(b) {
     colBottom = Math.max(colBottom, ly);
   }
   // plan last so its group id is unique and it sits above nothing else
-  s += tx(pX+W/2, pY - boundaryRear - 160*TS, 'PLAN VIEW', 150, titleOpts);
+  s += tx(pX+W/2, pY - boundaryRear - siteT - 160*TS, 'PLAN VIEW', 150, titleOpts); // above the site objects too
   s += grp(renderPlan({ width:W, depth:D, wallThickness:150, overhang:oh, tier:b.tier, components:b.planComponents||[], rooms:b.rooms, cornerLeft:cL, cornerRight:cR, straightPartition:b.straightPartition, partitionRoom:b.partitionRoom, partitions:b.partitions, roomLabels:b.roomLabels, siteObjects:b.siteObjects, siteImage:b.siteImage, ui:b.ui, boundaries:b.boundaries, roof, hasCanopy, hasDecking, deckingDepth, acUnits:b.acUnits||[], intDimWidthOffset:b.intDimWidthOffset, intDimDepthOffset:b.intDimDepthOffset }), { transform:`translate(${pX},${pY})`, id: 'plan-group' });
   const planDimY = pY + D + Math.max(frontProj, siteB) + 80;
   s += dimH(pX, pX+W, planDimY, `${W}mm`, 450*TS, false);
