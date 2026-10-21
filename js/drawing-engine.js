@@ -1509,14 +1509,15 @@ function renderPlan(cfg) {
       // Dimension label inside building (right of left wall inner edge)
       if (showCompDims) s += dimV_comp(c.x, c.x + c.w, wt, dimLabel, dimOff);
     } else if (c.wall === 'right') {
-      s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="right" style="cursor:grab">`;
+      const rx = (cfg.notch && c.x < cfg.notch.len) ? -cfg.notch.w : 0; // wing's right wall is set in by the notch (L-shaped plan)
+      s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="right" style="cursor:grab" transform="translate(${rx},0)">`;
       s += rc(width - wt - hitPad, c.x, wt + hitPad * 2, c.w, { fill: 'transparent' });
       s += rc(width-wt, c.x, wt, c.w, { fill: COL.white });
       s += ln(width-wt*0.3, c.x, width-wt*0.3, c.x+c.w, 1.5, COL.anthracite);
       s += ln(width-wt*0.7, c.x, width-wt*0.7, c.x+c.w, 1.5, COL.anthracite);
       s += '</g>';
       // Dimension label inside building (left of right wall inner edge)
-      if (showCompDims) s += dimV_comp(c.x, c.x + c.w, width - wt, dimLabel, -dimOff);
+      if (showCompDims) s += dimV_comp(c.x, c.x + c.w, width + rx - wt, dimLabel, -dimOff);
     } else if (c.wall === 'rear') {
       const ry = (cfg.notch && c.x >= width - cfg.notch.w) ? cfg.notch.len : 0; // main-block rear wall is set back by the notch
       s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="rear" style="cursor:grab" transform="translate(0,${ry})">`;
@@ -2076,10 +2077,16 @@ function compose(b) {
     }
   }
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totW} ${totH}" style="background:white;width:100%;height:100%;">${s}</svg>`;
+  return fastOpacity(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totW} ${totH}" style="background:white;width:100%;height:100%;">${s}</svg>`);
 }
 
 // ── Deep-building sheet: plan left, elevations stacked right ─
+/** PDF viewers treat `opacity` on a shape as a transparency group, and a sheet with ~400 of them opens
+ *  slowly and paints in pieces (Liam 21 Oct 2026). fill-opacity/stroke-opacity give the same look as a
+ *  plain constant alpha, which renders instantly. Applied to every finished sheet. */
+function fastOpacity(svg) {
+  return svg.replace(/<(line|rect|polygon|polyline|path|circle|ellipse|text)\b([^>]*?) opacity="([^"]+)"/g, '<$1$2 fill-opacity="$3" stroke-opacity="$3"');
+}
 function composeDeep(b) {
   TS = Math.max(1, Math.min(2, Math.max(b.width || 0, b.depth || 0) / 8000));
   const W=b.width, D=b.depth, H=b.height, oh=b.overhang||0, isSig=b.tier==='signature';
@@ -2174,7 +2181,7 @@ function composeDeep(b) {
   if (b.drawingLabels && b.drawingLabels.length) for (const label of b.drawingLabels) s += renderDrawingLabel(label);
   const totW = cX + colW + margin, totH = Math.max(planBottom, colBottom) + margin;
   const sheet = rc(0,0,totW,totH,{fill:'white'}) + rc(margin*0.4, margin*0.4, totW-margin*0.8, totH-margin*0.8, { sw: 4, stroke: '#333' });
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totW} ${totH}" style="background:white;width:100%;height:100%;">${svgDefs()}${sheet}${s.slice(svgDefs().length)}</svg>`;
+  return fastOpacity(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totW} ${totH}" style="background:white;width:100%;height:100%;">${svgDefs()}${sheet}${s.slice(svgDefs().length)}</svg>`);
 }
 
 // ── Public API ──────────────────────────────────────────────
@@ -2393,5 +2400,5 @@ export function generateSitePlan(state, componentsData, claddingData, ui) {
   s += tx(bx, by - 60 * TS, '0', 110, { anchor: 'start' }); s += tx(bx + barM, by - 60 * TS, `${barM / 1000}m`, 110);
   const scaleLabel = `1:${totW / 400 <= 50 ? 50 : totW / 400 <= 100 ? 100 : totW / 400 <= 200 ? 200 : 500} @ A3`;
   s += grp(renderTitle({ w: tiW, h: tiH, title: `Site plan: proposed ${state.buildingType || 'building'} for:`, customer: state.customer?.name, address: state.customer?.address, date: state.customer?.date, spec: `${(W / 1000).toFixed(1)}m x ${(D / 1000).toFixed(1)}m x ${(state.height / 1000).toFixed(2).replace(/0$/, '')}m`, useCase: 'Site plan', drawingNumber: (state.customNotes?.drawingNumber || 'GOB-001') + '-S', scaleLabel }), { transform: `translate(${tiX},${tiY})` });
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totW} ${totH}" style="background:white;width:100%;height:100%;">${s}</svg>`;
+  return fastOpacity(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totW} ${totH}" style="background:white;width:100%;height:100%;">${s}</svg>`);
 }
