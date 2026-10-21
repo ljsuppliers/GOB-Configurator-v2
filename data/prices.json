@@ -216,6 +216,16 @@
         "label": "EPDM roof upgrade to 1.5mm (standard is 1.2mm)",
         "price": 0,
         "note": "PRICE TBC - Liam to confirm (20 Sep 2026)"
+      },
+      "partitionWallPerM": {
+        "label": "Internal partition wall (per linear metre)",
+        "price": 185,
+        "note": "4x2 stud @400, 12.5mm board both sides, skim, paint, skirting. ESTIMATE 21 Oct 2026 - Liam to confirm."
+      },
+      "partitionDoor": {
+        "label": "Interior door set (Howden, hung and furnished)",
+        "price": 450,
+        "note": "ESTIMATE 21 Oct 2026 - Liam to confirm."
       }
     },
     "bathroom": {
@@ -366,5 +376,30 @@
         51000
       ]
     }
+  },
+  "commercialPricing": {
+    "note": "LARGE / COMMERCIAL buildings (area > 40m2 or width > 8.5m or depth > 5m): the premium matrix no longer applies. Customer price = external area x band rate (inc VAT, INCLUDING installation + groundworks), partitions/doors/extras on top. Band rates are ESTIMATES (21 Oct 2026) derived from the matrix top end (£1,417/m2 at 36m2) with scale economies - Liam/Richard to confirm per job.",
+    "bands": [
+      {
+        "maxArea": 60,
+        "perM2": 1375
+      },
+      {
+        "maxArea": 100,
+        "perM2": 1300
+      },
+      {
+        "maxArea": 160,
+        "perM2": 1225
+      },
+      {
+        "maxArea": 250,
+        "perM2": 1150
+      },
+      {
+        "maxArea": 100000,
+        "perM2": 1100
+      }
+    ]
   }
 }

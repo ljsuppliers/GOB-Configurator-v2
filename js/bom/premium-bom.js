@@ -657,8 +657,17 @@ export function buildPremiumBom(state, componentDefs) {
   }
 
   /* ---------- ROOF ---------- */
-  const span = d - 0.2;
-  const ladder = premiumRoofLadder(span);
+  // Roof joists run front-to-back. On a LARGE building the span is split by
+  // LOAD-BEARING internal walls that run left-to-right (dir 'h'); the ladder is
+  // sized for the longest bay. Anything over 4.5m without one is flagged.
+  let span = d - 0.2;
+  const lbLines = (Array.isArray(state.partitions) ? state.partitions : []).filter((p) => p && p.loadBearing && p.dir === 'h' && Number(p.len) > 0).map((p) => Number(p.y) / 1000).sort((a, b) => a - b);
+  if (lbLines.length) {
+    const pts = [0.15, ...lbLines, d - 0.15];
+    span = Math.max(...pts.slice(1).map((y, i) => y - pts[i]));
+  }
+  if (span > 4.6) add('STRUCTURAL CHECK (not a material)', 1, `Roof bay of ${span.toFixed(2)}m front-to-back exceeds the ${lbLines.length ? 'longest bay our ladder tables cover' : '4.5m our joist tables cover'}: add a LOAD-BEARING left-to-right internal wall (tick 'load-bearing' on the partition) or a steel beam. Structural engineer sign-off required for a building this size.`, { costQty: 0 });
+  const ladder = premiumRoofLadder(Math.min(span, 4.6));
   const REAR_OVERSAIL = 0.10; // joists AND firrings oversail the rear 100mm on every job
   // Joists: rear plate to front top plate = external depth, + 100mm rear
   // oversail. They only run on past the FRONT wall on TALL builds.
@@ -816,8 +825,15 @@ export function buildPremiumBom(state, componentDefs) {
   if (state.straightPartition?.enabled) {
     partWalls.push({ label: 'straight partition', run: d - 0.3, door: !!state.straightPartition.hasDoor });
   }
+  // Internal walls drawn on the plan (any number)
+  for (const [i, pw] of (Array.isArray(state.partitions) ? state.partitions : []).entries()) {
+    if (!pw || !(Number(pw.len) > 0)) continue;
+    const nd = (pw.doors || []).length;
+    partWalls.push({ label: `${pw.label || 'wall ' + (i + 1)}${pw.loadBearing ? ' (load-bearing)' : ''}`, run: Number(pw.len) / 1000, door: nd > 0, doors: nd, loadBearing: !!pw.loadBearing });
+  }
   for (const pwall of partWalls) {
-    const studsN = Math.ceil(pwall.run / 0.4) + 2 + (pwall.door ? 4 : 0);
+    const nDoors = pwall.doors ?? (pwall.door ? 1 : 0);
+    const studsN = Math.ceil(pwall.run / 0.4) + 2 + nDoors * 4 + (pwall.loadBearing ? Math.ceil(pwall.run / 0.4) : 0); // load-bearing: studs doubled
     const lm = Math.ceil((studsN * wallH + 3 * pwall.run) * 1.10);
     add('4x2 tanalised C24 timber', lm, `PARTITION (${pwall.label}, ${pwall.run.toFixed(2)}m): ${studsN} studs @400mm × ${wallH.toFixed(2)}m + head/sole plates + noggins, +10%`,
       { cuts: [{ len: wallH, n: studsN, what: 'partition studs' }, { len: pwall.run, n: 3, what: 'partition plates + noggins', join: true }], separate: `PARTITION ${pwall.label}` });
@@ -827,9 +843,9 @@ export function buildPremiumBom(state, componentDefs) {
     add('Multi-finish plaster (25kg bag)', Math.ceil(boardM2p / 8) + 1, `PARTITION (${pwall.label}): skim both sides`, { separate: `PARTITION ${pwall.label}` });
     add('Skirting board', Math.ceil(pwall.run * 2), `PARTITION (${pwall.label}): both sides`, { separate: `PARTITION ${pwall.label}` });
     if (pwall.door) {
-      add('Interior door 826x2040', 1, `PARTITION (${pwall.label}): interior door`, { separate: `PARTITION ${pwall.label}` });
-      add('Interior door lining & frame', 1, `PARTITION (${pwall.label})`, { separate: `PARTITION ${pwall.label}` });
-      add('Interior door ironmongery set', 1, `PARTITION (${pwall.label}): hinges, latch, handles`, { separate: `PARTITION ${pwall.label}` });
+      add('Interior door 826x2040', nDoors, `PARTITION (${pwall.label}): ${nDoors} interior door${nDoors === 1 ? '' : 's'}`, { separate: `PARTITION ${pwall.label}` });
+      add('Interior door lining & frame', nDoors, `PARTITION (${pwall.label})`, { separate: `PARTITION ${pwall.label}` });
+      add('Interior door ironmongery set', nDoors, `PARTITION (${pwall.label}): hinges, latch, handles`, { separate: `PARTITION ${pwall.label}` });
     }
   }
 

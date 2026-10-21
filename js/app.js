@@ -1,18 +1,18 @@
 // GOB Configurator v2 — Vue 3 App
 // Reactive state, live pricing, drawing preview, email drafting
 
-import { initPricing, calculatePrice, formatPrice, paidDirectlyItems } from './pricing.js?v=11';
-import { generateDrawing } from './drawing-engine.js?v=48';
+import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding } from './pricing.js?v=12';
+import { generateDrawing } from './drawing-engine.js?v=49';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=7';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory, restoreHistoryEntry } from './cloud-storage.js?v=8';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=59';
+import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=60';
 import { buildConstructionDrawings } from './construction.js?v=26';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=42';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
-import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=12';
+import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=13';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
@@ -77,6 +77,8 @@ function ensureStateDefaults(state) {
   if (!state.cladding) state.cladding = { front: 'anthracite-steel', left: 'anthracite-steel', right: 'anthracite-steel', rear: 'anthracite-steel' };
   if (!state.partitionRoom) state.partitionRoom = { enabled: false };
   if (!state.bathroom) state.bathroom = { enabled: false };
+  if (!Array.isArray(state.partitions)) state.partitions = []; // internal walls drawn on the plan (multi-room / commercial)
+  if (!Array.isArray(state.roomLabels)) state.roomLabels = [];
   return state;
 }
 
@@ -1259,7 +1261,7 @@ createApp({
         case 'building': return !!(s.width && s.depth && s.foundationType);
         case 'cladding': return !!(s.cladding && s.cladding.front);
         case 'doors': return (s.components || []).length > 0;
-        case 'layout': return !!((s.straightPartition && s.straightPartition.enabled) || (s.partitionRoom && s.partitionRoom.enabled) || (s.bathroom && s.bathroom.enabled) || (s.rooms && s.rooms.length > 1));
+        case 'layout': return !!((s.straightPartition && s.straightPartition.enabled) || (s.partitionRoom && s.partitionRoom.enabled) || (s.bathroom && s.bathroom.enabled) || (s.rooms && s.rooms.length > 1) || (s.partitions && s.partitions.length));
         case 'electrics': return any(ex) || (s.externalFeatures || []).length > 0 || (s.acUnits || []).length > 0;
         case 'extras': return any(se) || (s.customExtras || []).some((c) => c.label) || (s.customDeductions || []).some((c) => c.label) || any(s.deductions) || (s.discount && s.discount.type !== 'none' && s.discount.amount > 0) || (s.featureWalls && any(s.featureWalls));
         case 'notes': return !!(s.customNotes && (s.customNotes.quote || s.customNotes.email || s.customNotes.drawing)) || (s.drawingLabels || []).length > 0;
@@ -1962,6 +1964,51 @@ createApp({
     removeComponent(id) {
       this.state.components = this.state.components.filter(c => c.id !== id);
     },
+    /* ───────────── INTERNAL WALLS (any number) + ROOM LABELS ───────────── */
+    isLargeBuilding() { return this.state ? isLargeBuilding(this.state) : false; },
+    partitionSummary() { return this.state ? partitionSummary(this.state) : { count: 0, metres: 0, doors: 0 }; },
+    addPartition(dir) {
+      if (!Array.isArray(this.state.partitions)) this.state.partitions = [];
+      const w = this.state.width, d = this.state.depth, n = this.state.partitions.length + 1;
+      const p = dir === 'h'
+        ? { id: 'pw-' + Date.now(), dir: 'h', x: 150, y: Math.round(d / 2 / 50) * 50, len: w - 300, label: '', doors: [{ pos: 0.5, swing: 'a', flipped: false }], loadBearing: false }
+        : { id: 'pw-' + Date.now(), dir: 'v', x: Math.round(w / 2 / 50) * 50, y: 150, len: d - 300, label: '', doors: [{ pos: 0.5, swing: 'a', flipped: false }], loadBearing: false };
+      this.state.partitions.push(p);
+    },
+    removePartition(i) { this.state.partitions.splice(i, 1); },
+    addPartitionDoor(p) { if (!Array.isArray(p.doors)) p.doors = []; p.doors.push({ pos: 0.5, swing: 'a', flipped: false }); },
+    removePartitionDoor(p, j) { p.doors.splice(j, 1); },
+    addRoomLabel() {
+      if (!Array.isArray(this.state.roomLabels)) this.state.roomLabels = [];
+      this.state.roomLabels.push({ id: 'rl-' + Date.now(), text: 'Office', x: Math.round(this.state.width / 2 / 50) * 50, y: Math.round(this.state.depth / 2 / 50) * 50 });
+    },
+    removeRoomLabel(i) { this.state.roomLabels.splice(i, 1); },
+    /** Quick start for a commercial layout: a left-to-right corridor wall pair down the middle with rooms either side. */
+    addCorridorLayout() {
+      const w = this.state.width, d = this.state.depth;
+      const corridor = 1500, half = Math.round((d - corridor) / 2 / 50) * 50;
+      this.state.partitions = [
+        { id: 'pw-c1', dir: 'h', x: 150, y: half, len: w - 300, label: 'corridor wall (rear side)', doors: [], loadBearing: d > 5000 },
+        { id: 'pw-c2', dir: 'h', x: 150, y: half + corridor, len: w - 300, label: 'corridor wall (front side)', doors: [], loadBearing: d > 5000 },
+      ];
+      const roomW = 4000; const n = Math.max(1, Math.floor((w - 300) / roomW)); const rw = Math.round((w - 300) / n / 50) * 50;
+      for (let i = 1; i < n; i++) {
+        this.state.partitions.push({ id: 'pw-r' + i, dir: 'v', x: 150 + i * rw, y: 150, len: half - 150, label: '', doors: [], loadBearing: false });
+        this.state.partitions.push({ id: 'pw-f' + i, dir: 'v', x: 150 + i * rw, y: half + corridor, len: d - 150 - (half + corridor), label: '', doors: [], loadBearing: false });
+      }
+      // one door per room onto the corridor
+      for (let i = 0; i < n; i++) {
+        this.state.partitions[0].doors.push({ pos: (i + 0.5) / n, swing: 'b', flipped: false });
+        this.state.partitions[1].doors.push({ pos: (i + 0.5) / n, swing: 'a', flipped: false });
+      }
+      this.state.roomLabels = [];
+      for (let i = 0; i < n; i++) {
+        this.state.roomLabels.push({ id: 'rl-r' + i, text: `Office ${i + 1}`, x: 150 + i * rw + rw / 2, y: half / 2 });
+        this.state.roomLabels.push({ id: 'rl-f' + i, text: `Office ${n + i + 1}`, x: 150 + i * rw + rw / 2, y: half + corridor + (d - half - corridor) / 2 });
+      }
+      this.state.roomLabels.push({ id: 'rl-corr', text: 'Corridor', x: w / 2, y: half + corridor / 2 + 60 });
+      this.notify(`Corridor layout: ${n * 2} rooms either side of a ${corridor / 1000}m corridor`);
+    },
 
     removeRoom(index) {
       if (this.state.rooms.length > 1) {
@@ -2348,6 +2395,8 @@ createApp({
         buildFeatures.push(foundationLabels[s.foundationType] || 'Ground screw foundation system');
       }
 
+      // Internal walls drawn on the plan
+      { const ps = partitionSummary(s); if (ps.count) buildFeatures.push(`Internal partition walls (${ps.count} wall${ps.count === 1 ? '' : 's'}, ${ps.metres.toFixed(1)}m in total) with ${ps.doors} interior door${ps.doors === 1 ? '' : 's'}, plastered and decorated both sides, creating ${ps.count + 1} separate rooms as per the drawing`); }
       // Partition
       if (s.straightPartition?.enabled) {
         const leftLabel = s.straightPartition.leftLabel || 'Office';
@@ -2764,6 +2813,9 @@ createApp({
         discountLabel: this.price.discountLabel || this.state.discount?.description || 'Discount',
         total: this.price.totalIncVat,
         
+        // Internal walls (multi-room)
+        partitions: partitionSummary(this.state),
+        largeBuilding: isLargeBuilding(this.state),
         // Straight partition
         straightPartition: this.state.straightPartition?.enabled ? {
           enabled: true,

@@ -26,8 +26,21 @@ export function getInternalDimensions(state) {
   return { width: intWidth, depth: intDepth, height: intHeight };
 }
 
+/** Large / commercial building: outside the premium matrix and the standard electrical pack. */
+export function isLargeBuilding(state) {
+  const w = (state.width || 0) / 1000, d = (state.depth || 0) / 1000;
+  return w * d > 40 || w > 8.5 || d > 5;
+}
+export function partitionSummary(state) {
+  const parts = (Array.isArray(state.partitions) ? state.partitions : []).filter((p) => p && Number(p.len) > 0);
+  const metres = parts.reduce((s, p) => s + Number(p.len) / 1000, 0);
+  const doors = parts.reduce((s, p) => s + ((p.doors || []).length), 0);
+  return { count: parts.length, metres: Math.round(metres * 10) / 10, doors, parts };
+}
+
 export function getDownlightCount(state) {
   const sqm = (state.width / 1000) * (state.depth / 1000);
+  if (isLargeBuilding(state)) return Math.ceil(sqm / 2.5);
   if (sqm <= 9) return 4;
   if (sqm <= 15) return 6;
   if (sqm <= 24) return 8;
@@ -36,6 +49,7 @@ export function getDownlightCount(state) {
 }
 
 export function getSocketCount(state) {
+  if (isLargeBuilding(state)) return Math.max(5, Math.ceil((state.width / 1000) * (state.depth / 1000) / 5));
   return 5;
 }
 
@@ -49,6 +63,7 @@ export function getLightingZones(state) {
   let zones = 1;
   if (state.straightPartition?.enabled) zones++;
   if (state.partitionRoom?.enabled) zones++;
+  zones += partitionSummary(state).count; // one zone per internal wall (= one more room)
   return zones;
 }
 
@@ -124,6 +139,13 @@ export function calculatePrice(state) {
     result.extras.push({ label: partitionLabel, baseLabel: partitionLabel, qty: 1, unitPrice: partitionPrice, price: partitionPrice, section: 'internal' });
   }
 
+  // Internal partition walls (any number, drawn on the plan): per metre + per door
+  const ps = partitionSummary(state);
+  if (ps.count) {
+    const perM = struct.partitionWallPerM?.price || 185, perDoor = struct.partitionDoor?.price || 450;
+    const label = `Internal partition walls: ${ps.count} wall${ps.count === 1 ? '' : 's'}, ${ps.metres.toFixed(1)}m in total${ps.doors ? `, ${ps.doors} interior door${ps.doors === 1 ? '' : 's'}` : ''}`;
+    result.extras.push({ label, baseLabel: label, qty: 1, unitPrice: 0, price: Math.round(ps.metres * perM + ps.doors * perDoor), section: 'internal' });
+  }
   if (se.secretDoor) addExtra(result, struct.secretDoor, 1, 'doors');
   if (se.epdmUpgrade && struct.epdmUpgrade) addExtra(result, { ...struct.epdmUpgrade, label: struct.epdmUpgrade.price ? struct.epdmUpgrade.label : `${struct.epdmUpgrade.label} - PRICE TBC` }, 1, 'external');
   // Extra decking: typed sqm wins; otherwise worked out from the drawing
@@ -349,6 +371,13 @@ function lookupBasePrice(state) {
   // (Classic simply loses the canopy/decking via the standard deductions).
   // The matrix INCLUDES installation, which the quote shows as its own line,
   // so the building line = matrix - installation.
+  // LARGE / COMMERCIAL: area x band rate (inc. installation), see prices.commercialPricing
+  if (isLargeBuilding(state) && pricesData.commercialPricing) {
+    const area = (state.width / 1000) * (state.depth / 1000);
+    const band = pricesData.commercialPricing.bands.find((b) => area <= b.maxArea) || pricesData.commercialPricing.bands.at(-1);
+    const total = Math.round(area * band.perM2 / 50) * 50;
+    return Math.max(0, total - calculateInstallation(state));
+  }
   const mp = premiumMatrixPrice(state.width / 1000, state.depth / 1000);
   if (mp !== null) return Math.max(0, mp - calculateInstallation(state));
   const matrix = pricesData.basePrices[tier];

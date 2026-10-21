@@ -581,11 +581,11 @@
           <div class="dim-row">
             <div>
               <label>External width (mm)</label>
-              <input type="number" v-model.number="state.width" min="2000" max="12000" step="50">
+              <input type="number" v-model.number="state.width" min="2000" max="30000" step="50">
             </div>
             <div>
               <label>External depth (mm) <span style="color:#888;font-weight:normal">excl. canopy/decking</span></label>
-              <input type="number" v-model.number="state.depth" min="2000" max="8000" step="50">
+              <input type="number" v-model.number="state.depth" min="2000" max="15000" step="50">
             </div>
             <div>
               <label>Height (mm)</label>
@@ -800,6 +800,43 @@
               </div>
             </div>
           </details>
+          <h5 class="cfg-sub">Internal walls <span class="crm-muted" style="font-weight:normal;">(any number, drawn on the plan)</span></h5>
+          <p v-if="isLargeBuilding()" class="crm-muted" style="margin:0 0 6px;font-size:11px;">Large building: priced per m² (commercial band) and each wall becomes a lighting zone. Tick <b>load-bearing</b> on left-to-right walls that split the roof span (needed when the depth is over 4.5m).</p>
+          <div class="btn-row" style="margin-bottom:6px;">
+            <button type="button" class="btn-tiny" @click="addPartition('v')">+ wall front-to-back</button>
+            <button type="button" class="btn-tiny" @click="addPartition('h')">+ wall left-to-right</button>
+            <button type="button" class="btn-tiny" @click="addCorridorLayout()" title="Replaces the current walls with a central corridor and rooms either side">corridor layout</button>
+          </div>
+          <div v-for="(p, i) in state.partitions" :key="p.id" class="placed-component" style="flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:4px;width:100%;flex-wrap:wrap;">
+              <select v-model="p.dir" class="input-sm" style="width:118px;"><option value="v">front-to-back</option><option value="h">left-to-right</option></select>
+              <span class="comp-pos">x</span><input type="number" v-model.number="p.x" class="input-sm" style="width:62px;" step="50" min="0" :max="state.width">
+              <span class="comp-pos">y</span><input type="number" v-model.number="p.y" class="input-sm" style="width:62px;" step="50" min="0" :max="state.depth">
+              <span class="comp-pos">len</span><input type="number" v-model.number="p.len" class="input-sm" style="width:66px;" step="50" min="300">
+              <button class="comp-delete" @click="removePartition(i)" title="Remove wall">&#215;</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;width:100%;margin-top:4px;flex-wrap:wrap;">
+              <input type="text" v-model="p.label" class="input-sm" style="width:120px;" placeholder="label (optional)">
+              <label class="checkbox-row" style="margin:0;"><input type="checkbox" v-model="p.loadBearing"> load-bearing</label>
+              <button type="button" class="btn-tiny" @click="addPartitionDoor(p)">+ door</button>
+            </div>
+            <div v-for="(dr, j) in p.doors" :key="j" style="display:flex;align-items:center;gap:6px;width:100%;margin-top:3px;font-size:11px;">
+              <span class="comp-pos">door {{ j + 1 }}</span>
+              <input type="range" v-model.number="dr.pos" min="0" max="1" step="0.05" style="flex:1;" title="Position along the wall">
+              <select v-model="dr.swing" class="input-sm" style="width:84px;"><option value="a">swing A</option><option value="b">swing B</option></select>
+              <label style="font-size:11px;"><input type="checkbox" v-model="dr.flipped"> flip</label>
+              <button class="comp-delete" @click="removePartitionDoor(p, j)" title="Remove door">&#215;</button>
+            </div>
+          </div>
+          <p v-if="state.partitions.length" class="crm-muted" style="font-size:11px;margin:4px 0 0;">{{ partitionSummary().count }} walls, {{ partitionSummary().metres }}m, {{ partitionSummary().doors }} doors. x and y are from the rear-left corner of the building (mm); a front-to-back wall runs from y downwards, a left-to-right wall runs from x rightwards.</p>
+          <h5 class="cfg-sub">Room labels</h5>
+          <div class="btn-row" style="margin-bottom:6px;"><button type="button" class="btn-tiny" @click="addRoomLabel()">+ room label</button></div>
+          <div v-for="(l, i) in state.roomLabels" :key="l.id" class="placed-component" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+            <input type="text" v-model="l.text" class="input-sm" style="width:110px;">
+            <span class="comp-pos">x</span><input type="number" v-model.number="l.x" class="input-sm" style="width:66px;" step="50">
+            <span class="comp-pos">y</span><input type="number" v-model.number="l.y" class="input-sm" style="width:66px;" step="50">
+            <button class="comp-delete" @click="removeRoomLabel(i)">&#215;</button>
+          </div>
           <h5 class="cfg-sub">Straight Partition</h5>
           <div class="checkbox-row">
             <input type="checkbox" v-model="state.straightPartition.enabled" id="chk-straight-partition">
@@ -2604,7 +2641,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=196"></script>
+<script type="module" src="js/app.js?v=197"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

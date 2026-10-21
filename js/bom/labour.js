@@ -60,6 +60,11 @@ export function computeLabour(state, componentDefs) {
   day('groundworks', 'Groundworks - Ground Screw or Concrete Block System (2 days)', GROUNDWORKS_DAYS);
 
   // ---- EXTRAS (clear additions to the standard build) ----
+  { // internal partition walls drawn on the plan: ~0.5 day per 3m of wall + 0.25 day per door (ESTIMATE)
+    const parts = (Array.isArray(state.partitions) ? state.partitions : []).filter((p) => p && Number(p.len) > 0);
+    const lm = parts.reduce((s, p) => s + Number(p.len) / 1000, 0); const doors = parts.reduce((s, p) => s + ((p.doors || []).length), 0);
+    if (lm > 0) day('partitions', `Internal partition walls: ${lm.toFixed(1)}m + ${doors} door${doors === 1 ? '' : 's'} (0.5 day per 3m + 0.25 day per door)`, Math.round((lm / 3 * 0.5 + doors * 0.25) * 2) / 2, true);
+  }
   if (state.partitionRoom?.enabled) day('partition', `Partition room (${state.partitionRoom.label || state.partitionRoom.type}) incl. interior door`, 2.0);
   if (extH >= 2750) day('height', `Extra height (${(extH / 1000).toFixed(2)}m external): taller walls, joist oversail canopy box, more board`, 1.0, true);
   if (state.bathroom?.enabled) day('bathroom', `${state.bathroom.type === 'wc' ? 'WC' : 'Shower room'} carpentry/tiling fit-out (plumber separate, see subcontract)`, 1.0, true);
@@ -89,7 +94,7 @@ export function computeLabour(state, componentDefs) {
   // Electrician labour only (GOB supplies all electrical materials): £500 small
   // (4 downlights) / £600 medium (6-8) / £700 large (10-12) - Liam 2026-09-05.
   const intM2 = (w - 0.3) * (d - 0.3);
-  const elecFee = intM2 <= 12 ? 500 : intM2 <= 24 ? 600 : 700;
+  const elecFee = intM2 > 36 ? Math.round(intM2 * 25) : intM2 <= 12 ? 500 : intM2 <= 24 ? 600 : 700; // large buildings: ~£25/m2 (ESTIMATE)
   efixed('electrical_package', `Electrician - standard pack 1st + 2nd fix (${intM2 <= 12 ? 'small' : intM2 <= 24 ? 'medium' : 'large'} building), labour only`, elecFee);
   if (hasCanopy) efixed('canopy_lights', `Canopy lights ×${Math.max(1, Math.floor(w))} (£25 each)`, Math.max(1, Math.floor(w)) * 25);
   if ((state.acUnits || []).length) efixed('ac', `Air conditioning install ×${state.acUnits.length} (£400 each)`, state.acUnits.length * 400);
