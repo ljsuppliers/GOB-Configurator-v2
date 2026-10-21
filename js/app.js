@@ -2,11 +2,11 @@
 // Reactive state, live pricing, drawing preview, email drafting
 
 import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding } from './pricing.js?v=12';
-import { generateDrawing } from './drawing-engine.js?v=50';
+import { generateDrawing, generateSitePlan } from './drawing-engine.js?v=51';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=7';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
-import { initPlanEditor } from './ui/plan-editor.js?v=1';
+import { initPlanEditor, finishDraft } from './ui/plan-editor.js?v=2';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory, restoreHistoryEntry } from './cloud-storage.js?v=8';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=60';
@@ -80,6 +80,8 @@ function ensureStateDefaults(state) {
   if (!state.bathroom) state.bathroom = { enabled: false };
   if (!Array.isArray(state.partitions)) state.partitions = []; // internal walls drawn on the plan (multi-room / commercial)
   if (!Array.isArray(state.roomLabels)) state.roomLabels = [];
+  if (!Array.isArray(state.siteObjects)) state.siteObjects = []; // existing buildings, parking, paths, trees around the building
+  if (state.siteImage === undefined) state.siteImage = null; // background map / aerial photo (downscaled JPEG data URL)
   return state;
 }
 
@@ -106,6 +108,10 @@ createApp({
       // Plan editor (internal walls / doors / labels on the floor plan)
       planTool: 'select',
       planSelection: null,
+      planSheet: 'building', // 'building' | 'site'
+      planZoom: { k: 1, x: 0, y: 0 },
+      siteDraft: null, // path / fence being drawn point by point
+      calib: null, // { pts:[{x,y},{x,y}], distance:'' } for scaling a background map
       nextCompId: 100,
       nextFeatureId: 1000,
       nextAcUnitId: 2000,
@@ -637,7 +643,9 @@ createApp({
 
     drawingSvg() {
       if (!this.state || !this.appData.components) return '';
-      return generateDrawing(this.state, this.appData.components, this.appData.cladding, { selection: this.planSelection });
+      const ui = { selection: this.planSelection, calib: this.calib };
+      if (this.planSheet === 'site') return generateSitePlan(this.state, this.appData.components, this.appData.cladding, ui);
+      return generateDrawing(this.state, this.appData.components, this.appData.cladding, ui);
     },
 
     doorTypes() {
@@ -1980,12 +1988,62 @@ createApp({
       this.state.partitions.push(p);
     },
     removePartition(i) { this.state.partitions.splice(i, 1); this.planSelection = null; },
-    setPlanTool(t) { this.planTool = this.planTool === t ? 'select' : t; },
+    setPlanTool(t) { if (this.siteDraft) finishDraft(); this.planTool = this.planTool === t ? 'select' : t; if (document.activeElement && document.activeElement.tagName === 'BUTTON') document.activeElement.blur(); },
+    setPlanSheet(s) { this.planSheet = s; this.planSelection = null; this.planTool = 'select'; if (this.siteDraft) finishDraft(); this.zoomReset(); },
+    // ── zoom / pan (CSS transform on the canvas wrapper; the editor reads positions through getScreenCTM so it follows) ──
+    zoomAt(px, py, f) {
+      const z = this.planZoom; const k = Math.max(0.25, Math.min(8, z.k * f)); const r = k / z.k;
+      this.planZoom = { k, x: px - (px - z.x) * r, y: py - (py - z.y) * r };
+    },
+    zoomBy(f) { const c = document.getElementById('drawing-canvas'); const w = c ? c.clientWidth : 800, h = c ? c.clientHeight : 600; this.zoomAt(w / 2, h / 2, f); },
+    zoomReset() { this.planZoom = { k: 1, x: 0, y: 0 }; },
+    // ── site objects ──
+    addSiteObject(kind) {
+      if (!Array.isArray(this.state.siteObjects)) this.state.siteObjects = [];
+      const id = 'so-' + Date.now().toString(36); const W = this.state.width, D = this.state.depth;
+      const base = { building: { kind, x: W + 3000, y: 0, w: 5000, h: 4000, rot: 0, label: 'Existing building' }, parking: { kind, x: -3500, y: 0, w: 2400, h: 4800, rot: 0, label: '' },
+        tree: { kind, x: W + 2000, y: D + 2500, r: 1500, label: '' }, text: { kind, x: W / 2, y: D + 2500, label: 'Text' }, north: { kind, x: -2000, y: -2000, rot: 0 },
+        path: { kind, pts: [{ x: W / 2, y: D + 500 }, { x: W / 2, y: D + 4500 }], width: 1200, label: '' }, fence: { kind, pts: [{ x: -1500, y: -1500 }, { x: W + 1500, y: -1500 }], width: 0, label: '' } }[kind];
+      if (!base) return;
+      const o = { id, ...base }; this.state.siteObjects.push(o); this.planSelection = { type: 'site', id };
+    },
+    removeSiteObject(i) { this.state.siteObjects.splice(i, 1); this.planSelection = null; },
+    siteObjectName(o) { return { building: 'Existing building', parking: 'Parking space', path: 'Path / drive', fence: 'Fence / boundary', tree: 'Tree', text: 'Text', north: 'North arrow' }[o.kind] || o.kind; },
+    uploadSiteImage(ev) {
+      const f = ev.target.files && ev.target.files[0]; if (!f) return; ev.target.value = '';
+      const img = new Image(); const url = URL.createObjectURL(f);
+      img.onload = () => {
+        const max = 1600; const sc = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+        const dataUrl = c.toDataURL('image/jpeg', 0.8);
+        if (dataUrl.length > 700000) { this.notify('That image is too detailed to store with the design. Try a smaller crop.'); return; }
+        // default: 1 image px = 25mm, centred behind the building
+        const w = c.width * 25, h = c.height * 25;
+        this.state.siteImage = { dataUrl, x: Math.round((this.state.width - w) / 2), y: Math.round((this.state.depth - h) / 2), w, h, opacity: 0.6, pxW: c.width, pxH: c.height };
+        this.planSheet = 'site'; this.notify('Map added. Use Calibrate (two clicks on a known distance) to set its scale.');
+      };
+      img.src = url;
+    },
+    removeSiteImage() { this.state.siteImage = null; this.calib = null; },
+    applyCalibration() {
+      const c = this.calib, im = this.state.siteImage; if (!c || c.pts.length < 2 || !im) return;
+      const real = parseFloat(c.distance) * 1000; if (!(real > 0)) { this.notify('Enter the real distance in metres'); return; }
+      const [a, b] = c.pts; const drawn = Math.hypot(b.x - a.x, b.y - a.y); if (!(drawn > 0)) return;
+      const f = real / drawn; // scale the image about the first click so that point stays put
+      im.w = Math.round(im.w * f); im.h = Math.round(im.h * f); im.x = Math.round(a.x + (im.x - a.x) * f); im.y = Math.round(a.y + (im.y - a.y) * f);
+      this.calib = null; this.planTool = 'select'; this.notify('Map scaled: ' + (f * 25).toFixed(0) + 'mm per image pixel');
+    },
+    exportSitePlanPDF() {
+      this.showExportMenu = false; const was = this.planSheet; this.planSheet = 'site'; this.planSelection = null;
+      this.$nextTick(() => { const svg = document.querySelector('#drawing-canvas svg'); if (svg) exportDrawingPDF(this.state, svg.outerHTML, 'Site plan'); this.planSheet = was; });
+    },
     deletePlanSelection() {
       const s = this.planSelection; if (!s) return;
       if (s.type === 'wall') this.state.partitions = this.state.partitions.filter((p) => p.id !== s.id);
       else if (s.type === 'door') { const p = this.state.partitions.find((x) => x.id === s.id); if (p && p.doors) p.doors.splice(s.j, 1); }
       else if (s.type === 'label') this.state.roomLabels = this.state.roomLabels.filter((l) => l.id !== s.id);
+      else if (s.type === 'site') this.state.siteObjects = (this.state.siteObjects || []).filter((o) => o.id !== s.id);
       this.planSelection = null;
     },
     planSelectionText() {
@@ -1993,6 +2051,7 @@ createApp({
       if (s.type === 'wall') { const p = this.state.partitions.find((x) => x.id === s.id); return p ? `Wall ${p.dir === 'h' ? 'left-to-right' : 'front-to-back'}, ${(p.len / 1000).toFixed(2)}m${p.loadBearing ? ', load-bearing' : ''}` : ''; }
       if (s.type === 'door') return 'Door';
       if (s.type === 'label') { const l = this.state.roomLabels.find((x) => x.id === s.id); return l ? `Label "${l.text}"` : ''; }
+      if (s.type === 'site') { const o = (this.state.siteObjects || []).find((x) => x.id === s.id); return o ? this.siteObjectName(o) + (o.w ? ` ${(o.w / 1000).toFixed(1)}m x ${(o.h / 1000).toFixed(1)}m` : o.r ? ` ${(o.r * 2 / 1000).toFixed(1)}m canopy` : '') + ' (drag to move, corner to resize)' : ''; }
       return '';
     },
     addPartitionDoor(p) { if (!Array.isArray(p.doors)) p.doors = []; p.doors.push({ pos: 0.5, swing: 'a', flipped: false }); },

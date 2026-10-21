@@ -27,7 +27,7 @@ function formatVersionedFilename(baseType, customerName, date, quoteNumber) {
   return version > 1 ? `${stem} v${version}.pdf` : `${stem}.pdf`;
 }
 
-export function exportDrawingPDF(state, svgString) {
+export function exportDrawingPDF(state, svgString, baseType = 'Drawing') {
   // Check for required libraries
   if (typeof jspdf === 'undefined' && typeof jsPDF === 'undefined') {
     alert('jsPDF library not loaded.');
@@ -41,7 +41,7 @@ export function exportDrawingPDF(state, svgString) {
     format: 'a3'
   });
 
-  const filename = formatVersionedFilename('Drawing', state.customer?.name, state.customer?.date, state.customer?.number);
+  const filename = formatVersionedFilename(baseType, state.customer?.name, state.customer?.date, state.customer?.number);
 
   // Convert SVG to canvas, then to image in PDF
   const canvas = document.createElement('canvas');

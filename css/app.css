@@ -151,7 +151,11 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  position: relative;
 }
+#drawing-zoom { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transform-origin: 0 0; will-change: transform; }
+#drawing-canvas.plan-pan, #drawing-canvas.plan-pan svg { cursor: grab; }
 
 #drawing-canvas svg {
   max-width: 100%;
@@ -1052,3 +1056,17 @@ html, body {
 #drawing-canvas .plan-wall:hover rect:nth-child(2) { stroke:#0f766e; }
 #drawing-canvas .plan-room-label:hover rect:first-child { stroke:#0f766e; stroke-width:3; }
 #drawing-canvas.plan-edit svg { cursor:crosshair; }
+
+/* site plan tools / zoom */
+.sheet-toggle { display:inline-flex; border:1px solid #cbd5e1; border-radius:6px; overflow:hidden; margin-right:4px; }
+.sheet-toggle button { border:0 !important; border-radius:0 !important; margin:0; }
+.zoom-box { display:inline-flex; align-items:center; gap:2px; }
+.zoom-box button { min-width:26px; padding:2px 6px; }
+.zoom-pct { font-size:11px; min-width:40px; text-align:center; cursor:pointer; color:#555; }
+.calib-box { display:inline-flex; align-items:center; gap:4px; font-size:12px; }
+#drawing-canvas .site-obj { cursor:move; }
+#drawing-canvas .site-handle { fill:#0f766e; stroke:#fff; stroke-width:30; opacity:0; cursor:nwse-resize; }
+#drawing-canvas .site-obj:hover .site-handle, #drawing-canvas .site-obj.selected .site-handle { opacity:1; }
+#drawing-canvas .site-pt { fill:#fff; stroke:#0f766e; stroke-width:30; opacity:0; cursor:pointer; }
+#drawing-canvas .site-obj:hover .site-pt, #drawing-canvas .site-obj.selected .site-pt { opacity:1; }
+.placed-component.selected { outline:2px solid #0f766e; }

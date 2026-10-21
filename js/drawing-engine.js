@@ -1080,6 +1080,71 @@ function renderRoomLabels(labels, ui) {
   return s;
 }
 
+
+// ── Site layer: things around the building, not priced ───────────────────────
+// kinds: image (background map), building, parking, path, fence, tree, text, north
+export function siteBounds(objs, img) {
+  let minX = 0, minY = 0, maxX = 0, maxY = 0, any = false;
+  const add = (x, y) => { if (!Number.isFinite(x) || !Number.isFinite(y)) return; any = true; minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); };
+  if (img && img.w > 0) { add(img.x, img.y); add(img.x + img.w, img.y + img.h); }
+  for (const o of (objs || [])) {
+    if (!o) continue;
+    if (o.kind === 'building' || o.kind === 'parking') { const r = Math.max(o.w, o.h); add(o.x - (o.rot ? r : 0), o.y - (o.rot ? r : 0)); add(o.x + o.w + (o.rot ? r : 0), o.y + o.h + (o.rot ? r : 0)); }
+    else if (o.kind === 'tree') { add(o.x - o.r, o.y - o.r); add(o.x + o.r, o.y + o.r); }
+    else if (o.kind === 'path' || o.kind === 'fence') { for (const p of (o.pts || [])) { add(p.x - 600, p.y - 600); add(p.x + 600, p.y + 600); } }
+    else if (o.kind === 'text' || o.kind === 'north') { add(o.x - 1200, o.y - 600); add(o.x + 1200, o.y + 600); }
+  }
+  return { minX, minY, maxX, maxY, any };
+}
+function renderSiteImage(img) {
+  if (!img || !img.dataUrl || !(img.w > 0)) return '';
+  return tag('g', { class: 'site-image' }, tag('image', { href: img.dataUrl, x: img.x, y: img.y, width: img.w, height: img.h, opacity: img.opacity ?? 0.6, preserveAspectRatio: 'none' }));
+}
+function renderSiteObjects(objs, ui, opts) {
+  let s = '';
+  const sel = (ui && ui.selection) || null;
+  const big = opts && opts.big; // site-plan sheet: heavier text
+  const fs = big ? 260 : 150;
+  for (const o of (objs || [])) {
+    if (!o || !o.id) continue;
+    const isSel = sel && sel.type === 'site' && sel.id === o.id;
+    const hl = isSel ? { stroke: '#0f766e', sw: 6 } : null;
+    let g = '';
+    const cx = (o.x || 0) + (o.w || 0) / 2, cy = (o.y || 0) + (o.h || 0) / 2;
+    const rot = o.rot ? ` transform="rotate(${o.rot} ${cx} ${cy})"` : '';
+    if (o.kind === 'building') {
+      g += `<g${rot}>` + rc(o.x, o.y, o.w, o.h, { fill: '#e6e6e6', sw: hl ? 6 : 3, stroke: hl ? hl.stroke : '#666' })
+        + tag('line', { x1: o.x, y1: o.y, x2: o.x + o.w, y2: o.y + o.h, stroke: '#bbb', 'stroke-width': 2 }) + tag('line', { x1: o.x + o.w, y1: o.y, x2: o.x, y2: o.y + o.h, stroke: '#bbb', 'stroke-width': 2 })
+        + tx(cx, cy + fs * 0.35, o.label || 'Existing building', fs, { color: '#555' }) + '</g>';
+      g += tag('circle', { class: 'site-handle', 'data-so-id': o.id, cx: o.x + o.w, cy: o.y + o.h, r: 110 });
+    } else if (o.kind === 'parking') {
+      const along = o.w >= o.h ? 'w' : 'h'; const bayW = 2500; const n = Math.max(1, Math.round((along === 'w' ? o.w : o.h) / bayW));
+      g += `<g${rot}>` + rc(o.x, o.y, o.w, o.h, { fill: '#f1f1f1', sw: hl ? 6 : 2, stroke: hl ? hl.stroke : '#777' });
+      for (let i = 1; i < n; i++) g += along === 'w' ? ln(o.x + (o.w / n) * i, o.y, o.x + (o.w / n) * i, o.y + o.h, 2, '#888') : ln(o.x, o.y + (o.h / n) * i, o.x + o.w, o.y + (o.h / n) * i, 2, '#888');
+      g += tx(cx, cy + fs * 0.35, o.label || `Parking (${n} bays)`, fs * 0.9, { color: '#555' }) + '</g>';
+      g += tag('circle', { class: 'site-handle', 'data-so-id': o.id, cx: o.x + o.w, cy: o.y + o.h, r: 110 });
+    } else if (o.kind === 'path' || o.kind === 'fence') {
+      const pts = (o.pts || []).map((p) => `${p.x},${p.y}`).join(' ');
+      if (o.kind === 'path') g += tag('polyline', { points: pts, fill: 'none', stroke: hl ? hl.stroke : '#c9c3b5', 'stroke-width': o.width || 1200, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', opacity: 0.85 });
+      else g += tag('polyline', { points: pts, fill: 'none', stroke: 'transparent', 'stroke-width': 500 }) + tag('polyline', { points: pts, fill: 'none', stroke: hl ? hl.stroke : '#6b4f2a', 'stroke-width': hl ? 60 : 40, 'stroke-dasharray': '300,150' });
+      (o.pts || []).forEach((p, pi) => { g += tag('circle', { class: 'site-pt', 'data-so-id': o.id, 'data-i': pi, cx: p.x, cy: p.y, r: 90 }); });
+      const first = (o.pts || [])[0]; if (first && o.label) g += tx(first.x, first.y - 200, o.label, fs * 0.9, { color: '#555' });
+    } else if (o.kind === 'tree') {
+      g += tag('circle', { cx: o.x, cy: o.y, r: o.r || 1500, fill: '#cfe3cf', stroke: hl ? hl.stroke : '#5f8f5f', 'stroke-width': hl ? 6 : 3 }) + tag('circle', { cx: o.x, cy: o.y, r: 150, fill: '#6b4f2a' });
+      if (o.label) g += tx(o.x, o.y + (o.r || 1500) + fs, o.label, fs * 0.9, { color: '#4f6f4f' });
+      g += tag('circle', { class: 'site-handle', 'data-so-id': o.id, cx: o.x + (o.r || 1500), cy: o.y, r: 110 });
+    } else if (o.kind === 'text') {
+      g += rc(o.x - 1200, o.y - fs, 2400, fs * 1.6, { fill: 'transparent' }) + tx(o.x, o.y, o.label || 'Text', fs, { color: hl ? hl.stroke : '#333', bold: true });
+    } else if (o.kind === 'north') {
+      const r = 600;
+      g += `<g transform="rotate(${o.rot || 0} ${o.x} ${o.y})">` + tag('circle', { cx: o.x, cy: o.y, r, fill: 'white', stroke: '#333', 'stroke-width': 3 })
+        + tag('polygon', { points: `${o.x},${o.y - r * 0.85} ${o.x - r * 0.3},${o.y + r * 0.3} ${o.x},${o.y} ${o.x + r * 0.3},${o.y + r * 0.3}`, fill: '#333' }) + tx(o.x, o.y + r * 0.8, 'N', r * 0.5, { bold: true }) + '</g>';
+    }
+    s += tag('g', { class: 'site-obj' + (isSel ? ' selected' : ''), 'data-so-id': o.id, 'data-kind': o.kind, style: 'cursor:move' }, g);
+  }
+  return s;
+}
+
 // Corner partition room
 function renderPartitionRoom(pr, buildingWidth, buildingDepth, wt) {
   if (!pr || !pr.enabled) return '';
@@ -1199,6 +1264,9 @@ function renderPlan(cfg) {
   const canopyProj = overhang || 400;
   const deckProj = deckingDepth || 400;
   let s = '';
+  // Site layer under everything: background map image, then the objects around the building
+  s += renderSiteImage(cfg.siteImage);
+  s += renderSiteObjects(cfg.siteObjects, cfg.ui);
 
   // For Classic: depth includes canopy area, so internal floor is larger (no external canopy projection)
   // For Signature: depth is building only, canopy projects in front, decking may extend further
@@ -1686,18 +1754,21 @@ function compose(b) {
   const boundaryRight = (b.boundaries?.show && b.boundaries?.right) ? b.boundaries.right + 300 : 0;
   const boundaryRear = (b.boundaries?.show && b.boundaries?.rear) ? b.boundaries.rear + 200 : 0;
 
-  const row2Y = row1Bottom + 250 + labH + boundaryRear;
-  const pX = margin + dim + boundaryLeft;
+  // Site layer around the building (existing buildings, paths, trees, map image): grow the plan area to fit it
+  const sb = siteBounds(b.siteObjects, b.siteImage); const LIM = 60000;
+  const siteL = Math.min(LIM, Math.max(0, -sb.minX)), siteT = Math.min(LIM, Math.max(0, -sb.minY)), siteR = Math.min(LIM, Math.max(0, sb.maxX - W)), siteB = Math.min(LIM, Math.max(0, sb.maxY - D));
+  const row2Y = row1Bottom + 250 + labH + boundaryRear + siteT;
+  const pX = margin + dim + boundaryLeft + siteL;
   // Add extra plan space for canopy and/or decking projection
   const planExtra = frontProj > 0 ? frontProj + 300 : 0;
 
   const tiW = Math.max(4000, D*2 + 1000);
   const tiH = Math.max(D + planExtra + 600, 2800);
-  const tiX = pX + W + boundaryRight + 500;
+  const tiX = pX + W + boundaryRight + siteR + 500;
   const tiY = row2Y;
 
   const totW = Math.max(row1Right + margin, tiX + tiW + margin, pX + W + boundaryRight + dim + margin);
-  const totH = row2Y + Math.max(D + planExtra, tiH) + dim + 500 + margin;
+  const totH = row2Y + Math.max(D + planExtra + siteB, tiH) + dim + 500 + margin;
 
   let s = svgDefs();
   s += rc(0,0,totW,totH,{fill:'white'});
@@ -1727,7 +1798,7 @@ function compose(b) {
   // PLAN VIEW
   const planLabelY = boundaryRear ? row2Y - boundaryRear - 160 : row2Y - 160;
   s += tx(pX+W/2, planLabelY, 'Plan View', 180, { bold:true, color:'#222' });
-  s += grp(renderPlan({ width:W, depth:D, wallThickness:150, overhang:oh, tier:b.tier, components:b.planComponents||[], rooms:b.rooms, cornerLeft:cL, cornerRight:cR, straightPartition:b.straightPartition, partitionRoom:b.partitionRoom, partitions:b.partitions, roomLabels:b.roomLabels, ui:b.ui, boundaries:b.boundaries, hasCanopy, hasDecking, deckingDepth, acUnits:b.acUnits||[], intDimWidthOffset:b.intDimWidthOffset, intDimDepthOffset:b.intDimDepthOffset }), { transform:`translate(${pX},${row2Y})`, id: 'plan-group' });
+  s += grp(renderPlan({ width:W, depth:D, wallThickness:150, overhang:oh, tier:b.tier, components:b.planComponents||[], rooms:b.rooms, cornerLeft:cL, cornerRight:cR, straightPartition:b.straightPartition, partitionRoom:b.partitionRoom, partitions:b.partitions, roomLabels:b.roomLabels, siteObjects:b.siteObjects, siteImage:b.siteImage, ui:b.ui, boundaries:b.boundaries, hasCanopy, hasDecking, deckingDepth, acUnits:b.acUnits||[], intDimWidthOffset:b.intDimWidthOffset, intDimDepthOffset:b.intDimDepthOffset }), { transform:`translate(${pX},${row2Y})`, id: 'plan-group' });
   // Add canopy/decking space to dimension line
   const planDimY = frontProj > 0 ? row2Y+D+frontProj+80 : row2Y+D+80;
   // Width dimension - offset 450 to match depth dimension distance, label below line
@@ -1913,6 +1984,8 @@ export function generateDrawing(state, componentsData, claddingData, ui) {
     partitionRoom: state.partitionRoom,
     partitions: state.partitions || [],
     roomLabels: state.roomLabels || [],
+    siteObjects: state.siteObjects || [],
+    siteImage: state.siteImage || null,
     ui: ui || null,
     externalFeatures: (state.externalFeatures || []).filter(f => (f.elevation || 'front') === 'front'),
     leftExternalFeatures: (state.externalFeatures || []).filter(f => f.elevation === 'left'),
@@ -1936,4 +2009,63 @@ export function generateDrawing(state, componentsData, claddingData, ui) {
     drawingNumber: state.customNotes?.drawingNumber || '',
     drawingNotes: state.customNotes?.drawing || '',
   });
+}
+
+
+/** SITE PLAN sheet: the building footprint in its surroundings (site objects, background map,
+ *  boundaries), auto-scaled to A3 with a scale bar and north arrow. Same #plan-group so the
+ *  editor works on it. */
+export function generateSitePlan(state, componentsData, claddingData, ui) {
+  const W = state.width, D = state.depth;
+  const isSig = state.tier !== 'classic';
+  const proj = isSig ? Math.max(state.hasCanopy !== false ? (state.overhangDepth || 400) : 0, state.hasDecking !== false ? (state.deckingDepth || 400) : 0) : 0;
+  const objs = state.siteObjects || [], img = state.siteImage || null;
+  const sb = siteBounds(objs, img);
+  const bnd = { show: state.showBoundaries || false, left: parseInt(state.site?.boundaryLeft) || 0, right: parseInt(state.site?.boundaryRight) || 0, rear: parseInt(state.site?.boundaryRear) || 0 };
+  const pad = 2500;
+  const minX = Math.min(0, sb.minX, -(bnd.show ? bnd.left + 300 : 0)) - pad, minY = Math.min(0, sb.minY, -(bnd.show ? bnd.rear + 200 : 0)) - pad;
+  const maxX = Math.max(W, sb.maxX, W + (bnd.show ? bnd.right + 300 : 0)) + pad, maxY = Math.max(D + proj, sb.maxY) + pad;
+  const bw = maxX - minX, bh = maxY - minY;
+  TS = Math.max(1, Math.min(3, Math.max(bw, bh) / 9000));
+  const margin = 700 * TS, dim = 700 * TS, labH = 400 * TS;
+  const pX = margin + dim, pY = margin + labH;
+  const tiH = Math.max(2800 * TS, Math.min(bh, Math.max(bw, bh) * 0.4)), tiW = tiH * 1.8; // keep the title block's 1.8:1 template ratio
+  const tiX = pX + bw + 600 * TS, tiY = pY;
+  const totW = tiX + tiW + margin, totH = Math.max(pY + bh, tiY + tiH) + dim + 500 * TS + margin;
+  let s = svgDefs();
+  s += rc(0, 0, totW, totH, { fill: 'white' });
+  s += rc(margin * 0.4, margin * 0.4, totW - margin * 0.8, totH - margin * 0.8, { sw: 4, stroke: '#333' });
+  s += tx(pX + bw / 2, pY - 160 * TS, 'Site Plan', 180, { bold: true, color: '#222' });
+  // plan content, building origin at (pX - minX, pY - minY)
+  let g = '';
+  g += renderSiteImage(img);
+  g += renderSiteObjects(objs, ui, { big: true });
+  g += rc(0, 0, W, D, { fill: '#cfd8e3', sw: 5, stroke: '#1f3b63' });
+  if (proj > 0) g += rc(0, D, W, proj, { fill: '#e8edf3', sw: 2, stroke: '#1f3b63' });
+  g += tx(W / 2, D / 2 + 60 * TS, `Proposed ${(W / 1000).toFixed(1)}m x ${(D / 1000).toFixed(1)}m ${state.buildingType || 'building'}`, 200, { bold: true, color: '#1f3b63' });
+  g += tx(W / 2, D + proj + 1000 * TS, 'FRONT', 130, { color: '#1f3b63' });
+  if (bnd.show) g += renderBoundaries(bnd, W, D, proj);
+  // calibration markers (two clicks on the map)
+  const cal = ui && ui.calib; if (cal && cal.pts && cal.pts.length) {
+    cal.pts.forEach((p, i) => { g += tag('circle', { cx: p.x, cy: p.y, r: 120 * TS, fill: '#d97706', stroke: 'white', 'stroke-width': 20 }); });
+    if (cal.pts.length === 2) g += ln(cal.pts[0].x, cal.pts[0].y, cal.pts[1].x, cal.pts[1].y, 30, '#d97706');
+  }
+  g += tag('rect', { class: 'plan-floor', x: minX, y: minY, width: bw, height: bh, fill: 'transparent' });
+  // the floor pad must be UNDER the objects so they stay clickable: rebuild with it first
+  g = tag('rect', { class: 'plan-floor', x: minX, y: minY, width: bw, height: bh, fill: 'transparent' }) + g.replace(tag('rect', { class: 'plan-floor', x: minX, y: minY, width: bw, height: bh, fill: 'transparent' }), '');
+  // dims for the building (inside the group so clicks on them still count as plan clicks)
+  g += dimH(0, W, D + proj + 80, `${W}mm`, 450 * TS, false);
+  g += dimV(0, D, 0, `${D}mm`, -450 * TS);
+  s += grp(g, { transform: `translate(${pX - minX},${pY - minY})`, id: 'plan-group' });
+  // north arrow (unless the user placed one) + scale bar
+  if (!objs.some((o) => o && o.kind === 'north')) {
+    const nx = pX + bw - 900 * TS, ny = pY + 900 * TS, r = 500 * TS;
+    s += tag('circle', { cx: nx, cy: ny, r, fill: 'white', stroke: '#333', 'stroke-width': 3 }) + tag('polygon', { points: `${nx},${ny - r * 0.85} ${nx - r * 0.3},${ny + r * 0.3} ${nx},${ny} ${nx + r * 0.3},${ny + r * 0.3}`, fill: '#333' }) + tx(nx, ny + r * 0.8, 'N', r * 0.5, { bold: true });
+  }
+  const barM = bw > 40000 ? 10000 : 5000; const bx = pX, by = pY + bh + 350 * TS;
+  for (let i = 0; i < 5; i++) s += rc(bx + i * barM / 5, by, barM / 5, 120 * TS, { fill: i % 2 ? 'white' : '#333', sw: 2, stroke: '#333' });
+  s += tx(bx, by - 60 * TS, '0', 110, { anchor: 'start' }); s += tx(bx + barM, by - 60 * TS, `${barM / 1000}m`, 110);
+  const scaleLabel = `1:${totW / 400 <= 50 ? 50 : totW / 400 <= 100 ? 100 : totW / 400 <= 200 ? 200 : 500} @ A3`;
+  s += grp(renderTitle({ w: tiW, h: tiH, title: `Site plan: proposed ${state.buildingType || 'building'} for:`, customer: state.customer?.name, address: state.customer?.address, date: state.customer?.date, spec: `${(W / 1000).toFixed(1)}m x ${(D / 1000).toFixed(1)}m x ${(state.height / 1000).toFixed(2).replace(/0$/, '')}m`, useCase: 'Site plan', drawingNumber: (state.customNotes?.drawingNumber || 'GOB-001') + '-S', scaleLabel }), { transform: `translate(${tiX},${tiY})` });
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totW} ${totH}" style="background:white;width:100%;height:100%;">${s}</svg>`;
 }

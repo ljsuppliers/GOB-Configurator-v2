@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
   <title>GOB CRM</title>
-  <link rel="stylesheet" href="css/app.css?v=33">
+  <link rel="stylesheet" href="css/app.css?v=34">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/theme.css?v=14">
@@ -573,6 +573,40 @@
               <textarea v-model="state.site.planningNotes" rows="2" placeholder="Height > 2.5m, conservation area, Article 4, listed building..."></textarea>
             </label>
           </div>
+          </div>
+        </div>
+        <div class="config-section cfg" :class="{ 'cfg-closed': !cfgOpen('site'), 'cfg-done': (state.siteObjects || []).length > 0 || !!state.siteImage }">
+          <h4 class="cfg-head" @click="toggleCfg('site')"><span class="cfg-tick">&#10003;</span><span class="cfg-title">2b. Site plan <span class="crm-muted" style="font-weight:normal;">(optional)</span></span><span class="cfg-caret">{{ cfgOpen('site') ? '&#8963;' : '&#8964;' }}</span></h4>
+          <div class="cfg-body" v-show="cfgOpen('site')">
+            <p class="crm-muted" style="margin:0 0 6px;font-size:11px;">Show the building in its surroundings: existing buildings, parking, paths, fences and trees. Switch the drawing to <b>Site plan</b> and draw with the toolbar, or add items here and drag them into place. Positions are mm from the building's rear-left corner.</p>
+            <div class="btn-row" style="margin-bottom:6px;flex-wrap:wrap;">
+              <button type="button" class="btn-tiny" @click="addSiteObject('building'); planSheet = 'site'">+ building</button>
+              <button type="button" class="btn-tiny" @click="addSiteObject('parking'); planSheet = 'site'">+ parking</button>
+              <button type="button" class="btn-tiny" @click="addSiteObject('path'); planSheet = 'site'">+ path</button>
+              <button type="button" class="btn-tiny" @click="addSiteObject('fence'); planSheet = 'site'">+ fence</button>
+              <button type="button" class="btn-tiny" @click="addSiteObject('tree'); planSheet = 'site'">+ tree</button>
+              <button type="button" class="btn-tiny" @click="addSiteObject('text'); planSheet = 'site'">+ text</button>
+              <button type="button" class="btn-tiny" @click="addSiteObject('north'); planSheet = 'site'">+ north</button>
+            </div>
+            <div v-for="(o, i) in state.siteObjects" :key="o.id" class="placed-component" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;" :class="{ selected: planSelection && planSelection.type === 'site' && planSelection.id === o.id }" @click="planSelection = { type: 'site', id: o.id }; planSheet = 'site'">
+              <span class="comp-pos" style="min-width:58px;">{{ siteObjectName(o) }}</span>
+              <input v-if="o.kind !== 'north'" type="text" v-model="o.label" class="input-sm" style="width:104px;" placeholder="label">
+              <template v-if="o.w !== undefined"><span class="comp-pos">w</span><input type="number" v-model.number="o.w" class="input-sm" style="width:62px;" step="100"><span class="comp-pos">d</span><input type="number" v-model.number="o.h" class="input-sm" style="width:62px;" step="100"></template>
+              <template v-if="o.r !== undefined"><span class="comp-pos">canopy r</span><input type="number" v-model.number="o.r" class="input-sm" style="width:62px;" step="100"></template>
+              <template v-if="o.pts && o.kind === 'path'"><span class="comp-pos">width</span><input type="number" v-model.number="o.width" class="input-sm" style="width:62px;" step="100"></template>
+              <template v-if="o.rot !== undefined"><span class="comp-pos">rot</span><input type="number" v-model.number="o.rot" class="input-sm" style="width:52px;" step="5"></template>
+              <button class="comp-delete" @click.stop="removeSiteObject(i)" title="Remove">&#215;</button>
+            </div>
+            <h5 class="cfg-sub">Background map or aerial photo</h5>
+            <div v-if="!state.siteImage"><label class="btn-tiny" style="cursor:pointer;">Upload image <input type="file" accept="image/*" style="display:none;" @change="uploadSiteImage"></label> <span class="crm-muted" style="font-size:11px;">screenshot from Google Maps, a planning drawing, or a photo of a sketch</span></div>
+            <div v-else style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;">
+              <span class="comp-pos">opacity</span><input type="range" v-model.number="state.siteImage.opacity" min="0.1" max="1" step="0.05" style="width:80px;">
+              <span class="comp-pos">x</span><input type="number" v-model.number="state.siteImage.x" class="input-sm" style="width:66px;" step="100">
+              <span class="comp-pos">y</span><input type="number" v-model.number="state.siteImage.y" class="input-sm" style="width:66px;" step="100">
+              <span class="comp-pos">w</span><input type="number" v-model.number="state.siteImage.w" class="input-sm" style="width:72px;" step="100" @change="state.siteImage.h = Math.round(state.siteImage.w * (state.siteImage.pxH || 1) / (state.siteImage.pxW || 1))">
+              <button type="button" class="btn-tiny" @click="planSheet = 'site'; setPlanTool('calibrate')">Calibrate</button>
+              <button class="comp-delete" @click="removeSiteImage()" title="Remove image">&#215;</button>
+            </div>
           </div>
         </div>
         <div class="config-section cfg" :class="{ 'cfg-closed': !cfgOpen('building'), 'cfg-done': cfgDone('building') }">
@@ -1319,18 +1353,36 @@
       <!-- CENTER: Drawing Canvas -->
       <section class="drawing-panel">
         <div class="drawing-toolbar plan-tools">
-          <span class="plan-tools-label">Plan:</span>
-          <button :class="{ on: planTool === 'select' }" @click="setPlanTool('select')" title="Select, drag walls / doors / labels. Drag a wall end to change its length.">Select</button>
-          <button :class="{ on: planTool === 'wall-v' }" @click="setPlanTool('wall-v')" title="Click and drag on the floor to draw a wall running front-to-back">Wall &#8597;</button>
-          <button :class="{ on: planTool === 'wall-h' }" @click="setPlanTool('wall-h')" title="Click and drag on the floor to draw a wall running left-to-right">Wall &#8596;</button>
-          <button :class="{ on: planTool === 'door' }" @click="setPlanTool('door')" title="Click on an internal wall to add a door there">Door</button>
-          <button :class="{ on: planTool === 'label' }" @click="setPlanTool('label')" title="Click on the floor to place a room label">Label</button>
-          <button v-if="planSelection" class="danger" @click="deletePlanSelection()" title="Delete the selected item (or press Delete)">Delete {{ planSelection.type }}</button>
-          <span class="crm-muted plan-tools-hint">{{ planSelection ? planSelectionText() : (planTool === 'select' ? 'Drag anything on the plan. Esc clears.' : planTool === 'door' ? 'Click a wall to add a door' : planTool === 'label' ? 'Click where the label goes' : 'Drag on the floor to draw the wall') }}</span>
+          <span class="sheet-toggle"><button :class="{ on: planSheet === 'building' }" @click="setPlanSheet('building')" title="Building drawing: plan, elevations, title block">Building</button><button :class="{ on: planSheet === 'site' }" @click="setPlanSheet('site')" title="Site plan: the building in its surroundings">Site plan</button></span>
+          <template v-if="planSheet === 'building'">
+            <button :class="{ on: planTool === 'select' }" @click="setPlanTool('select')" title="Select, drag walls / doors / labels. Drag a wall end to change its length.">Select</button>
+            <button :class="{ on: planTool === 'wall-v' }" @click="setPlanTool('wall-v')" title="Click and drag on the floor to draw a wall running front-to-back">Wall &#8597;</button>
+            <button :class="{ on: planTool === 'wall-h' }" @click="setPlanTool('wall-h')" title="Click and drag on the floor to draw a wall running left-to-right">Wall &#8596;</button>
+            <button :class="{ on: planTool === 'door' }" @click="setPlanTool('door')" title="Click on an internal wall to add a door there">Door</button>
+            <button :class="{ on: planTool === 'label' }" @click="setPlanTool('label')" title="Click on the floor to place a room label">Label</button>
+          </template>
+          <template v-else>
+            <button :class="{ on: planTool === 'select' }" @click="setPlanTool('select')" title="Select and drag anything. Corner handle resizes.">Select</button>
+            <button :class="{ on: planTool === 'site-building' }" @click="setPlanTool('site-building')" title="Drag a rectangle for an existing building">Building</button>
+            <button :class="{ on: planTool === 'site-parking' }" @click="setPlanTool('site-parking')" title="Drag a rectangle for a parking space">Parking</button>
+            <button :class="{ on: planTool === 'site-path' }" @click="setPlanTool('site-path')" title="Click the corners of a path or drive, double-click (or Enter) to finish">Path</button>
+            <button :class="{ on: planTool === 'site-fence' }" @click="setPlanTool('site-fence')" title="Click along a fence or boundary line, double-click (or Enter) to finish">Fence</button>
+            <button :class="{ on: planTool === 'site-tree' }" @click="setPlanTool('site-tree')" title="Click to place a tree (drag its handle to set the canopy)">Tree</button>
+            <button :class="{ on: planTool === 'site-text' }" @click="setPlanTool('site-text')" title="Click to place a text note">Text</button>
+            <button :class="{ on: planTool === 'site-north' }" @click="setPlanTool('site-north')" title="Click to place the north arrow">North</button>
+            <button v-if="state.siteImage" :class="{ on: planTool === 'calibrate' }" @click="setPlanTool('calibrate')" title="Click two points on the map that are a known distance apart, then type the distance">Calibrate</button>
+          </template>
+          <button :class="{ on: planTool === 'pan' }" @click="setPlanTool('pan')" title="Drag to move the sheet (or hold Space, or use the middle mouse button)">Pan</button>
+          <button v-if="planSelection" class="danger" @click="deletePlanSelection()" title="Delete the selected item (or press Delete)">Delete {{ planSelection.type === 'site' ? '' : planSelection.type }}</button>
+          <button v-if="siteDraft" class="on" @click="setPlanTool('select')" title="Finish the path / fence (or press Enter)">Finish</button>
+          <span v-if="planTool === 'calibrate' && calib && calib.pts.length === 2" class="calib-box">= <input type="number" v-model="calib.distance" class="input-sm" style="width:60px;" step="0.1" placeholder="m"> m <button class="btn-tiny" @click="applyCalibration()">Apply</button></span>
+          <span class="crm-muted plan-tools-hint">{{ planSelection ? planSelectionText() : planTool === 'select' ? 'Drag anything on the plan. Ctrl + scroll to zoom. Esc clears.' : planTool === 'door' ? 'Click a wall to add a door' : planTool === 'label' ? 'Click where the label goes' : planTool === 'pan' ? 'Drag to move the sheet' : planTool === 'calibrate' ? (calib && calib.pts.length === 2 ? 'Now type the real distance' : 'Click two points a known distance apart') : planTool === 'site-path' || planTool === 'site-fence' ? 'Click each corner, double-click or Enter to finish' : planTool.startsWith('site-') ? (planTool === 'site-building' || planTool === 'site-parking' ? 'Drag a rectangle' : 'Click to place') : 'Drag on the floor to draw the wall' }}</span>
           <span style="flex:1"></span>
+          <span class="zoom-box"><button @click="zoomBy(1 / 1.25)" title="Zoom out">&#8722;</button><span class="zoom-pct" @click="zoomReset()" title="Reset zoom">{{ Math.round(planZoom.k * 100) }}%</span><button @click="zoomBy(1.25)" title="Zoom in">+</button></span>
+          <button v-if="planSheet === 'site'" @click="exportSitePlanPDF" title="Download the site plan as a PDF">Site plan PDF</button>
           <button @click="printDrawing" title="Open in new window for printing">Print</button>
         </div>
-        <div id="drawing-canvas" :class="{ 'plan-edit': planTool !== 'select' || !!planSelection }" v-html="drawingSvg"></div>
+        <div id="drawing-canvas" :class="{ 'plan-edit': planTool !== 'select' || !!planSelection, 'plan-pan': planTool === 'pan' }"><div id="drawing-zoom" :style="{ transform: 'translate(' + planZoom.x + 'px,' + planZoom.y + 'px) scale(' + planZoom.k + ')' }" v-html="drawingSvg"></div></div>
       </section>
 
       <!-- RIGHT: Price Panel -->
@@ -2650,7 +2702,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=198"></script>
+<script type="module" src="js/app.js?v=199"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>
