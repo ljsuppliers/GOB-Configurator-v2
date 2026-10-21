@@ -1155,7 +1155,11 @@ export function siteBounds(objs, img) {
     if (!o || isFurniture(o)) continue;
     if (o.kind === 'building' || o.kind === 'parking' || o.kind === 'area' || o.kind === 'overlay') { const r = Math.max(o.w, o.h); add(o.x - (o.rot ? r : 0), o.y - (o.rot ? r : 0)); add(o.x + o.w + (o.rot ? r : 0), o.y + o.h + (o.rot ? r : 0)); }
     else if (o.kind === 'tree') { add(o.x - o.r, o.y - o.r); add(o.x + o.r, o.y + o.r); }
-    else if (o.kind === 'path' || o.kind === 'fence') { const hw = Math.max(600, (o.width || 0) / 2 + 200); for (const p of (o.pts || [])) { add(p.x - hw, p.y - hw); add(p.x + hw, p.y + hw); } }
+    else if (o.kind === 'path' || o.kind === 'fence') { // exact extent of each segment (square ends): widen across the segment only, not along it
+      const hw = Math.max(300, (o.width || 0) / 2 + 100); const pts = o.pts || [];
+      if (pts.length === 1) { add(pts[0].x - hw, pts[0].y - hw); add(pts[0].x + hw, pts[0].y + hw); }
+      for (let i = 0; i + 1 < pts.length; i++) { const p = pts[i], q = pts[i + 1]; const dx = q.x - p.x, dy = q.y - p.y, len = Math.hypot(dx, dy) || 1; const nx = -dy / len * hw, ny = dx / len * hw; for (const [x, y] of [[p.x + nx, p.y + ny], [p.x - nx, p.y - ny], [q.x + nx, q.y + ny], [q.x - nx, q.y - ny]]) add(x, y); }
+    }
     else if (o.kind === 'text' || o.kind === 'north') { add(o.x - 1200, o.y - 600); add(o.x + 1200, o.y + 600); }
   }
   return { minX, minY, maxX, maxY, any };
@@ -2093,7 +2097,7 @@ function composeDeep(b) {
   const sideW = D + frontProj, colW = Math.max(sideW, W * 2 + gap);
   const rowH = labH + rise + H + deckH + (frontProj > 0 ? 900 : 600) * TS + 300 * TS;
   const overallLabel = (extra) => `${D + extra}mm overall incl. ${hasCanopy && proj > 0 && hasDecking && deckProj > 0 ? 'canopy/decking' : hasCanopy && proj > 0 ? 'canopy' : 'decking'}`;
-  let y = Math.max(margin, pY - labH - rise); // right column starts level with the top of the building on the plan (Liam 21 Oct 2026)
+  let y = Math.max(margin, pY - siteT - boundaryRear - labH - rise); // right column starts level with the top of the plan content (site objects included), Liam 21 Oct 2026
   // row 1: left elevation
   let ey = y + labH + rise;
   s += tx(cX + sideW/2, ey - rise - 160*TS, 'LEFT ELEVATION', 150, titleOpts);
