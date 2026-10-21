@@ -31,11 +31,31 @@ export function isLargeBuilding(state) {
   const w = (state.width || 0) / 1000, d = (state.depth || 0) / 1000;
   return w * d > 40 || w > 8.5 || d > 5;
 }
+export const ROOM_KINDS = [
+  { id: 'office', label: 'Office' }, { id: 'meeting', label: 'Meeting room' }, { id: 'reception', label: 'Reception' }, { id: 'kitchenette', label: 'Kitchenette' },
+  { id: 'wc', label: 'WC' }, { id: 'shower', label: 'Shower room' }, { id: 'store', label: 'Store' }, { id: 'corridor', label: 'Corridor' }, { id: 'other', label: 'Other' },
+];
+/** Rooms from the labels on the plan, grouped by kind, with the fit-out each kind brings. */
+export function roomSchedule(state) {
+  const labels = (Array.isArray(state.roomLabels) ? state.roomLabels : []).filter((l) => l && l.text);
+  const byKind = {};
+  for (const l of labels) { const k = l.kind || 'office'; (byKind[k] = byKind[k] || []).push(l); }
+  const fit = (pricesData && pricesData.extras && pricesData.extras.fitout) || {};
+  const items = [];
+  for (const k of Object.keys(byKind)) {
+    const cat = fit[k]; if (!cat || !cat.price) continue;
+    const n = byKind[k].length;
+    items.push({ kind: k, count: n, unitPrice: cat.price, price: cat.price * n, label: `${cat.label}${n > 1 ? ` x${n}` : ''} (${byKind[k].map((l) => l.text).join(', ')})`, baseLabel: cat.label, description: cat.description, estimate: !!cat.estimate });
+  }
+  const plumbed = (byKind.wc || []).length + (byKind.shower || []).length + (byKind.kitchenette || []).length;
+  return { rooms: labels.length, byKind, items, total: items.reduce((s, i) => s + i.price, 0), plumbed };
+}
 export function partitionSummary(state) {
   const parts = (Array.isArray(state.partitions) ? state.partitions : []).filter((p) => p && Number(p.len) > 0);
   const metres = parts.reduce((s, p) => s + Number(p.len) / 1000, 0);
   const doors = parts.reduce((s, p) => s + ((p.doors || []).length), 0);
-  return { count: parts.length, metres: Math.round(metres * 10) / 10, doors, parts };
+  const glazedM = parts.filter((p) => p.glazed).reduce((s, p) => s + Number(p.len) / 1000, 0);
+  return { count: parts.length, metres: Math.round(metres * 10) / 10, doors, parts, glazedMetres: Math.round(glazedM * 10) / 10, solidMetres: Math.round((metres - glazedM) * 10) / 10 };
 }
 
 export function getDownlightCount(state) {
@@ -142,9 +162,13 @@ export function calculatePrice(state) {
   // Internal partition walls (any number, drawn on the plan): per metre + per door
   const ps = partitionSummary(state);
   if (ps.count) {
-    const perM = struct.partitionWallPerM?.price || 185, perDoor = struct.partitionDoor?.price || 450;
-    const label = `Internal partition walls: ${ps.count} wall${ps.count === 1 ? '' : 's'}, ${ps.metres.toFixed(1)}m in total${ps.doors ? `, ${ps.doors} interior door${ps.doors === 1 ? '' : 's'}` : ''}`;
-    result.extras.push({ label, baseLabel: label, qty: 1, unitPrice: 0, price: Math.round(ps.metres * perM + ps.doors * perDoor), section: 'internal' });
+    const perM = struct.partitionWallPerM?.price || 185, perDoor = struct.partitionDoor?.price || 450, perGlazedM = struct.partitionGlazedPerM?.price || 350;
+    const label = `Internal partition walls: ${ps.count} wall${ps.count === 1 ? '' : 's'}, ${ps.metres.toFixed(1)}m in total${ps.glazedMetres ? ` (${ps.glazedMetres.toFixed(1)}m glazed)` : ''}${ps.doors ? `, ${ps.doors} interior door${ps.doors === 1 ? '' : 's'}` : ''}`;
+    result.extras.push({ label, baseLabel: label, qty: 1, unitPrice: 0, price: Math.round(ps.solidMetres * perM + ps.glazedMetres * perGlazedM + ps.doors * perDoor), section: 'internal' });
+  }
+  // Per-room fit-out from the room labels (WC, shower room, kitchenette, data points)
+  for (const it of roomSchedule(state).items) {
+    result.extras.push({ label: it.label, baseLabel: it.baseLabel, qty: it.count, unitPrice: it.unitPrice, price: it.price, section: 'internal', description: it.description });
   }
   if (se.secretDoor) addExtra(result, struct.secretDoor, 1, 'doors');
   if (se.epdmUpgrade && struct.epdmUpgrade) addExtra(result, { ...struct.epdmUpgrade, label: struct.epdmUpgrade.price ? struct.epdmUpgrade.label : `${struct.epdmUpgrade.label} - PRICE TBC` }, 1, 'external');

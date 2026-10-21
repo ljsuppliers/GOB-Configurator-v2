@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
   <title>GOB CRM</title>
-  <link rel="stylesheet" href="css/app.css?v=34">
+  <link rel="stylesheet" href="css/app.css?v=35">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/theme.css?v=14">
@@ -94,6 +94,7 @@
           <button class="btn" @click="showExportMenu = !showExportMenu">More &#9662;</button>
           <div id="export-menu" :class="{ show: showExportMenu }">
             <button @click="showExportMenu = false; exportQuotePDF()">Quote PDF</button>
+            <button @click="openMockup()" title="Photorealistic exterior picture of this design, generated from the spec in our house style">AI mockup picture</button>
             <button @click="showExportMenu = false; exportDrawingPDF()">Drawing PDF</button>
             <button @click="showExportMenu = false; exportBothPDFs()">Quote + Drawing PDF</button>
             <button @click="showExportMenu = false; printDrawing()">Print drawing</button>
@@ -852,6 +853,7 @@
             <div style="display:flex;align-items:center;gap:6px;width:100%;margin-top:4px;flex-wrap:wrap;">
               <input type="text" v-model="p.label" class="input-sm" style="width:120px;" placeholder="label (optional)">
               <label class="checkbox-row" style="margin:0;"><input type="checkbox" v-model="p.loadBearing"> load-bearing</label>
+              <label class="checkbox-row" style="margin:0;" title="Framed glass partition instead of a stud wall"><input type="checkbox" v-model="p.glazed"> glazed</label>
               <button type="button" class="btn-tiny" @click="addPartitionDoor(p)">+ door</button>
             </div>
             <div v-for="(dr, j) in p.doors" :key="j" style="display:flex;align-items:center;gap:6px;width:100%;margin-top:3px;font-size:11px;">
@@ -866,11 +868,13 @@
           <h5 class="cfg-sub">Room labels</h5>
           <div class="btn-row" style="margin-bottom:6px;"><button type="button" class="btn-tiny" @click="addRoomLabel()">+ room label</button></div>
           <div v-for="(l, i) in state.roomLabels" :key="l.id" class="placed-component" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
-            <input type="text" v-model="l.text" class="input-sm" style="width:110px;">
+            <input type="text" v-model="l.text" class="input-sm" style="width:92px;">
+            <select v-model="l.kind" class="input-sm" style="width:104px;" title="What the room is: WC, shower room and kitchenette add their fit-out to the price"><option v-for="k in roomKinds()" :value="k.id">{{ k.label }}</option></select>
             <span class="comp-pos">x</span><input type="number" v-model.number="l.x" class="input-sm" style="width:66px;" step="50">
             <span class="comp-pos">y</span><input type="number" v-model.number="l.y" class="input-sm" style="width:66px;" step="50">
             <button class="comp-delete" @click="removeRoomLabel(i)">&#215;</button>
           </div>
+          <p v-if="roomSchedule().rooms" class="crm-muted" style="font-size:11px;margin:4px 0 0;">{{ roomScheduleText() }}.<template v-if="roomSchedule().items.length"> Fit-out from the room kinds: <template v-for="(it, i) in roomSchedule().items">{{ i ? ', ' : '' }}{{ it.baseLabel }}{{ it.count > 1 ? ' x' + it.count : '' }} {{ fmt(it.price) }}{{ it.estimate ? ' (est.)' : '' }}</template> = <b>{{ fmt(roomSchedule().total) }}</b>.</template><template v-if="roomSchedule().plumbed && state.bathroom && state.bathroom.enabled"> <b>Note:</b> the WC / bathroom option below is also ticked, so it is being charged twice; untick it when the rooms carry their own fit-out.</template></p>
           <h5 class="cfg-sub">Straight Partition</h5>
           <div class="checkbox-row">
             <input type="checkbox" v-model="state.straightPartition.enabled" id="chk-straight-partition">
@@ -1349,6 +1353,33 @@
           </div>
         </div>
       </aside>
+
+      <!-- AI mockup modal -->
+      <div v-if="mockup.open" class="gob-modal-back" @click.self="mockup.open = false">
+        <div class="gob-modal">
+          <div class="gob-modal-head"><b>AI mockup picture</b><span class="crm-muted" style="font-size:11px;margin-left:8px;">Recraft, from the spec of this design{{ mockup.credits !== null ? ' - ' + mockup.credits + ' credits left' : '' }}</span><span style="flex:1"></span><button class="btn-tiny" @click="mockup.open = false">Close</button></div>
+          <p class="crm-muted" style="font-size:11px;margin:4px 0;">The description below is built from the design (size, cladding, doors, canopy). Edit it if you want something different, then Generate. Each picture costs about 4p. Pictures are indicative, not a drawing: always send the real drawing with them.</p>
+          <textarea v-model="mockup.prompt" rows="5" style="width:100%;font-size:12px;"></textarea>
+          <div class="btn-row" style="margin:6px 0;align-items:center;flex-wrap:wrap;gap:6px;">
+            <button class="btn" :disabled="mockup.busy" @click="generateMockup()">{{ mockup.busy ? 'Generating (20 to 40 seconds)...' : (mockup.images.length ? 'Generate another' : 'Generate') }}</button>
+            <button class="btn-tiny" @click="mockup.prompt = buildMockupPrompt()" title="Rebuild the description from the current design">Reset description</button>
+            <span style="flex:1"></span>
+            <span v-if="mockup.styleId" class="crm-muted" style="font-size:11px;" title="Custom style trained from real photos on gardenofficebuildings.co.uk">House style: on</span>
+            <button v-else class="btn-tiny" :disabled="mockup.styleBusy" @click="trainRecraftStyle()" title="One-off: trains a Recraft style from 10 real photos of our buildings so mockups look like ours">{{ mockup.styleBusy ? 'Training...' : 'Train house style from our photos' }}</button>
+          </div>
+          <p v-if="mockup.error" style="color:#b91c1c;font-size:12px;margin:4px 0;">{{ mockup.error }}</p>
+          <div class="mockup-grid">
+            <div v-for="im in mockup.images" :key="im.at" class="mockup-card">
+              <img :src="im.src" alt="AI mockup">
+              <div class="btn-row" style="gap:6px;margin-top:4px;">
+                <button class="btn-tiny" @click="downloadMockup(im)">Download</button>
+                <button class="btn-tiny" :disabled="im.saved" @click="saveMockupToProject(im)">{{ im.saved ? 'Saved to files' : 'Save to customer files' }}</button>
+                <span class="crm-muted" style="font-size:10px;">{{ im.styled ? 'house style' : 'stock style' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- CENTER: Drawing Canvas -->
       <section class="drawing-panel">
@@ -2702,7 +2733,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=199"></script>
+<script type="module" src="js/app.js?v=201"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

@@ -226,6 +226,11 @@
         "label": "Interior door set (Howden, hung and furnished)",
         "price": 450,
         "note": "ESTIMATE 21 Oct 2026 - Liam to confirm."
+      },
+      "partitionGlazedPerM": {
+        "label": "Glazed internal partition (per linear metre)",
+        "price": 350,
+        "note": "Framed glass office partition, floor to ceiling. ESTIMATE 21 Oct 2026 - Liam to confirm."
       }
     },
     "bathroom": {
@@ -260,6 +265,37 @@
       "bifoldUpgrade": {
         "label": "Bi-fold door upgrade from sliding",
         "price": 850
+      }
+    },
+    "fitout": {
+      "note": "Per-room fit-out priced from the room labels on the plan (label kind). Applies on top of the shell price. ESTIMATES 21 Oct 2026 unless the same item already exists in extras.bathroom.",
+      "wc": {
+        "label": "WC (toilet room) fit-out",
+        "price": 5000,
+        "description": "Toilet, small vanity basin, extractor fan, tiling and all internal plumbing. Water supply and waste connections arranged separately."
+      },
+      "shower": {
+        "label": "Shower room fit-out",
+        "price": 8500,
+        "description": "Toilet, vanity basin, shower tray with glass screen, extractor fan, heated towel rail, tiling and all internal plumbing. Water supply and waste connections arranged separately."
+      },
+      "kitchenette": {
+        "label": "Kitchenette fit-out",
+        "price": 4500,
+        "description": "Base and wall units, worktop, sink and tap, socket run for appliances, internal plumbing. Appliances not included.",
+        "estimate": true
+      },
+      "meeting": {
+        "label": "Meeting room data and AV points",
+        "price": 350,
+        "description": "Additional CAT6 points and TV mounting preparation.",
+        "estimate": true
+      },
+      "office": {
+        "label": "Office data points",
+        "price": 180,
+        "description": "Two additional CAT6 points per office.",
+        "estimate": true
       }
     }
   },

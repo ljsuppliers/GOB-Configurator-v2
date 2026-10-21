@@ -498,7 +498,7 @@ function buildQuoteData(q) {
   // as the quote PDF and the email, sent by the app as q.paidDirectly.
   const paidDirectly = Array.isArray(q.paidDirectly) && q.paidDirectly.length ? q.paidDirectly : [
     { label: 'Electrical and internet connection', detail: 'Priced after a visit from our electrician. Typically \u00a31,000 to \u00a32,000.' },
-    ...(q.bathroom && q.bathroom.enabled ? [{ label: 'Water supply and waste connections', detail: 'Arranged with our plumber and landscaper, priced after the site visit.' }] : []),
+    ...((q.bathroom && q.bathroom.enabled) || (q.roomSchedule && q.roomSchedule.plumbed) ? [{ label: 'Water supply and waste connections', detail: 'Arranged with our plumber and landscaper, priced after the site visit.' }] : []),
   ];
   sectionBar('Paid directly to the contractor (not in the total)');
   for (const it of paidDirectly) {

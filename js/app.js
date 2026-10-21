@@ -1,8 +1,8 @@
 // GOB Configurator v2 — Vue 3 App
 // Reactive state, live pricing, drawing preview, email drafting
 
-import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding } from './pricing.js?v=12';
-import { generateDrawing, generateSitePlan } from './drawing-engine.js?v=51';
+import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding, roomSchedule, ROOM_KINDS } from './pricing.js?v=13';
+import { generateDrawing, generateSitePlan } from './drawing-engine.js?v=52';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=7';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
@@ -13,7 +13,7 @@ import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=60';
 import { buildConstructionDrawings } from './construction.js?v=26';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=42';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
-import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=13';
+import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=14';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
@@ -80,6 +80,9 @@ function ensureStateDefaults(state) {
   if (!state.bathroom) state.bathroom = { enabled: false };
   if (!Array.isArray(state.partitions)) state.partitions = []; // internal walls drawn on the plan (multi-room / commercial)
   if (!Array.isArray(state.roomLabels)) state.roomLabels = [];
+  for (const l of state.roomLabels) { // room kind drives the fit-out price; infer it for labels saved before kinds existed
+    if (l && !l.kind) { const t = String(l.text || '').toLowerCase(); l.kind = /\bwc\b|toilet|loo/.test(t) ? 'wc' : /shower|bath/.test(t) ? 'shower' : /kitchen/.test(t) ? 'kitchenette' : /meeting|board/.test(t) ? 'meeting' : /reception/.test(t) ? 'reception' : /store|storage|cupboard/.test(t) ? 'store' : /corridor|hall|lobby/.test(t) ? 'corridor' : /office|studio|desk/.test(t) ? 'office' : 'other'; }
+  }
   if (!Array.isArray(state.siteObjects)) state.siteObjects = []; // existing buildings, parking, paths, trees around the building
   if (state.siteImage === undefined) state.siteImage = null; // background map / aerial photo (downscaled JPEG data URL)
   return state;
@@ -109,6 +112,7 @@ createApp({
       planTool: 'select',
       planSelection: null,
       planSheet: 'building', // 'building' | 'site'
+      mockup: { open: false, busy: false, images: [], prompt: '', error: '', credits: null, styleId: null, styleBusy: false },
       planZoom: { k: 1, x: 0, y: 0 },
       siteDraft: null, // path / fence being drawn point by point
       calib: null, // { pts:[{x,y},{x,y}], distance:'' } for scaling a background map
@@ -1979,6 +1983,13 @@ createApp({
     /* ───────────── INTERNAL WALLS (any number) + ROOM LABELS ───────────── */
     isLargeBuilding() { return this.state ? isLargeBuilding(this.state) : false; },
     partitionSummary() { return this.state ? partitionSummary(this.state) : { count: 0, metres: 0, doors: 0 }; },
+    roomSchedule() { return this.state ? roomSchedule(this.state) : { rooms: 0, byKind: {}, items: [], total: 0, plumbed: 0 }; },
+    roomKinds() { return ROOM_KINDS; },
+    roomScheduleText() {
+      const rs = this.roomSchedule(); if (!rs.rooms) return '';
+      const names = { office: 'office', meeting: 'meeting room', reception: 'reception', kitchenette: 'kitchenette', wc: 'WC', shower: 'shower room', store: 'store', corridor: 'corridor', other: 'room' };
+      return Object.keys(rs.byKind).map((k) => { const n = rs.byKind[k].length; const nm = names[k] || k; return `${n} ${nm}${n > 1 ? (nm.endsWith('s') ? '' : 's') : ''}`; }).join(', ');
+    },
     addPartition(dir) {
       if (!Array.isArray(this.state.partitions)) this.state.partitions = [];
       const w = this.state.width, d = this.state.depth, n = this.state.partitions.length + 1;
@@ -2034,6 +2045,67 @@ createApp({
       im.w = Math.round(im.w * f); im.h = Math.round(im.h * f); im.x = Math.round(a.x + (im.x - a.x) * f); im.y = Math.round(a.y + (im.y - a.y) * f);
       this.calib = null; this.planTool = 'select'; this.notify('Map scaled: ' + (f * 25).toFixed(0) + 'mm per image pixel');
     },
+    // ── AI exterior mockup (Recraft, /api/mockup) ──
+    buildMockupPrompt() {
+      const s = this.state; if (!s) return '';
+      const W = (s.width / 1000).toFixed(1), D = (s.depth / 1000).toFixed(1), H = (s.height / 1000).toFixed(1);
+      const isSig = s.tier !== 'classic'; const canopy = isSig && s.hasCanopy !== false, deck = isSig && s.hasDecking !== false;
+      const cladNames = { 'western-red-cedar': 'western red cedar timber cladding', 'anthracite-steel': 'anthracite grey standing-seam steel cladding', 'grey-steel': 'light grey steel cladding', 'composite-latte': 'latte coloured composite slatted cladding', 'composite-coffee': 'dark coffee brown composite slatted cladding', 'composite-grey': 'grey composite slatted cladding', 'composite-sage': 'sage green composite slatted cladding', 'composite-chartwell': 'chartwell green composite slatted cladding' };
+      const clad = s.cladding || {}; const front = cladNames[clad.front || 'anthracite-steel'] || 'anthracite steel cladding'; const side = cladNames[clad.left || clad.front || 'anthracite-steel'] || front;
+      const defs = { ...(this.appData.components?.doors || {}), ...(this.appData.components?.windows || {}) };
+      let bifold = 0, sliding = 0, single = 0, windows = 0;
+      for (const c of (s.components || [])) { const cat = defs[c.type]?.category || ''; if (c.type.includes('bifold')) bifold++; else if (cat === 'sliding') sliding++; else if (cat === 'single') single++; else windows++; }
+      const doors = [bifold ? `${bifold} wide anthracite aluminium bi-fold door${bifold > 1 ? 's' : ''}` : '', sliding ? `${sliding} large anthracite aluminium sliding glass door${sliding > 1 ? 's' : ''}` : '', single ? `${single} glazed single door${single > 1 ? 's' : ''}` : ''].filter(Boolean).join(', ');
+      const large = isLargeBuilding(s);
+      const parts = [
+        `Photorealistic exterior photograph of a ${large ? 'large single-storey modern flat-roof commercial garden building' : 'modern flat-roof garden office building'}, ${W}m wide by ${D}m deep, ${H}m high, built by Garden Office Buildings UK.`,
+        `${front.charAt(0).toUpperCase() + front.slice(1)} on the front${side !== front ? `, ${side} on the sides` : ' and sides'}.`,
+        doors ? `Front elevation with ${doors}${windows ? ` and ${windows} slim fixed window${windows > 1 ? 's' : ''}` : ''}.` : '',
+        canopy ? 'Integrated front canopy overhang with recessed downlights in the soffit' + (deck ? ' and a matching composite decking strip along the front.' : '.') : (deck ? 'Composite decking strip along the front.' : 'Flush front with no canopy.'),
+        'Thin dark fascia, warm interior lighting glowing through the glass, neat lawn and planting, UK garden, soft late afternoon light, eye-level three-quarter view, 35mm lens, architectural photography.',
+        (s.customNotes?.mockupNotes || '').trim(),
+      ];
+      return parts.filter(Boolean).join(' ');
+    },
+    openMockup() { this.showExportMenu = false; this.mockup.open = true; this.mockup.error = ''; if (!this.mockup.prompt) this.mockup.prompt = this.buildMockupPrompt(); this.loadRecraftStyle(); },
+    async loadRecraftStyle() {
+      if (this.mockup.styleId || !window.firebase || !firebase.firestore) return;
+      try { const d = await firebase.firestore().collection('settings').doc('recraft').get(); if (d.exists && d.data().styleId) this.mockup.styleId = d.data().styleId; } catch (e) { /* offline */ }
+    },
+    async trainRecraftStyle() {
+      this.mockup.styleBusy = true; this.mockup.error = '';
+      try {
+        const r = await fetch('/api/mockup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create-style' }) });
+        let j = null; try { j = await r.json(); } catch (e) { j = {}; } if (!r.ok) throw new Error((j && j.error) || `Mockup service ${r.status}: ${r.statusText}`);
+        this.mockup.styleId = j.styleId;
+        try { await firebase.firestore().collection('settings').doc('recraft').set({ styleId: j.styleId, trainedAt: new Date().toISOString(), photos: j.photos }, { merge: true }); } catch (e) { /* keep for this session */ }
+        this.notify(`House style trained from ${j.photos} real building photos`);
+      } catch (e) { this.mockup.error = e.message; }
+      this.mockup.styleBusy = false;
+    },
+    async generateMockup() {
+      if (this.mockup.busy) return; this.mockup.busy = true; this.mockup.error = '';
+      try {
+        const r = await fetch('/api/mockup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'generate', prompt: this.mockup.prompt || this.buildMockupPrompt(), styleId: this.mockup.styleId || undefined, n: 1 }) });
+        let j = null; try { j = await r.json(); } catch (e) { j = {}; } if (!r.ok) throw new Error((j && j.error) || `Mockup service ${r.status}: ${r.statusText}`);
+        for (const im of (j.images || [])) this.mockup.images.unshift({ src: `data:${im.mime};base64,${im.b64}`, mime: im.mime, at: Date.now(), styled: !!this.mockup.styleId });
+        if (j.credits !== undefined) this.mockup.credits = j.credits;
+      } catch (e) { this.mockup.error = e.message; }
+      this.mockup.busy = false;
+    },
+    mockupFileName(im) { const n = (this.state.customer?.name || 'design').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, ''); return `Mockup-${n}-${new Date(im.at).toISOString().slice(0, 10)}-${String(im.at).slice(-4)}.png`; },
+    downloadMockup(im) { const a = document.createElement('a'); a.href = im.src; a.download = this.mockupFileName(im); document.body.appendChild(a); a.click(); a.remove(); },
+    async saveMockupToProject(im) {
+      const cid = this.state.customerId || this.currentProject?.customerId;
+      if (!cid) { this.mockup.error = 'Link this design to a customer first, then the mockup can be saved to their files.'; return; }
+      try {
+        const blob = await (await fetch(im.src)).blob();
+        const file = new File([blob], this.mockupFileName(im), { type: im.mime });
+        const id = await uploadFile(cid, file, this.userName());
+        const j = this.currentProject; if (j && j.customerId === cid) await firebase.firestore().collection('customers').doc(cid).collection('files').doc(id).update({ projectName: j.name, projectId: j.id }).catch(() => {});
+        im.saved = true; this.notify('Mockup saved to the customer files');
+      } catch (e) { this.mockup.error = 'Save failed: ' + e.message; }
+    },
     exportSitePlanPDF() {
       this.showExportMenu = false; const was = this.planSheet; this.planSheet = 'site'; this.planSelection = null;
       this.$nextTick(() => { const svg = document.querySelector('#drawing-canvas svg'); if (svg) exportDrawingPDF(this.state, svg.outerHTML, 'Site plan'); this.planSheet = was; });
@@ -2058,7 +2130,7 @@ createApp({
     removePartitionDoor(p, j) { p.doors.splice(j, 1); },
     addRoomLabel() {
       if (!Array.isArray(this.state.roomLabels)) this.state.roomLabels = [];
-      this.state.roomLabels.push({ id: 'rl-' + Date.now(), text: 'Office', x: Math.round(this.state.width / 2 / 50) * 50, y: Math.round(this.state.depth / 2 / 50) * 50 });
+      this.state.roomLabels.push({ id: 'rl-' + Date.now(), text: 'Office', kind: 'office', x: Math.round(this.state.width / 2 / 50) * 50, y: Math.round(this.state.depth / 2 / 50) * 50 });
     },
     removeRoomLabel(i) { this.state.roomLabels.splice(i, 1); },
     /** Quick start for a commercial layout: a left-to-right corridor wall pair down the middle with rooms either side. */
@@ -2474,7 +2546,8 @@ createApp({
       }
 
       // Internal walls drawn on the plan
-      { const ps = partitionSummary(s); if (ps.count) buildFeatures.push(`Internal partition walls (${ps.count} wall${ps.count === 1 ? '' : 's'}, ${ps.metres.toFixed(1)}m in total) with ${ps.doors} interior door${ps.doors === 1 ? '' : 's'}, plastered and decorated both sides, creating ${ps.count + 1} separate rooms as per the drawing`); }
+      { const ps = partitionSummary(s); if (ps.count) buildFeatures.push(`Internal partition walls (${ps.count} wall${ps.count === 1 ? '' : 's'}, ${ps.metres.toFixed(1)}m in total${ps.glazedMetres ? `, of which ${ps.glazedMetres.toFixed(1)}m glazed` : ''}) with ${ps.doors} interior door${ps.doors === 1 ? '' : 's'}, plastered and decorated both sides, creating the rooms shown on the drawing`); }
+      { const rs = roomSchedule(s); if (rs.rooms) buildFeatures.push(`Room schedule as drawn: ${this.roomScheduleText()}`); for (const it of rs.items) { if (['wc', 'shower', 'kitchenette'].includes(it.kind)) buildFeatures.push(`${it.baseLabel}${it.count > 1 ? ` (x${it.count})` : ''}: ${it.description.replace(/\.$/, '')}`); } }
       // Partition
       if (s.straightPartition?.enabled) {
         const leftLabel = s.straightPartition.leftLabel || 'Office';
@@ -2893,6 +2966,7 @@ createApp({
         
         // Internal walls (multi-room)
         partitions: partitionSummary(this.state),
+        roomSchedule: (() => { const rs = roomSchedule(this.state); return { rooms: rs.rooms, text: this.roomScheduleText(), plumbed: rs.plumbed }; })(),
         largeBuilding: isLargeBuilding(this.state),
         // Straight partition
         straightPartition: this.state.straightPartition?.enabled ? {

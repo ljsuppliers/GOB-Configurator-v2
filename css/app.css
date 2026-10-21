@@ -1070,3 +1070,10 @@ html, body {
 #drawing-canvas .site-pt { fill:#fff; stroke:#0f766e; stroke-width:30; opacity:0; cursor:pointer; }
 #drawing-canvas .site-obj:hover .site-pt, #drawing-canvas .site-obj.selected .site-pt { opacity:1; }
 .placed-component.selected { outline:2px solid #0f766e; }
+
+/* generic modal (AI mockup) */
+.gob-modal-back { position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; }
+.gob-modal { background:#fff; border-radius:10px; box-shadow:0 20px 60px rgba(0,0,0,.3); width:min(960px, 100%); max-height:92vh; overflow:auto; padding:14px 16px; }
+.gob-modal-head { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+.mockup-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:10px; }
+.mockup-card img { width:100%; border-radius:6px; display:block; box-shadow:var(--shadow); }

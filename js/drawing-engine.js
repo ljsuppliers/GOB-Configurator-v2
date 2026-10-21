@@ -1031,7 +1031,7 @@ function renderPartitions(parts, buildingWidth, buildingDepth, wt, ui) {
     if (!p || !(p.len > 0)) continue;
     const doorW = 826;
     const isSel = sel && sel.type === 'wall' && sel.id === p.id;
-    const fill = p.loadBearing ? '#b8c4d6' : COL.wallFill, stroke = isSel ? '#0f766e' : (p.loadBearing ? '#1f3b63' : '#444'), sw = isSel ? 6 : 2;
+    const fill = p.glazed ? '#d6f0f7' : p.loadBearing ? '#b8c4d6' : COL.wallFill, stroke = isSel ? '#0f766e' : (p.glazed ? '#2a8fb0' : p.loadBearing ? '#1f3b63' : '#444'), sw = isSel ? 6 : 2;
     if (p.dir === 'h') {
       const x = Math.max(wt, Math.min(p.x, buildingWidth - wt)), y = Math.max(wt, Math.min(p.y, buildingDepth - wt));
       const len = Math.min(p.len, buildingWidth - wt - x);
@@ -1073,9 +1073,12 @@ function renderRoomLabels(labels, ui) {
   for (const l of (labels || [])) {
     if (!l || !l.text) continue;
     const isSel = sel && sel.type === 'label' && sel.id === l.id;
-    const w = Math.max(600, l.text.length * 120 * TS), h = 260 * TS;
+    const sub = { wc: 'WC', shower: 'Shower room', kitchenette: 'Kitchenette', meeting: 'Meeting room', reception: 'Reception', store: 'Store', corridor: 'Corridor' }[l.kind] || '';
+    const showSub = sub && l.text.toLowerCase().indexOf(sub.toLowerCase().split(' ')[0]) < 0;
+    const w = Math.max(600, Math.max(l.text.length, showSub ? sub.length * 0.7 : 0) * 120 * TS), h = (showSub ? 420 : 260) * TS;
+    const tint = { wc: '#dbeafe', shower: '#dbeafe', kitchenette: '#fef3c7' }[l.kind];
     s += tag('g', { class: 'plan-room-label' + (isSel ? ' selected' : ''), 'data-rl-id': l.id, style: 'cursor:move' },
-      rc(l.x - w / 2, l.y - h * 0.75, w, h, { fill: 'transparent' }) + (isSel ? rc(l.x - w / 2, l.y - h * 0.75, w, h, { fill: 'none', sw: 4, stroke: '#0f766e' }) : '') + tx(l.x, l.y, l.text, 200, { color: '#444', bold: true }));
+      rc(l.x - w / 2, l.y - h * 0.6, w, h, { fill: tint || 'transparent', rx: tint ? 60 : 0 }) + (isSel ? rc(l.x - w / 2, l.y - h * 0.6, w, h, { fill: 'none', sw: 4, stroke: '#0f766e' }) : '') + tx(l.x, l.y, l.text, 200, { color: '#444', bold: true }) + (showSub ? tx(l.x, l.y + 150 * TS, sub, 120, { color: '#666' }) : ''));
   }
   return s;
 }

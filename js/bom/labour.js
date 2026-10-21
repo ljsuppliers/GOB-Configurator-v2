@@ -65,6 +65,12 @@ export function computeLabour(state, componentDefs) {
     const lm = parts.reduce((s, p) => s + Number(p.len) / 1000, 0); const doors = parts.reduce((s, p) => s + ((p.doors || []).length), 0);
     if (lm > 0) day('partitions', `Internal partition walls: ${lm.toFixed(1)}m + ${doors} door${doors === 1 ? '' : 's'} (0.5 day per 3m + 0.25 day per door)`, Math.round((lm / 3 * 0.5 + doors * 0.25) * 2) / 2, true);
   }
+  { // per-room fit-out from the room labels (plumber separate, see subcontract)
+    const kinds = {}; for (const l of (Array.isArray(state.roomLabels) ? state.roomLabels : [])) { if (l && l.text) kinds[l.kind || 'office'] = (kinds[l.kind || 'office'] || 0) + 1; }
+    if (kinds.wc) day('fitout_wc', `WC fit-out x${kinds.wc}: carpentry, tiling, second fix (1 day each; plumber separate)`, kinds.wc * 1.0, true);
+    if (kinds.shower) day('fitout_shower', `Shower room fit-out x${kinds.shower}: carpentry, tiling, screen, second fix (1.5 days each; plumber separate)`, kinds.shower * 1.5, true);
+    if (kinds.kitchenette) day('fitout_kitchenette', `Kitchenette fit-out x${kinds.kitchenette}: units, worktop, sink (1 day each; plumber separate)`, kinds.kitchenette * 1.0, true);
+  }
   if (state.partitionRoom?.enabled) day('partition', `Partition room (${state.partitionRoom.label || state.partitionRoom.type}) incl. interior door`, 2.0);
   if (extH >= 2750) day('height', `Extra height (${(extH / 1000).toFixed(2)}m external): taller walls, joist oversail canopy box, more board`, 1.0, true);
   if (state.bathroom?.enabled) day('bathroom', `${state.bathroom.type === 'wc' ? 'WC' : 'Shower room'} carpentry/tiling fit-out (plumber separate, see subcontract)`, 1.0, true);
@@ -107,7 +113,8 @@ export function computeLabour(state, componentDefs) {
   const other = Number(lab.otherSubcontract || 0);
   if (other) sub.push({ id: 'other', label: lab.otherSubcontractLabel || 'Other subcontract (plumber etc.)', days: null, amount: Math.round(other) });
   const subTotal = sub.reduce((s, l) => s + l.amount, 0);
-  const needsPlumber = !!state.bathroom?.enabled && !other;
+  const plumbedRooms = (Array.isArray(state.roomLabels) ? state.roomLabels : []).filter((l) => l && l.text && ['wc', 'shower', 'kitchenette'].includes(l.kind)).length;
+  const needsPlumber = (!!state.bathroom?.enabled || plumbedRooms > 0) && !other;
 
   return {
     dayRate, externalArea, model: base.model, buildDays: base.days,
