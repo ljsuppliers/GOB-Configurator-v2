@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
   <title>GOB CRM</title>
-  <link rel="stylesheet" href="css/app.css?v=32">
+  <link rel="stylesheet" href="css/app.css?v=33">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/theme.css?v=14">
@@ -1318,10 +1318,19 @@
 
       <!-- CENTER: Drawing Canvas -->
       <section class="drawing-panel">
-        <div class="drawing-toolbar">
+        <div class="drawing-toolbar plan-tools">
+          <span class="plan-tools-label">Plan:</span>
+          <button :class="{ on: planTool === 'select' }" @click="setPlanTool('select')" title="Select, drag walls / doors / labels. Drag a wall end to change its length.">Select</button>
+          <button :class="{ on: planTool === 'wall-v' }" @click="setPlanTool('wall-v')" title="Click and drag on the floor to draw a wall running front-to-back">Wall &#8597;</button>
+          <button :class="{ on: planTool === 'wall-h' }" @click="setPlanTool('wall-h')" title="Click and drag on the floor to draw a wall running left-to-right">Wall &#8596;</button>
+          <button :class="{ on: planTool === 'door' }" @click="setPlanTool('door')" title="Click on an internal wall to add a door there">Door</button>
+          <button :class="{ on: planTool === 'label' }" @click="setPlanTool('label')" title="Click on the floor to place a room label">Label</button>
+          <button v-if="planSelection" class="danger" @click="deletePlanSelection()" title="Delete the selected item (or press Delete)">Delete {{ planSelection.type }}</button>
+          <span class="crm-muted plan-tools-hint">{{ planSelection ? planSelectionText() : (planTool === 'select' ? 'Drag anything on the plan. Esc clears.' : planTool === 'door' ? 'Click a wall to add a door' : planTool === 'label' ? 'Click where the label goes' : 'Drag on the floor to draw the wall') }}</span>
+          <span style="flex:1"></span>
           <button @click="printDrawing" title="Open in new window for printing">Print</button>
         </div>
-        <div id="drawing-canvas" v-html="drawingSvg"></div>
+        <div id="drawing-canvas" :class="{ 'plan-edit': planTool !== 'select' || !!planSelection }" v-html="drawingSvg"></div>
       </section>
 
       <!-- RIGHT: Price Panel -->
@@ -2641,7 +2650,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=197"></script>
+<script type="module" src="js/app.js?v=198"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

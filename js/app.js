@@ -2,10 +2,11 @@
 // Reactive state, live pricing, drawing preview, email drafting
 
 import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding } from './pricing.js?v=12';
-import { generateDrawing } from './drawing-engine.js?v=49';
+import { generateDrawing } from './drawing-engine.js?v=50';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=7';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
+import { initPlanEditor } from './ui/plan-editor.js?v=1';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory, restoreHistoryEntry } from './cloud-storage.js?v=8';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=60';
@@ -102,6 +103,9 @@ createApp({
       emailSubject: '',
       emailBody: '',
 
+      // Plan editor (internal walls / doors / labels on the floor plan)
+      planTool: 'select',
+      planSelection: null,
       nextCompId: 100,
       nextFeatureId: 1000,
       nextAcUnitId: 2000,
@@ -633,7 +637,7 @@ createApp({
 
     drawingSvg() {
       if (!this.state || !this.appData.components) return '';
-      return generateDrawing(this.state, this.appData.components, this.appData.cladding);
+      return generateDrawing(this.state, this.appData.components, this.appData.cladding, { selection: this.planSelection });
     },
 
     doorTypes() {
@@ -1975,7 +1979,22 @@ createApp({
         : { id: 'pw-' + Date.now(), dir: 'v', x: Math.round(w / 2 / 50) * 50, y: 150, len: d - 300, label: '', doors: [{ pos: 0.5, swing: 'a', flipped: false }], loadBearing: false };
       this.state.partitions.push(p);
     },
-    removePartition(i) { this.state.partitions.splice(i, 1); },
+    removePartition(i) { this.state.partitions.splice(i, 1); this.planSelection = null; },
+    setPlanTool(t) { this.planTool = this.planTool === t ? 'select' : t; },
+    deletePlanSelection() {
+      const s = this.planSelection; if (!s) return;
+      if (s.type === 'wall') this.state.partitions = this.state.partitions.filter((p) => p.id !== s.id);
+      else if (s.type === 'door') { const p = this.state.partitions.find((x) => x.id === s.id); if (p && p.doors) p.doors.splice(s.j, 1); }
+      else if (s.type === 'label') this.state.roomLabels = this.state.roomLabels.filter((l) => l.id !== s.id);
+      this.planSelection = null;
+    },
+    planSelectionText() {
+      const s = this.planSelection; if (!s) return '';
+      if (s.type === 'wall') { const p = this.state.partitions.find((x) => x.id === s.id); return p ? `Wall ${p.dir === 'h' ? 'left-to-right' : 'front-to-back'}, ${(p.len / 1000).toFixed(2)}m${p.loadBearing ? ', load-bearing' : ''}` : ''; }
+      if (s.type === 'door') return 'Door';
+      if (s.type === 'label') { const l = this.state.roomLabels.find((x) => x.id === s.id); return l ? `Label "${l.text}"` : ''; }
+      return '';
+    },
     addPartitionDoor(p) { if (!Array.isArray(p.doors)) p.doors = []; p.doors.push({ pos: 0.5, swing: 'a', flipped: false }); },
     removePartitionDoor(p, j) { p.doors.splice(j, 1); },
     addRoomLabel() {
@@ -3380,6 +3399,7 @@ createApp({
       // Initialize drag-drop for components
       this.$nextTick(() => {
         initComponentDrag(this, components);
+        initPlanEditor(this);
       });
 
       this.loaded = true;

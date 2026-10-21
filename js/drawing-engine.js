@@ -1022,38 +1022,61 @@ function renderStraightPartition(sp, buildingWidth, buildingDepth, wt) {
 
 // Internal walls drawn on the plan (any number). Each wall: { dir:'v'|'h', x, y, len, label, doors:[{pos 0..1, w, swing:'a'|'b', flipped}], loadBearing }
 // x,y = start of the wall centreline in building coordinates (mm, rear-left origin). 'v' runs front-to-back from (x,y); 'h' runs left-to-right.
-function renderPartitions(parts, buildingWidth, buildingDepth, wt) {
+function renderPartitions(parts, buildingWidth, buildingDepth, wt, ui) {
   let s = '';
   const partWt = 150;
+  const sel = (ui && ui.selection) || null;
+  const HIT = 120; // extra hit padding so thin walls are easy to grab
   for (const p of (parts || [])) {
     if (!p || !(p.len > 0)) continue;
     const doorW = 826;
+    const isSel = sel && sel.type === 'wall' && sel.id === p.id;
+    const fill = p.loadBearing ? '#b8c4d6' : COL.wallFill, stroke = isSel ? '#0f766e' : (p.loadBearing ? '#1f3b63' : '#444'), sw = isSel ? 6 : 2;
     if (p.dir === 'h') {
       const x = Math.max(wt, Math.min(p.x, buildingWidth - wt)), y = Math.max(wt, Math.min(p.y, buildingDepth - wt));
       const len = Math.min(p.len, buildingWidth - wt - x);
-      s += rc(x, y - partWt / 2, len, partWt, { fill: p.loadBearing ? '#b8c4d6' : COL.wallFill, sw: 2, stroke: p.loadBearing ? '#1f3b63' : '#444' });
-      for (const dr of (p.doors || [])) {
+      let g = rc(x, y - partWt / 2 - HIT, len, partWt + HIT * 2, { fill: 'transparent' });
+      g += rc(x, y - partWt / 2, len, partWt, { fill, sw, stroke });
+      (p.doors || []).forEach((dr, di) => {
         const dx = x + Math.max(30, Math.min((len - doorW) * (dr.pos ?? 0.5), len - doorW - 30));
-        s += drawDoor(dx, y - partWt / 2, doorW, partWt, 'horizontal', dr.swing === 'b' ? 'up' : 'down', !!dr.flipped);
-      }
-      if (p.label) s += tx(x + len / 2, y - partWt / 2 - 60, p.label, 110, { color: '#555' });
+        const dsel = sel && sel.type === 'door' && sel.id === p.id && sel.j === di;
+        g += tag('g', { class: 'plan-door' + (dsel ? ' selected' : ''), 'data-pw-id': p.id, 'data-door': di, style: 'cursor:ew-resize' },
+          rc(dx, y - partWt / 2 - HIT, doorW, partWt + HIT * 2, { fill: 'transparent' }) + drawDoor(dx, y - partWt / 2, doorW, partWt, 'horizontal', dr.swing === 'b' ? 'up' : 'down', !!dr.flipped) + (dsel ? rc(dx, y - partWt / 2, doorW, partWt, { fill: 'none', sw: 6, stroke: '#0f766e' }) : ''));
+      });
+      g += tag('circle', { class: 'pw-handle', 'data-pw-id': p.id, 'data-end': 'a', cx: x, cy: y, r: 110 });
+      g += tag('circle', { class: 'pw-handle', 'data-pw-id': p.id, 'data-end': 'b', cx: x + len, cy: y, r: 110 });
+      if (p.label) g += tx(x + len / 2, y - partWt / 2 - 60, p.label, 110, { color: '#555' });
+      s += tag('g', { class: 'plan-wall' + (isSel ? ' selected' : ''), 'data-pw-id': p.id, 'data-dir': 'h', style: 'cursor:move' }, g);
     } else {
       const x = Math.max(wt, Math.min(p.x, buildingWidth - wt)), y = Math.max(wt, Math.min(p.y, buildingDepth - wt));
       const len = Math.min(p.len, buildingDepth - wt - y);
-      s += rc(x - partWt / 2, y, partWt, len, { fill: p.loadBearing ? '#b8c4d6' : COL.wallFill, sw: 2, stroke: p.loadBearing ? '#1f3b63' : '#444' });
-      for (const dr of (p.doors || [])) {
+      let g = rc(x - partWt / 2 - HIT, y, partWt + HIT * 2, len, { fill: 'transparent' });
+      g += rc(x - partWt / 2, y, partWt, len, { fill, sw, stroke });
+      (p.doors || []).forEach((dr, di) => {
         const dy = y + Math.max(30, Math.min((len - doorW) * (dr.pos ?? 0.5), len - doorW - 30));
-        s += drawDoor(x - partWt / 2, dy, doorW, partWt, 'vertical', dr.swing === 'b' ? 'left' : 'right', !!dr.flipped);
-      }
-      if (p.label) s += tx(x + partWt / 2 + 60, y + len / 2, p.label, 110, { color: '#555', anchor: 'start' });
+        const dsel = sel && sel.type === 'door' && sel.id === p.id && sel.j === di;
+        g += tag('g', { class: 'plan-door' + (dsel ? ' selected' : ''), 'data-pw-id': p.id, 'data-door': di, style: 'cursor:ns-resize' },
+          rc(x - partWt / 2 - HIT, dy, partWt + HIT * 2, doorW, { fill: 'transparent' }) + drawDoor(x - partWt / 2, dy, doorW, partWt, 'vertical', dr.swing === 'b' ? 'left' : 'right', !!dr.flipped) + (dsel ? rc(x - partWt / 2, dy, partWt, doorW, { fill: 'none', sw: 6, stroke: '#0f766e' }) : ''));
+      });
+      g += tag('circle', { class: 'pw-handle', 'data-pw-id': p.id, 'data-end': 'a', cx: x, cy: y, r: 110 });
+      g += tag('circle', { class: 'pw-handle', 'data-pw-id': p.id, 'data-end': 'b', cx: x, cy: y + len, r: 110 });
+      if (p.label) g += tx(x + partWt / 2 + 60, y + len / 2, p.label, 110, { color: '#555', anchor: 'start' });
+      s += tag('g', { class: 'plan-wall' + (isSel ? ' selected' : ''), 'data-pw-id': p.id, 'data-dir': 'v', style: 'cursor:move' }, g);
     }
   }
   return s;
 }
 // Free room labels for multi-room layouts: [{ text, x, y }]
-function renderRoomLabels(labels) {
+function renderRoomLabels(labels, ui) {
   let s = '';
-  for (const l of (labels || [])) { if (l && l.text) s += tx(l.x, l.y, l.text, 200, { color: '#444', bold: true }); }
+  const sel = (ui && ui.selection) || null;
+  for (const l of (labels || [])) {
+    if (!l || !l.text) continue;
+    const isSel = sel && sel.type === 'label' && sel.id === l.id;
+    const w = Math.max(600, l.text.length * 120 * TS), h = 260 * TS;
+    s += tag('g', { class: 'plan-room-label' + (isSel ? ' selected' : ''), 'data-rl-id': l.id, style: 'cursor:move' },
+      rc(l.x - w / 2, l.y - h * 0.75, w, h, { fill: 'transparent' }) + (isSel ? rc(l.x - w / 2, l.y - h * 0.75, w, h, { fill: 'none', sw: 4, stroke: '#0f766e' }) : '') + tx(l.x, l.y, l.text, 200, { color: '#444', bold: true }));
+  }
   return s;
 }
 
@@ -1320,8 +1343,9 @@ function renderPlan(cfg) {
     s += renderPartitionRoom(cfg.partitionRoom, width, depth, wt);
   }
   // Internal walls + free room labels (multi-room / commercial layouts)
-  s += renderPartitions(cfg.partitions, width, depth, wt);
-  s += renderRoomLabels(cfg.roomLabels);
+  s += tag('rect', { class: 'plan-floor', x: wt, y: wt, width: width - wt * 2, height: depth - wt * 2, fill: 'transparent' });
+  s += renderRoomLabels(cfg.roomLabels, cfg.ui); // labels under the walls so thin walls/doors stay clickable
+  s += renderPartitions(cfg.partitions, width, depth, wt, cfg.ui);
 
   // Internal dimensions
   const intColor = '#2288CC';
@@ -1703,7 +1727,7 @@ function compose(b) {
   // PLAN VIEW
   const planLabelY = boundaryRear ? row2Y - boundaryRear - 160 : row2Y - 160;
   s += tx(pX+W/2, planLabelY, 'Plan View', 180, { bold:true, color:'#222' });
-  s += grp(renderPlan({ width:W, depth:D, wallThickness:150, overhang:oh, tier:b.tier, components:b.planComponents||[], rooms:b.rooms, cornerLeft:cL, cornerRight:cR, straightPartition:b.straightPartition, partitionRoom:b.partitionRoom, partitions:b.partitions, roomLabels:b.roomLabels, boundaries:b.boundaries, hasCanopy, hasDecking, deckingDepth, acUnits:b.acUnits||[], intDimWidthOffset:b.intDimWidthOffset, intDimDepthOffset:b.intDimDepthOffset }), { transform:`translate(${pX},${row2Y})` });
+  s += grp(renderPlan({ width:W, depth:D, wallThickness:150, overhang:oh, tier:b.tier, components:b.planComponents||[], rooms:b.rooms, cornerLeft:cL, cornerRight:cR, straightPartition:b.straightPartition, partitionRoom:b.partitionRoom, partitions:b.partitions, roomLabels:b.roomLabels, ui:b.ui, boundaries:b.boundaries, hasCanopy, hasDecking, deckingDepth, acUnits:b.acUnits||[], intDimWidthOffset:b.intDimWidthOffset, intDimDepthOffset:b.intDimDepthOffset }), { transform:`translate(${pX},${row2Y})`, id: 'plan-group' });
   // Add canopy/decking space to dimension line
   const planDimY = frontProj > 0 ? row2Y+D+frontProj+80 : row2Y+D+80;
   // Width dimension - offset 450 to match depth dimension distance, label below line
@@ -1773,7 +1797,7 @@ function compose(b) {
 
 // ── Public API ──────────────────────────────────────────────
 
-export function generateDrawing(state, componentsData, claddingData) {
+export function generateDrawing(state, componentsData, claddingData, ui) {
   if (!state || !componentsData) return '';
 
   const allComps = { ...componentsData.doors, ...componentsData.windows };
@@ -1889,6 +1913,7 @@ export function generateDrawing(state, componentsData, claddingData) {
     partitionRoom: state.partitionRoom,
     partitions: state.partitions || [],
     roomLabels: state.roomLabels || [],
+    ui: ui || null,
     externalFeatures: (state.externalFeatures || []).filter(f => (f.elevation || 'front') === 'front'),
     leftExternalFeatures: (state.externalFeatures || []).filter(f => f.elevation === 'left'),
     rightExternalFeatures: (state.externalFeatures || []).filter(f => f.elevation === 'right'),
