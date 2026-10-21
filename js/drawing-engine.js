@@ -545,6 +545,7 @@ function renderComp(type, x, y, w, h, compId, claddingType, handleSide) {
   else if (type.includes('opener')) inner = windowOpener(x,y,w,h);
   else inner = windowFixed(x,y,w,h);
   
+  if (TS > 1.4) inner = rc(x + 30 * TS, y + 30 * TS, w, h, { fill: 'black', opacity: 0.18 }) + inner; // drop shadow so small openings read on a big elevation
   // Wrap in group with data attributes for drag-drop
   if (compId) {
     return `<g class="component draggable" data-comp-id="${compId}" data-x="${x}" data-w="${w}" style="cursor:move">${inner}</g>`;
@@ -729,7 +730,7 @@ function renderFront(cfg) {
   
   // Wall cladding (main building only)
   s += rc(0, wallTop, width, wallH, { fill: cladFill(claddingType), clip: `url(#${cid})` });
-  s += rc(0, gutterBottom, width, 260, { fill: 'url(#shadowDown)', clip: `url(#${cid})` }); // shade under the fascia
+  s += rc(0, gutterBottom, width, 260 * TS, { fill: 'url(#shadowDown)', clip: `url(#${cid})` }); // shade under the fascia (scales with the sheet)
   // Building outline - walls only (not fascia area)
   s += ln(0, ROOF_ZONE, 0, height, 5, '#222'); // left wall
   s += ln(width, ROOF_ZONE, width, height, 5, '#222'); // right wall
@@ -741,8 +742,8 @@ function renderFront(cfg) {
 
   // Base trim at bottom of building - ALWAYS present on all tiers
   const trimH = deckH;
-  s += rc(-sideOverhang - 200, height + trimH, width + sideOverhang * 2 + 400, 110, { fill: 'url(#groundShadow)' }); // ground shadow
-  s += ln(-sideOverhang - 350, height + trimH, width + sideOverhang + 350, height + trimH, 3, '#444'); // ground line
+  s += rc(-sideOverhang - 200 * TS, height + trimH, width + sideOverhang * 2 + 400 * TS, 110 * TS, { fill: 'url(#groundShadow)' }); // ground shadow
+  s += ln(-sideOverhang - 350 * TS, height + trimH, width + sideOverhang + 350 * TS, height + trimH, 3 * TS, '#444'); // ground line
   s += rc(-sideOverhang, height, width + sideOverhang*2, trimH, { fill: COL.anthracite });
   s += ln(-sideOverhang, height, width + sideOverhang, height, 1.5, COL.anthraciteDk);
   s += ln(-sideOverhang, height + trimH, width + sideOverhang, height + trimH, 1, COL.anthraciteDk);
@@ -846,9 +847,9 @@ function renderSide(cfg) {
   s += gutterBar(0, ROOF_ZONE, depth, { dpRight: false, dpLeft: false, dpH: wallH*0.12 });
   // Wall cladding
   s += rc(0, wallTop, depth, wallH, { fill: cladFill(claddingType || 'steel'), clip: `url(#${cid})` });
-  s += rc(0, ROOF_ZONE + GUTTER_H, depth, 260, { fill: 'url(#shadowDown)', clip: `url(#${cid})` }); // shade under the fascia
-  s += rc(fasciaX - 200, height + deckH, fasciaW + 400, 110, { fill: 'url(#groundShadow)' }); // ground shadow
-  s += ln(fasciaX - 350, height + deckH, fasciaX + fasciaW + 350, height + deckH, 3, '#444'); // ground line
+  s += rc(0, ROOF_ZONE + GUTTER_H, depth, 260 * TS, { fill: 'url(#shadowDown)', clip: `url(#${cid})` }); // shade under the fascia
+  s += rc(fasciaX - 200 * TS, height + deckH, fasciaW + 400 * TS, 110 * TS, { fill: 'url(#groundShadow)' }); // ground shadow
+  s += ln(fasciaX - 350 * TS, height + deckH, fasciaX + fasciaW + 350 * TS, height + deckH, 3 * TS, '#444'); // ground line
   
   // Wall outline - but skip the front edge line if closed corner (it continues into screen)
   const hasClosedCorner = isSig && frontProj > 50 && corner === 'closed';
