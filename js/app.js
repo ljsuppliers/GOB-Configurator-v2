@@ -2,9 +2,9 @@
 // Reactive state, live pricing, drawing preview, email drafting
 
 import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding, roomSchedule, ROOM_KINDS, roofInfo } from './pricing.js?v=15';
-import { generateDrawing, generateSitePlan } from './drawing-engine.js?v=57';
+import { generateDrawing, generateSitePlan, isFurniture } from './drawing-engine.js?v=59';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=7';
-import { exportDrawingPDF } from './drawing-pdf/export.js';
+import { exportDrawingPDF, cleanSvgForOutput } from './drawing-pdf/export.js?v=2';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
 import { initPlanEditor, finishDraft } from './ui/plan-editor.js?v=3';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory, restoreHistoryEntry } from './cloud-storage.js?v=8';
@@ -2034,6 +2034,8 @@ createApp({
     addSiteObject(kind) {
       if (!Array.isArray(this.state.siteObjects)) this.state.siteObjects = [];
       const id = 'so-' + Date.now().toString(36); const W = this.state.width, D = this.state.depth;
+      const F = { desk: { w: 1600, h: 800 }, chair: { w: 500, h: 500 }, sofa: { w: 1600, h: 800 }, table: { w: 2400, h: 1100, seats: 8 }, kitchen: { w: 2400, h: 600 }, wc: { w: 450, h: 750 }, basin: { w: 550, h: 450 }, 'reception-desk': { w: 2000, h: 800 } }[kind];
+      if (F) { const o = { id, kind, x: Math.round(W / 2 / 50) * 50 - F.w / 2, y: Math.round(D / 2 / 50) * 50 - F.h / 2, rot: 0, label: '', ...F }; this.state.siteObjects.push(o); this.planSelection = { type: 'site', id }; return; }
       const base = { building: { kind, x: W + 3000, y: 0, w: 5000, h: 4000, rot: 0, label: 'Existing building' }, parking: { kind, x: -3500, y: 0, w: 2400, h: 4800, rot: 0, label: '' },
         tree: { kind, x: W + 2000, y: D + 2500, r: 1500, label: '' }, area: { kind, x: 0, y: D + 500, w: W, h: 2000, rot: 0, label: 'Proposed decking area' }, text: { kind, x: W / 2, y: D + 2500, label: 'Text' }, north: { kind, x: -2000, y: -2000, rot: 0 },
         path: { kind, pts: [{ x: W / 2, y: D + 500 }, { x: W / 2, y: D + 4500 }], width: 1200, label: '' }, fence: { kind, pts: [{ x: -1500, y: -1500 }, { x: W + 1500, y: -1500 }], width: 0, label: '' } }[kind];
@@ -2041,7 +2043,23 @@ createApp({
       const o = { id, ...base }; this.state.siteObjects.push(o); this.planSelection = { type: 'site', id };
     },
     removeSiteObject(i) { this.state.siteObjects.splice(i, 1); this.planSelection = null; },
-    siteObjectName(o) { return { building: 'Existing building', parking: 'Parking space', area: 'Marked area', path: 'Path / drive', fence: 'Fence / boundary', tree: 'Tree', text: 'Text', north: 'North arrow' }[o.kind] || o.kind; },
+    /** Drops typical furniture into every labelled room (around the label), to be dragged into place. */
+    furnishRooms() {
+      if (!Array.isArray(this.state.siteObjects)) this.state.siteObjects = [];
+      this.state.siteObjects = this.state.siteObjects.filter((o) => !isFurniture(o));
+      let n = 0; const add = (kind, x, y, extra) => { const F = { desk: { w: 1600, h: 800 }, chair: { w: 500, h: 500 }, sofa: { w: 1600, h: 800 }, table: { w: 2400, h: 1100, seats: 8 }, kitchen: { w: 2400, h: 600 }, wc: { w: 450, h: 750 }, basin: { w: 550, h: 450 }, 'reception-desk': { w: 2000, h: 800 } }[kind]; this.state.siteObjects.push({ id: 'fu-' + Date.now().toString(36) + (n++), kind, x: Math.round(x / 50) * 50, y: Math.round(y / 50) * 50, rot: 0, label: '', ...F, ...(extra || {}) }); };
+      for (const l of (this.state.roomLabels || [])) {
+        const k = l.kind || 'office';
+        if (k === 'office') { add('desk', l.x - 800, l.y - 1200); add('sofa', l.x - 800, l.y + 500); }
+        else if (k === 'meeting') add('table', l.x - 1200, l.y - 550);
+        else if (k === 'kitchenette') add('kitchen', l.x - 1200, l.y + 300);
+        else if (k === 'wc') { add('wc', l.x - 225, l.y - 900); add('basin', l.x + 400, l.y - 200); }
+        else if (k === 'reception') { add('reception-desk', l.x - 1000, l.y - 900); add('sofa', l.x - 800, l.y + 600); }
+      }
+      this.notify('Furniture added around each room label. Drag each piece into place, Delete removes one.');
+    },
+    hasFurniture() { return (this.state.siteObjects || []).some(isFurniture); },
+    siteObjectName(o) { return { building: 'Existing building', parking: 'Parking space', area: 'Marked area', desk: 'Desk + chair', chair: 'Chair', sofa: 'Sofa', table: 'Meeting table', kitchen: 'Kitchen units', wc: 'WC', basin: 'Basin', 'reception-desk': 'Reception desk', path: 'Path / drive', fence: 'Fence / boundary', tree: 'Tree', text: 'Text', north: 'North arrow' }[o.kind] || o.kind; },
     uploadSiteImage(ev) {
       const f = ev.target.files && ev.target.files[0]; if (!f) return; ev.target.value = '';
       const img = new Image(); const url = URL.createObjectURL(f);
@@ -3047,7 +3065,7 @@ createApp({
       const svg = document.querySelector('#drawing-canvas svg');
       if (!svg) return;
       const win = window.open('', '_blank');
-      win.document.write(`<!DOCTYPE html><html><head><title>${this.printFileName('Drawing')}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;}svg{max-width:100%;max-height:100vh;}</style></head><body>${svg.outerHTML}</body></html>`);
+      win.document.write(`<!DOCTYPE html><html><head><title>${this.printFileName('Drawing')}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;}svg{max-width:100%;max-height:100vh;}</style></head><body>${cleanSvgForOutput(svg.outerHTML)}</body></html>`);
       win.document.close();
       win.print();
     },

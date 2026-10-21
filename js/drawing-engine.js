@@ -1136,7 +1136,7 @@ function renderRoomLabels(labels, ui) {
     const w = Math.max(600, Math.max(l.text.length, showSub ? sub.length * 0.7 : 0) * 120 * TS * LS), h = (showSub ? 420 : 260) * TS * LS;
     const tint = { wc: '#dbeafe', shower: '#dbeafe', kitchenette: '#fef3c7' }[l.kind];
     s += tag('g', { class: 'plan-room-label' + (isSel ? ' selected' : ''), 'data-rl-id': l.id, style: 'cursor:move' },
-      rc(l.x - w / 2, l.y - h * 0.6, w, h, { fill: tint || 'transparent', rx: tint ? 60 : 0 }) + (isSel ? rc(l.x - w / 2, l.y - h * 0.6, w, h, { fill: 'none', sw: 4, stroke: '#0f766e' }) : '') + tx(l.x, l.y, l.text, 200 * LS, { color: '#444', bold: true }) + (showSub ? tx(l.x, l.y + 150 * TS * LS, sub, 120 * LS, { color: '#666' }) : ''));
+      rc(l.x - w / 2, l.y - h * 0.6, w, h, { fill: tint || '#ffffff', rx: 60, opacity: tint ? 1 : 0.85 }) + (isSel ? rc(l.x - w / 2, l.y - h * 0.6, w, h, { fill: 'none', sw: 4, stroke: '#0f766e' }) : '') + tx(l.x, l.y, l.text, 200 * LS, { color: '#444', bold: true }) + (showSub ? tx(l.x, l.y + 150 * TS * LS, sub, 120 * LS, { color: '#666' }) : ''));
   }
   return s;
 }
@@ -1149,7 +1149,7 @@ export function siteBounds(objs, img) {
   const add = (x, y) => { if (!Number.isFinite(x) || !Number.isFinite(y)) return; any = true; minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); };
   if (img && img.w > 0) { add(img.x, img.y); add(img.x + img.w, img.y + img.h); }
   for (const o of (objs || [])) {
-    if (!o) continue;
+    if (!o || isFurniture(o)) continue;
     if (o.kind === 'building' || o.kind === 'parking' || o.kind === 'area') { const r = Math.max(o.w, o.h); add(o.x - (o.rot ? r : 0), o.y - (o.rot ? r : 0)); add(o.x + o.w + (o.rot ? r : 0), o.y + o.h + (o.rot ? r : 0)); }
     else if (o.kind === 'tree') { add(o.x - o.r, o.y - o.r); add(o.x + o.r, o.y + o.r); }
     else if (o.kind === 'path' || o.kind === 'fence') { const hw = Math.max(600, (o.width || 0) / 2 + 200); for (const p of (o.pts || [])) { add(p.x - hw, p.y - hw); add(p.x + hw, p.y + hw); } }
@@ -1161,13 +1161,66 @@ function renderSiteImage(img) {
   if (!img || !img.dataUrl || !(img.w > 0)) return '';
   return tag('g', { class: 'site-image' }, tag('image', { href: img.dataUrl, x: img.x, y: img.y, width: img.w, height: img.h, opacity: img.opacity ?? 0.6, preserveAspectRatio: 'none' }));
 }
+const FURNITURE_KINDS = ['desk', 'chair', 'sofa', 'table', 'kitchen', 'wc', 'basin', 'reception-desk'];
+export const isFurniture = (o) => !!o && FURNITURE_KINDS.includes(o.kind);
+function renderFurniture(objs, ui) {
+  let s = '';
+  const sel = (ui && ui.selection) || null;
+  const LN = '#5b6470', FILL = '#ffffff';
+  for (const o of (objs || [])) {
+    if (!isFurniture(o) || !o.id) continue;
+    const isSel = sel && sel.type === 'site' && sel.id === o.id;
+    const stroke = isSel ? '#0f766e' : LN, sw = isSel ? 8 : 4;
+    const w = o.w || 1600, h = o.h || 800; const cx = o.x + w / 2, cy = o.y + h / 2;
+    let g = `<g transform="rotate(${o.rot || 0} ${cx} ${cy})">`;
+    if (o.kind === 'desk') { // desk with a chair on the long side facing the room
+      g += rc(o.x, o.y, w, h, { fill: FILL, sw, stroke });
+      g += tag('rect', { x: cx - 250, y: o.y + h + 60, width: 500, height: 450, rx: 120, fill: FILL, stroke, 'stroke-width': sw });
+      g += tag('rect', { x: cx - 300, y: o.y + h + 440, width: 600, height: 110, rx: 50, fill: FILL, stroke, 'stroke-width': sw });
+    } else if (o.kind === 'chair') {
+      g += tag('rect', { x: o.x, y: o.y, width: w, height: h, rx: 120, fill: FILL, stroke, 'stroke-width': sw });
+      g += tag('rect', { x: o.x - 50, y: o.y + h - 110, width: w + 100, height: 110, rx: 50, fill: FILL, stroke, 'stroke-width': sw });
+    } else if (o.kind === 'sofa') {
+      g += tag('rect', { x: o.x, y: o.y, width: w, height: h, rx: 140, fill: FILL, stroke, 'stroke-width': sw });
+      g += tag('rect', { x: o.x, y: o.y, width: w, height: 220, rx: 100, fill: '#eef0f3', stroke, 'stroke-width': sw }); // back
+      g += ln(cx, o.y + 220, cx, o.y + h, 3, stroke); // two seats
+    } else if (o.kind === 'table') { // meeting table with chairs all round (seats = o.seats || 8)
+      g += tag('rect', { x: o.x, y: o.y, width: w, height: h, rx: 120, fill: FILL, stroke, 'stroke-width': sw });
+      const seats = o.seats || 8, perSide = Math.max(1, Math.floor((seats - 2) / 2));
+      for (let i = 0; i < perSide; i++) { const sx = o.x + (w / (perSide + 1)) * (i + 1); for (const side of [-1, 1]) g += tag('rect', { x: sx - 230, y: side < 0 ? o.y - 560 : o.y + h + 80, width: 460, height: 480, rx: 120, fill: FILL, stroke, 'stroke-width': sw }); }
+      for (const side of [-1, 1]) g += tag('rect', { x: side < 0 ? o.x - 560 : o.x + w + 80, y: cy - 230, width: 480, height: 460, rx: 120, fill: FILL, stroke, 'stroke-width': sw });
+    } else if (o.kind === 'kitchen') { // run of units (600 deep) with a sink
+      g += rc(o.x, o.y, w, h, { fill: '#f3f0ea', sw, stroke });
+      g += ln(o.x, o.y + h - 60, o.x + w, o.y + h - 60, 2, stroke);
+      g += tag('rect', { x: o.x + w * 0.25, y: o.y + 90, width: 500, height: h - 180, rx: 60, fill: FILL, stroke, 'stroke-width': 3 });
+      g += tag('circle', { cx: o.x + w * 0.25 + 250, cy: o.y + 60, r: 40, fill: stroke });
+      g += tag('rect', { x: o.x + w * 0.65, y: o.y + 90, width: 580, height: h - 180, fill: 'none', stroke, 'stroke-width': 3 });
+      for (const [dx, dy] of [[150, 150], [430, 150], [150, 410], [430, 410]]) g += tag('circle', { cx: o.x + w * 0.65 + dx, cy: o.y + dy, r: 70, fill: 'none', stroke, 'stroke-width': 3 }); // hob rings
+    } else if (o.kind === 'wc') { // pan + cistern, facing away from the wall it backs onto
+      g += rc(o.x, o.y, w, 180, { fill: '#eef0f3', sw: 3, stroke }); // cistern
+      g += tag('ellipse', { cx: cx, cy: o.y + 180 + (h - 180) / 2 + 40, rx: w * 0.42, ry: (h - 180) / 2, fill: FILL, stroke, 'stroke-width': sw });
+    } else if (o.kind === 'basin') {
+      g += tag('rect', { x: o.x, y: o.y, width: w, height: h, rx: 80, fill: FILL, stroke, 'stroke-width': sw });
+      g += tag('ellipse', { cx, cy: cy + 20, rx: w * 0.32, ry: h * 0.3, fill: 'none', stroke, 'stroke-width': 3 });
+    } else if (o.kind === 'reception-desk') { // counter with a chair behind
+      g += rc(o.x, o.y, w, h, { fill: '#f3f0ea', sw, stroke });
+      g += ln(o.x, o.y + 120, o.x + w, o.y + 120, 2, stroke);
+      g += tag('rect', { x: cx - 250, y: o.y + h + 60, width: 500, height: 450, rx: 120, fill: FILL, stroke, 'stroke-width': sw });
+    }
+    if (o.label) g += tx(cx, o.y + h + 650 * Math.min(TS, 1.3) * 0.5, o.label, 90 * Math.min(TS, 1.3) / TS, { color: '#667' });
+    g += '</g>';
+    g += tag('circle', { class: 'site-handle', 'data-so-id': o.id, cx: o.x + w, cy: o.y + h, r: 110 });
+    s += tag('g', { class: 'site-obj furniture' + (isSel ? ' selected' : ''), 'data-so-id': o.id, 'data-kind': o.kind, style: 'cursor:move' }, g);
+  }
+  return s;
+}
 function renderSiteObjects(objs, ui, opts) {
   let s = '';
   const sel = (ui && ui.selection) || null;
   const big = opts && opts.big; // site-plan sheet: heavier text
   const fs = big ? 260 : 150;
   for (const o of (objs || [])) {
-    if (!o || !o.id) continue;
+    if (!o || !o.id || isFurniture(o)) continue;
     const isSel = sel && sel.type === 'site' && sel.id === o.id;
     const hl = isSel ? { stroke: '#0f766e', sw: 6 } : null;
     let g = '';
@@ -1479,11 +1532,13 @@ function renderPlan(cfg) {
   }
   // Internal walls + free room labels (multi-room / commercial layouts)
   s += tag('rect', { class: 'plan-floor', x: wt, y: wt, width: width - wt * 2, height: depth - wt * 2, fill: 'transparent' });
-  s += renderRoomLabels(cfg.roomLabels, cfg.ui); // labels under the walls so thin walls/doors stay clickable
+  s += renderFurniture(cfg.siteObjects, cfg.ui); // desks, sofas, kitchen, sanitaryware (drawn inside the rooms)
+  s += renderRoomLabels(cfg.roomLabels, cfg.ui); // labels over the furniture (white backing), under the walls so doors stay clickable
   s += renderPartitions(cfg.partitions, width, depth, wt, cfg.ui);
 
-  // Internal dimensions
+  // Internal dimensions (left off multi-room plans: the room sizes go in the specification instead - Liam 21 Oct 2026)
   const intColor = '#2288CC';
+  const multiRoom = Array.isArray(cfg.partitions) && cfg.partitions.length > 0;
   // External depth EXCLUDES the canopy (Liam 2026-09-05), so the internal
   // depth is simply the building depth less two walls - no canopy deduction.
   const intDepthMeasure = depth - wt * 2;
@@ -1491,7 +1546,9 @@ function renderPlan(cfg) {
   const intDimW = cfg.intDimWidthOffset || depth * 0.15;
   const intDimD = cfg.intDimDepthOffset || width * 0.15;
   const sp = cfg.straightPartition;
-  if (rooms && rooms.length > 1) {
+  if (multiRoom) {
+    // no internal dimension lines on a multi-room plan
+  } else if (rooms && rooms.length > 1) {
     // Multiple rooms (left/right partition via rooms)
     let acc = 0;
     for (let i = 0; i < rooms.length; i++) {
@@ -1559,6 +1616,7 @@ function renderPlan(cfg) {
   }
 
   // Corner labels (open/closed) - outside building, near front/decking edge
+  if (!(showCanopy && overhang > 0)) return s; // no canopy: open/closed corner labels are meaningless
   const cornerFontSize = 100;
   const cornerColor = '#555';
   const leftCornerLabel = (cornerLeft === 'closed') ? 'CLOSED CORNER' : 'OPEN CORNER';

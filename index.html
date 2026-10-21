@@ -878,6 +878,13 @@
             </div>
           </div>
           <p v-if="state.partitions.length" class="crm-muted" style="font-size:11px;margin:4px 0 0;">{{ partitionSummary().count }} walls, {{ partitionSummary().metres }}m, {{ partitionSummary().doors }} doors. x and y are from the rear-left corner of the building (mm); a front-to-back wall runs from y downwards, a left-to-right wall runs from x rightwards.</p>
+          <h5 class="cfg-sub">Furniture <span class="crm-muted" style="font-weight:normal;">(plan only, not priced)</span></h5>
+          <div class="btn-row" style="margin-bottom:6px;flex-wrap:wrap;">
+            <button type="button" class="btn-tiny" @click="furnishRooms()" title="Desk + sofa in each office, table in the meeting room, kitchen run, WC + basin, reception desk: placed by the room labels for you to drag">Furnish rooms from the labels</button>
+            <button type="button" class="btn-tiny" @click="addSiteObject('desk')">+ desk</button><button type="button" class="btn-tiny" @click="addSiteObject('sofa')">+ sofa</button><button type="button" class="btn-tiny" @click="addSiteObject('table')">+ table</button><button type="button" class="btn-tiny" @click="addSiteObject('kitchen')">+ kitchen</button><button type="button" class="btn-tiny" @click="addSiteObject('wc')">+ WC</button><button type="button" class="btn-tiny" @click="addSiteObject('basin')">+ basin</button><button type="button" class="btn-tiny" @click="addSiteObject('reception-desk')">+ reception desk</button>
+            <button v-if="hasFurniture()" type="button" class="btn-tiny" @click="state.siteObjects = state.siteObjects.filter(o => !['desk','chair','sofa','table','kitchen','wc','basin','reception-desk'].includes(o.kind))">clear furniture</button>
+          </div>
+          <p class="crm-muted" style="font-size:11px;margin:0 0 6px;">Drag a piece on the plan to move it, the corner handle resizes, Delete removes it. Rotate with the rot field in the Site plan section.</p>
           <h5 class="cfg-sub">Room labels</h5>
           <div class="btn-row" style="margin-bottom:6px;"><button type="button" class="btn-tiny" @click="addRoomLabel()">+ room label</button></div>
           <div v-for="(l, i) in state.roomLabels" :key="l.id" class="placed-component" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
@@ -2774,7 +2781,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=207"></script>
+<script type="module" src="js/app.js?v=209"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

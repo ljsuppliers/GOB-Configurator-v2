@@ -913,3 +913,6 @@ module.exports = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+// Shared with scratchpad/offline generators (bespoke specification sheets use the same look).
+module.exports._internals = { buildSheetValues, buildFormatRequests, getAuthClient, fmtDate, fmtCurrency, TEAL, WHITE, BLACK, GREY_BG, LIGHT_BLUE, LIGHT_RED, NEAR_BLACK, FONT, NUM_COLS, COL_WIDTHS, TEMPLATE_ID, QUOTES_FOLDER_ID };

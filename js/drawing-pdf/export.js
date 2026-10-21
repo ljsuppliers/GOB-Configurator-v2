@@ -27,7 +27,15 @@ function formatVersionedFilename(baseType, customerName, date, quoteNumber) {
   return version > 1 ? `${stem} v${version}.pdf` : `${stem}.pdf`;
 }
 
+/** Editor-only marks (wall-end handles, site/furniture handles, polyline points, cursors) must not print. */
+export function cleanSvgForOutput(svg) {
+  return String(svg || '')
+    .replace(/<circle[^>]*class="(?:pw-handle|site-handle|site-pt)"[^>]*\/>/g, '')
+    .replace(/<circle[^>]*class="(?:pw-handle|site-handle|site-pt)"[^>]*><\/circle>/g, '')
+    .replace(/ style="cursor:[^"]*"/g, '');
+}
 export function exportDrawingPDF(state, svgString, baseType = 'Drawing') {
+  svgString = cleanSvgForOutput(svgString);
   // Check for required libraries
   if (typeof jspdf === 'undefined' && typeof jsPDF === 'undefined') {
     alert('jsPDF library not loaded.');
