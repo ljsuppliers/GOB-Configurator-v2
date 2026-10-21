@@ -231,6 +231,11 @@
         "label": "Glazed internal partition (per linear metre)",
         "price": 350,
         "note": "Framed glass office partition, floor to ceiling. ESTIMATE 21 Oct 2026 - Liam to confirm."
+      },
+      "pitchedRoofPerM2": {
+        "label": "Pitched roof (per m2 of plan area)",
+        "price": 95,
+        "note": "Dual or mono pitch instead of the flat roof: ridge beam, rafters cut to the slope, gable framing + cladding, extra PIR/deck/EPDM area. ESTIMATE 21 Oct 2026 - Liam/Richard to confirm."
       }
     },
     "bathroom": {

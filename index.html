@@ -623,9 +623,20 @@
               <input type="number" v-model.number="state.depth" min="2000" max="15000" step="50">
             </div>
             <div>
-              <label>Height (mm)</label>
+              <label>Height (mm) <span v-if="state.roof && state.roof.type !== 'flat'" style="color:#888;font-weight:normal">at the eaves</span></label>
               <input type="number" v-model.number="state.height" min="2200" max="3500" step="50">
             </div>
+          </div>
+          <div class="roof-row" style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;margin-top:6px;">
+            <div><label>Roof</label>
+              <select v-model="state.roof.type" class="input-sm" style="width:130px;"><option value="flat">Flat (standard)</option><option value="dual">Dual pitch</option><option value="mono">Mono pitch</option></select></div>
+            <div v-if="state.roof.type === 'dual'"><label>Ridge runs</label>
+              <select v-model="state.roof.ridge" class="input-sm" style="width:200px;"><option value="y">front-to-back (falls to the sides)</option><option value="x">left-to-right (falls front and rear)</option></select></div>
+            <div v-if="state.roof.type === 'mono'"><label>High side</label>
+              <select v-model="state.roof.highSide" class="input-sm" style="width:100px;"><option value="rear">rear</option><option value="front">front</option><option value="left">left</option><option value="right">right</option></select></div>
+            <div v-if="state.roof.type !== 'flat'"><label>Rise (mm)</label>
+              <input type="number" v-model.number="state.roof.rise" class="input-sm" style="width:80px;" min="100" max="2000" step="50"></div>
+            <span v-if="state.roof.type !== 'flat'" class="crm-muted" style="font-size:11px;padding-bottom:6px;">ridge {{ (roofInfo().ridgeHeight / 1000).toFixed(2) }}m, about {{ roofInfo().pitchDeg }}°. Priced per m² as an estimate.</span>
           </div>
           <div class="radio-group" style="margin-top:6px;">
             <label><input type="radio" v-model="state.tier" value="signature"> Signature</label>
@@ -2733,7 +2744,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=201"></script>
+<script type="module" src="js/app.js?v=202"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>

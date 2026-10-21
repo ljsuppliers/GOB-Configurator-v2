@@ -72,6 +72,7 @@ export function computeLabour(state, componentDefs) {
     if (kinds.kitchenette) day('fitout_kitchenette', `Kitchenette fit-out x${kinds.kitchenette}: units, worktop, sink (1 day each; plumber separate)`, kinds.kitchenette * 1.0, true);
   }
   if (state.partitionRoom?.enabled) day('partition', `Partition room (${state.partitionRoom.label || state.partitionRoom.type}) incl. interior door`, 2.0);
+  { const r = state.roof || {}; if (r.type === 'dual' || r.type === 'mono') day('pitched_roof', `${r.type === 'dual' ? 'Dual' : 'Mono'}-pitched roof (${Number(r.rise) || 500}mm rise): ridge beam, rafters, gables, more deck/EPDM (1 day per 30m2 plan area)`, Math.max(1, Math.round(externalArea / 30 * 2) / 2), true); }
   if (extH >= 2750) day('height', `Extra height (${(extH / 1000).toFixed(2)}m external): taller walls, joist oversail canopy box, more board`, 1.0, true);
   if (state.bathroom?.enabled) day('bathroom', `${state.bathroom.type === 'wc' ? 'WC' : 'Shower room'} carpentry/tiling fit-out (plumber separate, see subcontract)`, 1.0, true);
   if (slattedSides) day('side_cladding', `Slatted cladding on ${slattedSides} side wall${slattedSides === 1 ? '' : 's'}: stick wall + cladding (0.5 day each)`, slattedSides * 0.5, true);

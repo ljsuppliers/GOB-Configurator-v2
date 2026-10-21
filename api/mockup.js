@@ -43,7 +43,7 @@ module.exports = async (req, res) => {
     if (q.action === 'credits') { const me = await recraft('/users/me', token); return res.status(200).json({ credits: me.credits, email: me.email }); }
     if (q.action === 'create-style') {
       const urls = Array.isArray(q.imageUrls) && q.imageUrls.length ? q.imageUrls.slice(0, 10) : HOUSE_PHOTOS;
-      const st = await recraft('/styles', token, { style: 'realistic_image', model: 'recraftv4_styles', image_urls: urls });
+      const st = await recraft('/styles', token, { style: 'realistic_image', model: 'recraftv3', image_urls: urls }); // v4 styles reject 'realistic_image'; v3 trained style tested 21 Oct 2026
       return res.status(200).json({ styleId: st.id, photos: urls.length });
     }
     // generate
@@ -51,7 +51,7 @@ module.exports = async (req, res) => {
     if (!prompt) return res.status(400).json({ error: 'prompt required' });
     const size = q.size || '1536x1024';
     const n = Math.max(1, Math.min(2, Number(q.n) || 1));
-    const base = { prompt, size, n, response_format: 'b64_json', negative_prompt: 'pitched roof, brick, shed, log cabin, conservatory, people, text, watermark, blurry, cartoon' };
+    const base = { prompt, size, n, response_format: 'b64_json', negative_prompt: (q.negative || 'brick, shed, log cabin, conservatory, people, text, watermark, blurry, cartoon') };
     let out;
     if (q.styleId) {
       try { out = await recraft('/images/generations', token, { ...base, style_id: q.styleId }); }

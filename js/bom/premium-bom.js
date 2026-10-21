@@ -667,14 +667,29 @@ export function buildPremiumBom(state, componentDefs) {
     span = Math.max(...pts.slice(1).map((y, i) => y - pts[i]));
   }
   if (span > 4.6) add('STRUCTURAL CHECK (not a material)', 1, `Roof bay of ${span.toFixed(2)}m front-to-back exceeds the ${lbLines.length ? 'longest bay our ladder tables cover' : '4.5m our joist tables cover'}: add a LOAD-BEARING left-to-right internal wall (tick 'load-bearing' on the partition) or a steel beam. Structural engineer sign-off required for a building this size.`, { costQty: 0 });
+  // PITCHED ROOF (dual / mono): the flat-roof ladder below still lists the rafters by span; this adds the
+  // ridge beam, the gable framing and the slope factor on the deck/EPDM. ESTIMATES - no pitched-roof build yet.
+  const roofCfg = state.roof || {}; const pitched = roofCfg.type === 'dual' || roofCfg.type === 'mono';
+  const riseM = pitched ? Math.max(0.1, Math.min(2, (Number(roofCfg.rise) || 500) / 1000)) : 0;
+  const ridgeY = roofCfg.ridge !== 'x'; // dual: ridge runs front-to-back
+  const runM = pitched ? (roofCfg.type === 'dual' ? (ridgeY ? w / 2 : d / 2) : ((roofCfg.highSide === 'front' || roofCfg.highSide === 'rear') ? d : w)) : 1;
+  const slopeFactor = pitched ? Math.sqrt(1 + (riseM / runM) ** 2) : 1;
+  if (pitched) {
+    const ridgeLen = roofCfg.type === 'dual' ? (ridgeY ? d : w) : 0;
+    add('STRUCTURAL CHECK (not a material)', 1, `PITCHED ROOF (${roofCfg.type === 'dual' ? 'dual pitch, ridge ' + (ridgeY ? 'front-to-back' : 'left-to-right') : 'mono pitch, high at the ' + (roofCfg.highSide || 'rear')}, ${(riseM * 1000).toFixed(0)}mm rise, ~${(Math.atan2(riseM, runM) * 180 / Math.PI).toFixed(1)}°): rafters replace the flat joists and are cut ${((slopeFactor - 1) * 100).toFixed(1)}% longer; ${roofCfg.type === 'dual' ? 'ridge beam needs posts or a load-bearing wall under it on spans over 4.6m' : 'high-side wall studs are ' + (riseM * 1000).toFixed(0) + 'mm longer'}. Engineer to confirm sizes - the lines below are ESTIMATES.`, { costQty: 0 });
+    if (ridgeLen > 0) add('6x2 tanalised C24 timber', Math.ceil(2 * (ridgeLen + 0.2) * 1.05), `RIDGE BEAM (ESTIMATE): doubled 6x2 x ${(ridgeLen + 0.2).toFixed(2)}m along the ridge, rafters bird-mouthed either side`, [{ len: ridgeLen + 0.2, n: 2, what: 'ridge beam (doubled)', join: true }]);
+    const gableM2 = roofCfg.type === 'dual' ? 2 * (0.5 * (ridgeY ? w : d) * riseM) : ((roofCfg.highSide === 'front' || roofCfg.highSide === 'rear') ? w : d) * riseM + (ridgeY ? d : w) * riseM; // two triangles, or the high wall strip + two wedges
+    add('4x2 tanalised C24 timber', Math.ceil(gableM2 * 3.2 * 1.1), `GABLE / high-side framing (ESTIMATE): ${gableM2.toFixed(1)}m2 of extra wall at 3.2 lm of 4x2 per m2, +10%`);
+    add('12mm OSB3 board (2440x1220)', Math.ceil(gableM2 / 2.88 * 1.15), `GABLE sheathing (ESTIMATE): ${gableM2.toFixed(1)}m2 / 2.88m2 per sheet +15% waste`);
+  }
   const ladder = premiumRoofLadder(Math.min(span, 4.6));
   const REAR_OVERSAIL = 0.10; // joists AND firrings oversail the rear 100mm on every job
   // Joists: rear plate to front top plate = external depth, + 100mm rear
   // oversail. They only run on past the FRONT wall on TALL builds.
   const joistOversailM = canopyMethod === 'joists-oversail' ? canopyM : 0;
-  const joistLen = d + joistOversailM + REAR_OVERSAIL;
+  const joistLen = (d + joistOversailM + REAR_OVERSAIL) * (pitched && (roofCfg.type === 'mono' ? (roofCfg.highSide === 'front' || roofCfg.highSide === 'rear') : !ridgeY) ? slopeFactor : 1); // rafters along the slope when the fall runs front-to-back
   // Firrings + deck + EPDM run the full depth + canopy/overhang + rear oversail.
-  const roofLen = d + canopyM + REAR_OVERSAIL;
+  const roofLen = (d + canopyM + REAR_OVERSAIL) * slopeFactor; // deck + EPDM area grows with the slope (both ridge directions)
   const rJoists = Math.ceil(w / ladder.spacing) + 1;
   const canopyMm = (canopyM * 1000).toFixed(0);
   // EDGE joists are DOUBLED as standard (Liam 2026-09-19): extra timbers for

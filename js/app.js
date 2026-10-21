@@ -1,19 +1,19 @@
 // GOB Configurator v2 — Vue 3 App
 // Reactive state, live pricing, drawing preview, email drafting
 
-import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding, roomSchedule, ROOM_KINDS } from './pricing.js?v=13';
-import { generateDrawing, generateSitePlan } from './drawing-engine.js?v=52';
+import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding, roomSchedule, ROOM_KINDS, roofInfo } from './pricing.js?v=14';
+import { generateDrawing, generateSitePlan } from './drawing-engine.js?v=53';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=7';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
 import { initPlanEditor, finishDraft } from './ui/plan-editor.js?v=2';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory, restoreHistoryEntry } from './cloud-storage.js?v=8';
 import { copyRichText } from './email/rich-copy.js';
-import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=60';
+import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=61';
 import { buildConstructionDrawings } from './construction.js?v=26';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=42';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
-import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=14';
+import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=15';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
@@ -83,6 +83,7 @@ function ensureStateDefaults(state) {
   for (const l of state.roomLabels) { // room kind drives the fit-out price; infer it for labels saved before kinds existed
     if (l && !l.kind) { const t = String(l.text || '').toLowerCase(); l.kind = /\bwc\b|toilet|loo/.test(t) ? 'wc' : /shower|bath/.test(t) ? 'shower' : /kitchen/.test(t) ? 'kitchenette' : /meeting|board/.test(t) ? 'meeting' : /reception/.test(t) ? 'reception' : /store|storage|cupboard/.test(t) ? 'store' : /corridor|hall|lobby/.test(t) ? 'corridor' : /office|studio|desk/.test(t) ? 'office' : 'other'; }
   }
+  if (!state.roof || typeof state.roof !== 'object') state.roof = { type: 'flat', ridge: 'y', rise: 500, highSide: 'rear' }; // flat is the standard; dual/mono pitch optional
   if (!Array.isArray(state.siteObjects)) state.siteObjects = []; // existing buildings, parking, paths, trees around the building
   if (state.siteImage === undefined) state.siteImage = null; // background map / aerial photo (downscaled JPEG data URL)
   return state;
@@ -1985,6 +1986,7 @@ createApp({
     partitionSummary() { return this.state ? partitionSummary(this.state) : { count: 0, metres: 0, doors: 0 }; },
     roomSchedule() { return this.state ? roomSchedule(this.state) : { rooms: 0, byKind: {}, items: [], total: 0, plumbed: 0 }; },
     roomKinds() { return ROOM_KINDS; },
+    roofInfo() { return this.state ? roofInfo(this.state) : { type: 'flat', rise: 0 }; },
     roomScheduleText() {
       const rs = this.roomSchedule(); if (!rs.rooms) return '';
       const names = { office: 'office', meeting: 'meeting room', reception: 'reception', kitchenette: 'kitchenette', wc: 'WC', shower: 'shower room', store: 'store', corridor: 'corridor', other: 'room' };
@@ -2058,7 +2060,7 @@ createApp({
       const doors = [bifold ? `${bifold} wide anthracite aluminium bi-fold door${bifold > 1 ? 's' : ''}` : '', sliding ? `${sliding} large anthracite aluminium sliding glass door${sliding > 1 ? 's' : ''}` : '', single ? `${single} glazed single door${single > 1 ? 's' : ''}` : ''].filter(Boolean).join(', ');
       const large = isLargeBuilding(s);
       const parts = [
-        `Photorealistic exterior photograph of a ${large ? 'large single-storey modern flat-roof commercial garden building' : 'modern flat-roof garden office building'}, ${W}m wide by ${D}m deep, ${H}m high, built by Garden Office Buildings UK.`,
+        `Photorealistic exterior photograph of a ${large ? 'large single-storey modern commercial garden building' : 'modern garden office building'} with a ${roofInfo(s).type === 'flat' ? 'flat roof' : roofInfo(s).type === 'dual' ? 'shallow dual-pitched roof' : 'shallow mono-pitched roof'}, ${W}m wide by ${D}m deep, ${H}m high${roofInfo(s).type !== 'flat' ? ` at the eaves (${(roofInfo(s).ridgeHeight / 1000).toFixed(1)}m at the ridge)` : ''}, built by Garden Office Buildings UK.`,
         `${front.charAt(0).toUpperCase() + front.slice(1)} on the front${side !== front ? `, ${side} on the sides` : ' and sides'}.`,
         doors ? `Front elevation with ${doors}${windows ? ` and ${windows} slim fixed window${windows > 1 ? 's' : ''}` : ''}.` : '',
         canopy ? 'Integrated front canopy overhang with recessed downlights in the soffit' + (deck ? ' and a matching composite decking strip along the front.' : '.') : (deck ? 'Composite decking strip along the front.' : 'Flush front with no canopy.'),
@@ -2473,7 +2475,7 @@ createApp({
 
       // External height
       const heightM = (s.height / 1000).toFixed(2).replace(/0$/, '');
-      buildFeatures.push(`${heightM}m external height (${s.height > 2500 ? 'upgraded' : 'standard'})`);
+      { const ri = roofInfo(s); buildFeatures.push(ri.type === 'flat' ? `${heightM}m external height (${s.height > 2500 ? 'upgraded' : 'standard'})` : `${heightM}m external height at the eaves, ${(ri.ridgeHeight / 1000).toFixed(2)}m at the ridge`); if (ri.type !== 'flat') buildFeatures.push(`${ri.label} (about ${ri.pitchDeg}°), EPDM covered, in place of our standard flat roof`); }
 
       // Internal finish
       buildFeatures.push('Internal wall finish: plaster-boarded, plastered and decorated white');
@@ -2966,6 +2968,7 @@ createApp({
         
         // Internal walls (multi-room)
         partitions: partitionSummary(this.state),
+        roof: roofInfo(this.state),
         roomSchedule: (() => { const rs = roomSchedule(this.state); return { rooms: rs.rooms, text: this.roomScheduleText(), plumbed: rs.plumbed }; })(),
         largeBuilding: isLargeBuilding(this.state),
         // Straight partition

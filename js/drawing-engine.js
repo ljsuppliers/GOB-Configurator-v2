@@ -73,13 +73,31 @@ const GUTTER_H = 30;
 
 function svgDefs() {
   return `<defs>
-    <linearGradient id="glass" x1="0" y1="0" x2="0.6" y2="1">
-      <stop offset="0%" stop-color="${COL.glassReflect}" stop-opacity="0.8"/>
-      <stop offset="25%" stop-color="${COL.glass}" stop-opacity="0.85"/>
-      <stop offset="60%" stop-color="${COL.glassDark}" stop-opacity="0.88"/>
-      <stop offset="85%" stop-color="${COL.glass}" stop-opacity="0.82"/>
-      <stop offset="100%" stop-color="${COL.glassReflect}" stop-opacity="0.75"/>
+    <linearGradient id="glass" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0%" stop-color="#D9E8EF" stop-opacity="0.92"/>
+      <stop offset="28%" stop-color="#93B8C8" stop-opacity="0.9"/>
+      <stop offset="55%" stop-color="#6A9AB0" stop-opacity="0.92"/>
+      <stop offset="80%" stop-color="#84ADBF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#C3D9E3" stop-opacity="0.85"/>
     </linearGradient>
+    <linearGradient id="shadowDown" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="groundShadow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="roofPlane" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6E7276"/>
+      <stop offset="100%" stop-color="#4A4F53"/>
+    </linearGradient>
+    <pattern id="wallHatch" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+      <rect width="80" height="80" fill="#C9C9C9"/>
+      <line x1="0" y1="80" x2="80" y2="0" stroke="#7A7A7A" stroke-width="4"/>
+      <line x1="-20" y1="20" x2="20" y2="-20" stroke="#7A7A7A" stroke-width="4"/>
+      <line x1="60" y1="100" x2="100" y2="60" stroke="#7A7A7A" stroke-width="4"/>
+    </pattern>
     <linearGradient id="frameGrad" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="${COL.anthraciteDk}"/>
       <stop offset="12%" stop-color="${COL.anthracite}"/>
@@ -197,6 +215,7 @@ function glassFill(x, y, w, h) {
   let s = '';
   s += rc(x, y, w, h, { fill: 'url(#glass)' });
   const rw = w * 0.12, rx1 = x + w * 0.3;
+  s += tag('polygon', { points: `${x},${y} ${x + w * 0.42},${y} ${x + w * 0.12},${y + h} ${x},${y + h * 0.7}`, fill: 'white', opacity: 0.13 });
   s += tag('polygon', { points: `${rx1},${y} ${rx1+rw},${y} ${rx1+rw*0.6+w*0.08},${y+h} ${rx1+w*0.08-rw*0.4},${y+h}`, fill: 'white', opacity: 0.1 });
   const rx2 = rx1 + rw + w*0.06;
   s += tag('polygon', { points: `${rx2},${y} ${rx2+rw*0.4},${y} ${rx2+rw*0.2+w*0.05},${y+h} ${rx2+w*0.05-rw*0.2},${y+h}`, fill: 'white', opacity: 0.06 });
@@ -686,6 +705,7 @@ function renderFront(cfg) {
   const sideOverhang = 25; // 25mm fascia overhang on each side
   let s = '';
   s += `<defs><clipPath id="${cid}"><rect x="0" y="${wallTop}" width="${width}" height="${wallH}"/></clipPath></defs>`;
+  s += renderRoofAbove(cfg.roofProfile, width, claddingType);
   
   // FASCIA - extends 25mm past each side, SEAMLESS (no stroke on inner edge)
   // Top trim (darkest)
@@ -708,6 +728,7 @@ function renderFront(cfg) {
   
   // Wall cladding (main building only)
   s += rc(0, wallTop, width, wallH, { fill: cladFill(claddingType), clip: `url(#${cid})` });
+  s += rc(0, gutterBottom, width, 260, { fill: 'url(#shadowDown)', clip: `url(#${cid})` }); // shade under the fascia
   // Building outline - walls only (not fascia area)
   s += ln(0, ROOF_ZONE, 0, height, 5, '#222'); // left wall
   s += ln(width, ROOF_ZONE, width, height, 5, '#222'); // right wall
@@ -719,6 +740,8 @@ function renderFront(cfg) {
 
   // Base trim at bottom of building - ALWAYS present on all tiers
   const trimH = deckH;
+  s += rc(-sideOverhang - 200, height + trimH, width + sideOverhang * 2 + 400, 110, { fill: 'url(#groundShadow)' }); // ground shadow
+  s += ln(-sideOverhang - 350, height + trimH, width + sideOverhang + 350, height + trimH, 3, '#444'); // ground line
   s += rc(-sideOverhang, height, width + sideOverhang*2, trimH, { fill: COL.anthracite });
   s += ln(-sideOverhang, height, width + sideOverhang, height, 1.5, COL.anthraciteDk);
   s += ln(-sideOverhang, height + trimH, width + sideOverhang, height + trimH, 1, COL.anthraciteDk);
@@ -758,6 +781,33 @@ function renderFront(cfg) {
   return s;
 }
 
+// ── Roof above the eaves (dual / mono pitch) ────────────────
+// profile: { kind:'band', rise }                  roof plane seen face-on, sloping away to the ridge
+//          { kind:'gable', rise, peakX }           gable end, ridge at peakX
+//          { kind:'wedge', leftRise, rightRise }   mono-pitch gable (one end high)
+// Drawn BEFORE the fascia so the fascia band sits over its foot. x runs 0..len.
+function renderRoofAbove(profile, len, claddingType) {
+  if (!profile || profile.kind === 'none') return '';
+  const so = 25; let s = '';
+  if (profile.kind === 'band') {
+    const r = profile.rise;
+    s += rc(-so, -r, len + so * 2, r, { fill: 'url(#roofPlane)' });
+    s += ln(-so, -r, len + so, -r, 4, '#222'); // ridge / high edge
+    s += ln(-so, -r, -so, 0, 2, '#222'); s += ln(len + so, -r, len + so, 0, 2, '#222');
+    return s;
+  }
+  const lr = profile.kind === 'gable' ? 0 : profile.leftRise, rr = profile.kind === 'gable' ? 0 : profile.rightRise;
+  const pts = profile.kind === 'gable' ? [[0, 0], [profile.peakX, -profile.rise], [len, 0]] : [[0, -lr], [len, -rr]];
+  const poly = pts.map((p) => p.join(',')).join(' ') + ` ${len},${TOP_TRIM} 0,${TOP_TRIM}`;
+  s += tag('polygon', { points: poly, fill: cladFill(claddingType || 'steel') });
+  s += tag('polygon', { points: poly, fill: 'black', opacity: 0.06 }); // gable sits in the shade of the barge board
+  // barge board following the slope (120mm deep) + thin top line
+  const edge = pts.map((p) => p.join(',')).join(' ');
+  s += tag('polyline', { points: edge, fill: 'none', stroke: '#2C2F32', 'stroke-width': 120, 'stroke-linejoin': 'miter', 'stroke-linecap': 'butt', transform: 'translate(0,60)' });
+  s += tag('polyline', { points: edge, fill: 'none', stroke: '#222', 'stroke-width': 4, 'stroke-linejoin': 'miter' });
+  return s;
+}
+
 // ── Side Elevation ──────────────────────────────────────────
 
 function renderSide(cfg) {
@@ -781,6 +831,7 @@ function renderSide(cfg) {
   let s = '';
   // Clip for wall cladding (main building only, not the overhangs)
   s += `<defs><clipPath id="${cid}"><rect x="0" y="${wallTop}" width="${depth}" height="${wallH}"/></clipPath></defs>`;
+  s += grp(renderRoofAbove(cfg.roofProfile, fasciaW - 50, claddingType), { transform: `translate(${fasciaX + 25},0)` });
   // FASCIA AND ROOF - continuous seamless piece including the 25mm end caps
   // Top trim (darkest)
   s += rc(fasciaX, 0, fasciaW, TOP_TRIM, { fill: COL.anthraciteDk });
@@ -794,6 +845,9 @@ function renderSide(cfg) {
   s += gutterBar(0, ROOF_ZONE, depth, { dpRight: false, dpLeft: false, dpH: wallH*0.12 });
   // Wall cladding
   s += rc(0, wallTop, depth, wallH, { fill: cladFill(claddingType || 'steel'), clip: `url(#${cid})` });
+  s += rc(0, ROOF_ZONE + GUTTER_H, depth, 260, { fill: 'url(#shadowDown)', clip: `url(#${cid})` }); // shade under the fascia
+  s += rc(fasciaX - 200, height + deckH, fasciaW + 400, 110, { fill: 'url(#groundShadow)' }); // ground shadow
+  s += ln(fasciaX - 350, height + deckH, fasciaX + fasciaW + 350, height + deckH, 3, '#444'); // ground line
   
   // Wall outline - but skip the front edge line if closed corner (it continues into screen)
   const hasClosedCorner = isSig && frontProj > 50 && corner === 'closed';
@@ -870,7 +924,8 @@ function renderSide(cfg) {
     if (canopyProj > 0) {
       const x1 = frontRight ? depth : -canopyProj;
       const x2 = frontRight ? depth + canopyProj : 0;
-      s += dimH_comp(x1, x2, -15, `Canopy ${canopyProj}mm`, -90);
+      const rp = cfg.roofProfile; const roofTop = rp ? (rp.kind === 'wedge' ? Math.max(rp.leftRise || 0, rp.rightRise || 0) : rp.rise || 0) : 0;
+      s += dimH_comp(x1, x2, -15 - roofTop, `Canopy ${canopyProj}mm`, -90);
     }
     // Decking dimension at the bottom (below base trim)
     if (showDecking && deckingSideProj > 0) {
@@ -1313,17 +1368,17 @@ function renderPlan(cfg) {
       }
     }
     // Main building outline
-    s += rc(0, 0, width, depth, { fill: COL.wallFill, sw: 6, stroke: '#222' });
+    s += rc(0, 0, width, depth, { fill: 'url(#wallHatch)', sw: 6, stroke: '#222' });
     s += rc(wt, wt, width-wt*2, depth-wt*2, { fill: COL.white, sw: 3, stroke: '#333' });
   } else if (!isSig && overhang > 0) {
     // CLASSIC with overhang: depth includes canopy, so internal floor is full depth
     // No external canopy projection - it's part of the stated depth
-    s += rc(0, 0, width, depth, { fill: COL.wallFill, sw: 6, stroke: '#222' });
+    s += rc(0, 0, width, depth, { fill: 'url(#wallHatch)', sw: 6, stroke: '#222' });
     // Internal floor area is depth - no canopy deduction (canopy is built into the depth measurement)
     s += rc(wt, wt, width-wt*2, depth-wt*2, { fill: COL.white, sw: 3, stroke: '#333' });
   } else {
     // No overhang - just the building
-    s += rc(0, 0, width, depth, { fill: COL.wallFill, sw: 6, stroke: '#222' });
+    s += rc(0, 0, width, depth, { fill: 'url(#wallHatch)', sw: 6, stroke: '#222' });
     s += rc(wt, wt, width-wt*2, depth-wt*2, { fill: COL.white, sw: 3, stroke: '#333' });
   }
   const hitPad = 80; // extra padding for click targets on thin wall elements
@@ -1461,6 +1516,30 @@ function renderPlan(cfg) {
   // Render boundary lines if enabled
   if (cfg.boundaries && cfg.boundaries.show) {
     s += renderBoundaries(cfg.boundaries, width, depth, isSig ? Math.max(showCanopy ? canopyProj : 0, showDecking ? deckProj : 0) : 0);
+  }
+
+  // Pitched roof: ridge line (dashed) and fall arrows on the plan
+  if (cfg.roof && cfg.roof.type !== 'flat') {
+    const r = cfg.roof; const dash = { fill: 'none', stroke: '#1f3b63', 'stroke-width': 6, 'stroke-dasharray': '220,120' };
+    const arrow = (x1, y1, x2, y2) => { const a = Math.atan2(y2 - y1, x2 - x1), h = 180; return ln(x1, y1, x2, y2, 5, '#1f3b63') + tag('polygon', { points: `${x2},${y2} ${x2 - h * Math.cos(a - 0.45)},${y2 - h * Math.sin(a - 0.45)} ${x2 - h * Math.cos(a + 0.45)},${y2 - h * Math.sin(a + 0.45)}`, fill: '#1f3b63' }); };
+    const lbl = (x, y, t, rot) => tx(x, y, t, 110, { color: '#1f3b63', bold: true, transform: rot ? `rotate(${rot} ${x} ${y})` : undefined });
+    if (r.type === 'dual' && r.ridge === 'y') { // ridge front-to-back, falls to both sides
+      s += tag('line', { x1: width / 2, y1: wt, x2: width / 2, y2: depth - wt, ...dash });
+      s += lbl(width / 2, wt + 300, 'RIDGE', 0);
+      s += arrow(width / 2 - 300, depth * 0.3, width * 0.12, depth * 0.3) + arrow(width / 2 + 300, depth * 0.3, width * 0.88, depth * 0.3);
+      s += lbl(width * 0.3, depth * 0.3 - 120, 'FALL', 0) + lbl(width * 0.7, depth * 0.3 - 120, 'FALL', 0);
+    } else if (r.type === 'dual') { // ridge left-to-right, falls front and rear
+      s += tag('line', { x1: wt, y1: depth / 2, x2: width - wt, y2: depth / 2, ...dash });
+      s += lbl(width * 0.08 + 300, depth / 2 - 100, 'RIDGE', 0);
+      s += arrow(width * 0.72, depth / 2 - 300, width * 0.72, depth * 0.12) + arrow(width * 0.72, depth / 2 + 300, width * 0.72, depth * 0.88);
+      s += lbl(width * 0.72 + 160, depth * 0.3, 'FALL', 90) + lbl(width * 0.72 + 160, depth * 0.7, 'FALL', 90);
+    } else { // mono: one arrow from the high side to the low side
+      const hs = r.highSide || 'rear';
+      const from = { rear: [width * 0.72, wt + 400], front: [width * 0.72, depth - wt - 400], left: [wt + 400, depth * 0.72], right: [width - wt - 400, depth * 0.72] }[hs];
+      const to = { rear: [width * 0.72, depth - wt - 400], front: [width * 0.72, wt + 400], left: [width - wt - 400, depth * 0.72], right: [wt + 400, depth * 0.72] }[hs];
+      s += arrow(from[0], from[1], to[0], to[1]);
+      s += lbl((from[0] + to[0]) / 2 + (hs === 'left' || hs === 'right' ? 0 : 200), (from[1] + to[1]) / 2 + (hs === 'left' || hs === 'right' ? -140 : 0), `FALL ${r.rise}mm`, hs === 'left' || hs === 'right' ? 0 : 90);
+    }
   }
 
   // Render AC units
@@ -1690,14 +1769,14 @@ function dimV_comp(y1, y2, x, label, off, customColor) {
 function dimH(x1, x2, y, label, off, labelBelow) {
   const yl = y+(off||250), cw = Math.min(100,(x2-x1)*0.05), ch = cw*0.5;
   let s = '';
-  s += ln(x1,y+15,x1,yl+12,1.5,'#444');
-  s += ln(x2,y+15,x2,yl+12,1.5,'#444');
-  s += ln(x1,yl,x2,yl,3,'#111');
-  s += tag('polyline',{points:`${x1+cw},${yl-ch} ${x1},${yl} ${x1+cw},${yl+ch}`,fill:'none',stroke:'#111','stroke-width':3});
-  s += tag('polyline',{points:`${x2-cw},${yl-ch} ${x2},${yl} ${x2-cw},${yl+ch}`,fill:'none',stroke:'#111','stroke-width':3});
+  s += ln(x1,y+15,x1,yl+12,1.2,'#777');
+  s += ln(x2,y+15,x2,yl+12,1.2,'#777');
+  s += ln(x1,yl,x2,yl,2.2,'#333');
+  s += tag('polyline',{points:`${x1+cw},${yl-ch} ${x1},${yl} ${x1+cw},${yl+ch}`,fill:'none',stroke:'#333','stroke-width':2.2});
+  s += tag('polyline',{points:`${x2-cw},${yl-ch} ${x2},${yl} ${x2-cw},${yl+ch}`,fill:'none',stroke:'#333','stroke-width':2.2});
   // Label above or below the line
   const labelY = labelBelow ? yl + 140 : yl - 55;
-  s += tx((x1+x2)/2, labelY, label, 170, { color: '#111' });
+  s += tx((x1+x2)/2, labelY, label, 150, { color: '#333' });
   return s;
 }
 
@@ -1707,16 +1786,16 @@ function dimV(y1, y2, x, label, off) {
   const cw = ch*0.5;
   let s = '';
   // Tick lines from building to dimension line
-  s += ln(x-15,y1,xl-12,y1,1.5,'#444');
-  s += ln(x-15,y2,xl-12,y2,1.5,'#444');
+  s += ln(x-15,y1,xl-12,y1,1.2,'#777');
+  s += ln(x-15,y2,xl-12,y2,1.2,'#777');
   // Main dimension line
-  s += ln(xl,y1,xl,y2,3,'#111');
+  s += ln(xl,y1,xl,y2,2.2,'#333');
   // Top arrow (pointing up)
-  s += tag('polyline',{points:`${xl-cw},${y1+ch} ${xl},${y1} ${xl+cw},${y1+ch}`,fill:'none',stroke:'#111','stroke-width':3,'stroke-linejoin':'miter'});
+  s += tag('polyline',{points:`${xl-cw},${y1+ch} ${xl},${y1} ${xl+cw},${y1+ch}`,fill:'none',stroke:'#333','stroke-width':2.2,'stroke-linejoin':'miter'});
   // Bottom arrow (pointing down)
-  s += tag('polyline',{points:`${xl-cw},${y2-ch} ${xl},${y2} ${xl+cw},${y2-ch}`,fill:'none',stroke:'#111','stroke-width':3,'stroke-linejoin':'miter'});
+  s += tag('polyline',{points:`${xl-cw},${y2-ch} ${xl},${y2} ${xl+cw},${y2-ch}`,fill:'none',stroke:'#333','stroke-width':2.2,'stroke-linejoin':'miter'});
   const cx = xl-70, cy = (y1+y2)/2;
-  s += tx(cx, cy, label, 170, { transform: `rotate(-90 ${cx} ${cy})`, color: '#111' });
+  s += tx(cx, cy, label, 150, { transform: `rotate(-90 ${cx} ${cy})`, color: '#333' });
   return s;
 }
 
@@ -1738,13 +1817,27 @@ function compose(b) {
   const proj = (isSig && oh > 0 && hasCanopy) ? oh : 0;
   const deckProj = (isSig && hasDecking) ? deckingDepth : 0;
   const frontProj = Math.max(proj, deckProj); // largest front projection for layout
-  const margin=700*TS, dim=600*TS, labH=350*TS;
+  const margin=700*TS, dim=(b.roof && b.roof.type !== 'flat' ? 1050 : 600)*TS, labH=350*TS;
   const deckH = oh > 0 ? 100 : 0;
   const cL = b.cornerLeft || 'open';
   const cR = b.cornerRight || 'open';
   const gap = 600*TS;
 
-  const row1Y = margin + labH;
+  // Roof profiles per view (pitched roofs rise above the eaves line, so row 1 moves down by the rise)
+  const roof = b.roof && b.roof.type !== 'flat' ? b.roof : null; const rise = roof ? roof.rise : 0;
+  const prof = { front: null, left: null, right: null }; const tall = { front: 0, left: 0, right: 0 }; // tall = the whole wall is higher (mono high side)
+  if (roof && roof.type === 'dual') {
+    if (roof.ridge === 'y') { prof.front = { kind: 'gable', rise, peakX: W / 2 }; prof.left = prof.right = { kind: 'band', rise }; }
+    else { prof.front = { kind: 'band', rise }; prof.left = prof.right = { kind: 'gable', rise, peakX: D / 2 }; }
+  } else if (roof) {
+    const hs = roof.highSide || 'rear';
+    if (hs === 'rear') { prof.front = { kind: 'band', rise }; prof.left = { kind: 'wedge', leftRise: rise, rightRise: 0 }; prof.right = { kind: 'wedge', leftRise: 0, rightRise: rise }; }
+    else if (hs === 'front') { tall.front = rise; prof.left = { kind: 'wedge', leftRise: 0, rightRise: rise }; prof.right = { kind: 'wedge', leftRise: rise, rightRise: 0 }; }
+    else if (hs === 'left') { tall.left = rise; prof.front = { kind: 'wedge', leftRise: rise, rightRise: 0 }; prof.right = { kind: 'band', rise }; }
+    else { tall.right = rise; prof.front = { kind: 'wedge', leftRise: 0, rightRise: rise }; prof.left = { kind: 'band', rise }; }
+  }
+  const liftComps = (list, by) => (by ? (list || []).map((c) => (c.y !== undefined && c.y !== null ? { ...c, y: c.y + by } : c)) : (list || []));
+  const row1Y = margin + labH + rise;
   const lX = margin + dim;
   const sideExtra = frontProj; // space needed for side elevation projections (canopy or decking)
   const fX = lX + D + sideExtra + gap;
@@ -1779,29 +1872,32 @@ function compose(b) {
 
   // LEFT ELEVATION
   const overallLabel = (extra) => `${D + extra}mm overall incl. ${hasCanopy && proj > 0 && hasDecking && deckProj > 0 ? 'canopy/decking' : hasCanopy && proj > 0 ? 'canopy' : 'decking'}`;
-  s += tx(lX+D/2, row1Y-160*TS, 'Left Elevation', 180, { bold:true, color:'#222' });
-  s += grp(renderSide({ depth:D, height:H, side:'left', tier:b.tier, overhang:oh, components:b.leftComponents||[], corner:cL, claddingType:b.leftCladding, hasCanopy, hasDecking, deckingDepth, externalFeatures:b.leftExternalFeatures||[] }), { transform:`translate(${lX},${row1Y})` });
+  const titleOpts = { bold:true, color:'#333', spacing: 28 };
+  const titleY = row1Y - rise - 160*TS;
+  s += tx(lX+D/2, titleY, 'LEFT ELEVATION', 150, titleOpts);
+  s += grp(renderSide({ depth:D, height:H + tall.left, side:'left', tier:b.tier, overhang:oh, components:liftComps(b.leftComponents, tall.left), corner:cL, claddingType:b.leftCladding, hasCanopy, hasDecking, deckingDepth, externalFeatures:b.leftExternalFeatures||[], roofProfile: prof.left }), { transform:`translate(${lX},${row1Y - tall.left})` });
   s += dimH(lX, lX+D, row1Y+H+deckH+30, `${depthLabel}mm`, 250*TS);
   if (frontProj > 0) s += dimH(lX, lX+D+frontProj, row1Y+H+deckH+30, overallLabel(frontProj), 620*TS);
-  // Height dimension on left side of left elevation
-  s += dimV(row1Y, row1Y+H+deckH, lX, `${H}mm`, -450*TS);
+  // Height dimension on left side of left elevation (eaves), plus the ridge height on a pitched roof
+  s += dimV(row1Y, row1Y+H+deckH, lX, roof ? `${H}mm eaves` : `${H}mm`, -450*TS);
+  if (roof) s += dimV(row1Y - rise, row1Y+H+deckH, lX, `${H + rise}mm ridge`, -900*TS);
 
   // FRONT ELEVATION
-  s += tx(fX+W/2, row1Y-160*TS, 'Front Elevation', 180, { bold:true, color:'#222' });
-  s += grp(renderFront({ width:W, height:H, overhang:oh, tier:b.tier, claddingType:b.frontCladding, components:b.frontComponents||[], cornerLeft:cL, cornerRight:cR, externalFeatures:b.externalFeatures||[], hasCanopy, hasDecking }), { transform:`translate(${fX},${row1Y})` });
+  s += tx(fX+W/2, titleY, 'FRONT ELEVATION', 150, titleOpts);
+  s += grp(renderFront({ width:W, height:H + tall.front, overhang:oh, tier:b.tier, claddingType:b.frontCladding, components:liftComps(b.frontComponents, tall.front), cornerLeft:cL, cornerRight:cR, externalFeatures:b.externalFeatures||[], hasCanopy, hasDecking, roofProfile: prof.front }), { transform:`translate(${fX},${row1Y - tall.front})` });
   s += dimH(fX, fX+W, row1Y+H+deckH+30, `${W}mm`, 250*TS);
 
   // RIGHT ELEVATION
   // For right side, canopy extends LEFT (negative x), so dimension starts earlier
-  s += tx(rX+D/2, row1Y-160*TS, 'Right Elevation', 180, { bold:true, color:'#222' });
-  s += grp(renderSide({ depth:D, height:H, side:'right', tier:b.tier, overhang:oh, components:b.rightComponents||[], corner:cR, claddingType:b.rightCladding, hasCanopy, hasDecking, deckingDepth, externalFeatures:b.rightExternalFeatures||[] }), { transform:`translate(${rX},${row1Y})` });
+  s += tx(rX+D/2, titleY, 'RIGHT ELEVATION', 150, titleOpts);
+  s += grp(renderSide({ depth:D, height:H + tall.right, side:'right', tier:b.tier, overhang:oh, components:liftComps(b.rightComponents, tall.right), corner:cR, claddingType:b.rightCladding, hasCanopy, hasDecking, deckingDepth, externalFeatures:b.rightExternalFeatures||[], roofProfile: prof.right }), { transform:`translate(${rX},${row1Y - tall.right})` });
   s += dimH(rX, rX+D, row1Y+H+deckH+30, `${depthLabel}mm`, 250*TS);
   if (frontProj > 0) s += dimH(rX-frontProj, rX+D, row1Y+H+deckH+30, overallLabel(frontProj), 620*TS);
 
   // PLAN VIEW
   const planLabelY = boundaryRear ? row2Y - boundaryRear - 160 : row2Y - 160;
-  s += tx(pX+W/2, planLabelY, 'Plan View', 180, { bold:true, color:'#222' });
-  s += grp(renderPlan({ width:W, depth:D, wallThickness:150, overhang:oh, tier:b.tier, components:b.planComponents||[], rooms:b.rooms, cornerLeft:cL, cornerRight:cR, straightPartition:b.straightPartition, partitionRoom:b.partitionRoom, partitions:b.partitions, roomLabels:b.roomLabels, siteObjects:b.siteObjects, siteImage:b.siteImage, ui:b.ui, boundaries:b.boundaries, hasCanopy, hasDecking, deckingDepth, acUnits:b.acUnits||[], intDimWidthOffset:b.intDimWidthOffset, intDimDepthOffset:b.intDimDepthOffset }), { transform:`translate(${pX},${row2Y})`, id: 'plan-group' });
+  s += tx(pX+W/2, planLabelY, 'PLAN VIEW', 150, titleOpts);
+  s += grp(renderPlan({ width:W, depth:D, wallThickness:150, overhang:oh, tier:b.tier, components:b.planComponents||[], rooms:b.rooms, cornerLeft:cL, cornerRight:cR, straightPartition:b.straightPartition, partitionRoom:b.partitionRoom, partitions:b.partitions, roomLabels:b.roomLabels, siteObjects:b.siteObjects, siteImage:b.siteImage, ui:b.ui, boundaries:b.boundaries, roof, hasCanopy, hasDecking, deckingDepth, acUnits:b.acUnits||[], intDimWidthOffset:b.intDimWidthOffset, intDimDepthOffset:b.intDimDepthOffset }), { transform:`translate(${pX},${row2Y})`, id: 'plan-group' });
   // Add canopy/decking space to dimension line
   const planDimY = frontProj > 0 ? row2Y+D+frontProj+80 : row2Y+D+80;
   // Width dimension - offset 450 to match depth dimension distance, label below line
@@ -1961,7 +2057,10 @@ export function generateDrawing(state, componentsData, claddingData, ui) {
   }));
 
   const tierLabel = state.tier === 'signature' ? 'Signature' : 'Classic';
-  const dims = `${(state.width/1000).toFixed(1)}m x ${(state.depth/1000).toFixed(1)}m x ${(state.height/1000).toFixed(2).replace(/0$/, '')}m`;
+  const rf = state.roof || {}; const roofType = rf.type === 'dual' || rf.type === 'mono' ? rf.type : 'flat';
+  const roof = { type: roofType, rise: roofType === 'flat' ? 0 : Math.max(100, Math.min(2000, Number(rf.rise) || 500)), ridge: rf.ridge === 'x' ? 'x' : 'y', highSide: ['front', 'rear', 'left', 'right'].includes(rf.highSide) ? rf.highSide : 'rear' };
+  const roofSpec = roofType === 'flat' ? '' : roofType === 'dual' ? ` | dual pitch ${roof.rise}mm, ridge ${roof.ridge === 'y' ? 'front-to-back' : 'left-to-right'}` : ` | mono pitch ${roof.rise}mm, high at ${roof.highSide}`;
+  const dims = `${(state.width/1000).toFixed(1)}m x ${(state.depth/1000).toFixed(1)}m x ${(state.height/1000).toFixed(2).replace(/0$/, '')}m${roofType !== 'flat' ? ' eaves' : ''}`;
   const frontCladLabel = frontClad?.label || 'Cedar';
 
   return compose({
@@ -2008,7 +2107,8 @@ export function generateDrawing(state, componentsData, claddingData, ui) {
     customer: state.customer?.name || '',
     address: state.customer?.address ? `@ ${state.customer.address}` : '',
     date: fmtDateUK(state.customer?.date) || '',
-    spec: `${dims} | ${tierLabel}`,
+    spec: `${dims} | ${tierLabel}${roofSpec}`,
+    roof,
     drawingNumber: state.customNotes?.drawingNumber || '',
     drawingNotes: state.customNotes?.drawing || '',
   });

@@ -50,6 +50,20 @@ export function roomSchedule(state) {
   const plumbed = (byKind.wc || []).length + (byKind.shower || []).length + (byKind.kitchenette || []).length;
   return { rooms: labels.length, byKind, items, total: items.reduce((s, i) => s + i.price, 0), plumbed };
 }
+/** Roof shape. state.roof = { type:'flat'|'dual'|'mono', ridge:'y' (runs front-to-back, falls to the sides) | 'x' (runs left-to-right, falls front and rear), rise (mm at the ridge above the eaves), highSide (mono only: front|rear|left|right) } */
+export function roofInfo(state) {
+  const r = state.roof || {}; const type = r.type === 'dual' || r.type === 'mono' ? r.type : 'flat';
+  const rise = type === 'flat' ? 0 : Math.max(100, Math.min(2000, Number(r.rise) || 500));
+  const ridge = r.ridge === 'x' ? 'x' : 'y'; const highSide = ['front', 'rear', 'left', 'right'].includes(r.highSide) ? r.highSide : 'rear';
+  const W = state.width || 0, D = state.depth || 0;
+  // horizontal run from eaves to the ridge (half the span for a dual pitch, the full span for a mono)
+  const run = type === 'dual' ? (ridge === 'y' ? W / 2 : D / 2) : type === 'mono' ? ((highSide === 'front' || highSide === 'rear') ? D : W) : 0;
+  const pitchDeg = run > 0 ? Math.atan2(rise, run) * 180 / Math.PI : 0;
+  const ridgeHeight = (state.height || 0) + rise;
+  const planM2 = (W / 1000) * (D / 1000);
+  const label = type === 'flat' ? 'Flat roof' : type === 'dual' ? `Dual-pitched roof, ridge running ${ridge === 'y' ? 'front-to-back (falls to both sides)' : 'left-to-right (falls to the front and rear)'}, ${rise}mm rise` : `Mono-pitched roof, high at the ${highSide}, ${rise}mm rise`;
+  return { type, rise, ridge, highSide, run, pitchDeg: Math.round(pitchDeg * 10) / 10, ridgeHeight, planM2, label };
+}
 export function partitionSummary(state) {
   const parts = (Array.isArray(state.partitions) ? state.partitions : []).filter((p) => p && Number(p.len) > 0);
   const metres = parts.reduce((s, p) => s + Number(p.len) / 1000, 0);
@@ -282,6 +296,10 @@ export function calculatePrice(state) {
     result.heightUpgrade = upgrade.price;
     result.heightUpgradeLabel = upgrade.label;
   }
+
+  // 6b. Pitched roof (dual / mono) priced per m2 of plan area - ESTIMATE
+  { const ri = roofInfo(state); const perM2 = struct.pitchedRoofPerM2?.price || 95;
+    if (ri.type !== 'flat') result.extras.push({ label: `${ri.label} (eaves ${((state.height || 0) / 1000).toFixed(2)}m, ridge ${(ri.ridgeHeight / 1000).toFixed(2)}m, ~${ri.pitchDeg}°)`, baseLabel: 'Pitched roof', qty: Math.round(ri.planM2 * 10) / 10, unitPrice: perM2, price: Math.round(ri.planM2 * perM2), section: 'external' }); }
 
   // 7. Installation
   result.installation = calculateInstallation(state);
