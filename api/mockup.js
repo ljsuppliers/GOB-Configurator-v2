@@ -9,17 +9,18 @@
 const BASE = 'https://external.api.recraft.ai/v1';
 
 // Real exterior photos of our buildings on gardenofficebuildings.co.uk (used to train the house style, max 10).
+// 21 Oct 2026: composite slatted cladding is the standard now (Liam), so the training set is the composite buildings; the
+// cedar set is kept in Firestore settings/recraft.styles.cedar.
 const HOUSE_PHOTOS = [
-  'https://gardenofficebuildings.co.uk/wp-content/uploads/2024/11/Maxi-garden-office-building.png',
-  'https://gardenofficebuildings.co.uk/wp-content/uploads/2024/11/Multi-6m-x-4m-garden-office.png',
-  'https://gardenofficebuildings.co.uk/wp-content/uploads/2024/11/6x4-garden-office.png',
-  'https://gardenofficebuildings.co.uk/wp-content/uploads/2024/07/garden-office.png',
-  'https://gardenofficebuildings.co.uk/wp-content/uploads/2024/07/Garden-Office-Buildings.jpg',
-  'https://gardenofficebuildings.co.uk/wp-content/uploads/2023/03/Midi-Garden-Office-Building.jpeg',
-  'https://gardenofficebuildings.co.uk/wp-content/uploads/2021/09/Midi-Garden-Office-in-Sevenoaks-Kent-2.jpg',
-  'https://gardenofficebuildings.co.uk/wp-content/uploads/2021/09/Maxi-Garden-Office-in-Petts-Wood-Orpington-2-1.jpg',
-  'https://gardenofficebuildings.co.uk/wp-content/uploads/2021/07/Home-Garden-Office-Kent-8.jpg',
-  'https://gardenofficebuildings.co.uk/wp-content/uploads/2021/06/Garden-Office-Sussex-1-scaled.jpg',
+  'https://gardenofficebuildings.co.uk/wp-content/uploads/2026/08/IMG_2288-scaled.jpg',
+  'https://gardenofficebuildings.co.uk/wp-content/uploads/2026/08/IMG_2287-scaled.jpg',
+  'https://gardenofficebuildings.co.uk/wp-content/uploads/2026/08/PHOTO-2026-07-06-18-59-28.jpg',
+  'https://gardenofficebuildings.co.uk/wp-content/uploads/2026/05/IMG_1549_2-scaled.jpg',
+  'https://gardenofficebuildings.co.uk/wp-content/uploads/2026/05/b1390c1c-b64d-47bb-bea9-6cd1fa4a8615.jpg',
+  'https://gardenofficebuildings.co.uk/wp-content/uploads/2026/05/IMG_9846-scaled.jpg',
+  'https://gardenofficebuildings.co.uk/wp-content/uploads/2025/11/IMG_4799-scaled.jpg',
+  'https://gardenofficebuildings.co.uk/wp-content/uploads/2025/11/grey-composite.png',
+  'https://gardenofficebuildings.co.uk/wp-content/uploads/2025/08/granny-annexe-by-garden-office-buildings.jpg',
 ];
 
 async function recraft(path, token, body, headers) {

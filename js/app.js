@@ -188,6 +188,7 @@ createApp({
       historyOpen: {},
       // Insightly-style record blades
       projectTab: 'details',
+      designPreviews: {}, // design id -> { svg, summary } rendered from the saved state (project + contact pages)
       projectEdit: false,
       projectDescExpanded: false,
       customerTab: 'details',
@@ -813,6 +814,7 @@ createApp({
       this.customerNotes = []; this.customerFiles = [];
       this.customerStatus = '';
       this.syncUrl();
+      for (const j of this.customerProjects.slice(0, 3)) this.loadDesignPreview(j);
       try {
         const [notes, files] = await Promise.all([listNotes(id), listFiles(id)]);
         if (this.currentCustomer && this.currentCustomer.id === id) { this.customerNotes = notes; this.customerFiles = files; }
@@ -1404,6 +1406,22 @@ createApp({
     stageName(o) { return stageName(o); },
     projectStatusOf(j) { return projectStatusOf(j); },
     projectTitle(j) { return j.name || j.ref || 'Untitled project'; },
+    /** Thumbnail + one-line summary of a project's saved drawing, for the contact and project pages. */
+    async loadDesignPreview(j) {
+      if (!j || !j.hasState || !j.id || this.designPreviews[j.id] || !this.cloudReady) return;
+      this.designPreviews = { ...this.designPreviews, [j.id]: { svg: '', summary: 'loading drawing...' } };
+      try {
+        const st = ensureStateDefaults(await loadDesign(j.id));
+        const svg = generateDrawing(st, this.appData.components, this.appData.cladding, null);
+        let total = null; try { total = calculatePrice(st).totalIncVat; } catch (e) { /* pricing not ready */ }
+        const clad = (this.appData.cladding?.types?.[st.cladding?.front]?.label) || '';
+        const doors = (st.components || []).filter((c) => /sliding|bifold|single/.test(c.type)).length;
+        const ri = roofInfo(st);
+        const summary = [`${(st.width / 1000).toFixed(1)}m x ${(st.depth / 1000).toFixed(1)}m x ${(st.height / 1000).toFixed(2).replace(/0$/, '')}m`, st.tier === 'classic' ? 'Classic' : 'Signature', ri.type !== 'flat' ? ri.label.split(',')[0].toLowerCase() : '', clad ? clad + ' front' : '', doors ? `${doors} door${doors > 1 ? 's' : ''}` : '', total ? formatPrice(total) + ' inc VAT' : ''].filter(Boolean).join(' · ');
+        this.designPreviews = { ...this.designPreviews, [j.id]: { svg, summary } };
+      } catch (e) { this.designPreviews = { ...this.designPreviews, [j.id]: { svg: '', summary: 'Drawing could not be loaded: ' + e.message } }; }
+    },
+    designPreview(j) { return (j && this.designPreviews[j.id]) || null; },
     async openProjectsPage(projectId) {
       this.materialsPage = false; this.installerPage = false; this.customersPage = false; this.homePage = false; this.projectsPage = true;
       if (this.cloudReady && !this.cloudDesigns.length) await this.refreshCloudDesigns();
@@ -1427,6 +1445,7 @@ createApp({
       this.projectCustomer = j.customerId ? (this.customers.find((c) => c.id === j.customerId) || null) : null;
       this.syncUrl();
       this.loadProjectHistory(id);
+      this.loadDesignPreview(j);
       if (j.customerId) {
         try {
           const [notes, files] = await Promise.all([listNotes(j.customerId), listFiles(j.customerId)]);
@@ -2052,7 +2071,7 @@ createApp({
       const s = this.state; if (!s) return '';
       const W = (s.width / 1000).toFixed(1), D = (s.depth / 1000).toFixed(1), H = (s.height / 1000).toFixed(1);
       const isSig = s.tier !== 'classic'; const canopy = isSig && s.hasCanopy !== false, deck = isSig && s.hasDecking !== false;
-      const cladNames = { 'western-red-cedar': 'western red cedar timber cladding', 'anthracite-steel': 'anthracite grey standing-seam steel cladding', 'grey-steel': 'light grey steel cladding', 'composite-latte': 'latte coloured composite slatted cladding', 'composite-coffee': 'dark coffee brown composite slatted cladding', 'composite-grey': 'grey composite slatted cladding', 'composite-sage': 'sage green composite slatted cladding', 'composite-chartwell': 'chartwell green composite slatted cladding' };
+      const cladNames = { 'western-red-cedar': 'western red cedar timber cladding', 'anthracite-steel': 'anthracite grey standing-seam steel cladding', 'grey-steel': 'light grey steel cladding', 'composite-latte': 'latte coloured vertical composite slatted cladding', 'composite-coffee': 'dark coffee brown vertical composite slatted cladding (narrow vertical slats)', 'composite-grey': 'grey vertical composite slatted cladding', 'composite-sage': 'sage green vertical composite slatted cladding', 'composite-chartwell': 'chartwell green vertical composite slatted cladding' };
       const clad = s.cladding || {}; const front = cladNames[clad.front || 'anthracite-steel'] || 'anthracite steel cladding'; const side = cladNames[clad.left || clad.front || 'anthracite-steel'] || front;
       const defs = { ...(this.appData.components?.doors || {}), ...(this.appData.components?.windows || {}) };
       let bifold = 0, sliding = 0, single = 0, windows = 0;

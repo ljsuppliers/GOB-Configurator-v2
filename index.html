@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
   <title>GOB CRM</title>
-  <link rel="stylesheet" href="css/app.css?v=35">
+  <link rel="stylesheet" href="css/app.css?v=36">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/configurator.css">
   <link rel="stylesheet" href="css/theme.css?v=14">
@@ -1709,6 +1709,7 @@
               <span class="blade-icon">🔨</span>
               <div class="blade-title"><small>Project · <span class="brand-tag" :class="'brand-' + brandOf(currentProject)">{{ brandLabel(currentProject) }}</span></small><h2>{{ projectTitle(currentProject) }}</h2></div>
               <button class="blade-pencil" :class="{ on: projectEdit }" @click="projectEdit = !projectEdit; projectTab = 'details'" title="Edit">✎</button>
+              <button v-if="!isGrannexe(currentProject)" class="btn btn-primary" @click="openProjectDesign('design')">{{ currentProject.hasState ? 'Open drawing & quote' : 'Start drawing & quote' }}</button>
               <div class="export-wrapper">
                 <button class="btn blade-actions" @click="showExportMenu = !showExportMenu">Actions &#9662;</button>
                 <div id="export-menu" :class="{ show: showExportMenu }">
@@ -1752,6 +1753,14 @@
 
             <!-- DETAILS -->
             <div v-if="projectTab === 'details'" class="blade-body">
+              <div v-if="!isGrannexe(currentProject) && currentProject.hasState" class="design-card">
+                <div class="design-thumb" :title="'Open the drawing and quote'" @click="openProjectDesign('design')" v-html="(designPreview(currentProject) || {}).svg || '<div class=\'design-thumb-empty\'>Loading drawing...</div>'"></div>
+                <div class="design-card-body">
+                  <b>Drawing &amp; quote</b>
+                  <div class="crm-muted" style="font-size:12px;margin:2px 0 8px;">{{ (designPreview(currentProject) || {}).summary || '' }}</div>
+                  <div class="btn-row"><button class="btn btn-primary" @click="openProjectDesign('design')">Open drawing &amp; quote</button><button class="btn" @click="openProjectDesign('materials')">Materials &amp; orders</button></div>
+                </div>
+              </div>
               <div class="sec">
                 <div class="sec-head" @click="toggleSec('p-details')"><span class="sec-caret">{{ secOpen['p-details'] === false ? '⌄' : '⌃' }}</span> Project Details</div>
                 <div v-show="secOpen['p-details'] !== false" class="sec-body">
@@ -1994,6 +2003,24 @@
 
             <!-- DETAILS -->
             <div v-if="customerTab === 'details'" class="blade-body">
+              <div v-if="currentCustomer && currentCustomer.id && !customerEdit" class="sec">
+                <div class="sec-head" @click="toggleSec('c-drawings')"><span class="sec-caret">{{ secOpen['c-drawings'] === false ? '⌄' : '⌃' }}</span> Projects &amp; drawings <em>{{ customerProjects.length }}</em>
+                  <span class="sec-tools" @click.stop><a href="#" @click.prevent="newDesignForCustomer()">+ New design / quote</a></span>
+                </div>
+                <div v-show="secOpen['c-drawings'] !== false" class="sec-body">
+                  <div v-if="!customerProjects.length" class="crm-muted">No project yet. <a href="#" @click.prevent="newDesignForCustomer()">Start a design and quote</a> for this contact.</div>
+                  <div v-for="j in customerProjects" :key="'dc-' + j.id" class="design-card" :class="{ 'design-card-closed': ['complete', 'cancelled'].includes(j.jobStatus) }">
+                    <div v-if="j.hasState" class="design-thumb" title="Open the drawing and quote" @click="openCustomerProject(j, 'design')" v-html="(designPreview(j) || {}).svg || '<div class=\'design-thumb-empty\'>Loading drawing...</div>'"></div>
+                    <div v-else class="design-thumb design-thumb-none" @click="openCustomerProject(j, 'design')"><div class="design-thumb-empty">No drawing yet</div></div>
+                    <div class="design-card-body">
+                      <b><a href="#" @click.prevent="openProjectsPage(j.id)">{{ projectTitle(j) }}</a></b>
+                      <div style="font-size:12px;margin:2px 0;"><span class="chip" :class="'chip-job-' + j.jobStatus">{{ statusMeta(j.jobStatus).label }}</span> &nbsp;{{ stageOf(j) }}. {{ stageName(stageOf(j)) }}<span v-if="j.updatedAt"> · updated {{ fmtDateOnly(j.updatedAt) }}</span></div>
+                      <div class="crm-muted" style="font-size:12px;margin:0 0 8px;">{{ (designPreview(j) || {}).summary || j.dimensions || '' }}</div>
+                      <div class="btn-row"><button class="btn btn-primary" @click="openCustomerProject(j, 'design')">{{ j.hasState ? 'Open drawing & quote' : 'Start drawing & quote' }}</button><button v-if="j.hasState" class="btn" @click="openCustomerProject(j, 'materials')">Materials</button><button class="btn" @click="openProjectsPage(j.id)">Project page</button></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div class="sec">
                 <div class="sec-head" @click="toggleSec('c-name')"><span class="sec-caret">{{ secOpen['c-name'] === false ? '⌄' : '⌃' }}</span> Name and Occupation</div>
                 <div v-show="secOpen['c-name'] !== false" class="sec-body">
@@ -2744,7 +2771,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=202"></script>
+<script type="module" src="js/app.js?v=203"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>
