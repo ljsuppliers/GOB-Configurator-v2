@@ -2,11 +2,11 @@
 // Reactive state, live pricing, drawing preview, email drafting
 
 import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding, roomSchedule, ROOM_KINDS, roofInfo } from './pricing.js?v=15';
-import { generateDrawing, generateSitePlan } from './drawing-engine.js?v=56';
+import { generateDrawing, generateSitePlan } from './drawing-engine.js?v=57';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=7';
 import { exportDrawingPDF } from './drawing-pdf/export.js';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
-import { initPlanEditor, finishDraft } from './ui/plan-editor.js?v=2';
+import { initPlanEditor, finishDraft } from './ui/plan-editor.js?v=3';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory, restoreHistoryEntry } from './cloud-storage.js?v=8';
 import { copyRichText } from './email/rich-copy.js';
 import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=61';
@@ -2035,13 +2035,13 @@ createApp({
       if (!Array.isArray(this.state.siteObjects)) this.state.siteObjects = [];
       const id = 'so-' + Date.now().toString(36); const W = this.state.width, D = this.state.depth;
       const base = { building: { kind, x: W + 3000, y: 0, w: 5000, h: 4000, rot: 0, label: 'Existing building' }, parking: { kind, x: -3500, y: 0, w: 2400, h: 4800, rot: 0, label: '' },
-        tree: { kind, x: W + 2000, y: D + 2500, r: 1500, label: '' }, text: { kind, x: W / 2, y: D + 2500, label: 'Text' }, north: { kind, x: -2000, y: -2000, rot: 0 },
+        tree: { kind, x: W + 2000, y: D + 2500, r: 1500, label: '' }, area: { kind, x: 0, y: D + 500, w: W, h: 2000, rot: 0, label: 'Proposed decking area' }, text: { kind, x: W / 2, y: D + 2500, label: 'Text' }, north: { kind, x: -2000, y: -2000, rot: 0 },
         path: { kind, pts: [{ x: W / 2, y: D + 500 }, { x: W / 2, y: D + 4500 }], width: 1200, label: '' }, fence: { kind, pts: [{ x: -1500, y: -1500 }, { x: W + 1500, y: -1500 }], width: 0, label: '' } }[kind];
       if (!base) return;
       const o = { id, ...base }; this.state.siteObjects.push(o); this.planSelection = { type: 'site', id };
     },
     removeSiteObject(i) { this.state.siteObjects.splice(i, 1); this.planSelection = null; },
-    siteObjectName(o) { return { building: 'Existing building', parking: 'Parking space', path: 'Path / drive', fence: 'Fence / boundary', tree: 'Tree', text: 'Text', north: 'North arrow' }[o.kind] || o.kind; },
+    siteObjectName(o) { return { building: 'Existing building', parking: 'Parking space', area: 'Marked area', path: 'Path / drive', fence: 'Fence / boundary', tree: 'Tree', text: 'Text', north: 'North arrow' }[o.kind] || o.kind; },
     uploadSiteImage(ev) {
       const f = ev.target.files && ev.target.files[0]; if (!f) return; ev.target.value = '';
       const img = new Image(); const url = URL.createObjectURL(f);

@@ -1150,9 +1150,9 @@ export function siteBounds(objs, img) {
   if (img && img.w > 0) { add(img.x, img.y); add(img.x + img.w, img.y + img.h); }
   for (const o of (objs || [])) {
     if (!o) continue;
-    if (o.kind === 'building' || o.kind === 'parking') { const r = Math.max(o.w, o.h); add(o.x - (o.rot ? r : 0), o.y - (o.rot ? r : 0)); add(o.x + o.w + (o.rot ? r : 0), o.y + o.h + (o.rot ? r : 0)); }
+    if (o.kind === 'building' || o.kind === 'parking' || o.kind === 'area') { const r = Math.max(o.w, o.h); add(o.x - (o.rot ? r : 0), o.y - (o.rot ? r : 0)); add(o.x + o.w + (o.rot ? r : 0), o.y + o.h + (o.rot ? r : 0)); }
     else if (o.kind === 'tree') { add(o.x - o.r, o.y - o.r); add(o.x + o.r, o.y + o.r); }
-    else if (o.kind === 'path' || o.kind === 'fence') { for (const p of (o.pts || [])) { add(p.x - 600, p.y - 600); add(p.x + 600, p.y + 600); } }
+    else if (o.kind === 'path' || o.kind === 'fence') { const hw = Math.max(600, (o.width || 0) / 2 + 200); for (const p of (o.pts || [])) { add(p.x - hw, p.y - hw); add(p.x + hw, p.y + hw); } }
     else if (o.kind === 'text' || o.kind === 'north') { add(o.x - 1200, o.y - 600); add(o.x + 1200, o.y + 600); }
   }
   return { minX, minY, maxX, maxY, any };
@@ -1186,14 +1186,19 @@ function renderSiteObjects(objs, ui, opts) {
       g += tag('circle', { class: 'site-handle', 'data-so-id': o.id, cx: o.x + o.w, cy: o.y + o.h, r: 110 });
     } else if (o.kind === 'path' || o.kind === 'fence') {
       const pts = (o.pts || []).map((p) => `${p.x},${p.y}`).join(' ');
-      if (o.kind === 'path') g += tag('polyline', { points: pts, fill: 'none', stroke: hl ? hl.stroke : '#c9c3b5', 'stroke-width': o.width || 1200, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', opacity: 0.85 });
+      if (o.kind === 'path') { const road = (o.width || 1200) > 2500; g += tag('polyline', { points: pts, fill: 'none', stroke: hl ? hl.stroke : (road ? '#d4d4d4' : '#c9c3b5'), 'stroke-width': o.width || 1200, 'stroke-linejoin': 'round', 'stroke-linecap': road ? 'butt' : 'round', opacity: 0.9 }); if (road) g += tag('polyline', { points: pts, fill: 'none', stroke: '#ffffff', 'stroke-width': 60, 'stroke-dasharray': '600,400' }); }
       else g += tag('polyline', { points: pts, fill: 'none', stroke: 'transparent', 'stroke-width': 500 }) + tag('polyline', { points: pts, fill: 'none', stroke: hl ? hl.stroke : '#6b4f2a', 'stroke-width': hl ? 60 : 40, 'stroke-dasharray': '300,150' });
       (o.pts || []).forEach((p, pi) => { g += tag('circle', { class: 'site-pt', 'data-so-id': o.id, 'data-i': pi, cx: p.x, cy: p.y, r: 90 }); });
-      const first = (o.pts || [])[0]; if (first && o.label) g += tx(first.x, first.y - 200, o.label, fs * 0.9, { color: '#555' });
+      const pts0 = o.pts || []; const first = pts0[0], second = pts0[1];
+      if (first && o.label) { const vert = second && Math.abs(second.y - first.y) > Math.abs(second.x - first.x); const mx = second ? (first.x + second.x) / 2 : first.x, my = second ? (first.y + second.y) / 2 : first.y - 200; g += tx(mx, my, o.label, fs * 0.9, { color: '#555', transform: vert ? `rotate(-90 ${mx} ${my})` : undefined }); }
     } else if (o.kind === 'tree') {
       g += tag('circle', { cx: o.x, cy: o.y, r: o.r || 1500, fill: '#cfe3cf', stroke: hl ? hl.stroke : '#5f8f5f', 'stroke-width': hl ? 6 : 3 }) + tag('circle', { cx: o.x, cy: o.y, r: 150, fill: '#6b4f2a' });
       if (o.label) g += tx(o.x, o.y + (o.r || 1500) + fs, o.label, fs * 0.9, { color: '#4f6f4f' });
       g += tag('circle', { class: 'site-handle', 'data-so-id': o.id, cx: o.x + (o.r || 1500), cy: o.y, r: 110 });
+    } else if (o.kind === 'area') {
+      g += `<g${rot}>` + tag('rect', { x: o.x, y: o.y, width: o.w, height: o.h, fill: '#eef3f7', stroke: hl ? hl.stroke : '#5b7a99', 'stroke-width': hl ? 6 : 3, 'stroke-dasharray': '220,120', opacity: 0.9 })
+        + tx(cx, cy + fs * 0.35, o.label || 'Area', fs * 0.9, { color: '#4a6684', italic: true }) + '</g>';
+      g += tag('circle', { class: 'site-handle', 'data-so-id': o.id, cx: o.x + o.w, cy: o.y + o.h, r: 110 });
     } else if (o.kind === 'text') {
       g += rc(o.x - 1200, o.y - fs, 2400, fs * 1.6, { fill: 'transparent' }) + tx(o.x, o.y, o.label || 'Text', fs, { color: hl ? hl.stroke : '#333', bold: true });
     } else if (o.kind === 'north') {
@@ -2052,10 +2057,11 @@ function composeDeep(b) {
   // plan last so its group id is unique and it sits above nothing else
   s += tx(pX+W/2, pY - boundaryRear - 160*TS, 'PLAN VIEW', 150, titleOpts);
   s += grp(renderPlan({ width:W, depth:D, wallThickness:150, overhang:oh, tier:b.tier, components:b.planComponents||[], rooms:b.rooms, cornerLeft:cL, cornerRight:cR, straightPartition:b.straightPartition, partitionRoom:b.partitionRoom, partitions:b.partitions, roomLabels:b.roomLabels, siteObjects:b.siteObjects, siteImage:b.siteImage, ui:b.ui, boundaries:b.boundaries, roof, hasCanopy, hasDecking, deckingDepth, acUnits:b.acUnits||[], intDimWidthOffset:b.intDimWidthOffset, intDimDepthOffset:b.intDimDepthOffset }), { transform:`translate(${pX},${pY})`, id: 'plan-group' });
-  const planDimY = pY + D + (frontProj > 0 ? frontProj : 0) + 80;
+  const planDimY = pY + D + Math.max(frontProj, siteB) + 80;
   s += dimH(pX, pX+W, planDimY, `${W}mm`, 450*TS, false);
-  s += dimV(pY, pY+D, pX, `${D}mm`, -450*TS);
-  if (frontProj > 0) s += dimV(pY, pY+D+frontProj, pX, overallLabel(frontProj), -900*TS);
+  const dimX = pX - boundaryLeft - siteL; // left of the boundary / path / site objects
+  s += dimV(pY, pY+D, dimX, `${D}mm`, -450*TS);
+  if (frontProj > 0) s += dimV(pY, pY+D+frontProj, dimX, overallLabel(frontProj), -900*TS);
   if (isSig && (hasCanopy || hasDecking)) {
     const numSpot = hasCanopy ? Math.floor(W / 1000) : 0; const parts = [];
     if (hasCanopy && oh > 0) parts.push(`canopy (${oh}mm) with ${numSpot} spotlight${numSpot !== 1 ? 's' : ''}`);

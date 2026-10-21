@@ -86,8 +86,8 @@ function onDown(e) {
   }
   // ── site tools ──
   if (!Array.isArray(app.state.siteObjects)) app.state.siteObjects = [];
-  if (tool === 'site-building' || tool === 'site-parking') {
-    const o = { id: uid('so'), kind: tool === 'site-building' ? 'building' : 'parking', x: snap(pt.x), y: snap(pt.y), w: 1000, h: 1000, rot: 0, label: tool === 'site-building' ? 'Existing building' : '' };
+  if (tool === 'site-building' || tool === 'site-parking' || tool === 'site-area') {
+    const o = { id: uid('so'), kind: tool === 'site-building' ? 'building' : tool === 'site-area' ? 'area' : 'parking', x: snap(pt.x), y: snap(pt.y), w: 1000, h: 1000, rot: 0, label: tool === 'site-building' ? 'Existing building' : tool === 'site-area' ? 'Proposed area' : '' };
     app.state.siteObjects.push(o); drag = { kind: 'site-draw', o, start: { x: o.x, y: o.y } }; freezeCTM(); select({ type: 'site', id: o.id }); e.preventDefault(); return;
   }
   if (tool === 'site-tree') { const o = { id: uid('so'), kind: 'tree', x: snap(pt.x), y: snap(pt.y), r: 1500, label: '' }; app.state.siteObjects.push(o); select({ type: 'site', id: o.id }); e.preventDefault(); return; }

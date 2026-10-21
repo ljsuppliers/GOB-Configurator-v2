@@ -583,6 +583,7 @@
             <div class="btn-row" style="margin-bottom:6px;flex-wrap:wrap;">
               <button type="button" class="btn-tiny" @click="addSiteObject('building'); planSheet = 'site'">+ building</button>
               <button type="button" class="btn-tiny" @click="addSiteObject('parking'); planSheet = 'site'">+ parking</button>
+              <button type="button" class="btn-tiny" @click="addSiteObject('area')" title="Dashed outline with a label: proposed decking, patio, future extension">+ marked area</button>
               <button type="button" class="btn-tiny" @click="addSiteObject('path'); planSheet = 'site'">+ path</button>
               <button type="button" class="btn-tiny" @click="addSiteObject('fence'); planSheet = 'site'">+ fence</button>
               <button type="button" class="btn-tiny" @click="addSiteObject('tree'); planSheet = 'site'">+ tree</button>
@@ -1408,6 +1409,7 @@
             <button :class="{ on: planTool === 'select' }" @click="setPlanTool('select')" title="Select and drag anything. Corner handle resizes.">Select</button>
             <button :class="{ on: planTool === 'site-building' }" @click="setPlanTool('site-building')" title="Drag a rectangle for an existing building">Building</button>
             <button :class="{ on: planTool === 'site-parking' }" @click="setPlanTool('site-parking')" title="Drag a rectangle for a parking space">Parking</button>
+            <button :class="{ on: planTool === 'site-area' }" @click="setPlanTool('site-area')" title="Drag a rectangle for a marked area (proposed decking, patio)">Area</button>
             <button :class="{ on: planTool === 'site-path' }" @click="setPlanTool('site-path')" title="Click the corners of a path or drive, double-click (or Enter) to finish">Path</button>
             <button :class="{ on: planTool === 'site-fence' }" @click="setPlanTool('site-fence')" title="Click along a fence or boundary line, double-click (or Enter) to finish">Fence</button>
             <button :class="{ on: planTool === 'site-tree' }" @click="setPlanTool('site-tree')" title="Click to place a tree (drag its handle to set the canopy)">Tree</button>
@@ -2772,7 +2774,7 @@
 <script src="lib/firebase/firebase-storage-compat.js"></script>
 
 <!-- App -->
-<script type="module" src="js/app.js?v=206"></script>
+<script type="module" src="js/app.js?v=207"></script>
 <script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 
 </body>
