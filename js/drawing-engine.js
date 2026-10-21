@@ -2110,7 +2110,11 @@ function composeDeep(b) {
   const sideW = D + frontProj, colW = Math.max(sideW, W * 2 + gap);
   const rowH = labH + rise + H + deckH + (frontProj > 0 ? 900 : 600) * TS + 300 * TS;
   const overallLabel = (extra) => `${D + extra}mm overall incl. ${hasCanopy && proj > 0 && hasDecking && deckProj > 0 ? 'canopy/decking' : hasCanopy && proj > 0 ? 'canopy' : 'decking'}`;
-  let y = Math.max(margin, pY - siteT - boundaryRear - labH - rise); // right column starts level with the top of the plan content (site objects included), Liam 21 Oct 2026
+  const tiH = 6600;
+  const colTop = Math.max(margin, pY - siteT - boundaryRear - labH - rise);
+  const colH = rowH * 3 + 200*TS + tiH;
+  // right column centred on the plan content's vertical extent so the sheet has no empty bottom-right corner (Liam 21 Oct 2026)
+  let y = Math.max(colTop, colTop + (planBottom - colTop - colH) / 2);
   // row 1: left elevation
   let ey = y + labH + rise;
   s += tx(cX + sideW/2, ey - rise - 160*TS, 'LEFT ELEVATION', 150, titleOpts);
@@ -2139,7 +2143,7 @@ function composeDeep(b) {
   s += dimH(bX, bX+W, ey+H+deckH+30, `${W}mm`, 250*TS);
   y += rowH;
   // row 4: title block + notes
-  const tiH = 6600, tiW = Math.min(colW, Math.round(tiH * 1.85)); const tiX = cX, tiY = y + 200*TS;
+  const tiW = Math.min(colW, Math.round(tiH * 1.85)); const tiX = cX, tiY = y + 200*TS;
   s += grp(renderTitle({ w:tiW, h:tiH, title:b.title, customer:b.customer, address:b.address, date:b.date, spec:b.spec, useCase:b.useCase, drawingNumber:b.drawingNumber, scaleLabel: `1:${100} @ A3` }), { transform:`translate(${tiX},${tiY})` });
   let colBottom = tiY + tiH;
   if (b.drawingNotes && b.drawingNotes.trim()) {

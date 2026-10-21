@@ -2,9 +2,9 @@
 // Reactive state, live pricing, drawing preview, email drafting
 
 import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding, roomSchedule, ROOM_KINDS, roofInfo } from './pricing.js?v=16';
-import { generateDrawing, generateSitePlan, isFurniture } from './drawing-engine.js?v=62';
+import { generateDrawing, generateSitePlan, isFurniture } from './drawing-engine.js?v=63';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=8';
-import { exportDrawingPDF, cleanSvgForOutput } from './drawing-pdf/export.js?v=2';
+import { exportDrawingPDF, cleanSvgForOutput } from './drawing-pdf/export.js?v=3';
 import { initComponentDrag } from './ui/component-drag.js?v=2';
 import { initPlanEditor, finishDraft } from './ui/plan-editor.js?v=3';
 import { newDesignId, initFirebase, isFirebaseReady, saveDesign, updateDesign, listDesigns, loadDesign, deleteDesign, listHistory, restoreHistoryEntry } from './cloud-storage.js?v=8';
