@@ -500,11 +500,10 @@ function buildQuoteData(q) {
     { label: 'Electrical and internet connection', detail: 'Priced after a visit from our electrician. Typically \u00a31,000 to \u00a32,000.' },
     ...((q.bathroom && q.bathroom.enabled) || (q.roomSchedule && q.roomSchedule.plumbed) ? [{ label: 'Water supply and waste connections', detail: 'Arranged with our plumber and landscaper, priced after the site visit.' }] : []),
   ];
-  sectionBar('Paid directly to the contractor (not in the total)');
+  sectionBar('Not included in total');
   for (const it of paidDirectly) {
     contentRow(it.short || it.label, { price: it.amount || '' });
   }
-  contentRow('* Ranges are confirmed after the site visits. We arrange and liaise throughout; you pay each contractor directly.', { fontSize: 10 });
 
   greySpacer(28);
 

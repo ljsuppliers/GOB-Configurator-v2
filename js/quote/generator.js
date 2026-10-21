@@ -496,7 +496,7 @@ export function generateQuotePDF(state, price) {
   setColor(colors.primary);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('PAID DIRECTLY TO THE CONTRACTOR (NOT IN THE TOTAL)', margins.left, y);
+  doc.text('NOT INCLUDED IN TOTAL', margins.left, y);
   y += 6;
   for (const item of paidDirectlyItems(state)) {
     y = checkPageBreak(y, 6);
@@ -509,10 +509,7 @@ export function generateQuotePDF(state, price) {
     doc.setFont('helvetica', 'normal');
     y += 4.5;
   }
-  setColor(colors.grey);
-  doc.setFontSize(8);
-  doc.text('* Ranges are confirmed after the site visits. We arrange and liaise throughout; you pay each contractor directly.', margins.left + 5, y + 1);
-  y += 9;
+  y += 4;
 
   // ═══════════════════════════════════════════════════════════════
   // ADDITIONAL NOTES
@@ -718,7 +715,7 @@ export function generateQuotePDF(state, price) {
     'All prices include VAT at 20%.',
     'Customer to provide toilet facility and 6-yard skip for waste removal.',
     'Installation and groundworks are paid directly to our installer team.',
-    'Items listed under "Arranged by us, paid directly" are arranged by us and paid by the customer to the contractor; they are not included in the total.',
+    'Items listed under "Not included in total" are arranged by us and paid by the customer to the contractor.',
     'Lead time: typically 8-12 weeks from deposit payment.',
     'A holding deposit of £250 is required to reserve your delivery and installation date.',
     'Possible step at front of building may be required depending on final ground/building level.'
