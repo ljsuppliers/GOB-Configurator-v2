@@ -2037,7 +2037,7 @@ createApp({
       const F = { desk: { w: 1600, h: 800 }, chair: { w: 500, h: 500 }, sofa: { w: 1600, h: 800 }, table: { w: 2400, h: 1100, seats: 8 }, kitchen: { w: 2400, h: 600 }, wc: { w: 450, h: 750 }, basin: { w: 550, h: 450 }, 'reception-desk': { w: 2000, h: 800 } }[kind];
       if (F) { const o = { id, kind, x: Math.round(W / 2 / 50) * 50 - F.w / 2, y: Math.round(D / 2 / 50) * 50 - F.h / 2, rot: 0, label: '', ...F }; this.state.siteObjects.push(o); this.planSelection = { type: 'site', id }; return; }
       const base = { building: { kind, x: W + 3000, y: 0, w: 5000, h: 4000, rot: 0, label: 'Existing building' }, parking: { kind, x: -3500, y: 0, w: 2400, h: 4800, rot: 0, label: '' },
-        tree: { kind, x: W + 2000, y: D + 2500, r: 1500, label: '' }, area: { kind, x: 0, y: D + 500, w: W, h: 2000, rot: 0, label: 'Proposed decking area' }, text: { kind, x: W / 2, y: D + 2500, label: 'Text' }, north: { kind, x: -2000, y: -2000, rot: 0 },
+        tree: { kind, x: W + 2000, y: D + 2500, r: 1500, label: '' }, area: { kind, x: 0, y: D + 500, w: W, h: 2000, rot: 0, label: 'Proposed decking area' }, overlay: { kind, x: 0, y: 0, w: Math.min(W, 5000), h: Math.min(D, 8000), rot: 0, label: 'Existing building (to be removed)' }, text: { kind, x: W / 2, y: D + 2500, label: 'Text' }, north: { kind, x: -2000, y: -2000, rot: 0 },
         path: { kind, pts: [{ x: W / 2, y: D + 500 }, { x: W / 2, y: D + 4500 }], width: 1200, label: '' }, fence: { kind, pts: [{ x: -1500, y: -1500 }, { x: W + 1500, y: -1500 }], width: 0, label: '' } }[kind];
       if (!base) return;
       const o = { id, ...base }; this.state.siteObjects.push(o); this.planSelection = { type: 'site', id };
@@ -2059,7 +2059,7 @@ createApp({
       this.notify('Furniture added around each room label. Drag each piece into place, Delete removes one.');
     },
     hasFurniture() { return (this.state.siteObjects || []).some(isFurniture); },
-    siteObjectName(o) { return { building: 'Existing building', parking: 'Parking space', area: 'Marked area', desk: 'Desk + chair', chair: 'Chair', sofa: 'Sofa', table: 'Meeting table', kitchen: 'Kitchen units', wc: 'WC', basin: 'Basin', 'reception-desk': 'Reception desk', path: 'Path / drive', fence: 'Fence / boundary', tree: 'Tree', text: 'Text', north: 'North arrow' }[o.kind] || o.kind; },
+    siteObjectName(o) { return { building: 'Existing building', parking: 'Parking space', area: 'Marked area', overlay: 'Overlay sketch', desk: 'Desk + chair', chair: 'Chair', sofa: 'Sofa', table: 'Meeting table', kitchen: 'Kitchen units', wc: 'WC', basin: 'Basin', 'reception-desk': 'Reception desk', path: 'Path / drive', fence: 'Fence / boundary', tree: 'Tree', text: 'Text', north: 'North arrow' }[o.kind] || o.kind; },
     uploadSiteImage(ev) {
       const f = ev.target.files && ev.target.files[0]; if (!f) return; ev.target.value = '';
       const img = new Image(); const url = URL.createObjectURL(f);

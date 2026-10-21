@@ -92,6 +92,9 @@ function svgDefs() {
       <stop offset="0%" stop-color="#6E7276"/>
       <stop offset="100%" stop-color="#4A4F53"/>
     </linearGradient>
+    <pattern id="overlayHatch" x="0" y="0" width="300" height="300" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="300" stroke="#b45309" stroke-width="8" opacity="0.35"/>
+    </pattern>
     <pattern id="wallHatch" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
       <rect width="80" height="80" fill="#C9C9C9"/>
       <line x1="0" y1="80" x2="80" y2="0" stroke="#7A7A7A" stroke-width="4"/>
@@ -1150,7 +1153,7 @@ export function siteBounds(objs, img) {
   if (img && img.w > 0) { add(img.x, img.y); add(img.x + img.w, img.y + img.h); }
   for (const o of (objs || [])) {
     if (!o || isFurniture(o)) continue;
-    if (o.kind === 'building' || o.kind === 'parking' || o.kind === 'area') { const r = Math.max(o.w, o.h); add(o.x - (o.rot ? r : 0), o.y - (o.rot ? r : 0)); add(o.x + o.w + (o.rot ? r : 0), o.y + o.h + (o.rot ? r : 0)); }
+    if (o.kind === 'building' || o.kind === 'parking' || o.kind === 'area' || o.kind === 'overlay') { const r = Math.max(o.w, o.h); add(o.x - (o.rot ? r : 0), o.y - (o.rot ? r : 0)); add(o.x + o.w + (o.rot ? r : 0), o.y + o.h + (o.rot ? r : 0)); }
     else if (o.kind === 'tree') { add(o.x - o.r, o.y - o.r); add(o.x + o.r, o.y + o.r); }
     else if (o.kind === 'path' || o.kind === 'fence') { const hw = Math.max(600, (o.width || 0) / 2 + 200); for (const p of (o.pts || [])) { add(p.x - hw, p.y - hw); add(p.x + hw, p.y + hw); } }
     else if (o.kind === 'text' || o.kind === 'north') { add(o.x - 1200, o.y - 600); add(o.x + 1200, o.y + 600); }
@@ -1218,13 +1221,29 @@ function renderFurniture(objs, ui) {
   }
   return s;
 }
+function renderOverlays(objs, ui) {
+  let s = ''; const sel = (ui && ui.selection) || null; const LS = Math.min(TS, 1.3) / TS;
+  for (const o of (objs || [])) {
+    if (!o || o.kind !== 'overlay' || !o.id) continue;
+    const isSel = sel && sel.type === 'site' && sel.id === o.id;
+    const w = o.w || 1000, h = o.h || 1000; const cx = o.x + w / 2, cy = o.y + h / 2;
+    let g = `<g transform="rotate(${o.rot || 0} ${cx} ${cy})">`;
+    g += tag('rect', { x: o.x, y: o.y, width: w, height: h, fill: 'url(#overlayHatch)', stroke: 'none' });
+    g += tag('rect', { x: o.x, y: o.y, width: w, height: h, fill: 'none', stroke: isSel ? '#0f766e' : '#b45309', 'stroke-width': isSel ? 70 : 50, 'stroke-dasharray': '320,160', 'stroke-linejoin': 'round' });
+    if (o.label) { const fs = 150 * TS * LS; const tw = o.label.length * fs * 0.56 + 300; g += tag('rect', { x: cx - tw / 2, y: cy - fs * 0.8, width: tw, height: fs * 1.5, rx: 80, fill: '#ffffff', opacity: 0.9 }) + tx(cx, cy + fs * 0.3, o.label, 150 * LS, { color: '#92400e', bold: true, italic: true }); }
+    g += '</g>';
+    g += tag('circle', { class: 'site-handle', 'data-so-id': o.id, cx: o.x + w, cy: o.y + h, r: 110 });
+    s += tag('g', { class: 'site-obj overlay' + (isSel ? ' selected' : ''), 'data-so-id': o.id, 'data-kind': o.kind, style: 'cursor:move' }, g);
+  }
+  return s;
+}
 function renderSiteObjects(objs, ui, opts) {
   let s = '';
   const sel = (ui && ui.selection) || null;
   const big = opts && opts.big; // site-plan sheet: heavier text
   const fs = big ? 260 : 150;
   for (const o of (objs || [])) {
-    if (!o || !o.id || isFurniture(o)) continue;
+    if (!o || !o.id || isFurniture(o) || o.kind === 'overlay') continue;
     const isSel = sel && sel.type === 'site' && sel.id === o.id;
     const hl = isSel ? { stroke: '#0f766e', sw: 6 } : null;
     let g = '';
@@ -1539,6 +1558,7 @@ function renderPlan(cfg) {
   s += renderFurniture(cfg.siteObjects, cfg.ui); // desks, sofas, kitchen, sanitaryware (drawn inside the rooms)
   s += renderRoomLabels(cfg.roomLabels, cfg.ui); // labels over the furniture (white backing), under the walls so doors stay clickable
   s += renderPartitions(cfg.partitions, width, depth, wt, cfg.ui);
+  s += renderOverlays(cfg.siteObjects, cfg.ui); // existing-building footprints etc., sketched over the plan
 
   // Internal dimensions (left off multi-room plans: the room sizes go in the specification instead - Liam 21 Oct 2026)
   const intColor = '#2288CC';
