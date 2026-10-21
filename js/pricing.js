@@ -27,6 +27,12 @@ export function getInternalDimensions(state) {
 }
 
 /** Large / commercial building: outside the premium matrix and the standard electrical pack. */
+/** External footprint in m2: the rectangle less a rear-right notch (L-shaped plan). */
+export function footprintM2(state) {
+  const w = (state.width || 0) / 1000, d = (state.depth || 0) / 1000;
+  const n = state.notch; const cut = n && n.w > 0 && n.len > 0 ? (n.w / 1000) * (n.len / 1000) : 0;
+  return Math.max(0, w * d - cut);
+}
 export function isLargeBuilding(state) {
   const w = (state.width || 0) / 1000, d = (state.depth || 0) / 1000;
   return w * d > 40 || w > 8.5 || d > 5;
@@ -416,7 +422,7 @@ function lookupBasePrice(state) {
   // so the building line = matrix - installation.
   // LARGE / COMMERCIAL: area x band rate (inc. installation), see prices.commercialPricing
   if (isLargeBuilding(state) && pricesData.commercialPricing) {
-    const area = (state.width / 1000) * (state.depth / 1000);
+    const area = footprintM2(state);
     const band = pricesData.commercialPricing.bands.find((b) => area <= b.maxArea) || pricesData.commercialPricing.bands.at(-1);
     const total = Math.round(area * band.perM2 / 50) * 50;
     return Math.max(0, total - calculateInstallation(state));

@@ -1,7 +1,7 @@
 // GOB Configurator v2 — Vue 3 App
 // Reactive state, live pricing, drawing preview, email drafting
 
-import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding, roomSchedule, ROOM_KINDS, roofInfo } from './pricing.js?v=15';
+import { initPricing, calculatePrice, formatPrice, paidDirectlyItems, partitionSummary, isLargeBuilding, roomSchedule, ROOM_KINDS, roofInfo } from './pricing.js?v=16';
 import { generateDrawing, generateSitePlan, isFurniture } from './drawing-engine.js?v=62';
 import { generateQuotePDF, generateCombinedPDF } from './quote/generator.js?v=8';
 import { exportDrawingPDF, cleanSvgForOutput } from './drawing-pdf/export.js?v=2';
@@ -13,7 +13,7 @@ import { buildPremiumBom, USE_TAGS } from './bom/premium-bom.js?v=61';
 import { buildConstructionDrawings } from './construction.js?v=26';
 import { loadCatalogue, saveCatalogue, joinBom, buildOrders, catalogueEmptyMaterial, SUPPLY_MODES, stageFor } from './bom/orders.js?v=42';
 import { gmailConfigured, gmailSignedInAs, sendEmail } from './bom/gmail-send.js?v=1';
-import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=15';
+import { computeLabour, DEFAULT_DAY_RATE } from './bom/labour.js?v=16';
 import { emptyInstaller } from './bom/installers.js?v=2';
 import { SENDER_EMAIL } from './google-config.js?v=2';
 import { initAuth, authAvailable, signInWithGoogle, signInWithEmail, sendPasswordReset, signOut, userLabel, friendlyAuthError } from './auth.js?v=1';
