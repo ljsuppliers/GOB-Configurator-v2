@@ -1243,7 +1243,7 @@ function renderSiteObjects(objs, ui, opts) {
       g += tag('circle', { class: 'site-handle', 'data-so-id': o.id, cx: o.x + o.w, cy: o.y + o.h, r: 110 });
     } else if (o.kind === 'path' || o.kind === 'fence') {
       const pts = (o.pts || []).map((p) => `${p.x},${p.y}`).join(' ');
-      if (o.kind === 'path') { const road = (o.width || 1200) > 2500; g += tag('polyline', { points: pts, fill: 'none', stroke: hl ? hl.stroke : (road ? '#d4d4d4' : '#c9c3b5'), 'stroke-width': o.width || 1200, 'stroke-linejoin': 'round', 'stroke-linecap': road ? 'butt' : 'round', opacity: 0.9 }); if (road) g += tag('polyline', { points: pts, fill: 'none', stroke: '#ffffff', 'stroke-width': 60, 'stroke-dasharray': '600,400' }); }
+      if (o.kind === 'path') { const road = (o.width || 1200) > 2500; g += tag('polyline', { points: pts, fill: 'none', stroke: hl ? hl.stroke : (road ? '#e4e4e4' : '#ddd8cd'), 'stroke-width': o.width || 1200, 'stroke-linejoin': 'round', 'stroke-linecap': road ? 'butt' : 'round', opacity: 0.9 }); if (road) g += tag('polyline', { points: pts, fill: 'none', stroke: '#ffffff', 'stroke-width': 60, 'stroke-dasharray': '600,400' }); }
       else g += tag('polyline', { points: pts, fill: 'none', stroke: 'transparent', 'stroke-width': 500 }) + tag('polyline', { points: pts, fill: 'none', stroke: hl ? hl.stroke : '#6b4f2a', 'stroke-width': hl ? 60 : 40, 'stroke-dasharray': '300,150' });
       (o.pts || []).forEach((p, pi) => { g += tag('circle', { class: 'site-pt', 'data-so-id': o.id, 'data-i': pi, cx: p.x, cy: p.y, r: 90 }); });
       const pts0 = o.pts || []; const first = pts0[0], second = pts0[1];
