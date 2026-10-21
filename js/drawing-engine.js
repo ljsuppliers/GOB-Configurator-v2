@@ -2073,7 +2073,7 @@ function composeDeep(b) {
   const sideW = D + frontProj, colW = Math.max(sideW, W * 2 + gap);
   const rowH = labH + rise + H + deckH + (frontProj > 0 ? 900 : 600) * TS + 300 * TS;
   const overallLabel = (extra) => `${D + extra}mm overall incl. ${hasCanopy && proj > 0 && hasDecking && deckProj > 0 ? 'canopy/decking' : hasCanopy && proj > 0 ? 'canopy' : 'decking'}`;
-  let y = margin;
+  let y = Math.max(margin, pY - labH - rise); // right column starts level with the top of the building on the plan (Liam 21 Oct 2026)
   // row 1: left elevation
   let ey = y + labH + rise;
   s += tx(cX + sideW/2, ey - rise - 160*TS, 'LEFT ELEVATION', 150, titleOpts);
