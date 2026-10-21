@@ -404,7 +404,7 @@ function secretCladdedDoor(x, y, w, h, claddingType, handleSide) {
 // ── Windows ─────────────────────────────────────────────────
 
 function windowFixed(x, y, w, h) {
-  const t = Math.max(55, w * 0.09);
+  const t = Math.max(55, Math.min(85, w * 0.09));
   let s = frameProfile(x,y,w,h,t);
   s += glassFill(x+t, y+t, w-t*2, h-t*2);
   s += rc(x+t, y+t, w-t*2, h-t*2, { sw: 0.5, stroke: '#252A2E' });
@@ -412,7 +412,7 @@ function windowFixed(x, y, w, h) {
 }
 
 function windowOpener(x, y, w, h) {
-  const t = Math.max(55, w * 0.09); // Main frame thickness
+  const t = Math.max(55, Math.min(85, w * 0.09)); // Main frame thickness (capped so wide windows keep a slim frame)
   const tTop = Math.max(70, t * 1.3); // Thicker frame for top opener section
   const innerH = h - t - tTop; // Total inner height (bottom frame t, top frame tTop)
   const opH = innerH * 0.18; // Top opener is 18% of inner height (smaller)
@@ -1175,8 +1175,9 @@ function renderFurniture(objs, ui) {
     let g = `<g transform="rotate(${o.rot || 0} ${cx} ${cy})">`;
     if (o.kind === 'desk') { // desk with a chair on the long side facing the room
       g += rc(o.x, o.y, w, h, { fill: FILL, sw, stroke });
-      g += tag('rect', { x: cx - 250, y: o.y + h + 60, width: 500, height: 450, rx: 120, fill: FILL, stroke, 'stroke-width': sw });
-      g += tag('rect', { x: cx - 300, y: o.y + h + 440, width: 600, height: 110, rx: 50, fill: FILL, stroke, 'stroke-width': sw });
+      g += ln(o.x + 120, o.y + h - 60, o.x + w - 120, o.y + h - 60, 2, stroke); // desk edge
+      g += tag('rect', { x: cx - 260, y: o.y + h + 80, width: 520, height: 480, rx: 150, fill: FILL, stroke, 'stroke-width': sw }); // seat
+      g += tag('path', { d: `M ${cx - 300} ${o.y + h + 500} Q ${cx} ${o.y + h + 700} ${cx + 300} ${o.y + h + 500}`, fill: 'none', stroke, 'stroke-width': sw }); // back rest
     } else if (o.kind === 'chair') {
       g += tag('rect', { x: o.x, y: o.y, width: w, height: h, rx: 120, fill: FILL, stroke, 'stroke-width': sw });
       g += tag('rect', { x: o.x - 50, y: o.y + h - 110, width: w + 100, height: 110, rx: 50, fill: FILL, stroke, 'stroke-width': sw });
@@ -1191,6 +1192,7 @@ function renderFurniture(objs, ui) {
       for (const side of [-1, 1]) g += tag('rect', { x: side < 0 ? o.x - 560 : o.x + w + 80, y: cy - 230, width: 480, height: 460, rx: 120, fill: FILL, stroke, 'stroke-width': sw });
     } else if (o.kind === 'kitchen') { // run of units (600 deep) with a sink
       g += rc(o.x, o.y, w, h, { fill: '#f3f0ea', sw, stroke });
+      for (let ux = o.x + 600; ux < o.x + w - 10; ux += 600) g += ln(ux, o.y, ux, o.y + h, 2, '#9aa0a8'); // 600mm unit modules
       g += ln(o.x, o.y + h - 60, o.x + w, o.y + h - 60, 2, stroke);
       g += tag('rect', { x: o.x + w * 0.25, y: o.y + 90, width: 500, height: h - 180, rx: 60, fill: FILL, stroke, 'stroke-width': 3 });
       g += tag('circle', { cx: o.x + w * 0.25 + 250, cy: o.y + 60, r: 40, fill: stroke });
@@ -2149,7 +2151,7 @@ export function generateDrawing(state, componentsData, claddingData, ui) {
     const def = allComps[comp.type];
     if (!def) continue;
     const w = def.width;
-    const h = def.height;
+    const h = comp.customHeight && comp.customHeight > 0 ? comp.customHeight : def.height;
     const x = comp.positionX || 0;
 
     // Calculate y position based on component category and custom position
