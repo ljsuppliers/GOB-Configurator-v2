@@ -1515,7 +1515,8 @@ function renderPlan(cfg) {
       if (showCompDims) s += dimV_comp(c.x, c.x + c.w, wt, dimLabel, dimOff);
     } else if (c.wall === 'right') {
       const nt = cfg.notch, pd = nt && nt.pod;
-      const rx = !nt || c.x >= nt.len ? 0 : (pd && c.x >= nt.len - pd.len) ? -(nt.w - pd.w) : -nt.w; // wing / pod right wall is set in by the notch (L-shaped plan)
+      const cm = c.x + c.w / 2; // judge by the opening's centre
+      const rx = !nt || cm >= nt.len ? 0 : (pd && cm >= nt.len - pd.len) ? -(nt.w - pd.w) : -nt.w; // wing / pod right wall is set in by the notch (L-shaped plan)
       s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="right" style="cursor:grab" transform="translate(${rx},0)">`;
       s += rc(width - wt - hitPad, c.x, wt + hitPad * 2, c.w, { fill: 'transparent' });
       s += rc(width-wt, c.x, wt, c.w, { fill: COL.white });
@@ -1526,7 +1527,8 @@ function renderPlan(cfg) {
       if (showCompDims) s += dimV_comp(c.x, c.x + c.w, width + rx - wt, dimLabel, -dimOff);
     } else if (c.wall === 'rear') {
       const nt = cfg.notch, pd = nt && nt.pod;
-      const ry = !nt || c.x < width - nt.w ? 0 : (pd && c.x < width - nt.w + pd.w) ? nt.len - pd.len : nt.len; // main-block / pod rear wall is set back by the notch
+      const cm = c.x + c.w / 2; // judge by the opening's centre
+      const ry = !nt || cm < width - nt.w ? 0 : (pd && cm < width - nt.w + pd.w) ? nt.len - pd.len : nt.len; // main-block / pod rear wall is set back by the notch
       s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="rear" style="cursor:grab" transform="translate(0,${ry})">`;
       s += rc(c.x, -hitPad, c.w, wt + hitPad * 2, { fill: 'transparent' });
       s += rc(c.x, 0, c.w, wt, { fill: COL.white });
