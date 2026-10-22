@@ -1632,9 +1632,8 @@ function renderPlan(cfg) {
     s += dimH_comp(0, nx, 0, `${nx}mm`, -260);                       // wing width, above its rear wall
     const pd = cfg.notch.pod;
     if (pd) {
-      s += dimH_comp(nx, nx + pd.w, ny - pd.len, `${pd.w}mm`, -260);       // pod rear wall
+      s += dimH_comp(nx, nx + pd.w, ny - pd.len, `${pd.w}mm x ${pd.len}mm`, -260); // pod size on one dim above its rear wall (a vertical dim's extension line poked out of the corner, Liam 22 Oct 2026)
       s += dimH_comp(nx + pd.w, width, ny, `${cfg.notch.w - pd.w}mm`, -260); // set-back rear wall beyond the pod
-      s += dimV_comp(ny - pd.len, ny, nx + pd.w, `${pd.len}mm`, 260);       // pod depth, outside its right wall
     } else s += dimH_comp(nx, width, ny, `${cfg.notch.w}mm`, -260);   // set-back rear wall
     s += dimV_comp(0, ny, width, `${ny}mm`, 260);                    // notch depth, outside the right-hand line
   }
