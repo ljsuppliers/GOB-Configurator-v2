@@ -1882,7 +1882,8 @@ function dimV_comp(y1, y2, x, label, off, customColor) {
   s += tag('polyline', { points: `${xl - cw},${y2 - ch} ${xl},${y2} ${xl + cw},${y2 - ch}`, fill: 'none', stroke: color, 'stroke-width': 2 });
   // Text (rotated): on the far side of dim line (closer to building centre)
   const cy = (y1 + y2) / 2;
-  const textX = off < 0 ? xl - 140 : xl + 140;
+  // rotated -90 the glyphs rise towards -x from the baseline at textX, so on the right-hand side the baseline must sit a cap-height clear of the line (Liam 22 Oct 2026: numbers sat on the line)
+  const textX = off < 0 ? xl - 140 : xl + 70 + 120 * TS * 0.75;
   s += tx(textX, cy, label, 120, { color, transform: `rotate(-90 ${textX} ${cy})` });
   return s;
 }
