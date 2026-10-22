@@ -30,7 +30,7 @@ export function getInternalDimensions(state) {
 /** External footprint in m2: the rectangle less a rear-right notch (L-shaped plan). */
 export function footprintM2(state) {
   const w = (state.width || 0) / 1000, d = (state.depth || 0) / 1000;
-  const n = state.notch; const cut = n && n.w > 0 && n.len > 0 ? (n.w / 1000) * (n.len / 1000) : 0;
+  const n = state.notch; const pd = n && n.pod; const cut = n && n.w > 0 && n.len > 0 ? (n.w / 1000) * (n.len / 1000) - (pd && pd.w > 0 && pd.len > 0 ? (pd.w / 1000) * (pd.len / 1000) : 0) : 0; // less any infill pod in the inside corner
   return Math.max(0, w * d - cut);
 }
 export function isLargeBuilding(state) {

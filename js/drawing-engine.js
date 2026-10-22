@@ -742,7 +742,7 @@ function renderFront(cfg) {
     const cy = comp.y !== undefined ? comp.y : (height - comp.h);
     s += renderComp(comp.type, comp.x, cy, comp.w, comp.h, comp.id, claddingType, comp.handleSide);
   }
-  if (cfg.stepAt > 0 && cfg.stepAt < width) s += ln(cfg.stepAt, ROOF_ZONE, cfg.stepAt, height, 5, '#222'); // wall steps back here (L-shaped plan)
+  for (const st of [].concat(cfg.stepAt || [])) if (st > 0 && st < width) s += ln(st, ROOF_ZONE, st, height, 5, '#222'); // wall steps back here (L-shaped plan)
 
   // Base trim at bottom of building - ALWAYS present on all tiers
   const trimH = deckH;
@@ -877,7 +877,7 @@ function renderSide(cfg) {
     const cy = comp.y !== undefined ? comp.y : (height - comp.h);
     s += renderComp(comp.type, comp.x, cy, comp.w, comp.h, comp.id, claddingType, comp.handleSide);
   }
-  if (cfg.stepAt > 0 && cfg.stepAt < depth) s += ln(cfg.stepAt, ROOF_ZONE, cfg.stepAt, height, 5, '#222') + rc(cfg.stepAt, ROOF_ZONE + GUTTER_H, side === 'left' ? -1 : 1, 0, {}); // wall steps back here (L-shaped plan)
+  for (const st of [].concat(cfg.stepAt || [])) if (st > 0 && st < depth) s += ln(st, ROOF_ZONE, st, height, 5, '#222') + rc(st, ROOF_ZONE + GUTTER_H, side === 'left' ? -1 : 1, 0, {}); // wall steps back here (L-shaped plan)
   const trimH = deckH;
 
   if (isSig && (canopyProj > 0 || deckingSideProj > 0)) {
@@ -1406,9 +1406,14 @@ function renderPartitionRoom(pr, buildingWidth, buildingDepth, wt) {
 /** Outer wall band + inner floor for a rectangle, or an L-shape when the rear-right corner is notched away. */
 function buildingOutline(width, depth, wt, notch) {
   if (!notch || !(notch.w > 0) || !(notch.len > 0)) return rc(0, 0, width, depth, { fill: 'url(#wallHatch)', sw: 6, stroke: '#222' }) + rc(wt, wt, width-wt*2, depth-wt*2, { fill: COL.white, sw: 3, stroke: '#333' });
-  const nx = width - notch.w, ny = notch.len;
-  const outer = `0,0 ${nx},0 ${nx},${ny} ${width},${ny} ${width},${depth} 0,${depth}`;
-  const inner = `${wt},${wt} ${nx - wt},${wt} ${nx - wt},${ny + wt} ${width - wt},${ny + wt} ${width - wt},${depth - wt} ${wt},${depth - wt}`;
+  const nx = width - notch.w, ny = notch.len, pod = notch.pod;
+  // pod = a small infill (e.g. a WC block) in the inside corner of the L: x from nx to nx+pod.w, y from ny-pod.len to ny
+  const outer = pod
+    ? `0,0 ${nx},0 ${nx},${ny - pod.len} ${nx + pod.w},${ny - pod.len} ${nx + pod.w},${ny} ${width},${ny} ${width},${depth} 0,${depth}`
+    : `0,0 ${nx},0 ${nx},${ny} ${width},${ny} ${width},${depth} 0,${depth}`;
+  const inner = pod
+    ? `${wt},${wt} ${nx - wt},${wt} ${nx - wt},${ny - pod.len + wt} ${nx + pod.w - wt},${ny - pod.len + wt} ${nx + pod.w - wt},${ny + wt} ${width - wt},${ny + wt} ${width - wt},${depth - wt} ${wt},${depth - wt}`
+    : `${wt},${wt} ${nx - wt},${wt} ${nx - wt},${ny + wt} ${width - wt},${ny + wt} ${width - wt},${depth - wt} ${wt},${depth - wt}`;
   return tag('polygon', { points: outer, fill: 'url(#wallHatch)', stroke: '#222', 'stroke-width': 6, 'stroke-linejoin': 'miter' }) + tag('polygon', { points: inner, fill: COL.white, stroke: '#333', 'stroke-width': 3, 'stroke-linejoin': 'miter' });
 }
 function renderPlan(cfg) {
@@ -1509,7 +1514,8 @@ function renderPlan(cfg) {
       // Dimension label inside building (right of left wall inner edge)
       if (showCompDims) s += dimV_comp(c.x, c.x + c.w, wt, dimLabel, dimOff);
     } else if (c.wall === 'right') {
-      const rx = (cfg.notch && c.x < cfg.notch.len) ? -cfg.notch.w : 0; // wing's right wall is set in by the notch (L-shaped plan)
+      const nt = cfg.notch, pd = nt && nt.pod;
+      const rx = !nt || c.x >= nt.len ? 0 : (pd && c.x >= nt.len - pd.len) ? -(nt.w - pd.w) : -nt.w; // wing / pod right wall is set in by the notch (L-shaped plan)
       s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="right" style="cursor:grab" transform="translate(${rx},0)">`;
       s += rc(width - wt - hitPad, c.x, wt + hitPad * 2, c.w, { fill: 'transparent' });
       s += rc(width-wt, c.x, wt, c.w, { fill: COL.white });
@@ -1519,7 +1525,8 @@ function renderPlan(cfg) {
       // Dimension label inside building (left of right wall inner edge)
       if (showCompDims) s += dimV_comp(c.x, c.x + c.w, width + rx - wt, dimLabel, -dimOff);
     } else if (c.wall === 'rear') {
-      const ry = (cfg.notch && c.x >= width - cfg.notch.w) ? cfg.notch.len : 0; // main-block rear wall is set back by the notch
+      const nt = cfg.notch, pd = nt && nt.pod;
+      const ry = !nt || c.x < width - nt.w ? 0 : (pd && c.x < width - nt.w + pd.w) ? nt.len - pd.len : nt.len; // main-block / pod rear wall is set back by the notch
       s += `<g class="plan-component" data-comp-id="${c.id}" data-elevation="rear" style="cursor:grab" transform="translate(0,${ry})">`;
       s += rc(c.x, -hitPad, c.w, wt + hitPad * 2, { fill: 'transparent' });
       s += rc(c.x, 0, c.w, wt, { fill: COL.white });
@@ -1623,7 +1630,12 @@ function renderPlan(cfg) {
   if (cfg.notch && cfg.notch.w > 0) {
     const nx = width - cfg.notch.w, ny = cfg.notch.len;
     s += dimH_comp(0, nx, 0, `${nx}mm`, -260);                       // wing width, above its rear wall
-    s += dimH_comp(nx, width, ny, `${cfg.notch.w}mm`, -260);         // set-back rear wall
+    const pd = cfg.notch.pod;
+    if (pd) {
+      s += dimH_comp(nx, nx + pd.w, ny - pd.len, `${pd.w}mm`, -260);       // pod rear wall
+      s += dimH_comp(nx + pd.w, width, ny, `${cfg.notch.w - pd.w}mm`, -260); // set-back rear wall beyond the pod
+      s += dimV_comp(ny - pd.len, ny, nx + pd.w, `${pd.len}mm`, 260);       // pod depth, outside its right wall
+    } else s += dimH_comp(nx, width, ny, `${cfg.notch.w}mm`, -260);   // set-back rear wall
     s += dimV_comp(0, ny, width, `${ny}mm`, 260);                    // notch depth, outside the right-hand line
   }
   // Pitched roof: ridge line (dashed) and fall arrows on the plan
@@ -2135,7 +2147,7 @@ function composeDeep(b) {
   ey = y + labH + rise;
   const rX = cX + frontProj;
   s += tx(rX + D/2, ey - rise - 160*TS, 'RIGHT ELEVATION', 150, titleOpts);
-  s += grp(renderSide({ depth:D, height:H, side:'right', tier:b.tier, overhang:oh, components:b.rightComponents||[], corner:cR, claddingType:b.rightCladding, hasCanopy, hasDecking, deckingDepth, externalFeatures:b.rightExternalFeatures||[], roofProfile: prof.right, stepAt: b.notch ? D - b.notch.len : 0 }), { transform:`translate(${rX},${ey})` });
+  s += grp(renderSide({ depth:D, height:H, side:'right', tier:b.tier, overhang:oh, components:b.rightComponents||[], corner:cR, claddingType:b.rightCladding, hasCanopy, hasDecking, deckingDepth, externalFeatures:b.rightExternalFeatures||[], roofProfile: prof.right, stepAt: b.notch ? (b.notch.pod ? [D - b.notch.len, D - b.notch.len + b.notch.pod.len] : D - b.notch.len) : 0 }), { transform:`translate(${rX},${ey})` });
   s += dimH(rX, rX+D, ey+H+deckH+30, `${D}mm`, 250*TS);
   if (frontProj > 0) s += dimH(rX-frontProj, rX+D, ey+H+deckH+30, overallLabel(frontProj), 620*TS);
   y += rowH;
@@ -2146,7 +2158,7 @@ function composeDeep(b) {
   s += grp(renderFront({ width:W, height:H, overhang:oh, tier:b.tier, claddingType:b.frontCladding, components:b.frontComponents||[], cornerLeft:cL, cornerRight:cR, externalFeatures:b.externalFeatures||[], hasCanopy, hasDecking, roofProfile: prof.front }), { transform:`translate(${fX},${ey})` });
   s += dimH(fX, fX+W, ey+H+deckH+30, `${W}mm`, 250*TS);
   s += tx(bX + W/2, ey - rise - 160*TS, 'REAR ELEVATION', 150, titleOpts);
-  s += grp(renderFront({ width:W, height:H, overhang:0, tier:b.tier, claddingType:b.rearCladding, components:b.rearComponents||[], cornerLeft:'closed', cornerRight:'closed', externalFeatures:b.rearExternalFeatures||[], hasCanopy:false, hasDecking:false, roofProfile: prof.rear, stepAt: b.notch ? b.notch.w : 0 }), { transform:`translate(${bX},${ey})` });
+  s += grp(renderFront({ width:W, height:H, overhang:0, tier:b.tier, claddingType:b.rearCladding, components:b.rearComponents||[], cornerLeft:'closed', cornerRight:'closed', externalFeatures:b.rearExternalFeatures||[], hasCanopy:false, hasDecking:false, roofProfile: prof.rear, stepAt: b.notch ? (b.notch.pod ? [b.notch.w - b.notch.pod.w, b.notch.w] : b.notch.w) : 0 }), { transform:`translate(${bX},${ey})` });
   s += dimH(bX, bX+W, ey+H+deckH+30, `${W}mm`, 250*TS);
   y += rowH;
   // row 4: title block + notes
@@ -2300,7 +2312,7 @@ export function generateDrawing(state, componentsData, claddingData, ui) {
     rearCladding,
     rearComponents,
     sheetLayout: state.sheetLayout || 'auto',
-    notch: (state.notch && state.notch.w > 0 && state.notch.len > 0 && state.notch.w < state.width && state.notch.len < state.depth) ? { w: Number(state.notch.w), len: Number(state.notch.len) } : null,
+    notch: (state.notch && state.notch.w > 0 && state.notch.len > 0 && state.notch.w < state.width && state.notch.len < state.depth) ? { w: Number(state.notch.w), len: Number(state.notch.len), pod: (state.notch.pod && state.notch.pod.w > 0 && state.notch.pod.len > 0 && state.notch.pod.w < state.notch.w && state.notch.pod.len < state.notch.len) ? { w: Number(state.notch.pod.w), len: Number(state.notch.pod.len) } : null } : null,
     cornerLeft: state.cornerLeft || 'open',
     cornerRight: state.cornerRight || 'open',
     hasCanopy: state.tier === 'signature' ? (state.hasCanopy !== false) : false,

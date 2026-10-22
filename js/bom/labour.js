@@ -39,7 +39,7 @@ export function computeLabour(state, componentDefs) {
   const lab = state.labour || {};
   const dayRate = lab.dayRate > 0 ? lab.dayRate : DEFAULT_DAY_RATE;
   const w = state.width / 1000, d = state.depth / 1000;
-  const nt = state.notch; const externalArea = w * d - (nt && nt.w > 0 && nt.len > 0 ? (nt.w / 1000) * (nt.len / 1000) : 0); // L-shaped plans lose the notch
+  const nt = state.notch; const pd = nt && nt.pod; const externalArea = w * d - (nt && nt.w > 0 && nt.len > 0 ? (nt.w / 1000) * (nt.len / 1000) - (pd && pd.w > 0 && pd.len > 0 ? (pd.w / 1000) * (pd.len / 1000) : 0) : 0); // L-shaped plans lose the notch (less any pod)
   const extH = Math.max(state.height || 2500, 2500 + (state.structuralExtras?.heightUpgrade || 0));
   const comps = state.components || [];
   const cat = (c) => (componentDefs[c.type] || {}).category || 'standard';
